@@ -1,0 +1,11 @@
+{
+  "id": "notification",
+  "name": "Thông Báo",
+  "version": "1.0.0",
+  "tier": "free",
+  "icon": "i-bell",
+  "description": "Thông báo real-time, đánh dấu đã đọc, tùy chỉnh.",
+  "permissions": ["notification:read", "notification:write"],
+  "routes": "/api/v1/notifications",
+  "events": ["notification"]
+}

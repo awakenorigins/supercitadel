@@ -1,0 +1,93 @@
+/* Citadel design system — taste-applied (off-black, jade, mono numbers, border-depth) */
+:root {
+  --void: #0a0d12; --base: #0d1117; --s1: #141b24; --s2: #1a232f; --s3: #212d3b; --elev: #283648;
+  --bd: #1e2935; --bd2: #2a3947; --line: #1a242f;
+  --jade: #34d3b8; --jade-d: #1c9784; --jade-soft: rgba(52, 211, 184, .12);
+  --amber: #e8b366; --amber-soft: rgba(232, 179, 102, .12);
+  --rose: #ec6a85; --violet: #9889e8; --sky: #5fb8f0;
+  --txt: #e9eff6; --dim: #9aacbf; --mut: #5c6f83; --faint: #37475a;
+  --fd: 'Outfit', system-ui, sans-serif;
+  --fb: 'Be Vietnam Pro', system-ui, sans-serif;
+  --fm: 'JetBrains Mono', ui-monospace, monospace;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; }
+body { font-family: var(--fb); background: var(--void); color: var(--txt); -webkit-font-smoothing: antialiased; }
+button { font-family: var(--fb); cursor: pointer; }
+input { font-family: var(--fb); }
+
+/* ── ambient (time-aware set bởi JS) ── */
+.ambient { position: fixed; inset: 0; z-index: 0; pointer-events: none; transition: background 1.2s;
+  background: radial-gradient(600px 360px at 80% -8%, var(--amb1, rgba(52,211,184,.08)), transparent 62%),
+              radial-gradient(500px 360px at 10% 108%, var(--amb2, rgba(152,137,232,.06)), transparent 58%); }
+
+/* ── utility ── */
+.mono { font-family: var(--fm); }
+.fd { font-family: var(--fd); }
+.dim { color: var(--dim); } .mut { color: var(--mut); }
+.card { background: var(--s1); border: 1px solid var(--bd); border-radius: 18px; }
+.btn-p { background: var(--jade); color: #04231f; border: none; font-weight: 700; border-radius: 13px; padding: 14px; font-size: 15px; transition: transform .12s; width: 100%; }
+.btn-p:active { transform: scale(.98); }
+.chip { font-size: 12px; background: var(--s1); border: 1px solid var(--bd); border-radius: 99px; padding: 6px 12px; color: var(--dim); }
+.chip:active { border-color: var(--jade); color: var(--jade); }
+
+/* ── living core ── */
+.core { position: relative; border-radius: 50%; display: grid; place-items: center; }
+.core .pulse { position: absolute; inset: 0; border-radius: 50%; border: 1.5px solid var(--jade); opacity: .5; animation: cpulse 3.6s ease-out infinite; }
+.core .pulse:nth-child(2) { animation-delay: 1.8s; }
+@keyframes cpulse { 0% { transform: scale(.65); opacity: .55; } 100% { transform: scale(1.5); opacity: 0; } }
+.core .orb { width: 72%; height: 72%; border-radius: 50%; background: radial-gradient(circle at 34% 28%, var(--jade), var(--jade-d)); box-shadow: inset 0 -3px 10px rgba(0,0,0,.35), 0 0 22px var(--jade-soft); animation: cbreath 4s ease-in-out infinite; display: grid; place-items: center; color: #04231f; }
+@keyframes cbreath { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+.core.warn .orb { background: radial-gradient(circle at 34% 28%, var(--amber), #bd8638); animation-duration: 2s; }
+.core.warn .pulse { border-color: var(--amber); animation-duration: 2s; }
+
+/* ── avatar gradient mesh ── */
+.ava { border-radius: 12px; flex-shrink: 0; display: grid; place-items: center; font-family: var(--fd); font-weight: 700; color: #fff; position: relative; }
+.ava.mint { background: linear-gradient(135deg, #34d3b8, #1c9784); color: #04231f; }
+.ava.violet { background: linear-gradient(135deg, #9889e8, #6c5ce7); }
+.ava.amber { background: linear-gradient(135deg, #e8b366, #c0863a); color: #2a1c08; }
+.ava.rose { background: linear-gradient(135deg, #ec6a85, #c2415c); }
+.ava.sky { background: linear-gradient(135deg, #5fb8f0, #2f86c2); }
+.ava .on { position: absolute; bottom: -1px; right: -1px; width: 12px; height: 12px; border-radius: 50%; background: var(--jade); border: 3px solid var(--base); }
+
+/* ── icon ── */
+.icon { width: 1em; height: 1em; stroke: currentColor; stroke-width: 1.6; fill: none; stroke-linecap: round; stroke-linejoin: round; display: block; }
+
+/* ── app shell ── */
+.shell { max-width: 480px; margin: 0 auto; min-height: 100dvh; display: flex; flex-direction: column; position: relative; z-index: 1; background: var(--base); }
+@media (min-width: 520px) { .shell { border-left: 1px solid var(--bd); border-right: 1px solid var(--bd); } }
+.scroll { flex: 1; overflow-y: auto; padding-bottom: 92px; }
+.botnav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; height: 78px; display: flex; align-items: flex-start; justify-content: space-around; padding: 10px 6px 0; background: linear-gradient(180deg, rgba(13,17,23,.5), rgba(13,17,23,.97)); backdrop-filter: blur(24px); border-top: 1px solid var(--line); z-index: 50; }
+.bn { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--mut); font-size: 9.5px; font-weight: 600; flex: 1; background: none; border: none; transition: color .2s; position: relative; text-decoration: none; }
+.bn .icon { width: 22px; height: 22px; opacity: .7; }
+.bn.active { color: var(--jade); } .bn.active .icon { opacity: 1; }
+.bn .bdg { position: absolute; top: 0; margin-left: 22px; background: var(--rose); color: #fff; font-size: 9px; font-weight: 700; border-radius: 99px; min-width: 15px; height: 15px; display: grid; place-items: center; padding: 0 4px; font-family: var(--fm); }
+.bn-c { flex: 0 0 auto; margin-top: -22px; }
+.bn-c .core { width: 54px; height: 54px; }
+.bn-c span { color: var(--jade); margin-top: 3px; }
+
+/* ── page header ── */
+.pg-h { padding: 18px 20px 4px; }
+.pg-h .k { font-family: var(--fm); font-size: 11px; color: var(--jade); letter-spacing: .06em; text-transform: uppercase; }
+.pg-h h1 { font-family: var(--fd); font-weight: 800; font-size: 27px; letter-spacing: -.025em; margin-top: 4px; }
+
+/* ── tiểu tâm sheet ── */
+.tt-scrim { position: fixed; inset: 0; z-index: 80; background: rgba(6,8,12,.66); backdrop-filter: blur(4px); opacity: 0; pointer-events: none; transition: .3s; }
+.tt-scrim.open { opacity: 1; pointer-events: auto; }
+.tt-sheet { position: fixed; left: 50%; transform: translate(-50%, 100%); bottom: 0; width: 100%; max-width: 480px; z-index: 90; height: 86dvh; background: var(--base); border-radius: 26px 26px 0 0; border: 1px solid var(--bd2); border-bottom: none; transition: transform .42s cubic-bezier(.16, 1, .3, 1); display: flex; flex-direction: column; }
+.tt-sheet.open { transform: translate(-50%, 0); }
+.bub { padding: 11px 14px; border-radius: 15px; font-size: 13.5px; line-height: 1.5; }
+.bub.ai { background: var(--s1); border: 1px solid var(--bd); border-bottom-left-radius: 4px; }
+.bub.me { background: var(--jade); color: #04231f; border-bottom-right-radius: 4px; font-weight: 500; }
+.tcard { margin-top: 9px; background: var(--void); border: 1px solid var(--bd2); border-radius: 13px; overflow: hidden; }
+.tcard .th { display: flex; align-items: center; gap: 7px; padding: 9px 12px; background: var(--s2); border-bottom: 1px solid var(--line); font-family: var(--fm); font-size: 10.5px; color: var(--violet); }
+.blink { display: inline-block; width: 7px; height: 14px; background: var(--jade); vertical-align: middle; margin-left: 2px; animation: bk 1s step-end infinite; }
+@keyframes bk { 50% { opacity: 0; } }
+.typing { display: flex; gap: 4px; padding: 12px 15px; background: var(--s1); border: 1px solid var(--bd); border-radius: 15px; border-bottom-left-radius: 5px; width: fit-content; }
+.typing span { width: 7px; height: 7px; border-radius: 50%; background: var(--mut); animation: tdot 1.4s infinite; }
+.typing span:nth-child(2) { animation-delay: .2s; } .typing span:nth-child(3) { animation-delay: .4s; }
+@keyframes tdot { 0%, 60%, 100% { opacity: .3; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-4px); } }
+
+/* skeleton */
+.skel { background: linear-gradient(90deg, var(--s1) 25%, var(--s2) 50%, var(--s1) 75%); background-size: 200% 100%; animation: sk 1.4s infinite; border-radius: 10px; }
+@keyframes sk { to { background-position: -200% 0; } }

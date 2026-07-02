@@ -1,0 +1,35 @@
+// Icon — inline SVG sprite (taste rule: anti-emoji, stroke 1.6).
+const PATHS: Record<string, React.ReactNode> = {
+  home: <path d="M3 10.5 12 4l9 6.5M5 9.5V20h14V9.5" />,
+  chat: <path d="M21 12a8 8 0 0 1-11.5 7.2L4 20l.8-5.5A8 8 0 1 1 21 12Z" />,
+  grid: <><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /></>,
+  user: <><circle cx="12" cy="8" r="4" /><path d="M5 21c0-3.9 3.1-7 7-7s7 3.1 7 7" /></>,
+  spark: <><path d="M12 3v4M12 17v4M5 12H3M21 12h-2M6.3 6.3 7.7 7.7M16.3 16.3l1.4 1.4M17.7 6.3l-1.4 1.4M7.7 16.3l-1.4 1.4" /><circle cx="12" cy="12" r="3" /></>,
+  bell: <path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0" />,
+  coin: <><circle cx="12" cy="12" r="9" /><path d="M9.5 9.5h3.2a2 2 0 0 1 0 4H9.5m0-4V15m0-1.5h4" /></>,
+  coffee: <path d="M4 9h13v5a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V9ZM17 10h2a2 2 0 0 1 0 4h-2M7 4v2M11 4v2M14 4v2" />,
+  up: <path d="M5 16l5-5 3 3 6-7M16 7h4v4" />,
+  box: <path d="m12 2 8 4.5v9L12 20l-8-4.5v-9L12 2ZM4 6.5 12 11l8-4.5M12 11v9" />,
+  users: <><circle cx="9" cy="8" r="3.5" /><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 5.5a3.5 3.5 0 0 1 0 6.9M21 20c0-2.6-1.7-4.8-4-5.6" /></>,
+  check: <path d="M5 12.5 10 17l9-10" />,
+  cart: <><path d="M3 4h2l2.4 12.2a1.5 1.5 0 0 0 1.5 1.3h8.5a1.5 1.5 0 0 0 1.5-1.2L21 8H6" /><circle cx="9" cy="20" r="1" /><circle cx="18" cy="20" r="1" /></>,
+  cog: <><circle cx="12" cy="12" r="3" /><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.3 1a7 7 0 0 0-2-1.2L16 2H8l-.6 2.5a7 7 0 0 0-2 1.2l-2.3-1-2 3.4 2 1.5A7 7 0 0 0 3 12c0 .4 0 .8.1 1.2l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 2 1.2L8 22h8l.6-2.5a7 7 0 0 0 2-1.2l2.3 1 2-3.4-2-1.5c.1-.4.1-.8.1-1.2Z" /></>,
+  search: <><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></>,
+  shield: <path d="M12 3 5 6v5c0 4.5 3 8 7 10 4-2 7-5.5 7-10V6l-7-3Z" />,
+  plus: <path d="M12 5v14M5 12h14" />,
+  edit: <path d="M4 20h4L18.5 9.5a2 2 0 0 0-2.8-2.8L5 17.2 4 20Z" />,
+  send: <path d="M5 12 19 5l-4 14-3.5-5.5L5 12Z" />,
+  chevron: <path d="m9 6 6 6-6 6" />,
+  back: <path d="m15 6-6 6 6 6" />,
+  x: <path d="M6 6l12 12M18 6 6 18" />,
+  gift: <><rect x="3" y="8" width="18" height="13" rx="1.5" /><path d="M3 12h18M12 8v13M12 8S10 3 7.5 4.5 9.5 8 12 8Zm0 0s2-5 4.5-3.5S14.5 8 12 8Z" /></>,
+  logout: <path d="M14 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M9 16l-4-4 4-4M5 12h10" />,
+};
+
+export function Icon({ name, size, style }: { name: string; size?: number; style?: React.CSSProperties }) {
+  return (
+    <svg className="icon" viewBox="0 0 24 24" style={{ ...(size ? { width: size, height: size } : {}), ...style }}>
+      {PATHS[name] ?? null}
+    </svg>
+  );
+}
