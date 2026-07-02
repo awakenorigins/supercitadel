@@ -41,8 +41,28 @@ Module plug-in qua manifest + deps injection. Xem `docs/DEV_GUIDE.md`.
 - `docs/DEV_GUIDE.md` — phát triển + thêm module
 - `DEPLOY.md` — chỉ thị deploy cho OpenClaw
 
+## Nghiệm thu V7A (P6 — 9 chuẩn §09 spec v5.1)
+**9/9 PASS** — chạy tự động bằng `scripts/acceptance-v7a.mts`:
+```bash
+cd services/api && pnpm exec tsx ../../scripts/acceptance-v7a.mts
+# chỉ secret-scan (CI gate): thêm --secret-only
+```
+| # | Chuẩn | Kết quả |
+|---|---|---|
+| 1 | Đổi model AI → trí nhớ/nhân cách nhất quán tuyệt đối | ✅ (test swap v7a-p2) |
+| 2 | Cross-org mọi ngả → chặn + ghi vết | ✅ (v7a-p6: HTTP thật, JWT giả/?orgId đều chặn) |
+| 3 | Vật phẩm xem info + Sử dụng → hiệu ứng thật | ✅ (v7a-p3: 29 ✓) |
+| 4 | 100% nút và màn hình sống | ✅ (audit-buttons 0 nút chết) |
+| 5 | Token → dùng trong 30 giây; nhạy cảm đòi lớp 2 | ✅ (v7a-p6: đo thời gian thật) |
+| 6 | Beta mode bật/tắt: tắt → energy hao/hồi/nhắc đúng | ✅ (v7a-p2: test cả 2 mode) |
+| 7 | M0 Kế Toán đủ + tài liệu + Excel | ✅ (v7a-p4 + audit-module-docs 7/7) |
+| 8 | Tạm tắt module → không gãy, quyền thu hồi sạch | ✅ (v7a-p6: 403 MODULE_INACTIVE, bật lại data nguyên) |
+| 9 | Rà mã nguồn → 0 bí mật trong code | ✅ (secret-scan 0 hit / 144 file) |
+
+CI gate (`.github/workflows/ci.yml`): typecheck → test → audit-module-docs → audit-buttons → secret-scan → web build.
+
 ## Chất lượng (verify chạy thật)
-- V7A: typecheck **13/13** · `pnpm test` **12/12 packages xanh** (v7a-p1 17 asserts · v7a-p2 16 · v7a-p3 29 · v7a-p4 35 · v7a-p5 17 · soul 47…) · next build 15/15 routes · audit-buttons 0 nút chết · audit-module-docs 7/7
+- V7A: typecheck **13/13** · `pnpm test` **12/12 packages xanh** (v7a-p1 17 asserts · v7a-p2 16 · v7a-p3 29 · v7a-p4 35 · v7a-p5 17 · v7a-p6 36 · soul 47…) · next build 15/15 routes · audit-buttons 0 nút chết · audit-module-docs 7/7 · **acceptance 9/9 PASS**
 - ~185 assertion pass · test 9/9 packages · typecheck 10/10: auth, tenant isolation, Tiểu Tâm, RBAC, WS real-time, chat, CRM, Om
 - **Full typecheck 10/10 packages** · `pnpm -r test` xanh · Next build 4 routes
 - CI: `.github/workflows/ci.yml` (install→typecheck→test→build)

@@ -19,7 +19,9 @@ const client = new PGlite();
 await client.exec(readFileSync(new URL('../migrations/0001_hr.sql', import.meta.url), 'utf8'));
 await client.exec(readFileSync(new URL('../migrations/0002_hr_v2.sql', import.meta.url), 'utf8'));
 const db = drizzle(client, { schema: hr }) as any;
-const today = new Date().toISOString().slice(0, 10);
+// Anchor mọi mốc giờ vào CÙNG một thời điểm — tránh flake nửa đêm (local vs UTC lệch ngày)
+const lateTime = new Date(); lateTime.setHours(18, 30, 0, 0); // 18:30 > 17:00 → late
+const today = lateTime.toISOString().slice(0, 10); // cùng quy ước UTC với service dateStr()
 
 // ── Employees ──
 const lan = await createEmployee(db, ORG, { fullName: 'Lan Phạm', roleTitle: 'Quản lý ca', phone: '0901' });
@@ -31,10 +33,9 @@ assert((await listEmployees(db, ORG_B)).length === 0, 'tenant isolation employee
 
 // ── Attendance: check-in với ca → late ──
 const caToi = await createShift(db, ORG, { name: 'Ca Tối', shiftDate: today, startTime: '17:00', endTime: '22:00' });
-const lateTime = new Date(); lateTime.setHours(18, 30, 0, 0); // 18:30 > 17:00 → late
 const att1 = await checkIn(db, ORG, { employeeId: lan.id, shiftId: caToi.id, at: lateTime });
 assert(att1.status === 'present' && att1.lateEntry === true, 'check-in 18:30 ca 17:00 → late_entry');
-await expectErr(() => checkIn(db, ORG, { employeeId: lan.id }), 409, 'check-in lần 2 trong ngày → 409');
+await expectErr(() => checkIn(db, ORG, { employeeId: lan.id, at: new Date(lateTime.getTime() + 60_000) }), 409, 'check-in lần 2 trong ngày → 409');
 const outTime = new Date(lateTime.getTime() + 3.5 * 3_600_000);
 const att2 = await checkOut(db, ORG, { employeeId: lan.id, at: outTime });
 assert(Number(att2.workingHours) === 3.5, `check-out → working_hours 3.5 (=${att2.workingHours})`);

@@ -1,4 +1,4 @@
-# Citadel V2 — API Reference
+# Citadel V7A — API Reference
 
 Base: `http://<host>:3001`  ·  Auth: `Authorization: Bearer <jwt>` (lấy từ /auth/login)
 
@@ -7,12 +7,38 @@ Base: `http://<host>:3001`  ·  Auth: `Authorization: Bearer <jwt>` (lấy từ 
 |---|---|---|---|
 | GET | /health | — | Liveness |
 | GET | /ready | — | Readiness (check DB), 503 nếu DB down |
-| POST | /api/v1/auth/login | `{token}` | Token 13 ký tự → `{jwt,user,firstLogin}` |
-| GET | /api/v1/me | — | Thông tin user hiện tại |
+| POST | /api/v1/auth/login | `{token}` | Token 13 ký tự → `{jwt,user,firstLogin}` (rate-limit 5/phút/IP) |
+| GET | /api/v1/me | — | Thông tin user + `securityLevel` + `needsUpgrade` |
+
+## Bảo mật lũy tiến lớp 2 (V7A P1)
+| Method | Path | Body | Mô tả |
+|---|---|---|---|
+| POST | /api/v1/me/bind-email | `{email}` | Gắn email → lên lớp 2 |
+| POST | /api/v1/me/bind-phone | `{phone}` | Gắn SĐT VN → lên lớp 2 |
+| PATCH | /api/v1/users/:id/role | `{role}` | Đổi role (owner+, đòi lớp 2) |
+
+Hành động nhạy cảm (chi Om > 1000 · đổi role · hủy phiếu đã thu) ở lớp 1 → `403` kèm hướng dẫn tiếng Việt.
+
+## Audit log (V7A P1)
+| Method | Path | Body | Mô tả |
+|---|---|---|---|
+| GET | /api/v1/audit-logs?action=&limit= | — | Chỉ owner/super_admin; LUÔN filter org từ JWT; limit ≤ 200 |
 
 ## Tiểu Tâm
 | POST | /api/v1/tieu-tam/chat | `{message,userName?,orgName?,facts?}` | Reply JSON (stub/live) |
-| POST | /api/v1/tieu-tam/chat/stream | `{message}` | SSE: event `token`/`tool`/`suggestions`/`done` |
+| POST | /api/v1/tieu-tam/chat/stream | `{message}` | SSE: event `token`/`tool`/`suggestions`/`energy`/`done` |
+| GET | /api/v1/tieu-tam/state | — | `{mood,energy,status,statusLabel,statusMessage,engine,theme,betaMode}` |
+| PATCH | /api/v1/tieu-tam/engine | `{engine}` | Đổi bộ não stub-a/stub-b/openai/anthropic — trí nhớ nguyên vẹn (audit) |
+| GET | /api/v1/tieu-tam/memories | — | Trí nhớ của mình (org+user scope, limit ≤ 100) |
+| DELETE | /api/v1/tieu-tam/memories/:id | — | Quên một mảnh trí nhớ (cross-org/user → 404, audit) |
+
+## Cửa hàng vật phẩm + Kho chứa (V7A P3)
+| Method | Path | Body | Mô tả |
+|---|---|---|---|
+| GET | /api/v1/store/items | — | Catalog vật phẩm (food/decor/boost, giá Om, effect) |
+| POST | /api/v1/store/items/:code/buy | — | Mua — trừ Om thật trong transaction; thiếu tiền → 409 |
+| GET | /api/v1/inventory-items | — | Kho của tôi (join catalog, info đầy đủ, org+user isolation) |
+| POST | /api/v1/inventory-items/:id/use | — | Sử dụng → hiệu ứng thật: food +energy · boost hồi 100% · decor đổi theme; không sở hữu → 404 |
 
 ## Chat
 | GET | /api/v1/chat/rooms | — | Phòng của tôi |
@@ -79,6 +105,14 @@ API module bị gate: chưa bật → 403 MODULE_INACTIVE.
 | GET | /reports/trial-balance | — | Cân đối thử |
 | GET | /reports/profit-loss | — | Lãi lỗ kỳ |
 | GET | /reports/outstanding?type= | — | Công nợ theo đối tác |
+
+### Excel connect (V7A P4)
+| GET | /accounting/export/general-ledger.xlsx?account=&from=&to= | — | Sổ cái .xlsx (header tiếng Việt) |
+| GET | /accounting/export/invoices.xlsx | — | Hóa đơn .xlsx |
+| GET | /accounting/export/trial-balance.xlsx | — | Cân đối thử .xlsx (dòng TỔNG + cờ SỔ CÂN/LỆCH) |
+| GET | /accounting/export/profit-loss.xlsx | — | Lãi lỗ .xlsx |
+| GET | /accounting/export/general-ledger.json | — | Cùng data dạng JSON cho AI (columns+entries+sumDebit/sumCredit/balanced) |
+| POST | /accounting/import/invoices.xlsx | multipart `file` hoặc `{fileBase64}` | Import hóa đơn — validate từng dòng, lỗi tiếng Việt kèm số dòng, không tạo rác |
 
 ## Users
 | GET | /api/v1/users | — | Thành viên org (cho tạo chat) |

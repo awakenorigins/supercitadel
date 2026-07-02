@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -e
-echo "════ Citadel V2 — Deploy ════"
+echo "════ Citadel V7A — Deploy ════"
 if [ ! -f .env ]; then
   cp .env.example .env
   SECRET=$(head -c32 /dev/urandom | base64 | tr -d '/+=' | head -c40)
@@ -16,7 +16,7 @@ docker compose exec -T postgres psql -U citadel -d citadel -f /dev/stdin < packa
 docker compose exec -T postgres psql -U citadel -d citadel -f /dev/stdin < packages/db/migrations/0003_super_admin.sql 2>/dev/null || true
 docker compose exec -T api sh -c "pnpm --filter @citadel/db exec tsx src/migrate.ts" || true
 # module migrations
-for m in chat notification crm om inventory hr; do
+for m in chat notification crm om inventory hr accounting; do
   for mig in modules/$m/migrations/*.sql; do
     docker compose exec -T postgres psql -U citadel -d citadel -f /dev/stdin < "$mig" 2>/dev/null || true
   done

@@ -1,4 +1,26 @@
 # Citadel Build — State: V7A — Repo chuẩn hóa từ nền V8 (2026-07-02)
+## Mạch V7A-P6 (NGHIỆM THU CUỐI — VẬN HÀNH VỮNG — mới nhất, 2026-07-03)
+- **9/9 chuẩn §09 PASS** — script nghiệm thu tự động `scripts/acceptance-v7a.mts` (chạy: `cd services/api && pnpm exec tsx ../../scripts/acceptance-v7a.mts`; có `--secret-only` cho CI gate):
+
+| # | Chuẩn §09 | Kết quả | Bằng chứng |
+|---|---|---|---|
+| 1 | Đổi model AI → trí nhớ/nhân cách nhất quán | ✅ PASS | v7a-p2 (swap stub-a→stub-b qua PATCH /engine, cùng bộ câu, fact+persona nhất quán) |
+| 2 | Cross-org mọi ngả → chặn + ghi vết | ✅ PASS | v7a-p6: audit-logs/memories/kho vật phẩm/accounting export/JWT giả/?orgId đều chặn, audit ghi vết đủ |
+| 3 | Vật phẩm xem info + use hiệu ứng thật | ✅ PASS | v7a-p3 29 ✓ (food +energy đúng amount, recharge 100, decor đổi theme bền) |
+| 4 | 100% nút và màn hình sống | ✅ PASS | audit-buttons 0 nút chết + next build 15/15 routes (P5) |
+| 5 | Token → dùng trong 30 giây; nhạy cảm đòi lớp 2 | ✅ PASS | v7a-p6: login→/me→topup đo thời gian thật <30s; chi Om>1000 lớp 1→403 VN; bind email→lớp 2→200 |
+| 6 | Beta mode bật/tắt đúng | ✅ PASS | v7a-p2: BETA_MODE=false hao -2/-5 + kiệt sức từ chối việc nặng; true không bao giờ cạn |
+| 7 | M0 Kế Toán đủ + docs + Excel | ✅ PASS | v7a-p4 37 ✓ (4 .xlsx + JSON + import validate) · audit-module-docs 7/7 |
+| 8 | Tạm tắt module → không gãy | ✅ PASS | v7a-p6: deactivate accounting → mọi route 403 MODULE_INACTIVE (kể cả export); module khác 200; activate lại data nguyên; audit đủ |
+| 9 | 0 bí mật trong code | ✅ PASS | secret-scan 0 hit trên 144 file source (sk-/ghp_/github_pat_/AKIA/PRIVATE KEY/password=) |
+
+- Test mới `services/api/src/v7a-p6.test.ts` (**36 checks ✓**, vào `pnpm test`): (a) chuẩn #2 cross-org MỌI NGẢ qua HTTP thật — JWT thật + requireAuth thật, audit-logs/tt memories/kho vật phẩm/accounting export rỗng cho org B/JWT sửa chữ ký 401/?orgId=A bị BỎ QUA; (b) chuẩn #5 đo thời gian THẬT token→login→/me→topup <30s + sensitive gate 403 tiếng Việt→bind email→pass; (c) chuẩn #8 deactivate accounting→403 MODULE_INACTIVE mọi route kể cả export, om/notifications/tieu-tam/store vẫn 200, activate lại chart còn nguyên, audit deactivate/activate, core module không tắt được (400)
+- Vận hành: deploy.sh thêm migrate module **accounting** (thiếu từ P0 — loop cũ chỉ 6 module); docker-compose.yml api thêm env `BETA_MODE` + `OPENAI_API_KEY`/`ANTHROPIC_API_KEY` pass-through (.env.example đã có sẵn cả 3); migrations 0004-0006 chạy qua `migrate.ts` (runner đọc cả thư mục, đã có sẵn trong deploy.sh)
+- CI ci.yml thêm 3 gate sau test: audit-module-docs · audit-buttons · secret-scan (`acceptance-v7a.mts --secret-only`)
+- docs/API.md bổ sung đầy đủ P1-P5: audit-logs, bind-email/phone + users/:id/role, tieu-tam state/engine/memories (GET+DELETE), store items + inventory-items use, accounting export 4 .xlsx + JSON + import
+- Fix flake test hr-v2 (lệch ngày local vs UTC lúc nửa đêm: `new Date()` ở 00:1x CEST = ngày hôm trước theo UTC của service dateStr) — anchor mọi mốc giờ vào cùng thời điểm lateTime, today theo UTC
+- Verify: typecheck **13/13 PASS** · `pnpm -r test` **12/12 packages xanh** (v7a-p1→p6: 17+16+29+37+17+36 asserts) · acceptance **9/9 PASS, 0 FAIL, 0 MANUAL** · secret-scan 0 hit
+
 ## Mạch V7A-P5 (TRẢI NGHIỆM PREMIUM: khu vực riêng Tiểu Tâm + polish UI/UX + mobile — mới nhất)
 - G9 "nơi chốn thực sự": trang `apps/web/app/tieu-tam/page.tsx` — khu vực riêng đầy đủ của Tiểu Tâm (không phải widget góc màn hình)
 - Hero avatar CÁO SVG sống theo mood (vẽ tay theo design system, stroke jade, không dependency): tràn đầy = nhún nhảy tươi sáng + ring nhanh · ổn định = thở bình thường + mắt chớp · mệt = chậm ngả nhẹ + một mắt lười · kiệt sức = ngủ gật (mắt nhắm, miệng ngáp, "z z z" bay) — CSS keyframes trong globals.css (fox-*)
