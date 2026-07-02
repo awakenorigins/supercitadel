@@ -19,6 +19,7 @@ import { buildInventoryRoutes } from '@citadel/module-inventory/server/routes.js
 import { buildHrRoutes } from '@citadel/module-hr/server/routes.js';
 import { buildAccountingRoutes } from '@citadel/module-accounting/server/routes.js';
 import { buildModuleRoutes, requireModule } from './modules/routes.js';
+import { buildStoreItemRoutes, buildInventoryItemRoutes } from './items/routes.js';
 import { toolRegistry } from '@citadel/tieu-tam';
 import { buildAuditRoutes } from './audit/routes.js';
 import { logAudit, makeAudit, ipOf } from './audit/service.js';
@@ -102,6 +103,9 @@ app.route('/api/v1/om', buildOmRoutes({
   sensitiveGate: async (c, amount) => { if (amount > SENSITIVE_OM_THRESHOLD) await assertSecurityLevel(getDb(), c.get('auth'), 2); },
 }));
 app.route('/api/v1/modules', buildModuleRoutes({ db: getDb(), requireAuth, audit }));
+// V7A P3 — vòng kinh tế khép kín: store vật phẩm + kho chứa + sử dụng (hiệu ứng thật)
+app.route('/api/v1/store', buildStoreItemRoutes({ db: getDb(), requireAuth, audit }));
+app.route('/api/v1/inventory-items', buildInventoryItemRoutes({ db: getDb(), requireAuth, audit }));
 app.route('/api/v1/inventory', buildInventoryRoutes({ db: getDb(), requireAuth, gate: requireModule(getDb(), 'inventory') }));
 app.route('/api/v1/hr', buildHrRoutes({ db: getDb(), requireAuth, gate: requireModule(getDb(), 'hr'), audit }));
 app.route('/api/v1/accounting', buildAccountingRoutes({

@@ -99,12 +99,43 @@ export const ttSoulState = pgTable(
     mood: varchar('mood', { length: 24 }).notNull().default('vui'),
     energy: real('energy').notNull().default(100),
     engine: varchar('engine', { length: 24 }).notNull().default('stub-a'),
+    // V7A P3: vật phẩm decor đổi giao diện — theme lưu vào hồn (hiệu ứng thật)
+    theme: varchar('theme', { length: 24 }).notNull().default('jade'),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => ({ pk: primaryKey({ columns: [t.orgId, t.userId] }) }),
 );
 
-export const schema = { orgs, users, tokens, auditLogs, ttMemories, ttSoulState };
+// ─── Item system (V7A P3 — G3/G4: vòng kinh tế khép kín) ───────
+// item_catalog: danh mục TOÀN CỤC (không org_id — catalog bán, không phải dữ liệu tenant).
+export const itemCatalog = pgTable('item_catalog', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  code: varchar('code', { length: 40 }).notNull().unique(),
+  name: varchar('name', { length: 80 }).notNull(),
+  description: text('description').notNull(),
+  category: varchar('category', { length: 12 }).notNull(), // 'food' | 'decor' | 'boost'
+  price: integer('price').notNull(),
+  effect: jsonb('effect').notNull(), // {"type":"feed_energy","amount":20} | {"type":"recharge_full"} | {"type":"decor","theme":"gold"}
+  icon: varchar('icon', { length: 24 }),
+  active: boolean('active').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// user_items: sở hữu per (org, user) — tenant isolation bắt buộc (hiến pháp #1).
+export const userItems = pgTable(
+  'user_items',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    orgId: uuid('org_id').notNull().references(() => orgs.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id').notNull(),
+    itemCode: varchar('item_code', { length: 40 }).notNull().references(() => itemCatalog.code),
+    qty: integer('qty').notNull().default(1),
+    acquiredAt: timestamp('acquired_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({ orgUserIdx: index('user_items_org_user_idx').on(t.orgId, t.userId) }),
+);
+
+export const schema = { orgs, users, tokens, auditLogs, ttMemories, ttSoulState, itemCatalog, userItems };
 export type DB = typeof schema;
 
 // ── Module registry (v6) ──

@@ -23,6 +23,7 @@ await client.exec(mig('0002_org_modules.sql'));
 await client.exec(mig('0003_super_admin.sql'));
 await client.exec(mig('0004_v7a_p1.sql'));
 await client.exec(mig('0005_v7a_p2.sql'));
+await client.exec(mig('0006_v7a_p3.sql'));
 const db = drizzle(client, { schema }) as any;
 
 const [orgA] = await db.insert(orgs).values({ name: 'Quán A', slug: 'quan-a' }).returning();

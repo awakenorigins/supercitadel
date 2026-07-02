@@ -30,6 +30,7 @@ export default function Home() {
           <div className="ava amber" style={{ width: 36, height: 36, borderRadius: 12 }}><Icon name="coffee" size={19} /></div>
           <b style={{ fontSize: 15 }}>Cà Phê Nhà Mình</b>
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+            <button onClick={() => router.push('/items')} title="Kho vật phẩm" style={{ width: 34, height: 34, borderRadius: 11, background: 'var(--s1)', border: '1px solid var(--bd)', color: 'var(--dim)', display: 'grid', placeItems: 'center' }}><Icon name="bag" size={16} /></button>
             <button onClick={() => router.push('/search')} style={{ width: 34, height: 34, borderRadius: 11, background: 'var(--s1)', border: '1px solid var(--bd)', color: 'var(--dim)', display: 'grid', placeItems: 'center' }}><Icon name="search" size={16} /></button>
             <button onClick={() => router.push('/notifications')} style={{ width: 34, height: 34, borderRadius: 11, background: 'var(--s1)', border: '1px solid var(--bd)', color: 'var(--dim)', display: 'grid', placeItems: 'center', position: 'relative' }}>
               <Icon name="bell" size={16} />

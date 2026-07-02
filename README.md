@@ -20,6 +20,7 @@ Web `:3000` (/chat /crm) · API `:3001` (/health /ready) · WS `:3002`
 - **Nhân Sự v2 (fork domain model frappe/hrms)**: hồ sơ NV, chấm công vào/ra + đi trễ theo ca, nghỉ phép đủ vòng đời (loại phép, cấp phép, đơn + duyệt/từ chối, số dư, tự ghi bảng công)
 - **TRÁI TIM — hồn tách động cơ (V7A P2)**: trí nhớ Tiểu Tâm trung lập text thuần (tt_memories: fact/person/topic/summary/preference), Context Assembler một cổng (buildWorkProfile), persona = data; đổi model = gạt công tắc (PATCH /tieu-tam/engine, adapters stub-a/stub-b/openai/anthropic — key từ env); học chảy ngược về hồn sau mỗi hội thoại; **test swap PASS: đổi động cơ, fact + nhân cách nhất quán tuyệt đối**
 - **Mood/Energy (V7A P2)**: năng lượng 0-100 hao theo lượt (nhẹ -2/nặng -5), hồi +1/phút lazy + cho ăn (feedEnergy) + nạp gói (rechargeFull); 4 trạng thái Tràn đầy/Ổn định/Mệt/Kiệt sức (kiệt sức từ chối việc nặng dễ thương, vẫn chat nhẹ); GET /tieu-tam/state + SSE energy tick + energy bar/mood trong sheet; `BETA_MODE=true` (mặc định) không bao giờ cạn
+- **VÒNG KINH TẾ KHÉP KÍN (V7A P3)**: Ví Om → Cửa hàng vật phẩm (GET /store/items + POST /store/items/:code/buy — trừ Om thật trong transaction, chặn thiếu tiền) → Kho chứa (/inventory-items — info đầy đủ, tenant-isolated) → Sử dụng → hiệu ứng THẬT: đồ ăn hồi energy Tiểu Tâm (trả trước/sau), Pin Sạc Đầy hồi 100%, theme decor đổi màu giao diện ngay (jade/gold/sage); trang web /items + section Vật phẩm trong Cửa hàng; audit store.item_purchase + item.use
 - **Audit log + Bảo mật lũy tiến lớp 2 (V7A P1)**: ghi vết mọi thao tác nhạy cảm (login, mua/bật/tắt module, chi Om, hóa đơn/phiếu thu chi, duyệt phép); GET /audit-logs cho owner+; gắn email/SĐT → lên lớp 2; hành động nhạy cảm (chi Om >1000, đổi role, hủy phiếu đã thu) đòi lớp 2
 - **Module Kho Hàng**: tồn kho ± , cảnh báo sắp hết · **Module Nhân Sự**: ca làm + xếp người
 - **3 token seed**: SUPER_ADMIN (full quyền) · OWNER · MANAGER + ví **99.999 Om**
@@ -38,6 +39,7 @@ Module plug-in qua manifest + deps injection. Xem `docs/DEV_GUIDE.md`.
 - `DEPLOY.md` — chỉ thị deploy cho OpenClaw
 
 ## Chất lượng (verify chạy thật)
+- V7A: typecheck **13/13** · `pnpm test` **12/12 packages xanh** (v7a-p1 17 asserts · v7a-p2 16 · v7a-p3 29 · soul 47…) · audit-buttons 0 nút chết
 - ~185 assertion pass · test 9/9 packages · typecheck 10/10: auth, tenant isolation, Tiểu Tâm, RBAC, WS real-time, chat, CRM, Om
 - **Full typecheck 10/10 packages** · `pnpm -r test` xanh · Next build 4 routes
 - CI: `.github/workflows/ci.yml` (install→typecheck→test→build)

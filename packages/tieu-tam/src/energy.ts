@@ -45,6 +45,7 @@ export interface SoulState {
   mood: string;
   energy: number;
   engine: string;
+  theme: string;
   status: EnergyStatus;
   betaMode: boolean;
 }
@@ -66,6 +67,7 @@ export async function getSoulState(db: any, orgId: string, userId: string): Prom
     mood: row.mood,
     energy,
     engine: row.engine,
+    theme: row.theme ?? 'jade',
     status: statusOf(energy),
     betaMode: isBetaMode(),
   };
@@ -125,6 +127,14 @@ export async function rechargeFull(db: any, orgId: string, userId: string): Prom
   const cur = await getSoulState(db, orgId, userId);
   await setEnergy(db, orgId, userId, 100, 'vui');
   return { ...cur, energy: 100, mood: 'vui', status: 'tran_day' };
+}
+
+/** Đổi theme giao diện — vật phẩm decor (V7A P3). Lưu vào hồn → web đổi accent color thật. */
+export async function setTheme(db: any, orgId: string, userId: string, theme: string): Promise<SoulState> {
+  const cur = await getSoulState(db, orgId, userId); // ensure row exists
+  await db.update(ttSoulState).set({ theme })
+    .where(and(eq(ttSoulState.orgId, orgId), eq(ttSoulState.userId, userId)));
+  return { ...cur, theme };
 }
 
 /** Đổi động cơ (engine) — gạt công tắc, hồn giữ nguyên. Validation tên engine ở caller (ENGINE_NAMES). */

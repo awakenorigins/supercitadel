@@ -1,0 +1,73 @@
+// Item routes (V7A P3 — G3/G4): store vật phẩm + kho chứa + sử dụng.
+// GET  /store/items            → catalog + giá (toàn cục)
+// POST /store/items/:code/buy  → trừ Om THẬT (transaction) + vào kho + audit
+// GET  /inventory-items        → kho của user (org+user filter — hiến pháp #1)
+// POST /inventory-items/:id/use → hiệu ứng THẬT (energy/theme) + trừ qty + audit
+import { Hono, type Context, type MiddlewareHandler } from 'hono';
+import { AppError, type JwtPayload } from '@citadel/core';
+import { listCatalog, buyItem, listOwned, useItem } from './service.js';
+
+declare module 'hono' { interface ContextVariableMap { auth: JwtPayload; } }
+const orgOf = (c: any) => (c.get('auth') as JwtPayload).orgId;
+const userOf = (c: any) => (c.get('auth') as JwtPayload).sub;
+
+type AuditFn = (c: Context, e: { action: string; resource?: string; resourceId?: string; detail?: unknown }) => Promise<void>;
+
+export function buildStoreItemRoutes(deps: { db: any; requireAuth: MiddlewareHandler; audit?: AuditFn }) {
+  const r = new Hono();
+  r.onError((err, c) => err instanceof AppError ? c.json(err.toJSON(), err.status as 400) : (console.error('[store-items]', err), c.json({ error: { code: 'INTERNAL', message: 'Lỗi hệ thống' } }, 500)));
+  r.use('*', deps.requireAuth);
+
+  // Catalog vật phẩm đang bán
+  r.get('/items', async (c) => c.json({ items: await listCatalog(deps.db) }));
+
+  // Mua — trừ Om thật, cộng kho, audit
+  r.post('/items/:code/buy', async (c) => {
+    const code = c.req.param('code');
+    const res = await buyItem(deps.db, orgOf(c), userOf(c), code);
+    await deps.audit?.(c, { action: 'store.item_purchase', resource: 'item_catalog', resourceId: code, detail: { paidOm: res.paidOm, qty: res.owned.qty } });
+    return c.json({
+      ok: true,
+      item: { code: res.item.code, name: res.item.name },
+      paidOm: res.paidOm,
+      balance: res.balance,
+      qty: res.owned.qty,
+      message: `Đã mua ${res.item.name} (−${res.paidOm} Om · còn ${res.balance.toLocaleString('vi')}) — vào Kho vật phẩm để dùng nha!`,
+    });
+  });
+
+  return r;
+}
+
+export function buildInventoryItemRoutes(deps: { db: any; requireAuth: MiddlewareHandler; audit?: AuditFn }) {
+  const r = new Hono();
+  r.onError((err, c) => err instanceof AppError ? c.json(err.toJSON(), err.status as 400) : (console.error('[inventory-items]', err), c.json({ error: { code: 'INTERNAL', message: 'Lỗi hệ thống' } }, 500)));
+  r.use('*', deps.requireAuth);
+
+  // Kho của user — info đầy đủ từ catalog
+  r.get('/', async (c) => c.json({ items: await listOwned(deps.db, orgOf(c), userOf(c)) }));
+
+  // Sử dụng — hiệu ứng thật + trừ qty + audit
+  r.post('/:id/use', async (c) => {
+    const id = c.req.param('id');
+    const res = await useItem(deps.db, orgOf(c), userOf(c), id);
+    await deps.audit?.(c, {
+      action: 'item.use', resource: 'user_items', resourceId: id,
+      detail: { itemCode: res.item.code, effect: res.effect, energyBefore: res.energyBefore, energyAfter: res.energyAfter, theme: res.theme },
+    });
+    return c.json({
+      ok: true,
+      message: res.message,
+      item: res.item,
+      effect: res.effect,
+      energyBefore: res.energyBefore,
+      energyAfter: res.energyAfter,
+      theme: res.theme,
+      qtyLeft: res.qtyLeft,
+      energy: Math.round(res.soul.energy),
+      status: res.soul.status,
+    });
+  });
+
+  return r;
+}

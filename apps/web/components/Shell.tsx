@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Icon } from './Icon';
 import { API, getSession } from '../lib/api';
+import { applyTheme, applyStoredTheme } from '../lib/theme';
 
 interface Msg { who: 'ai' | 'me'; text: string; tool?: any; suggestions?: string[] }
 
@@ -11,6 +12,17 @@ export function Shell({ children, badge }: { children: React.ReactNode; badge?: 
   const path = usePathname();
   const router = useRouter();
   const [ttOpen, setTtOpen] = useState(false);
+
+  // theme từ vật phẩm decor (V7A P3) — áp ngay từ cache, sync lại từ server
+  useEffect(() => {
+    applyStoredTheme();
+    const s = getSession();
+    if (!s) return;
+    fetch(`${API}/api/v1/tieu-tam/state`, { headers: { Authorization: `Bearer ${s.jwt}` } })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => d?.theme && applyTheme(d.theme))
+      .catch(() => {});
+  }, []);
 
   // time-aware ambient
   useEffect(() => {
@@ -38,7 +50,7 @@ export function Shell({ children, badge }: { children: React.ReactNode; badge?: 
             <div className="core"><div className="pulse" /><div className="orb"><Icon name="spark" size={20} /></div></div>
             <span>Tiểu Tâm</span>
           </button>
-          <button className={`bn ${is('/modules') || is('/crm') || is('/inventory') || is('/hr') || is('/accounting') ? 'active' : ''}`} onClick={nav('/modules')}><Icon name="grid" />Module</button>
+          <button className={`bn ${is('/modules') || is('/items') || is('/crm') || is('/inventory') || is('/hr') || is('/accounting') ? 'active' : ''}`} onClick={nav('/modules')}><Icon name="grid" />Module</button>
           <button className={`bn ${is('/settings') ? 'active' : ''}`} onClick={nav('/settings')}><Icon name="user" />Tôi</button>
         </nav>
       </div>

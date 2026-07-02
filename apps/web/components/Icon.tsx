@@ -24,6 +24,12 @@ const PATHS: Record<string, React.ReactNode> = {
   x: <path d="M6 6l12 12M18 6 6 18" />,
   gift: <><rect x="3" y="8" width="18" height="13" rx="1.5" /><path d="M3 12h18M12 8v13M12 8S10 3 7.5 4.5 9.5 8 12 8Zm0 0s2-5 4.5-3.5S14.5 8 12 8Z" /></>,
   logout: <path d="M14 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M9 16l-4-4 4-4M5 12h10" />,
+  // V7A P3 — item system
+  bag: <path d="M6 8h12l1 12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1L6 8ZM9 8V6a3 3 0 0 1 6 0v2" />,
+  cake: <path d="M4 13h16v7H4v-7Zm2 0v-2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2M12 9V6M12 6c-1 0-1.8-.9-1.8-1.9C10.2 3 12 2 12 2s1.8 1 1.8 2.1C13.8 5.1 13 6 12 6ZM4 16.5c1.3 1 2.7 1 4 0s2.7-1 4 0 2.7 1 4 0 2.7-1 4 0" />,
+  leaf: <path d="M5 20C5 10 11 4 20 4c0 9-6 15-15 16ZM5 20c2-6 6-10 11-12" />,
+  battery: <><rect x="2" y="8" width="17" height="8" rx="2" /><path d="M22 11v2M6 11l2 2-2 2M10 11l2 2-2 2" /></>,
+  palette: <path d="M12 21a9 9 0 1 1 9-9c0 2.5-2 3-3.5 3H15a2 2 0 0 0-1.5 3.3c.5.6.2 1.7-1.5 1.7ZM7.5 11.5h.01M11 7.5h.01M16 9h.01" />,
 };
 
 export function Icon({ name, size, style }: { name: string; size?: number; style?: React.CSSProperties }) {

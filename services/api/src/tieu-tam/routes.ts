@@ -48,6 +48,7 @@ export function buildTieuTamRoutes({ db, requireAuth = defaultRequireAuth, audit
       statusLabel: STATUS_LABEL[s.status],
       statusMessage: STATUS_MESSAGE[s.status],
       engine: s.engine,
+      theme: s.theme,
       betaMode: s.betaMode,
     });
   });

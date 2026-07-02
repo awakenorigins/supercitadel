@@ -1,5 +1,15 @@
 # Citadel Build — State: V7A — Repo chuẩn hóa từ nền V8 (2026-07-02)
-## Mạch V7A-P2 (TRÁI TIM: hồn tách động cơ + mood/energy — mới nhất)
+## Mạch V7A-P3 (VÒNG KINH TẾ KHÉP KÍN: item system + kho chứa + use effects + store vật phẩm — mới nhất)
+- G3+G4 đóng "mắt xích đứt" spec §04: Ví NaraPoint (Om) → Cửa hàng → Kho chứa → Sử dụng → hiệu ứng THẬT thấy được
+- Migration 0006: item_catalog (TOÀN CỤC không org_id — danh mục bán; code unique, category food/decor/boost CHECK, price, effect jsonb, icon, active) + user_items (org_id NOT NULL + user_id + item_code ref + qty>0 CHECK, unique (org,user,code) — tenant isolation hiến pháp #1) + tt_soul_state.theme (default 'jade')
+- Seed 6 vật phẩm: Bánh Mochi (food 30 Om, feed +20) · Trà Ô Long (food 50, +35) · Hạt Dẻ Nướng (food 15, +10) · Pin Sạc Đầy (boost 120, recharge_full) · Theme Hổ Phách (decor 200, theme gold) · Theme Sage (decor 200, theme sage)
+- Store mở rộng (G4): GET /api/v1/store/items (catalog) + POST /store/items/:code/buy — trừ Om THẬT qua ledger trong db.transaction (hiến pháp #5: chặn thiếu tiền 409 "Không đủ Om (cần X, có Y)", thiếu tiền → KHÔNG vào kho, số dư giữ nguyên), mua lại → gộp qty+1, audit store.item_purchase
+- Kho chứa (G3): GET /api/v1/inventory-items (join catalog — info ĐẦY ĐỦ tên/mô tả/category/effect, LUÔN filter org+user) + POST /inventory-items/:id/use — hiệu ứng THẬT: feed_energy → feedEnergy() trả energyBefore/After + message "Tiểu Tâm ăn Bánh Mochi, năng lượng +20 (45→65) 🦊"; recharge_full → rechargeFull() = 100; decor → setTheme() lưu tt_soul_state.theme; trừ qty, hết → xóa row; use đồ không sở hữu / org khác → 404; audit item.use (kèm effect + energy trước/sau)
+- packages/tieu-tam: SoulState + theme, setTheme() mới; GET /tieu-tam/state trả thêm theme
+- Web: trang /items (grid vật phẩm sở hữu, tap → sheet info đầy đủ + nút Sử dụng → toast hiệu ứng + energy pill update + theme đổi màu NGAY); /modules thêm section "Vật phẩm" (icon/giá Om/mô tả/nút Mua + link Kho của tôi); lib/theme.ts (jade/gold/sage — đổi accent var toàn app, cache localStorage, Shell sync từ server); home thêm nút túi đồ → /items; icon mới bag/cake/leaf/battery/palette
+- Test v7a-p3.test.ts: 29 asserts (catalog seed, thiếu tiền 409 + không vào kho, trừ Om chính xác tuyệt đối 4 lần mua, audit đúng org+user, tenant isolation kho + use 404, food +đúng amount BETA_MODE=false, recharge 100, decor theme lưu bền, qty giảm/xóa, vòng khép kín org B độc lập); typecheck 13/13; pnpm test 12/12 xanh; audit-buttons 0 nút chết
+
+## Mạch V7A-P2 (TRÁI TIM: hồn tách động cơ + mood/energy)
 - G1 hồn tách động cơ: migration 0005 tt_memories (kind fact/person/topic/summary/preference, salience, index org+user, CHECK kind) + tt_soul_state (mood/energy/engine per org+user, PK org+user)
 - Memory Store (packages/tieu-tam/memory.ts): remember (dedupe cùng org+user+kind+content) / recall (ILIKE, tenant filter LUÔN) / getProfile; trí nhớ TEXT THUẦN — không format provider nào (hiến pháp #8)
 - Học chảy ngược về hồn: extractFacts heuristic VN (tên user/dự án/sở thích) → learnFromMessage best-effort sau mỗi lượt chat
