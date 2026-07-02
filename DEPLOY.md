@@ -1,6 +1,6 @@
 # DEPLOY — Chỉ thị cho OpenClaw
 
-Đây là Citadel V2 (bản demo M3: nền + Tiểu Tâm + Chat real-time).
+Đây là SUPERCITADEL (bản demo M3: nền + Tiểu Tâm + Chat real-time).
 
 ## Việc cần làm (chạy đúng thứ tự)
 1. Giải nén file zip này (nếu chưa).

@@ -33,7 +33,7 @@ export default function Login() {
             <div className="pulse" /><div className="pulse" />
             <div className="orb"><Icon name="spark" size={40} /></div>
           </div>
-          <div className="mono" style={{ fontSize: 11, color: 'var(--jade)', letterSpacing: '.16em', textTransform: 'uppercase' }}>Tiểu Tâm-First Business OS</div>
+          <div className="mono" style={{ fontSize: 11, color: 'var(--jade)', letterSpacing: '.16em', textTransform: 'uppercase' }}>SUPERCITADEL · Tiểu Tâm-First Business OS</div>
           <h1 className="fd" style={{ fontWeight: 800, fontSize: 30, lineHeight: 1.1, letterSpacing: '-.03em', marginTop: 12 }}>
             Chào, tôi là <span style={{ color: 'var(--jade)' }}>Tiểu Tâm</span>.
           </h1>

@@ -1,10 +1,12 @@
-# Citadel V7A — Tiểu Tâm-First Business OS
+# SUPERCITADEL — Tiểu Tâm-First Business OS
 
-Hệ điều hành kinh doanh đa-tenant cho SME Việt (F&B/Retail), nơi AI "Tiểu Tâm" hiểu xuyên module và là giao diện chính. Production-ready.
+**SUPERCITADEL** (nền Citadel V7A — 9/9 nghiệm thu PASS) là hệ điều hành kinh doanh đa-tenant cho SME Việt (F&B/Retail), nơi AI "Tiểu Tâm" hiểu xuyên module và là giao diện chính. Production-ready.
+
+> Rebrand R1: tên hiển thị/UI/docs là **SUPERCITADEL**; scope package nội bộ giữ `@citadel/*` để không phá imports.
 
 ## Deploy 1 lệnh (OpenClaw đọc DEPLOY.md)
 ```bash
-unzip citadel-v2.zip -d citadel && cd citadel && bash deploy.sh
+git clone https://github.com/NachaFromMars/supercitadel && cd supercitadel && bash deploy.sh
 ```
 Web `:3000` (/chat /crm) · API `:3001` (/health /ready) · WS `:3002`
 
@@ -28,7 +30,7 @@ Web `:3000` (/chat /crm) · API `:3001` (/health /ready) · WS `:3002`
 - **Module Kho Hàng**: tồn kho ± , cảnh báo sắp hết · **Module Nhân Sự**: ca làm + xếp người
 - **3 token seed**: SUPER_ADMIN (full quyền) · OWNER · MANAGER + ví **99.999 Om**
 - **Rate-limiting**: chống brute-force token (login 5/phút/IP)
-- **UI taste-applied**: 7 màn (Login · Home · Chat · CRM · Om · Settings + Tiểu Tâm sheet SSE) — design system off-black/jade, SVG icons, living core, bento, skeleton
+- **UI SUPERCITADEL Design System V2 (R1)**: desktop sidebar collapsible + topbar (breadcrumb/search/bell/energy pill Tiểu Tâm) · mobile bottom nav + sheet SSE — off-black elevation layers, jade primary, KPI cards glow/sparkline kiểu tremor, motion tokens (fade-up/scale-in/shimmer), 3 theme jade/gold/sage đổi bằng vật phẩm decor
 - **CORS** đã bật — browser gọi API trực tiếp
 
 ## Kiến trúc

@@ -60,7 +60,7 @@ async function main() {
   app.onError((e, c) => (e instanceof AppError ? c.json(e.toJSON(), e.status as 400) : (console.error(e), c.json({ error: { code: 'INTERNAL', message: String(e) } }, 500))));
   app.get('/health', (c) => c.json({ ok: true, service: 'citadel-api' }));
   app.get('/ready', async (c) => { try { await db.execute(dsql`SELECT 1`); return c.json({ ready: true }); } catch { return c.json({ ready: false }, 503); } });
-  app.get('/', (c) => c.json({ name: 'Citadel V8 API', docs: '/docs/API.md' }));
+  app.get('/', (c) => c.json({ name: 'SUPERCITADEL API', docs: '/docs/API.md' }));
   _resetRateLimit();
   app.post('/api/v1/auth/login', rateLimit({ windowMs: 60_000, max: 5 }), async (c) => {
     const b = await c.req.json().catch(() => ({}));

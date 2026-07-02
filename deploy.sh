@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -e
-echo "════ Citadel V7A — Deploy ════"
+echo "════ SUPERCITADEL — Deploy ════"
 if [ ! -f .env ]; then
   cp .env.example .env
   SECRET=$(head -c32 /dev/urandom | base64 | tr -d '/+=' | head -c40)

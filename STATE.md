@@ -1,4 +1,13 @@
-# Citadel Build — State: V7A — Repo chuẩn hóa từ nền V8 (2026-07-02)
+# SUPERCITADEL Build — State (nền Citadel V7A, repo NachaFromMars/supercitadel)
+## Mạch SUPERCITADEL-R1 (REBRAND + DESIGN SYSTEM V2 — mới nhất, 2026-07-03)
+- **Rebrand**: tên hiển thị "SUPERCITADEL" toàn UI/docs (layout metadata, login, API `/` name, README, root package `supercitadel`); scope `@citadel/*` GIỮ NGUYÊN để không phá imports; localStorage keys `citadel.*` giữ để không logout người dùng cũ.
+- **Design System V2** (`apps/web/app/globals.css`, học pattern Kiranism/shadcn-admin/Studio Admin/tremor — không thêm dependency): token hóa surface elevation (--void→--elev 6 lớp), typography scale (--fs-display→--fs-micro), radius/spacing scale, shadow 3 mức + glow tremor-style, motion tokens (--ease/--dur) + keyframes fade-up/scale-in/shimmer; nền off-black sâu hơn có radial gradient jade subtle; scrollbar styled; 3 theme jade/gold/sage vẫn đổi qua lib/theme.ts (ghi đè --jade/--jade-d/--jade-soft).
+- **Shell V2** (`components/Shell.tsx`): desktop ≥1024px sidebar trái collapsible (icon-only khi thu, nhớ localStorage `citadel.sb`) — logo fox SUPERCITADEL, nav groups Tổng quan/Nghiệp vụ (Kế toán·CRM·Kho·Nhân sự)/Kinh tế (Om·Cửa hàng·Kho đồ)/Tiểu Tâm (energy dot theo status)/Hệ thống, user footer avatar+org; topbar sticky breadcrumb + search + bell badge + energy pill Tiểu Tâm (mở sheet SSE); mobile <1024px giữ bottom nav 5 mục V7A nguyên; Tiểu Tâm sheet SSE nguyên logic, desktop neo góc phải như chat dock.
+- **Home V2** (`app/home/page.tsx`): KPI grid 4 thẻ (doanh thu hero glow+sparkline SVG thuần · deal mở từ `/crm/stats` · hàng sắp hết từ `/inventory/low-stock` · thành viên từ `/dashboard/summary`) — module tắt → hiện "Module tắt" thay vì vỡ; quick actions 4 nút; hoạt động gần đây = audit-logs THẬT (`/audit-logs?limit=6`, nhãn tiếng Việt theo action, staff không quyền → empty state lịch sự); khu Tiểu Tâm chào theo mood thật từ `/tieu-tam/state` + nút mở chat.
+- Icon mới: book/target/panel/fox (stroke 1.6 nhất quán). Backend KHÔNG đổi (chỉ đổi string tên API `/`).
+- Verify R1: typecheck 13/13 PASS · pnpm -r test 12/12 xanh · next build production PASS · audit-buttons 0 nút chết.
+- **Còn lại cho R2**: redesign từng trang nghiệp vụ (accounting/crm/inventory/hr/om/modules/items/settings/chat/tieu-tam) theo design system V2 — data tables, form sheets, charts; command palette cmd+k; desktop layout rộng hơn cho bảng.
+
 ## Mạch V7A-P6 (NGHIỆM THU CUỐI — VẬN HÀNH VỮNG — mới nhất, 2026-07-03)
 - **9/9 chuẩn §09 PASS** — script nghiệm thu tự động `scripts/acceptance-v7a.mts` (chạy: `cd services/api && pnpm exec tsx ../../scripts/acceptance-v7a.mts`; có `--secret-only` cho CI gate):
 

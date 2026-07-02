@@ -1,4 +1,4 @@
-# Citadel V2 — Hướng Dẫn Phát Triển
+# SUPERCITADEL — Hướng Dẫn Phát Triển
 
 ## Stack
 pnpm monorepo + turbo · Hono (API) · ws (realtime) · Drizzle + Postgres/pgvector · Next.js 15 (web) · TypeScript.

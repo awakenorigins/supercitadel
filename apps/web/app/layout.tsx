@@ -1,5 +1,5 @@
 import './globals.css';
-export const metadata = { title: 'Citadel V8', description: 'Tiểu Tâm-First Business OS' };
+export const metadata = { title: 'SUPERCITADEL', description: 'SUPERCITADEL — Tiểu Tâm-First Business OS' };
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="vi">

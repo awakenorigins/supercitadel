@@ -30,6 +30,11 @@ const PATHS: Record<string, React.ReactNode> = {
   leaf: <path d="M5 20C5 10 11 4 20 4c0 9-6 15-15 16ZM5 20c2-6 6-10 11-12" />,
   battery: <><rect x="2" y="8" width="17" height="8" rx="2" /><path d="M22 11v2M6 11l2 2-2 2M10 11l2 2-2 2" /></>,
   palette: <path d="M12 21a9 9 0 1 1 9-9c0 2.5-2 3-3.5 3H15a2 2 0 0 0-1.5 3.3c.5.6.2 1.7-1.5 1.7ZM7.5 11.5h.01M11 7.5h.01M16 9h.01" />,
+  // SUPERCITADEL R1 — sidebar nav
+  book: <path d="M4 19V5a2 2 0 0 1 2-2h13v16H6.5A2.5 2.5 0 0 0 4 21.5V19Zm0 0a2.5 2.5 0 0 0 2.5 2.5H19M8 7h7M8 11h5" />,
+  target: <><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1" /></>,
+  panel: <><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M9 4v16M14 12h4m0 0-1.8-1.8M18 12l-1.8 1.8" /></>,
+  fox: <path d="M5 4c2 2.2 4.3 3 7 3s5-.8 7-3c.6 3 .3 5.8-1 8.2 1 1.5 1 3.3.2 4.8-1.3 2.4-3.6 4-6.2 4s-4.9-1.6-6.2-4c-.8-1.5-.8-3.3.2-4.8C4.7 9.8 4.4 7 5 4ZM9.5 12.5h.01M14.5 12.5h.01M12 15.5l-1-1h2l-1 1Z" />,
 };
 
 export function Icon({ name, size, style }: { name: string; size?: number; style?: React.CSSProperties }) {

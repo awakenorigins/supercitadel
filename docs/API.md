@@ -1,4 +1,4 @@
-# Citadel V7A — API Reference
+# SUPERCITADEL — API Reference (nền Citadel V7A)
 
 Base: `http://<host>:3001`  ·  Auth: `Authorization: Bearer <jwt>` (lấy từ /auth/login)
 

@@ -43,7 +43,7 @@ app.onError((err, c) => {
 });
 
 app.get('/health', (c) => c.json({ ok: true, service: 'citadel-api', ts: Date.now() }));
-app.get('/', (c) => c.json({ name: 'Citadel V8 API', status: 'OK', version: '8.0.0' }));
+app.get('/', (c) => c.json({ name: 'SUPERCITADEL API', status: 'OK', version: '8.0.0' }));
 
 app.post('/api/v1/auth/login', rateLimit({ windowMs: 60_000, max: 5 }), async (c) => {
   const body = await c.req.json().catch(() => ({}));

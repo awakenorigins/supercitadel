@@ -1,4 +1,4 @@
-# Citadel V2 — Hướng Dẫn Sử Dụng
+# SUPERCITADEL — Hướng Dẫn Sử Dụng
 
 ## Đăng nhập
 Mở web (`http://<host>:3000`), nhập **token 13 ký tự** chủ quán cấp. Không cần email/mật khẩu.

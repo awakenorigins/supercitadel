@@ -1,17 +1,57 @@
 'use client';
-// App shell: ambient bg + bottom nav + Tiểu Tâm sheet (SSE streaming thật).
+// SUPERCITADEL Shell V2 — desktop: sidebar collapsible + topbar (breadcrumb/search/bell/energy pill);
+// mobile: bottom nav 5 mục (giữ V7A). Tiểu Tâm sheet SSE streaming GIỮ NGUYÊN hoạt động.
 import { useState, useRef, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Icon } from './Icon';
-import { API, getSession } from '../lib/api';
+import { API, api, getSession } from '../lib/api';
 import { applyTheme, applyStoredTheme } from '../lib/theme';
 
 interface Msg { who: 'ai' | 'me'; text: string; tool?: any; suggestions?: string[] }
+interface SoulState { energy: number; status: string; statusLabel: string; mood: string; engine?: string }
+
+const STATUS_COLOR: Record<string, string> = {
+  tran_day: 'var(--jade)',
+  on_dinh: 'var(--sky, #5fb8f0)',
+  met: 'var(--amber, #e8b366)',
+  kiet_suc: 'var(--rose, #e87a8a)',
+};
+const MOOD_EMOJI: Record<string, string> = { vui: '😊', binh_thuong: '🙂', met: '😮‍💨', kiet_suc: '🥺' };
+
+// Nav groups V2 (học pattern shadcn-admin/Kiranism — group label + items)
+const NAV_GROUPS: { label: string; items: { to: string; icon: string; label: string }[] }[] = [
+  { label: 'Tổng quan', items: [
+    { to: '/home', icon: 'home', label: 'Trang chủ' },
+    { to: '/chat', icon: 'chat', label: 'Nhắn tin' },
+  ]},
+  { label: 'Nghiệp vụ', items: [
+    { to: '/accounting', icon: 'book', label: 'Kế toán' },
+    { to: '/crm', icon: 'target', label: 'CRM' },
+    { to: '/inventory', icon: 'box', label: 'Kho hàng' },
+    { to: '/hr', icon: 'users', label: 'Nhân sự' },
+  ]},
+  { label: 'Kinh tế', items: [
+    { to: '/om', icon: 'coin', label: 'Ví Om' },
+    { to: '/modules', icon: 'grid', label: 'Cửa hàng' },
+    { to: '/items', icon: 'bag', label: 'Kho vật phẩm' },
+  ]},
+];
+const PAGE_LABEL: Record<string, string> = {
+  '/home': 'Trang chủ', '/chat': 'Nhắn tin', '/accounting': 'Kế toán', '/crm': 'CRM',
+  '/inventory': 'Kho hàng', '/hr': 'Nhân sự', '/om': 'Ví Om', '/modules': 'Cửa hàng Module',
+  '/items': 'Kho vật phẩm', '/tieu-tam': 'Tiểu Tâm', '/settings': 'Cài đặt',
+  '/notifications': 'Thông báo', '/search': 'Tìm kiếm',
+};
 
 export function Shell({ children, badge }: { children: React.ReactNode; badge?: number }) {
   const path = usePathname();
   const router = useRouter();
   const [ttOpen, setTtOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const [soul, setSoul] = useState<SoulState | null>(null);
+  const [unread, setUnread] = useState(0);
+  const [userName, setUserName] = useState('');
+  const [role, setRole] = useState('');
 
   // V7A P5: trang /tieu-tam (hoặc bất kỳ trang nào) mở sheet chat qua custom event
   useEffect(() => {
@@ -20,15 +60,28 @@ export function Shell({ children, badge }: { children: React.ReactNode; badge?: 
     return () => window.removeEventListener('citadel:tt-chat', open);
   }, []);
 
-  // theme từ vật phẩm decor (V7A P3) — áp ngay từ cache, sync lại từ server
+  // sidebar collapse — nhớ qua localStorage
+  useEffect(() => {
+    try { if (localStorage.getItem('citadel.sb') === '1') setCollapsed(true); } catch {}
+  }, []);
+  const toggleSb = () => setCollapsed((c) => {
+    try { localStorage.setItem('citadel.sb', c ? '0' : '1'); } catch {}
+    return !c;
+  });
+
+  // theme từ vật phẩm decor (V7A P3) + soul state cho energy pill/dot
   useEffect(() => {
     applyStoredTheme();
     const s = getSession();
     if (!s) return;
+    setUserName(s.user.displayName ?? 'Người dùng');
+    setRole(s.user.role);
     fetch(`${API}/api/v1/tieu-tam/state`, { headers: { Authorization: `Bearer ${s.jwt}` } })
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => d?.theme && applyTheme(d.theme))
+      .then((d) => { if (d) { setSoul(d); if (d.theme) applyTheme(d.theme); } })
       .catch(() => {});
+    api<{ notifications: any[] }>('/api/v1/notifications?unread=true')
+      .then((d) => setUnread(d.notifications.length)).catch(() => {});
   }, []);
 
   // time-aware ambient
@@ -42,39 +95,104 @@ export function Shell({ children, badge }: { children: React.ReactNode; badge?: 
 
   const nav = (to: string) => () => router.push(to);
   const is = (p: string) => path === p || path?.startsWith(p + '/');
+  const roleLabel: Record<string, string> = { super_admin: 'Quản trị hệ thống', owner: 'Chủ quán', manager: 'Quản lý', staff: 'Nhân viên' };
+  const pageLabel = PAGE_LABEL[Object.keys(PAGE_LABEL).find((p) => is(p)) ?? ''] ?? 'SUPERCITADEL';
+  const energyColor = soul ? (STATUS_COLOR[soul.status] ?? 'var(--jade)') : 'var(--jade)';
 
   return (
     <>
       <div className="ambient" />
-      <div className="shell">
-        {children}
-        <nav className="botnav">
-          <button className={`bn ${is('/home') ? 'active' : ''}`} onClick={nav('/home')}><Icon name="home" />Trang chủ</button>
-          <button className={`bn ${is('/chat') ? 'active' : ''}`} onClick={nav('/chat')}>
-            <Icon name="chat" />Nhắn tin{badge ? <span className="bdg">{badge}</span> : null}
-          </button>
-          <button className={`bn bn-c ${is('/tieu-tam') ? 'active' : ''}`} onClick={nav('/tieu-tam')}>
-            <div className="core"><div className="pulse" /><div className="orb"><Icon name="spark" size={20} /></div></div>
-            <span>Tiểu Tâm</span>
-          </button>
-          <button className={`bn ${is('/modules') || is('/items') || is('/crm') || is('/inventory') || is('/hr') || is('/accounting') ? 'active' : ''}`} onClick={nav('/modules')}><Icon name="grid" />Module</button>
-          <button className={`bn ${is('/settings') ? 'active' : ''}`} onClick={nav('/settings')}><Icon name="user" />Tôi</button>
-        </nav>
+      <div className={`app ${collapsed ? 'sb-collapsed' : ''}`}>
+        {/* ── sidebar (desktop) ── */}
+        <aside className="sidebar">
+          <div className="sb-head">
+            <div className="sb-logo"><Icon name="fox" size={21} /></div>
+            <div className="sb-brand">
+              <b>SUPERCITADEL</b>
+              <span>Tiểu Tâm-First OS</span>
+            </div>
+          </div>
+          <div className="sb-body">
+            {NAV_GROUPS.map((g) => (
+              <div key={g.label}>
+                <div className="sb-gl">{g.label}</div>
+                {g.items.map((it) => (
+                  <button key={it.to} className={`sb-it ${is(it.to) ? 'active' : ''}`} onClick={nav(it.to)} title={it.label}>
+                    <Icon name={it.icon} /><span className="sb-lb">{it.label}</span>
+                    {it.to === '/chat' && badge ? <span className="sb-dot" style={{ background: 'var(--rose)' }} /> : null}
+                  </button>
+                ))}
+              </div>
+            ))}
+            <div className="sb-gl">Tiểu Tâm</div>
+            <button className={`sb-it ${is('/tieu-tam') ? 'active' : ''}`} onClick={nav('/tieu-tam')} title="Nhà của Tiểu Tâm">
+              <Icon name="spark" /><span className="sb-lb">Nhà của em</span>
+              <span className="sb-dot" style={{ background: energyColor }} />
+            </button>
+            <div className="sb-gl">Hệ thống</div>
+            <button className={`sb-it ${is('/notifications') ? 'active' : ''}`} onClick={nav('/notifications')} title="Thông báo">
+              <Icon name="bell" /><span className="sb-lb">Thông báo</span>
+              {unread > 0 ? <span className="sb-dot" style={{ background: 'var(--rose)' }} /> : null}
+            </button>
+            <button className={`sb-it ${is('/settings') ? 'active' : ''}`} onClick={nav('/settings')} title="Cài đặt">
+              <Icon name="cog" /><span className="sb-lb">Cài đặt</span>
+            </button>
+          </div>
+          <div className="sb-foot">
+            <button className="sb-user" onClick={nav('/settings')} title="Tài khoản">
+              <div className="ava mint" style={{ width: 34, height: 34, borderRadius: 10, fontSize: 14 }}>{(userName || 'C').slice(0, 1)}</div>
+              <div className="sb-ui">
+                <b>{userName || '—'}</b>
+                <span>{roleLabel[role] ?? role} · Cà Phê Nhà Mình</span>
+              </div>
+            </button>
+            <button className="sb-toggle" onClick={toggleSb} title={collapsed ? 'Mở rộng' : 'Thu gọn'}>
+              <Icon name="back" size={14} />
+            </button>
+          </div>
+        </aside>
+
+        {/* ── main ── */}
+        <div className="main">
+          <header className="topbar">
+            <div className="tb-crumb">
+              <span>SUPERCITADEL</span><span className="sep">/</span><b>{pageLabel}</b>
+            </div>
+            <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 9 }}>
+              <button className="tb-act" onClick={nav('/search')} title="Tìm kiếm"><Icon name="search" size={16} /></button>
+              <button className="tb-act" onClick={nav('/notifications')} title="Thông báo">
+                <Icon name="bell" size={16} />
+                {unread > 0 && <span className="tb-bdg">{unread}</span>}
+              </button>
+              <button className="tb-energy" onClick={() => setTtOpen(true)} title="Tiểu Tâm">
+                <span style={{ fontSize: 13 }}>{soul ? (MOOD_EMOJI[soul.mood] ?? '🦊') : '🦊'}</span>
+                <span className="bar"><i style={{ width: `${soul ? Math.max(3, Math.min(100, soul.energy)) : 100}%`, background: energyColor }} /></span>
+                <span className="mono" style={{ fontSize: 10.5, color: energyColor }}>{soul ? `${Math.round(soul.energy)}%` : '·'}</span>
+              </button>
+            </div>
+          </header>
+
+          <div className="shell">
+            {children}
+            <nav className="botnav">
+              <button className={`bn ${is('/home') ? 'active' : ''}`} onClick={nav('/home')}><Icon name="home" />Trang chủ</button>
+              <button className={`bn ${is('/chat') ? 'active' : ''}`} onClick={nav('/chat')}>
+                <Icon name="chat" />Nhắn tin{badge ? <span className="bdg">{badge}</span> : null}
+              </button>
+              <button className={`bn bn-c ${is('/tieu-tam') ? 'active' : ''}`} onClick={nav('/tieu-tam')}>
+                <div className="core"><div className="pulse" /><div className="orb"><Icon name="spark" size={20} /></div></div>
+                <span>Tiểu Tâm</span>
+              </button>
+              <button className={`bn ${is('/modules') || is('/items') || is('/crm') || is('/inventory') || is('/hr') || is('/accounting') || is('/om') ? 'active' : ''}`} onClick={nav('/modules')}><Icon name="grid" />Module</button>
+              <button className={`bn ${is('/settings') ? 'active' : ''}`} onClick={nav('/settings')}><Icon name="user" />Tôi</button>
+            </nav>
+          </div>
+        </div>
       </div>
       <TieuTamSheet open={ttOpen} onClose={() => setTtOpen(false)} />
     </>
   );
 }
-
-interface SoulState { energy: number; status: string; statusLabel: string; mood: string; engine?: string }
-
-const STATUS_COLOR: Record<string, string> = {
-  tran_day: 'var(--jade)',
-  on_dinh: 'var(--sky, #5fb8f0)',
-  met: 'var(--amber, #e8b366)',
-  kiet_suc: 'var(--rose, #e87a8a)',
-};
-const MOOD_EMOJI: Record<string, string> = { vui: '😊', binh_thuong: '🙂', met: '😮‍💨', kiet_suc: '🥺' };
 
 function TieuTamSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [msgs, setMsgs] = useState<Msg[]>([
