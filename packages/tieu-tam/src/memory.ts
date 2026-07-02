@@ -65,6 +65,16 @@ export async function recall(
     .limit(Math.min(limit, 100)) as Memory[];
 }
 
+/** Quên một mảnh trí nhớ (V7A P5 — người dùng chủ động xóa). Luôn ràng org; user chỉ xóa được
+ *  trí nhớ của chính mình hoặc trí nhớ cấp org (userId NULL) trong org mình. */
+export async function forget(db: any, orgId: string, userId: string | null, id: string): Promise<Memory | null> {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) return null;
+  const conds = [eq(ttMemories.id, id), eq(ttMemories.orgId, orgId)] as any[];
+  if (userId) conds.push(sql`(${ttMemories.userId} = ${userId} OR ${ttMemories.userId} IS NULL)`);
+  const [row] = await db.delete(ttMemories).where(and(...conds)).returning();
+  return (row as Memory) ?? null;
+}
+
 /** Tóm tắt hồ sơ trí nhớ của một người dùng trong org — cho Context Assembler. */
 export async function getProfile(db: any, orgId: string, userId: string | null) {
   const memories = await recall(db, orgId, userId, undefined, 50);

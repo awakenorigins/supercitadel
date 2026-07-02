@@ -7,7 +7,7 @@ import { streamSSE } from 'hono/streaming';
 import {
   getProvider, type ChatContext,
   buildWorkProfile, getEngine, ENGINE_NAMES, type EngineMessage,
-  getSoulState, tickEnergy, setEngine, learnFromMessage,
+  getSoulState, tickEnergy, setEngine, learnFromMessage, recall, forget,
   detectIntent, STATUS_LABEL, STATUS_MESSAGE, isBetaMode,
 } from '@citadel/tieu-tam';
 import { requireAuth as defaultRequireAuth, orgOf } from '../auth/middleware.js';
@@ -51,6 +51,29 @@ export function buildTieuTamRoutes({ db, requireAuth = defaultRequireAuth, audit
       theme: s.theme,
       betaMode: s.betaMode,
     });
+  });
+
+  /** Trí nhớ — "Em nhớ gì về mình" (V7A P5 — G9). Luôn filter org + user (hiến pháp #1). */
+  app.get('/memories', async (c) => {
+    const auth = c.get('auth');
+    const limit = Math.min(Number(c.req.query('limit') ?? 50) || 50, 100);
+    const rows = await recall(db, orgOf(c), auth.sub, undefined, limit);
+    return c.json({
+      memories: rows.map((m) => ({
+        id: m.id, kind: m.kind, content: m.content, salience: m.salience, createdAt: m.createdAt,
+      })),
+      total: rows.length,
+    });
+  });
+
+  /** Xóa một mảnh trí nhớ — người dùng làm chủ trí nhớ của mình. Audit tieu_tam.memory_delete. */
+  app.delete('/memories/:id', async (c) => {
+    const auth = c.get('auth');
+    const id = c.req.param('id');
+    const removed = await forget(db, orgOf(c), auth.sub, id);
+    if (!removed) throw Errors.notFound('Không tìm thấy mảnh trí nhớ này');
+    await audit?.(c, { action: 'tieu_tam.memory_delete', resource: 'tt_memories', resourceId: removed.id, detail: { kind: removed.kind, content: removed.content } });
+    return c.json({ ok: true, message: 'Em đã quên chuyện đó rồi nha 🦊' });
   });
 
   /** Đổi động cơ — gạt công tắc (nguyên tắc 5). Hồn (trí nhớ + persona) giữ nguyên. */

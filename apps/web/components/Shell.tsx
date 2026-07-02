@@ -13,6 +13,13 @@ export function Shell({ children, badge }: { children: React.ReactNode; badge?: 
   const router = useRouter();
   const [ttOpen, setTtOpen] = useState(false);
 
+  // V7A P5: trang /tieu-tam (hoặc bất kỳ trang nào) mở sheet chat qua custom event
+  useEffect(() => {
+    const open = () => setTtOpen(true);
+    window.addEventListener('citadel:tt-chat', open);
+    return () => window.removeEventListener('citadel:tt-chat', open);
+  }, []);
+
   // theme từ vật phẩm decor (V7A P3) — áp ngay từ cache, sync lại từ server
   useEffect(() => {
     applyStoredTheme();
@@ -46,7 +53,7 @@ export function Shell({ children, badge }: { children: React.ReactNode; badge?: 
           <button className={`bn ${is('/chat') ? 'active' : ''}`} onClick={nav('/chat')}>
             <Icon name="chat" />Nhắn tin{badge ? <span className="bdg">{badge}</span> : null}
           </button>
-          <button className="bn bn-c" onClick={() => setTtOpen(true)}>
+          <button className={`bn bn-c ${is('/tieu-tam') ? 'active' : ''}`} onClick={nav('/tieu-tam')}>
             <div className="core"><div className="pulse" /><div className="orb"><Icon name="spark" size={20} /></div></div>
             <span>Tiểu Tâm</span>
           </button>

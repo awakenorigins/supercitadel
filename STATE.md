@@ -1,5 +1,18 @@
 # Citadel Build — State: V7A — Repo chuẩn hóa từ nền V8 (2026-07-02)
-## Mạch V7A-P4 (M0 KẾ ToÁn HOÀN THIỆN: Excel connect + tài liệu module = giáo trình Tiểu Tâm — mới nhất)
+## Mạch V7A-P5 (TRẢI NGHIỆM PREMIUM: khu vực riêng Tiểu Tâm + polish UI/UX + mobile — mới nhất)
+- G9 "nơi chốn thực sự": trang `apps/web/app/tieu-tam/page.tsx` — khu vực riêng đầy đủ của Tiểu Tâm (không phải widget góc màn hình)
+- Hero avatar CÁO SVG sống theo mood (vẽ tay theo design system, stroke jade, không dependency): tràn đầy = nhún nhảy tươi sáng + ring nhanh · ổn định = thở bình thường + mắt chớp · mệt = chậm ngả nhẹ + một mắt lười · kiệt sức = ngủ gật (mắt nhắm, miệng ngáp, "z z z" bay) — CSS keyframes trong globals.css (fox-*)
+- Energy bar LỚN có % + màu theo trạng thái (jade/sky/amber/rose) + statusLabel + statusMessage tiếng Việt từ GET /state; fill animate `.tt-energy-fill` (cubic-bezier .7s) — cho ăn thấy thanh chạy mượt real-time
+- Nút "Cho ăn" → sheet list đồ ăn/boost SỞ HỮU (từ /inventory-items filter food+boost), dùng ngay tại chỗ qua POST /inventory-items/:id/use — energy tăng thấy được, toast message thật từ API; kho trống → empty state + nút Đến Cửa hàng
+- Trí nhớ "Em nhớ gì về mình": endpoint MỚI `GET /api/v1/tieu-tam/memories` (recall org+user — hiến pháp #1, limit ≤100) + `DELETE /api/v1/tieu-tam/memories/:id` (forget() mới trong packages/tieu-tam/memory.ts — user chỉ xóa trí nhớ của mình/org-level trong org mình, cross-org/cross-user → 404; audit `tieu_tam.memory_delete` kèm kind+content) — UI list badge kind tiếng Việt (Về mình/Chủ đề/Sở thích…) + nút xóa từng mảnh, message "Em đã quên chuyện đó rồi nha 🦊"
+- Engine switcher: dropdown stub-a/stub-b/openai/anthropic gọi PATCH /engine sẵn có → toast "Đổi bộ não thành công, trí nhớ nguyên vẹn 🦊"; chú thích "đổi model = gạt công tắc, hồn giữ nguyên"
+- Nút "Trò chuyện" mở Tiểu Tâm sheet SSE hiện có qua custom event `citadel:tt-chat` (Shell lắng nghe) — không duplicate sheet
+- Nav: nút giữa (living core) botnav đổi từ mở-sheet → điều hướng /tieu-tam (vị trí trang trọng nhất app), active state theo path
+- Polish §07: theme accent chuyển mượt (transition background/border/color .35s cho card/btn/chip/bub) — đổi theme decor không giật; toast animation trượt vào; mobile @480px (pg-h gọn, fox nhỏ lại); rà empty state + skeleton toàn app — các trang cũ đã đầy đủ từ trước (accounting/crm/hr/inventory/om/chat/notifications/search đều có skel + message tiếng Việt), trang mới /tieu-tam có đủ skeleton (hero+memories) + empty states + error toast
+- Test mới services/api/src/v7a-p5.test.ts: **17 asserts** (GET /memories đúng scope user+org-level, KHÔNG lộ org khác 2 chiều, DELETE xóa thật + audit đúng resource/user, cross-org 404 + data còn nguyên, cross-user cùng org 404, chính chủ xóa được, org-level xóa được, id rác/uuid lạ 404 sạch, GET sau xóa phản ánh đúng, /state không vỡ)
+- Verify: typecheck **13/13 PASS** · `pnpm -r test` **12/12 packages xanh** · `next build` production **15/15 routes** (/tieu-tam 4.53 kB) · audit-buttons **0 nút chết** · audit-module-docs **7/7 PASS**
+
+## Mạch V7A-P4 (M0 KẾ ToÁn HOÀN THIỆN: Excel connect + tài liệu module = giáo trình Tiểu Tâm)
 - G7 Excel connect (Kế Toán): thêm dep `xlsx` (SheetJS 0.18.5, pin version) vào modules/accounting + services/api; module mới `server/excel.ts`
 - 4 endpoint export .xlsx THẬT (Content-Type `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`, org isolation từ JWT): `/export/general-ledger.xlsx` (hệ Số CT/Ngày/TK Nợ/TK Có/Số tiền/Đối tác/Diễn giải từ GL), `/export/invoices.xlsx`, `/export/trial-balance.xlsx` (kèm dòng TỔNG + cờ SỔ CÂN/LỆCH), `/export/profit-loss.xlsx`
 - Endpoint machine-friendly cho AI: `GET /export/general-ledger.json` — cùng data với .xlsx dạng JSON (columns + entries + sumDebit/sumCredit/balanced) — cầu "Claude trên Excel"
