@@ -18,6 +18,8 @@ Web `:3000` (/chat /crm) · API `:3001` (/health /ready) · WS `:3002`
 - **Cửa hàng Module THẬT**: mua bằng Om (trừ tiền ledger), bật/tắt, gate 403 khi chưa kích hoạt; nhóm Kinh doanh (CRM) · Vận hành (Kho) · Nhân sự (Ca)
 - **Kế Toán (fork domain model ERPNext Accounts)**: sổ cái kép GL bất biến, chart TK chuẩn VN, hóa đơn bán/mua, thu chi knock-off công nợ, hủy = bút toán đảo, báo cáo lãi lỗ/cân đối thử/công nợ
 - **Nhân Sự v2 (fork domain model frappe/hrms)**: hồ sơ NV, chấm công vào/ra + đi trễ theo ca, nghỉ phép đủ vòng đời (loại phép, cấp phép, đơn + duyệt/từ chối, số dư, tự ghi bảng công)
+- **TRÁI TIM — hồn tách động cơ (V7A P2)**: trí nhớ Tiểu Tâm trung lập text thuần (tt_memories: fact/person/topic/summary/preference), Context Assembler một cổng (buildWorkProfile), persona = data; đổi model = gạt công tắc (PATCH /tieu-tam/engine, adapters stub-a/stub-b/openai/anthropic — key từ env); học chảy ngược về hồn sau mỗi hội thoại; **test swap PASS: đổi động cơ, fact + nhân cách nhất quán tuyệt đối**
+- **Mood/Energy (V7A P2)**: năng lượng 0-100 hao theo lượt (nhẹ -2/nặng -5), hồi +1/phút lazy + cho ăn (feedEnergy) + nạp gói (rechargeFull); 4 trạng thái Tràn đầy/Ổn định/Mệt/Kiệt sức (kiệt sức từ chối việc nặng dễ thương, vẫn chat nhẹ); GET /tieu-tam/state + SSE energy tick + energy bar/mood trong sheet; `BETA_MODE=true` (mặc định) không bao giờ cạn
 - **Audit log + Bảo mật lũy tiến lớp 2 (V7A P1)**: ghi vết mọi thao tác nhạy cảm (login, mua/bật/tắt module, chi Om, hóa đơn/phiếu thu chi, duyệt phép); GET /audit-logs cho owner+; gắn email/SĐT → lên lớp 2; hành động nhạy cảm (chi Om >1000, đổi role, hủy phiếu đã thu) đòi lớp 2
 - **Module Kho Hàng**: tồn kho ± , cảnh báo sắp hết · **Module Nhân Sự**: ca làm + xếp người
 - **3 token seed**: SUPER_ADMIN (full quyền) · OWNER · MANAGER + ví **99.999 Om**
@@ -44,4 +46,4 @@ Module plug-in qua manifest + deps injection. Xem `docs/DEV_GUIDE.md`.
 - Tích hợp end-to-end: API→ws→client real-time đã chứng minh
 
 ## Cấu hình
-Copy `.env.example` → `.env`. Tiểu Tâm: `LLM_MODE=stub` (mặc định, không key) hoặc `live` + `OPENAI_API_KEY`/`ANTHROPIC_API_KEY`.
+Copy `.env.example` → `.env`. Tiểu Tâm: engine mặc định `stub-a` (không key); gạt sang `openai`/`anthropic` qua PATCH `/api/v1/tieu-tam/engine` + `OPENAI_API_KEY`/`ANTHROPIC_API_KEY` trong env. `BETA_MODE=true` (mặc định): energy không bao giờ cạn.

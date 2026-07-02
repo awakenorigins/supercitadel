@@ -7,7 +7,7 @@ import { sql, eq, and } from 'drizzle-orm';
 import { login } from './auth/service.js';
 import { requireAuth, orgOf } from './auth/middleware.js';
 import { rateLimit } from './middleware/rateLimit.js';
-import { tieuTam } from './tieu-tam/routes.js';
+import { buildTieuTamRoutes } from './tieu-tam/routes.js';
 import { buildChatRoutes } from '@citadel/module-chat/server/routes.js';
 import { publishEvent } from '@citadel/module-chat/server/emit.js';
 import { dashboard } from './dashboard/routes.js';
@@ -91,7 +91,7 @@ app.patch('/api/v1/users/:id/role', requireAuth, async (c) => {
   return c.json({ ok: true, user: { id: row.id, role: row.role } });
 });
 
-app.route('/api/v1/tieu-tam', tieuTam);
+app.route('/api/v1/tieu-tam', buildTieuTamRoutes({ db: getDb(), requireAuth, audit }));
 app.route('/api/v1/chat', buildChatRoutes({ db: getDb(), emit: publishEvent, requireAuth }));
 app.route('/api/v1/dashboard', dashboard);
 app.route('/api/v1/notifications', buildNotificationRoutes({ db: getDb(), requireAuth }));

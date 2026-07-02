@@ -47,14 +47,35 @@ export function Shell({ children, badge }: { children: React.ReactNode; badge?: 
   );
 }
 
+interface SoulState { energy: number; status: string; statusLabel: string; mood: string; engine?: string }
+
+const STATUS_COLOR: Record<string, string> = {
+  tran_day: 'var(--jade)',
+  on_dinh: 'var(--sky, #5fb8f0)',
+  met: 'var(--amber, #e8b366)',
+  kiet_suc: 'var(--rose, #e87a8a)',
+};
+const MOOD_EMOJI: Record<string, string> = { vui: '😊', binh_thuong: '🙂', met: '😮‍💨', kiet_suc: '🥺' };
+
 function TieuTamSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [msgs, setMsgs] = useState<Msg[]>([
     { who: 'ai', text: 'Chào bạn! Tôi là Tiểu Tâm. Hỏi tôi về doanh thu, deal, tồn kho, ca làm…', suggestions: ['Doanh thu hôm nay', 'Deal đang mở', 'Tồn kho thế nào'] },
   ]);
   const [draft, setDraft] = useState('');
   const [streaming, setStreaming] = useState(false);
+  const [soul, setSoul] = useState<SoulState | null>(null);
   const boxRef = useRef<HTMLDivElement>(null);
   useEffect(() => { boxRef.current?.scrollTo({ top: 1e9 }); }, [msgs, streaming]);
+
+  // mở sheet → lấy trạng thái hồn (mood + energy + engine)
+  useEffect(() => {
+    if (!open) return;
+    const s = getSession();
+    fetch(`${API}/api/v1/tieu-tam/state`, { headers: { Authorization: `Bearer ${s?.jwt ?? ''}` } })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => d && setSoul(d))
+      .catch(() => {});
+  }, [open]);
 
   async function ask(q: string) {
     if (!q.trim() || streaming) return;
@@ -80,6 +101,7 @@ function TieuTamSheet({ open, onClose }: { open: boolean; onClose: () => void })
         for (const ev of events) {
           const type = /event: (\w+)/.exec(ev)?.[1];
           const data = /data: ([\s\S]*)/.exec(ev)?.[1] ?? '';
+          if (type === 'energy') { try { setSoul((prev) => ({ ...prev, ...JSON.parse(data) })); } catch {} continue; }
           setMsgs((m) => {
             const last = { ...m[m.length - 1] };
             if (type === 'token') last.text += data;
@@ -101,7 +123,20 @@ function TieuTamSheet({ open, onClose }: { open: boolean; onClose: () => void })
         <div style={{ width: 38, height: 4, borderRadius: 3, background: 'var(--bd2)', margin: '10px auto 2px' }} />
         <div style={{ padding: '8px 18px 13px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1px solid var(--line)' }}>
           <div className="core" style={{ width: 40, height: 40 }}><div className="pulse" /><div className="orb"><Icon name="spark" size={18} /></div></div>
-          <div><b className="fd" style={{ fontSize: 16 }}>Tiểu Tâm</b><div style={{ fontSize: 11.5, color: 'var(--jade)' }}>● trực tuyến · chế độ stub</div></div>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <b className="fd" style={{ fontSize: 16 }}>Tiểu Tâm</b>
+            {soul ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 3 }}>
+                <span style={{ fontSize: 12 }}>{MOOD_EMOJI[soul.mood] ?? '😊'}</span>
+                <div style={{ flex: 1, maxWidth: 110, height: 5, borderRadius: 3, background: 'var(--s1)', border: '1px solid var(--bd)', overflow: 'hidden' }}>
+                  <div style={{ width: `${Math.max(3, Math.min(100, soul.energy))}%`, height: '100%', borderRadius: 3, background: STATUS_COLOR[soul.status] ?? 'var(--jade)', transition: 'width .4s ease' }} />
+                </div>
+                <span style={{ fontSize: 11, color: STATUS_COLOR[soul.status] ?? 'var(--jade)', whiteSpace: 'nowrap' }}>{soul.statusLabel ?? ''} · {Math.round(soul.energy)}%</span>
+              </div>
+            ) : (
+              <div style={{ fontSize: 11.5, color: 'var(--jade)' }}>● trực tuyến</div>
+            )}
+          </div>
           <button onClick={onClose} style={{ marginLeft: 'auto', width: 34, height: 34, borderRadius: 10, background: 'var(--s1)', border: '1px solid var(--bd)', color: 'var(--dim)', display: 'grid', placeItems: 'center' }}><Icon name="x" size={15} /></button>
         </div>
         <div ref={boxRef} style={{ flex: 1, overflowY: 'auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 13 }}>

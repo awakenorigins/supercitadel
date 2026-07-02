@@ -1,5 +1,20 @@
 # Citadel Build — State: V7A — Repo chuẩn hóa từ nền V8 (2026-07-02)
-## Mạch V7A-P1 (Nền móng hardening — mới nhất)
+## Mạch V7A-P2 (TRÁI TIM: hồn tách động cơ + mood/energy — mới nhất)
+- G1 hồn tách động cơ: migration 0005 tt_memories (kind fact/person/topic/summary/preference, salience, index org+user, CHECK kind) + tt_soul_state (mood/energy/engine per org+user, PK org+user)
+- Memory Store (packages/tieu-tam/memory.ts): remember (dedupe cùng org+user+kind+content) / recall (ILIKE, tenant filter LUÔN) / getProfile; trí nhớ TEXT THUẦN — không format provider nào (hiến pháp #8)
+- Học chảy ngược về hồn: extractFacts heuristic VN (tên user/dự án/sở thích) → learnFromMessage best-effort sau mỗi lượt chat
+- Persona = DATA trung lập (persona.ts): xưng "em", tone, principles — adapter tự render, KHÔNG khắc vào prompt model nào
+- Context Assembler (assembler.ts): buildWorkProfile(db, orgId, userId) — MỘT cổng duy nhất → {persona, memories, moduleMap, mood, energy, status, engine}
+- EngineAdapter registry (adapters.ts): stub-a / stub-b (2 variant chứng minh swap) + openai + anthropic (key từ env, model qua OPENAI_MODEL/ANTHROPIC_MODEL); đổi model = gạt công tắc PATCH /api/v1/tieu-tam/engine (validate + audit tieu_tam.engine_change from/to)
+- G2 energy (energy.ts): 0-100, nhẹ -2 / nặng -5 (nặng = intent nghiệp vụ), regen lazy +1/phút theo updated_at (không cron), feedEnergy(amount) + rechargeFull() hook sẵn cho P3
+- 4 trạng thái: Tràn đầy >70 · Ổn định 30-70 · Mệt 10-30 (gợi ý nghỉ nhẹ nhàng) · Kiệt sức <10 (từ chối việc nặng "em mệt rồi, cho em nghỉ chút hoặc cho em ăn gì đó nha", vẫn chat nhẹ)
+- BETA_MODE env (default true): energy hiển thị nhưng không bao giờ cạn/từ chối — test cả 2 mode
+- API: GET /api/v1/tieu-tam/state {mood,energy,status,statusLabel,statusMessage,engine,betaMode}; SSE chat/stream thêm event `energy` tick đầu stream; buildTieuTamRoutes({db,requireAuth,audit}) deps-injection (legacy tieuTam stub giữ cho audit script cũ)
+- Web Shell.tsx: Tiểu Tâm sheet + energy bar (màu theo trạng thái) + mood emoji + % — fetch /state khi mở, cập nhật live từ SSE energy event
+- TEST SWAP (chuẩn nghiệm thu #1) PASS: remember facts ("tôi tên Khoa", "dự án Citadel tới bước Phase 2") qua stub-a → gạt sang stub-b → hỏi lại CÙNG bộ câu → fact "Khoa"/"Phase 2" NHẤT QUÁN tuyệt đối, persona xưng "em" không đổi, trí nhớ vẫn text thuần
+- Test: soul.test.ts 47 asserts + v7a-p2.test.ts 16 asserts (swap qua HTTP + audit + SSE energy + kiệt sức + beta); typecheck 13/13; pnpm test 12/12 xanh
+
+## Mạch V7A-P1 (Nền móng hardening)
 - Audit log G8: migration 0004 chuẩn hóa audit_logs (user_id/resource/resource_id/detail/ip + index org+created); audit service best-effort (không gãy nghiệp vụ); ghi vết: auth.login, module purchase/activate/deactivate, om topup/spend, acc invoice/payment create + voucher cancel, hr leave approve/reject, security bind, user role change
 - GET /api/v1/audit-logs: chỉ owner/super_admin, LUÔN filter org từ JWT (tenant isolation), filter ?action + limit ≤ 200
 - Progressive security lớp 2 G5: users.email/phone/security_level; POST /me/bind-email + /me/bind-phone (validate format VN, nâng lớp 2); GET /me trả securityLevel + needsUpgrade (ví Om > 0 mà lớp < 2)

@@ -1,6 +1,6 @@
 // @citadel/db — Drizzle schema (Postgres + pgvector)
 // Multi-tenant: every tenant-scoped table carries org_id. Single source of truth for DB shape.
-import { pgTable, uuid, varchar, text, timestamp, pgEnum, index, jsonb, char, boolean, integer, primaryKey } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, text, timestamp, pgEnum, index, jsonb, char, boolean, integer, real, primaryKey } from 'drizzle-orm/pg-core';
 
 // ─── enums ──────────────────────────────────────────────────────
 export const roleEnum = pgEnum('role', ['super_admin', 'owner', 'manager', 'staff']);
@@ -73,7 +73,38 @@ export const auditLogs = pgTable(
   (t) => ({ orgIdx: index('audit_org_idx').on(t.orgId) }),
 );
 
-export const schema = { orgs, users, tokens, auditLogs };
+// ─── Tiểu Tâm — hồn tách động cơ (V7A P2 — G1) ──────────────────
+// tt_memories: trí nhớ TRUNG LẬP (text thuần / JSON có cấu trúc) — không phụ thuộc provider nào.
+export const ttMemories = pgTable(
+  'tt_memories',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    orgId: uuid('org_id').notNull().references(() => orgs.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id'),
+    kind: varchar('kind', { length: 16 }).notNull(), // 'fact'|'person'|'topic'|'summary'|'preference'
+    content: text('content').notNull(),
+    salience: real('salience').notNull().default(0.5),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({ orgUserIdx: index('tt_memories_org_user_idx').on(t.orgId, t.userId) }),
+);
+
+// tt_soul_state: mood + energy + engine per (org, user) — đổi model = gạt công tắc, hồn giữ nguyên.
+export const ttSoulState = pgTable(
+  'tt_soul_state',
+  {
+    orgId: uuid('org_id').notNull().references(() => orgs.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id').notNull(),
+    mood: varchar('mood', { length: 24 }).notNull().default('vui'),
+    energy: real('energy').notNull().default(100),
+    engine: varchar('engine', { length: 24 }).notNull().default('stub-a'),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({ pk: primaryKey({ columns: [t.orgId, t.userId] }) }),
+);
+
+export const schema = { orgs, users, tokens, auditLogs, ttMemories, ttSoulState };
 export type DB = typeof schema;
 
 // ── Module registry (v6) ──

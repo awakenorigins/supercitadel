@@ -4,7 +4,7 @@
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
-  "scripts": { "typecheck": "tsc --noEmit", "test": "tsx src/engine.test.ts" },
-  "dependencies": { "@citadel/core": "workspace:*" },
-  "devDependencies": { "tsx": "^4.19.0", "typescript": "^5.7.0", "@types/node": "^22.0.0" }
+  "scripts": { "typecheck": "tsc --noEmit", "test": "tsx src/engine.test.ts && tsx src/soul.test.ts" },
+  "dependencies": { "@citadel/core": "workspace:*", "@citadel/db": "workspace:*", "drizzle-orm": "^0.36.0" },
+  "devDependencies": { "tsx": "^4.19.0", "typescript": "^5.7.0", "@types/node": "^22.0.0", "@electric-sql/pglite": "^0.2.0" }
 }

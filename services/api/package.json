@@ -7,7 +7,7 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
-    "test": "tsx src/rl.test.ts && tsx src/v7a-p1.test.ts"
+    "test": "tsx src/rl.test.ts && tsx src/v7a-p1.test.ts && tsx src/v7a-p2.test.ts"
   },
   "dependencies": {
     "@citadel/core": "workspace:*",
