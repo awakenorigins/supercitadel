@@ -1,1 +1,14 @@
-{ "id":"om","name":"Ví Om","version":"1.0.0","tier":"free","icon":"i-coin","description":"Đồng Om — tiền tệ nội bộ cho AI & module.","permissions":["om:read","om:topup"],"routes":"/api/v1/om" }
+{
+  "id": "om",
+  "name": "Ví Om",
+  "version": "1.0.0",
+  "tier": "free",
+  "icon": "i-coin",
+  "description": "Đồng Om — tiền tệ nội bộ cho AI & module.",
+  "permissions": [
+    "om:read",
+    "om:topup"
+  ],
+  "routes": "/api/v1/om",
+  "docs": "docs/GUIDE.md"
+}

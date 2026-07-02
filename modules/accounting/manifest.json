@@ -1,1 +1,15 @@
-{ "id":"accounting","name":"Kế Toán","version":"1.0.0","tier":"paid","priceOm":500,"icon":"i-coin","description":"Sổ cái kép, thu chi, công nợ, lãi lỗ — fork domain model ERPNext Accounts.","permissions":["accounting:read","accounting:write"],"routes":"/api/v1/accounting" }
+{
+  "id": "accounting",
+  "name": "Kế Toán",
+  "version": "1.1.0",
+  "tier": "paid",
+  "priceOm": 500,
+  "icon": "i-coin",
+  "description": "Sổ cái kép, thu chi, công nợ, lãi lỗ — fork domain model ERPNext Accounts.",
+  "permissions": [
+    "accounting:read",
+    "accounting:write"
+  ],
+  "routes": "/api/v1/accounting",
+  "docs": "docs/GUIDE.md"
+}

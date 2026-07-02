@@ -11,6 +11,10 @@ export interface ChatContext {
 }
 
 export const CANNED: Record<Intent, (ctx: ChatContext) => Omit<TieuTamReply, 'mode'>> = {
+  help: () => ({
+    text: 'Bạn muốn em hướng dẫn phần nào? Em thuộc giáo trình các module đang bật — kế toán, kho, nhân sự, CRM… cứ hỏi cụ thể nhé (ví dụ: "làm sao tạo hóa đơn?").',
+    suggestions: ['Làm sao tạo hóa đơn?', 'Cách xuất Excel sổ sách', 'Cách tạo ca làm'],
+  }),
   greeting: (c) => ({
     text: `Chào ${c.userName ?? 'bạn'}! Tôi là Tiểu Tâm. Hôm nay tôi giúp gì cho ${c.orgName ?? 'quán'} được?`,
     suggestions: ['Doanh thu hôm nay', 'Deal đang mở', 'Tồn kho thế nào'],

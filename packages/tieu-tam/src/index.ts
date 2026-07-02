@@ -54,4 +54,5 @@ export * from './memory.js';
 export * from './assembler.js';
 export * from './adapters.js';
 export * from './energy.js';
+export * from './docs.js';
 export { CANNED } from './canned.js';

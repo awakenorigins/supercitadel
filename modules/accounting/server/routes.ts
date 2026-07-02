@@ -1,7 +1,8 @@
 import { Hono, type Context, type MiddlewareHandler } from 'hono';
-import { AppError, type JwtPayload } from '@citadel/core';
+import { AppError, Errors, type JwtPayload } from '@citadel/core';
 import { seedChart, listAccounts, createJournal, createInvoice, listInvoices, createPayment, listPayments, cancelVoucher, listVouchers, voucherType } from './service.js';
 import { generalLedger, trialBalance, profitLoss, partyOutstanding, accountBalance } from './reports.js';
+import { XLSX_MIME, exportGeneralLedgerXlsx, exportGeneralLedgerJson, exportInvoicesXlsx, exportTrialBalanceXlsx, exportProfitLossXlsx, importInvoicesXlsx } from './excel.js';
 declare module 'hono' { interface ContextVariableMap { auth: JwtPayload; } }
 const orgOf = (c: any) => (c.get('auth') as JwtPayload).orgId;
 const q = (c: any, k: string, dft: string) => c.req.query(k) ?? dft;
@@ -55,5 +56,47 @@ export function buildAccountingRoutes(deps: {
   r.get('/reports/trial-balance', async (c) => c.json(await trialBalance(deps.db, orgOf(c), q(c, 'from', '1970-01-01'), q(c, 'to', today()))));
   r.get('/reports/profit-loss', async (c) => c.json(await profitLoss(deps.db, orgOf(c), q(c, 'from', '1970-01-01'), q(c, 'to', today()))));
   r.get('/reports/outstanding', async (c) => c.json(await partyOutstanding(deps.db, orgOf(c), (c.req.query('type') as any) ?? 'sales')));
+
+  // ── Excel connect (V7A P4 — G7): export sổ sách .xlsx thật + import hóa đơn ──
+  const xlsxRes = (c: Context, buf: Uint8Array, name: string) => c.body(buf as any, 200, {
+    'Content-Type': XLSX_MIME,
+    'Content-Disposition': `attachment; filename="${name}"`,
+  });
+  r.get('/export/general-ledger.xlsx', async (c) =>
+    xlsxRes(c, await exportGeneralLedgerXlsx(deps.db, orgOf(c), q(c, 'from', '1970-01-01'), q(c, 'to', today())), 'so-cai-gl.xlsx'));
+  r.get('/export/invoices.xlsx', async (c) =>
+    xlsxRes(c, await exportInvoicesXlsx(deps.db, orgOf(c)), 'hoa-don.xlsx'));
+  r.get('/export/trial-balance.xlsx', async (c) =>
+    xlsxRes(c, await exportTrialBalanceXlsx(deps.db, orgOf(c), q(c, 'from', '1970-01-01'), q(c, 'to', today())), 'can-doi-thu.xlsx'));
+  r.get('/export/profit-loss.xlsx', async (c) =>
+    xlsxRes(c, await exportProfitLossXlsx(deps.db, orgOf(c), q(c, 'from', '1970-01-01'), q(c, 'to', today())), 'lai-lo.xlsx'));
+  // JSON machine-friendly — cầu cho AI làm việc trên bảng tính ("Claude trên Excel")
+  r.get('/export/general-ledger.json', async (c) =>
+    c.json(await exportGeneralLedgerJson(deps.db, orgOf(c), q(c, 'from', '1970-01-01'), q(c, 'to', today()))));
+
+  // Import hóa đơn: multipart (field `file`) hoặc JSON {fileBase64}. Validate TẠI CỬA từng dòng — lỗi tiếng Việt kèm số dòng.
+  r.post('/import/invoices.xlsx', async (c) => {
+    let buf: Uint8Array | null = null;
+    const ct = c.req.header('content-type') ?? '';
+    if (ct.includes('multipart/form-data')) {
+      const form = await c.req.parseBody().catch(() => ({} as Record<string, unknown>));
+      const f = (form as any).file;
+      if (f && typeof f.arrayBuffer === 'function') buf = new Uint8Array(await f.arrayBuffer());
+    } else {
+      const b = await c.req.json().catch(() => ({}));
+      if (typeof b.fileBase64 === 'string' && b.fileBase64) {
+        try { buf = new Uint8Array(Buffer.from(b.fileBase64, 'base64')); } catch { buf = null; }
+      }
+    }
+    if (!buf || !buf.length) throw Errors.validation('Thiếu file Excel — gửi multipart field "file" hoặc JSON {fileBase64}', 'file');
+    const result = await importInvoicesXlsx(deps.db, orgOf(c), buf);
+    await deps.audit?.(c, { action: 'acc.import_invoices', resource: 'invoice', detail: { created: result.created.length, errors: result.errors.length } });
+    return c.json({
+      created: result.created.length,
+      errors: result.errors,
+      invoices: result.created,
+      message: `Nhập xong: ${result.created.length} hóa đơn thành công, ${result.errors.length} lỗi`,
+    });
+  });
   return r;
 }

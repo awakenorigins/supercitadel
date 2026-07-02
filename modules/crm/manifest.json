@@ -6,7 +6,16 @@
   "priceOm": 400,
   "icon": "i-users",
   "description": "Quản lý khách hàng, pipeline bán hàng, chăm sóc.",
-  "permissions": ["crm:contacts:read","crm:contacts:write","crm:deals:read","crm:deals:write"],
-  "tools": ["crm.query_deals","crm.query_contacts"],
-  "routes": "/api/v1/crm"
+  "permissions": [
+    "crm:contacts:read",
+    "crm:contacts:write",
+    "crm:deals:read",
+    "crm:deals:write"
+  ],
+  "tools": [
+    "crm.query_deals",
+    "crm.query_contacts"
+  ],
+  "routes": "/api/v1/crm",
+  "docs": "docs/GUIDE.md"
 }

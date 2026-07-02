@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { Shell } from '../../components/Shell';
 import { Icon } from '../../components/Icon';
 import { ModuleLocked } from '../../components/ModuleGate';
-import { api, getSession } from '../../lib/api';
+import { api, getSession, API } from '../../lib/api';
 
 interface Inv { id: string; invoiceType: string; partyName: string; grandTotal: string; outstanding: string; status: string; postingDate: string }
 interface Pay { id: string; paymentType: string; partyName: string; amount: string; postingDate: string; status: string; remarks: string | null }
@@ -79,6 +79,44 @@ export default function AccountingPage() {
     } catch (e: any) { setMsg({ t: e.message, ok: false }); }
   }
 
+  // ── Excel connect (V7A P4) ──
+  const [xlsOpen, setXlsOpen] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importRes, setImportRes] = useState<{ created: number; errors: string[] } | null>(null);
+  const EXPORTS = [
+    ['general-ledger', 'Sổ cái GL', 'so-cai-gl.xlsx'],
+    ['invoices', 'Hóa đơn', 'hoa-don.xlsx'],
+    ['trial-balance', 'Cân đối thử', 'can-doi-thu.xlsx'],
+    ['profit-loss', 'Lãi lỗ', 'lai-lo.xlsx'],
+  ] as const;
+  async function downloadXlsx(kind: string, filename: string) {
+    setXlsOpen(false);
+    try {
+      const s = getSession();
+      const r = await fetch(`${API}/api/v1/accounting/export/${kind}.xlsx`, { headers: s ? { Authorization: `Bearer ${s.jwt}` } : {} });
+      if (!r.ok) { const d = await r.json().catch(() => ({} as any)); throw new Error((d as any)?.error?.message ?? `Lỗi ${r.status}`); }
+      const blob = await r.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = filename; a.click();
+      URL.revokeObjectURL(url);
+      setMsg({ t: `Đã xuất ${filename}`, ok: true });
+    } catch (e: any) { setMsg({ t: e.message, ok: false }); }
+  }
+  async function importXlsx(file: File) {
+    setImporting(true); setImportRes(null);
+    try {
+      const s = getSession();
+      const fd = new FormData(); fd.append('file', file);
+      const r = await fetch(`${API}/api/v1/accounting/import/invoices.xlsx`, { method: 'POST', headers: s ? { Authorization: `Bearer ${s.jwt}` } : {}, body: fd });
+      const d = await r.json().catch(() => ({} as any));
+      if (!r.ok) throw new Error((d as any)?.error?.message ?? `Lỗi ${r.status}`);
+      setImportRes({ created: d.created, errors: d.errors ?? [] });
+      setMsg({ t: d.message, ok: d.created > 0 || (d.errors ?? []).length === 0 });
+      load();
+    } catch (e: any) { setMsg({ t: e.message, ok: false }); }
+    finally { setImporting(false); }
+  }
+
   const tabs = [['quy', 'Thu Chi'], ['congno', 'Công nợ'], ['baocao', 'Báo cáo']] as const;
   return (
     <Shell>
@@ -92,6 +130,34 @@ export default function AccountingPage() {
               ))}
             </div>
             {msg && <div className="card" style={{ margin: '11px 20px 0', padding: '10px 13px', fontSize: 12.5, color: msg.ok ? 'var(--jade)' : 'var(--amber)', borderColor: msg.ok ? 'rgba(52,211,184,.3)' : 'rgba(232,179,102,.35)' }}>{msg.t}</div>}
+
+            {/* Excel connect: xuất 4 báo cáo + nhập hóa đơn (V7A P4 — G7) */}
+            <div style={{ margin: '11px 20px 0', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7, position: 'relative' }}>
+              <button onClick={() => setXlsOpen(!xlsOpen)} style={{ padding: '9px 0', borderRadius: 11, fontWeight: 700, fontSize: 12, border: '1px solid var(--bd)', background: 'var(--s1)', color: 'var(--dim)' }}>⤓ Xuất Excel</button>
+              <label style={{ padding: '9px 0', borderRadius: 11, fontWeight: 700, fontSize: 12, border: '1px solid var(--bd)', background: 'var(--s1)', color: 'var(--dim)', textAlign: 'center', cursor: 'pointer', opacity: importing ? .5 : 1 }}>
+                {importing ? 'Đang nhập…' : '⤒ Nhập hóa đơn từ Excel'}
+                <input type="file" accept=".xlsx" style={{ display: 'none' }} disabled={importing} onChange={(e) => { const f = e.target.files?.[0]; if (f) importXlsx(f); e.target.value = ''; }} />
+              </label>
+              {xlsOpen && (
+                <div className="card" style={{ position: 'absolute', top: 42, left: 0, right: '50%', zIndex: 5, padding: 6, borderRadius: 13 }}>
+                  {EXPORTS.map(([kind, label, fn]) => (
+                    <button key={kind} onClick={() => downloadXlsx(kind, fn)} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '9px 11px', borderRadius: 9, border: 'none', background: 'transparent', color: 'var(--txt)', fontSize: 12.5, fontWeight: 600 }}>{label} (.xlsx)</button>
+                  ))}
+                </div>
+              )}
+            </div>
+            {importRes && (
+              <div className="card" style={{ margin: '9px 20px 0', padding: '10px 13px', borderRadius: 13 }}>
+                <div style={{ fontSize: 12.5, fontWeight: 700, color: importRes.created > 0 ? 'var(--jade)' : 'var(--dim)' }}>Kết quả nhập: {importRes.created} hóa đơn thành công · {importRes.errors.length} lỗi</div>
+                {importRes.errors.length > 0 && (
+                  <div style={{ marginTop: 6 }}>
+                    {importRes.errors.slice(0, 10).map((er, i) => <div key={i} style={{ fontSize: 11.5, color: 'var(--amber)', padding: '2px 0' }}>• {er}</div>)}
+                    {importRes.errors.length > 10 && <div style={{ fontSize: 11, color: 'var(--mut)' }}>… và {importRes.errors.length - 10} lỗi nữa</div>}
+                  </div>
+                )}
+                <div style={{ fontSize: 10, color: 'var(--mut)', marginTop: 6 }}>Mẫu cột: Loại (bán/mua) · Đối tác · Ngày · Diễn giải · Số lượng · Đơn giá</div>
+              </div>
+            )}
 
             {tab === 'quy' && (
               <>

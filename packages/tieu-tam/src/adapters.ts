@@ -6,6 +6,7 @@ import type { WorkProfile } from './assembler.js';
 import { renderPersonaText } from './persona.js';
 import { detectIntent } from './intent.js';
 import { CANNED, type ChatContext } from './canned.js';
+import { answerFromDocs } from './docs.js';
 
 export interface EngineMessage { role: 'user' | 'assistant'; content: string }
 
@@ -36,6 +37,17 @@ function matchMemories(profile: WorkProfile, question: string): string[] {
 function stubReply(variant: 'a' | 'b', profile: WorkProfile, messages: EngineMessage[]): TieuTamReply {
   const question = messages.filter((m) => m.role === 'user').at(-1)?.content ?? '';
   const p = profile.persona;
+  // 'help' → trả lời từ GIÁO TRÌNH module thật (V7A P4 — G6), không bịa
+  if (detectIntent(question) === 'help') {
+    const hit = answerFromDocs(question, profile.moduleDocs ?? []);
+    if (hit) {
+      return {
+        text: `Dạ, ${p.selfRef} hướng dẫn nè — ${hit.text}`,
+        suggestions: ['Hỏi tiếp về module này', 'Xem hướng dẫn module khác'],
+        mode: 'stub',
+      };
+    }
+  }
   const hits = matchMemories(profile, question);
   if (hits.length) {
     // Facts từ hồn — NGUYÊN VĂN, không đổi theo engine. Variant chỉ đổi câu đệm.
@@ -76,6 +88,13 @@ function renderSystemPrompt(profile: WorkProfile): string {
     parts.push(...profile.memories.map((m) => `- [${m.kind}] ${m.content}`));
   }
   if (profile.moduleMap.length) parts.push(`Module đang bật: ${profile.moduleMap.join(', ')}.`);
+  if (profile.moduleDocs?.length) {
+    parts.push('Bản đồ năng lực (từ giáo trình module — trả lời hướng dẫn ĐÚNG theo đây, không bịa):');
+    for (const d of profile.moduleDocs) {
+      parts.push(`- ${d.name}: ${d.summary}`);
+      if (d.steps.length) parts.push(`  Hướng dẫn: ${d.steps.join(' ')}`);
+    }
+  }
   parts.push(`Trạng thái hiện tại: mood=${profile.mood}, năng lượng=${Math.round(profile.energy)}/100.`);
   return parts.join('\n');
 }

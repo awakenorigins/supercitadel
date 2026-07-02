@@ -5,8 +5,18 @@
   "tier": "free",
   "icon": "i-chat",
   "description": "Chat nội bộ real-time, nhóm, file.",
-  "permissions": ["chat:read", "chat:write", "chat:admin", "chat:react"],
-  "tools": ["chat.search_messages"],
+  "permissions": [
+    "chat:read",
+    "chat:write",
+    "chat:admin",
+    "chat:react"
+  ],
+  "tools": [
+    "chat.search_messages"
+  ],
   "routes": "/api/v1/chat",
-  "events": ["chat:message"]
+  "events": [
+    "chat:message"
+  ],
+  "docs": "docs/GUIDE.md"
 }

@@ -6,6 +6,7 @@ import { and, eq } from 'drizzle-orm';
 import { TIEU_TAM_PERSONA, type Persona } from './persona.js';
 import { recall, type Memory } from './memory.js';
 import { getSoulState, type EnergyStatus } from './energy.js';
+import { loadModuleDocs, type ModuleDoc } from './docs.js';
 
 export interface WorkProfile {
   persona: Persona;
@@ -13,6 +14,8 @@ export interface WorkProfile {
   memories: Memory[];
   /** Module đang bật của org → Tiểu Tâm biết mình có thể làm gì. */
   moduleMap: string[];
+  /** Giáo trình các module active (V7A P4 — G6): bản đồ năng lực + hướng dẫn thật để trả lời 'help'. Cache file — không đọc lại mỗi request. */
+  moduleDocs: ModuleDoc[];
   mood: string;
   energy: number;
   status: EnergyStatus;
@@ -35,10 +38,14 @@ export async function buildWorkProfile(
     getSoulState(db, orgId, userId),
     db.select().from(orgModules).where(and(eq(orgModules.orgId, orgId), eq(orgModules.status, 'active'))).catch(() => []),
   ]);
+  const moduleMap = (mods as any[]).map((m) => m.moduleId);
+  // accounting = M0 mặc định mọi tài khoản — luôn có trong bản đồ năng lực kể cả khi chưa mua module trả phí khác
+  const docIds = moduleMap.includes('accounting') ? moduleMap : [...moduleMap, 'accounting'];
   return {
     persona: TIEU_TAM_PERSONA,
     memories,
-    moduleMap: (mods as any[]).map((m) => m.moduleId),
+    moduleMap,
+    moduleDocs: loadModuleDocs(docIds),
     mood: soul.mood,
     energy: soul.energy,
     status: soul.status,

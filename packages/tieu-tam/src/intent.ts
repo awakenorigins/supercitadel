@@ -2,6 +2,7 @@
 // Used by the stub provider; the live provider may also use it for tool routing hints.
 
 export type Intent =
+  | 'help'      // hướng dẫn sử dụng — trả lời từ giáo trình module (V7A P4)
   | 'revenue'   // doanh thu
   | 'deals'     // CRM deals
   | 'inventory' // tồn kho
@@ -20,6 +21,7 @@ interface IntentRule {
 
 // Order matters: more specific first.
 const RULES: IntentRule[] = [
+  { intent: 'help', keywords: ['làm sao', 'làm thế nào', 'hướng dẫn', 'cách tạo', 'cách dùng', 'cách xuất', 'cách nhập', 'sử dụng thế nào', 'chỉ em', 'chỉ tôi'] },
   { intent: 'greeting', keywords: ['chào', 'hello', 'hi ', 'xin chào', 'alo'] },
   { intent: 'finance', keywords: ['lãi lỗ', 'công nợ', 'thu chi', 'tiền mặt', 'sổ quỹ', 'kế toán', 'hóa đơn'] },
   { intent: 'revenue', keywords: ['doanh thu', 'doanh số', 'bán được', 'thu nhập', 'lãi', 'tiền'] },
