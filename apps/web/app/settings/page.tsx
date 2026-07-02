@@ -3,17 +3,54 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Shell } from '../../components/Shell';
 import { Icon } from '../../components/Icon';
-import { getSession, clearSession } from '../../lib/api';
+import { getSession, clearSession, api } from '../../lib/api';
+
+interface Me {
+  id: string; role: string;
+  securityLevel: number; email: string | null; phone: string | null;
+  needsUpgrade: boolean; upgradeHint?: string;
+}
+
+const inputSt: React.CSSProperties = {
+  background: 'var(--s2)', border: '1px solid var(--bd)', borderRadius: 12,
+  padding: '11px 13px', color: 'var(--txt)', fontSize: 14, width: '100%', outline: 'none',
+};
 
 export default function SettingsPage() {
   const router = useRouter();
   const [name, setName] = useState(''); const [role, setRole] = useState('');
+  const [me, setMe] = useState<Me | null>(null);
+  const [email, setEmail] = useState(''); const [phone, setPhone] = useState('');
+  const [busy, setBusy] = useState('');
+  const [msg, setMsg] = useState<{ t: string; ok: boolean } | null>(null);
+
   useEffect(() => {
     const s = getSession();
     if (!s) { router.replace('/'); return; }
     setName(s.user.displayName ?? 'Người dùng'); setRole(s.user.role);
+    api<Me>('/api/v1/me').then(setMe).catch(() => {});
   }, [router]);
-  const roleLabel: Record<string, string> = { owner: 'Chủ quán', manager: 'Quản lý', staff: 'Nhân viên' };
+
+  async function bind(kind: 'email' | 'phone') {
+    const value = kind === 'email' ? email.trim() : phone.trim();
+    if (!value) { setMsg({ t: kind === 'email' ? 'Nhập email trước đã' : 'Nhập số điện thoại trước đã', ok: false }); return; }
+    setBusy(kind); setMsg(null);
+    try {
+      const d = await api<{ message: string; securityLevel: number }>(`/api/v1/me/bind-${kind}`, {
+        method: 'POST', body: JSON.stringify(kind === 'email' ? { email: value } : { phone: value }),
+      });
+      setMsg({ t: d.message ?? 'Đã lưu', ok: true });
+      const fresh = await api<Me>('/api/v1/me').catch(() => null);
+      if (fresh) setMe(fresh);
+      if (kind === 'email') setEmail(''); else setPhone('');
+    } catch (e: any) {
+      setMsg({ t: e.message ?? 'Có lỗi xảy ra — thử lại nhé', ok: false });
+    } finally { setBusy(''); }
+  }
+
+  const roleLabel: Record<string, string> = { super_admin: 'Quản trị hệ thống', owner: 'Chủ quán', manager: 'Quản lý', staff: 'Nhân viên' };
+  const level = me?.securityLevel ?? 1;
+
   return (
     <Shell>
       <div className="scroll">
@@ -25,14 +62,48 @@ export default function SettingsPage() {
             <div className="mut" style={{ fontSize: 12.5, marginTop: 2 }}>{roleLabel[role] ?? role} · Cà Phê Nhà Mình</div>
           </div>
         </div>
+
+        {/* ── Bảo mật (V7A P1 — progressive security lớp 2) ── */}
+        <div style={{ margin: '20px 20px 0' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.1em', color: 'var(--faint)', textTransform: 'uppercase', padding: '0 4px 8px' }}>Bảo mật</div>
+          <div className="card" style={{ borderRadius: 16, padding: 16, display: 'grid', gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 13 }}>
+              <div style={{ width: 32, height: 32, borderRadius: 9, background: level >= 2 ? 'var(--jade-soft)' : 'rgba(236,106,133,.14)', color: level >= 2 ? 'var(--jade)' : 'var(--rose)', display: 'grid', placeItems: 'center', flexShrink: 0 }}><Icon name="shield" size={16} /></div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 14, fontWeight: 600 }}>Bảo mật lớp {level}</div>
+                <div className="mut" style={{ fontSize: 11.5, marginTop: 1 }}>{level >= 2 ? 'Tài khoản đã được bảo vệ bằng email/SĐT' : 'Gắn email hoặc SĐT để lên lớp 2'}</div>
+              </div>
+              <span className="mono" style={{ fontSize: 12, color: level >= 2 ? 'var(--jade)' : 'var(--rose)' }}>{level}/4</span>
+            </div>
+            {me?.needsUpgrade && me.upgradeHint && (
+              <div style={{ padding: '9px 12px', borderRadius: 11, background: 'var(--amber-soft)', color: 'var(--amber)', fontSize: 12 }}>{me.upgradeHint}</div>
+            )}
+            {msg && <div style={{ padding: '9px 12px', borderRadius: 11, fontSize: 12.5, background: msg.ok ? 'var(--jade-soft)' : 'rgba(236,106,133,.14)', color: msg.ok ? 'var(--jade)' : 'var(--rose)' }}>{msg.t}</div>}
+
+            <div style={{ display: 'grid', gap: 7 }}>
+              <div className="mut" style={{ fontSize: 11.5 }}>Email {me?.email ? <span className="mono" style={{ color: 'var(--jade)' }}>· {me.email}</span> : ''}</div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="ten@congty.vn" type="email" style={inputSt} />
+                <button onClick={() => bind('email')} disabled={busy === 'email'} className="btn-p" style={{ width: 'auto', padding: '0 16px', fontSize: 13, opacity: busy === 'email' ? .6 : 1 }}>{busy === 'email' ? '…' : 'Gắn'}</button>
+              </div>
+            </div>
+            <div style={{ display: 'grid', gap: 7 }}>
+              <div className="mut" style={{ fontSize: 11.5 }}>Số điện thoại {me?.phone ? <span className="mono" style={{ color: 'var(--jade)' }}>· {me.phone}</span> : ''}</div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="0912345678" type="tel" style={inputSt} />
+                <button onClick={() => bind('phone')} disabled={busy === 'phone'} className="btn-p" style={{ width: 'auto', padding: '0 16px', fontSize: 13, opacity: busy === 'phone' ? .6 : 1 }}>{busy === 'phone' ? '…' : 'Gắn'}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {[
           { gl: 'Tiểu Tâm', items: [
             { icon: 'spark', tint: 'var(--jade-soft)', color: 'var(--jade)', n: 'Chế độ tính cách', v: 'Thân thiện' },
             { icon: 'spark', tint: 'rgba(152,137,232,.14)', color: 'var(--violet)', n: 'Gợi ý chủ động', v: 'Bật' },
           ]},
-          { gl: 'Tổ chức & Bảo mật', items: [
+          { gl: 'Tổ chức', items: [
             { icon: 'coffee', tint: 'var(--amber-soft)', color: 'var(--amber)', n: 'Thông tin tổ chức', v: '' },
-            { icon: 'shield', tint: 'rgba(236,106,133,.14)', color: 'var(--rose)', n: 'Bảo mật lũy tiến', v: 'Cấp 2/4' },
             { icon: 'users', tint: 'var(--s3)', color: 'var(--dim)', n: 'Thành viên & quyền', v: '' },
           ]},
         ].map((g) => (

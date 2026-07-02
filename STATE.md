@@ -1,4 +1,13 @@
 # Citadel Build — State: V7A — Repo chuẩn hóa từ nền V8 (2026-07-02)
+## Mạch V7A-P1 (Nền móng hardening — mới nhất)
+- Audit log G8: migration 0004 chuẩn hóa audit_logs (user_id/resource/resource_id/detail/ip + index org+created); audit service best-effort (không gãy nghiệp vụ); ghi vết: auth.login, module purchase/activate/deactivate, om topup/spend, acc invoice/payment create + voucher cancel, hr leave approve/reject, security bind, user role change
+- GET /api/v1/audit-logs: chỉ owner/super_admin, LUÔN filter org từ JWT (tenant isolation), filter ?action + limit ≤ 200
+- Progressive security lớp 2 G5: users.email/phone/security_level; POST /me/bind-email + /me/bind-phone (validate format VN, nâng lớp 2); GET /me trả securityLevel + needsUpgrade (ví Om > 0 mà lớp < 2)
+- Gate nhạy cảm: chi Om > 1000 (POST /om/spend mới) · đổi role (PATCH /users/:id/role mới, owner+) · hủy phiếu thu/chi → đòi lớp 2, 403 kèm hướng dẫn tiếng Việt
+- Web Settings + mục "Bảo mật": hiện lớp hiện tại, banner needsUpgrade, form gắn email/SĐT gọi API thật, thông báo thành công/lỗi tiếng Việt
+- G10 rà nút sống: scripts/audit-buttons.mts (quét onClick rỗng/TODO/href=#/button không handler) — 0 nút chết
+- Test v7a-p1: 17 asserts (audit đúng org + không lộ org khác, staff 403, bind nâng lớp, gate 403 lớp 1/pass lớp 2, needsUpgrade); typecheck 13/13; pnpm test 12/12 packages xanh
+
 ## Mạch V7A-P0
 - Fork nền V8 (/opt/NewCitadelV21) → repo citadel-v7a, loại node_modules/.env/dist, secret-scan sạch
 - PLAN-V7A.md: gap analysis 10 điểm vs spec v5.1, lộ trình 7 phase, 9 chuẩn nghiệm thu

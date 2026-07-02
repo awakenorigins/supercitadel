@@ -1,5 +1,5 @@
 // Module registry routes — list catalog với trạng thái org, bật/tắt, mua bằng Om (trừ tiền thật).
-import { Hono, type MiddlewareHandler } from 'hono';
+import { Hono, type Context, type MiddlewareHandler } from 'hono';
 import { eq, and } from 'drizzle-orm';
 import { AppError, Errors, type JwtPayload } from '@citadel/core';
 import { orgModules } from '@citadel/db';
@@ -40,7 +40,9 @@ export function requireModule(db: any, moduleId: string): MiddlewareHandler {
   };
 }
 
-export function buildModuleRoutes(deps: { db: any; requireAuth: MiddlewareHandler }) {
+type AuditFn = (c: Context, e: { action: string; resource?: string; resourceId?: string; detail?: unknown }) => Promise<void>;
+
+export function buildModuleRoutes(deps: { db: any; requireAuth: MiddlewareHandler; audit?: AuditFn }) {
   const r = new Hono();
   r.onError((err, c) => err instanceof AppError ? c.json(err.toJSON(), err.status as 400) : (console.error('[modules]', err), c.json({ error: { code: 'INTERNAL', message: 'Lỗi hệ thống' } }, 500)));
   r.use('*', deps.requireAuth);
@@ -66,6 +68,7 @@ export function buildModuleRoutes(deps: { db: any; requireAuth: MiddlewareHandle
     } else {
       await deps.db.insert(orgModules).values({ orgId, moduleId: id, purchased: true, status: 'active', activatedAt: new Date() });
     }
+    await deps.audit?.(c, { action: 'module.purchase', resource: 'module', resourceId: id, detail: { paidOm: def.priceOm } });
     return c.json({ ok: true, module: id, paidOm: def.priceOm, balance: pay.balance });
   });
 
@@ -85,6 +88,7 @@ export function buildModuleRoutes(deps: { db: any; requireAuth: MiddlewareHandle
     } else {
       await deps.db.insert(orgModules).values({ orgId, moduleId: id, status: 'active', activatedAt: new Date() });
     }
+    await deps.audit?.(c, { action: 'module.activate', resource: 'module', resourceId: id });
     return c.json({ ok: true, module: id, active: true });
   });
 
@@ -95,6 +99,7 @@ export function buildModuleRoutes(deps: { db: any; requireAuth: MiddlewareHandle
     const orgId = orgOf(c);
     await deps.db.update(orgModules).set({ status: 'inactive' })
       .where(and(eq(orgModules.orgId, orgId), eq(orgModules.moduleId, id)));
+    await deps.audit?.(c, { action: 'module.deactivate', resource: 'module', resourceId: id });
     return c.json({ ok: true, module: id, active: false });
   });
 

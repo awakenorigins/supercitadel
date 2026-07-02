@@ -1,11 +1,12 @@
-import { Hono, type MiddlewareHandler } from 'hono';
+import { Hono, type Context, type MiddlewareHandler } from 'hono';
 import { AppError, type JwtPayload } from '@citadel/core';
 import { listShifts, createShift, assignStaff } from './service.js';
 import { listEmployees, createEmployee, updateEmployee, checkIn, checkOut, attendanceByDate } from './service-v2.js';
 import { listLeaveTypes, createLeaveType, allocateLeave, leaveBalance, applyLeave, listApplications, decideLeave } from './leave.js';
 declare module 'hono' { interface ContextVariableMap { auth: JwtPayload; } }
 const orgOf = (c: any) => (c.get('auth') as JwtPayload).orgId;
-export function buildHrRoutes(deps: { db: any; requireAuth: MiddlewareHandler; gate?: MiddlewareHandler }) {
+type AuditFn = (c: Context, e: { action: string; resource?: string; resourceId?: string; detail?: unknown }) => Promise<void>;
+export function buildHrRoutes(deps: { db: any; requireAuth: MiddlewareHandler; gate?: MiddlewareHandler; audit?: AuditFn }) {
   const r = new Hono();
   r.onError((err, c) => err instanceof AppError ? c.json(err.toJSON(), err.status as 400) : (console.error('[hr]', err), c.json({ error: { code: 'INTERNAL', message: 'Lỗi hệ thống' } }, 500)));
   r.use('*', deps.requireAuth);
@@ -35,8 +36,16 @@ export function buildHrRoutes(deps: { db: any; requireAuth: MiddlewareHandler; g
   });
   r.post('/leave/applications', async (c) => { const b = await c.req.json().catch(() => ({})); return c.json({ application: await applyLeave(deps.db, orgOf(c), b) }, 201); });
   r.get('/leave/applications', async (c) => c.json({ applications: await listApplications(deps.db, orgOf(c), c.req.query('status')) }));
-  r.post('/leave/applications/:id/approve', async (c) => c.json({ application: await decideLeave(deps.db, orgOf(c), c.req.param('id'), true, (c.get('auth') as JwtPayload).sub) }));
-  r.post('/leave/applications/:id/reject', async (c) => c.json({ application: await decideLeave(deps.db, orgOf(c), c.req.param('id'), false, (c.get('auth') as JwtPayload).sub) }));
+  r.post('/leave/applications/:id/approve', async (c) => {
+    const application = await decideLeave(deps.db, orgOf(c), c.req.param('id'), true, (c.get('auth') as JwtPayload).sub);
+    await deps.audit?.(c, { action: 'hr.leave.approve', resource: 'leave_application', resourceId: c.req.param('id'), detail: { totalDays: application?.totalDays } });
+    return c.json({ application });
+  });
+  r.post('/leave/applications/:id/reject', async (c) => {
+    const application = await decideLeave(deps.db, orgOf(c), c.req.param('id'), false, (c.get('auth') as JwtPayload).sub);
+    await deps.audit?.(c, { action: 'hr.leave.reject', resource: 'leave_application', resourceId: c.req.param('id') });
+    return c.json({ application });
+  });
 
   return r;
 }

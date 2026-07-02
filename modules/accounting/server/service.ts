@@ -175,6 +175,13 @@ export async function listPayments(db: DB, orgId: string) {
   return db.select().from(accPayments).where(eq(accPayments.orgId, orgId)).orderBy(desc(accPayments.createdAt));
 }
 
+/** Loại chứng từ (invoice/payment/journal) — dùng cho gate nhạy cảm trước khi hủy. */
+export async function voucherType(db: DB, orgId: string, voucherId: string): Promise<string> {
+  const [v] = await db.select().from(accVouchers).where(and(eq(accVouchers.id, voucherId), eq(accVouchers.orgId, orgId)));
+  if (!v) throw Errors.notFound('Không tìm thấy chứng từ');
+  return v.voucherType;
+}
+
 /** Hủy chứng từ = bút toán ĐẢO (GL bất biến). Invoice chỉ hủy khi chưa thu đồng nào; payment hủy → hoàn công nợ. */
 export async function cancelVoucher(db: DB, orgId: string, voucherId: string) {
   const [v] = await db.select().from(accVouchers).where(and(eq(accVouchers.id, voucherId), eq(accVouchers.orgId, orgId)));

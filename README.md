@@ -18,6 +18,7 @@ Web `:3000` (/chat /crm) · API `:3001` (/health /ready) · WS `:3002`
 - **Cửa hàng Module THẬT**: mua bằng Om (trừ tiền ledger), bật/tắt, gate 403 khi chưa kích hoạt; nhóm Kinh doanh (CRM) · Vận hành (Kho) · Nhân sự (Ca)
 - **Kế Toán (fork domain model ERPNext Accounts)**: sổ cái kép GL bất biến, chart TK chuẩn VN, hóa đơn bán/mua, thu chi knock-off công nợ, hủy = bút toán đảo, báo cáo lãi lỗ/cân đối thử/công nợ
 - **Nhân Sự v2 (fork domain model frappe/hrms)**: hồ sơ NV, chấm công vào/ra + đi trễ theo ca, nghỉ phép đủ vòng đời (loại phép, cấp phép, đơn + duyệt/từ chối, số dư, tự ghi bảng công)
+- **Audit log + Bảo mật lũy tiến lớp 2 (V7A P1)**: ghi vết mọi thao tác nhạy cảm (login, mua/bật/tắt module, chi Om, hóa đơn/phiếu thu chi, duyệt phép); GET /audit-logs cho owner+; gắn email/SĐT → lên lớp 2; hành động nhạy cảm (chi Om >1000, đổi role, hủy phiếu đã thu) đòi lớp 2
 - **Module Kho Hàng**: tồn kho ± , cảnh báo sắp hết · **Module Nhân Sự**: ca làm + xếp người
 - **3 token seed**: SUPER_ADMIN (full quyền) · OWNER · MANAGER + ví **99.999 Om**
 - **Rate-limiting**: chống brute-force token (login 5/phút/IP)
