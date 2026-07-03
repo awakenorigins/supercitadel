@@ -31,6 +31,7 @@ const KIND_COLOR: Record<string, string> = {
 };
 const ENGINES = [
   { v: 'sonnet-4.6', label: 'Sonnet 4.6 ⭐ (mặc định)' },
+  { v: 'gpt-5.5', label: 'GPT 5.5 🚀' },
   { v: 'stub-a', label: 'Stub A — bộ não thử nghiệm' },
   { v: 'stub-b', label: 'Stub B — bộ não thử nghiệm' },
   { v: 'openai', label: 'OpenAI — GPT' },

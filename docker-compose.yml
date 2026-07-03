@@ -36,6 +36,9 @@ services:
       LLM_BASE_URL: ${LLM_BASE_URL:-}
       LLM_MODEL: ${LLM_MODEL:-cc/claude-sonnet-4-6}
       LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM2_BASE_URL: ${LLM2_BASE_URL:-}
+      LLM2_MODEL: ${LLM2_MODEL:-cx/gpt-5.5}
+      LLM2_API_KEY: ${LLM2_API_KEY:-}
       PORT: 3001
     depends_on:
       postgres: { condition: service_healthy }
