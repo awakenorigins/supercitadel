@@ -42,8 +42,17 @@ const PAGE_LABEL: Record<string, string> = {
   '/items': 'Kho vật phẩm', '/tieu-tam': 'Tiểu Tâm', '/settings': 'Cài đặt',
   '/notifications': 'Thông báo', '/search': 'Tìm kiếm',
 };
+// R2: breadcrumb 2 cấp — tên nhóm lấy từ NAV_GROUPS (+ các trang ngoài nav groups)
+const GROUP_EXTRA: Record<string, string> = {
+  '/tieu-tam': 'Tiểu Tâm', '/settings': 'Hệ thống', '/notifications': 'Hệ thống', '/search': 'Hệ thống',
+};
+function groupOf(path: string): string | null {
+  for (const g of NAV_GROUPS) if (g.items.some((it) => path === it.to || path.startsWith(it.to + '/'))) return g.label;
+  const k = Object.keys(GROUP_EXTRA).find((p) => path === p || path.startsWith(p + '/'));
+  return k ? GROUP_EXTRA[k] : null;
+}
 
-export function Shell({ children, badge }: { children: React.ReactNode; badge?: number }) {
+export function Shell({ children, badge, wide }: { children: React.ReactNode; badge?: number; wide?: boolean }) {
   const path = usePathname();
   const router = useRouter();
   const [ttOpen, setTtOpen] = useState(false);
@@ -97,6 +106,7 @@ export function Shell({ children, badge }: { children: React.ReactNode; badge?: 
   const is = (p: string) => path === p || path?.startsWith(p + '/');
   const roleLabel: Record<string, string> = { super_admin: 'Quản trị hệ thống', owner: 'Chủ quán', manager: 'Quản lý', staff: 'Nhân viên' };
   const pageLabel = PAGE_LABEL[Object.keys(PAGE_LABEL).find((p) => is(p)) ?? ''] ?? 'SUPERCITADEL';
+  const groupLabel = groupOf(path ?? '');
   const energyColor = soul ? (STATUS_COLOR[soul.status] ?? 'var(--jade)') : 'var(--jade)';
 
   return (
@@ -156,7 +166,9 @@ export function Shell({ children, badge }: { children: React.ReactNode; badge?: 
         <div className="main">
           <header className="topbar">
             <div className="tb-crumb">
-              <span>SUPERCITADEL</span><span className="sep">/</span><b>{pageLabel}</b>
+              <span>SUPERCITADEL</span>
+              {groupLabel && <><span className="sep">/</span><span>{groupLabel}</span></>}
+              <span className="sep">/</span><b>{pageLabel}</b>
             </div>
             <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 9 }}>
               <button className="tb-act" onClick={nav('/search')} title="Tìm kiếm"><Icon name="search" size={16} /></button>
@@ -172,7 +184,7 @@ export function Shell({ children, badge }: { children: React.ReactNode; badge?: 
             </div>
           </header>
 
-          <div className="shell">
+          <div className={`shell${wide ? ' wide' : ''}`}>
             {children}
             <nav className="botnav">
               <button className={`bn ${is('/home') ? 'active' : ''}`} onClick={nav('/home')}><Icon name="home" />Trang chủ</button>
