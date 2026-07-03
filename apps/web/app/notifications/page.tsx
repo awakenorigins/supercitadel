@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Shell } from '../../components/Shell';
 import { Icon } from '../../components/Icon';
+import { EmptyState } from '../../components/EmptyState';
 import { api, getSession } from '../../lib/api';
 
 interface Notif { id: string; kind: string; title: string; bodyText: string | null; readAt: string | null; createdAt: string }
@@ -46,7 +47,7 @@ export default function NotificationsPage() {
         </div>
         <div style={{ marginTop: 10 }}>
           {items === null && [1, 2, 3].map((i) => <div key={i} className="skel" style={{ height: 62, margin: '0 20px 8px' }} />)}
-          {items?.length === 0 && <p className="mut" style={{ padding: 20, fontSize: 13 }}>Chưa có thông báo nào.</p>}
+          {items?.length === 0 && <EmptyState icon="doc" title="Chưa có thông báo" sub="Thông báo hệ thống và nhắc việc sẽ hiện ở đây." />}
           {items?.map((n) => {
             const st = KIND_STYLE[n.kind] ?? KIND_STYLE.system;
             return (

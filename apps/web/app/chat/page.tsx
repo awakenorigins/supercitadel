@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Shell } from '../../components/Shell';
 import { Icon } from '../../components/Icon';
+import { EmptyState } from '../../components/EmptyState';
 import { api, getSession, WS_URL } from '../../lib/api';
 
 interface Msg { id: string; body: string; senderId: string; createdAt: string }
@@ -67,7 +68,7 @@ export default function ChatPage() {
         </div>
         <div style={{ padding: '14px 14px 0' }}>
           {rooms === null && [1, 2, 3].map((i) => <div key={i} className="skel" style={{ height: 64, marginBottom: 8, borderRadius: 14 }} />)}
-          {rooms?.length === 0 && <p className="mut" style={{ padding: 20, fontSize: 13 }}>Chưa có phòng chat. Chạy seed hoặc tạo phòng qua API.</p>}
+          {rooms?.length === 0 && <EmptyState icon="people" title="Chưa có phòng chat" sub="Tạo phòng mới để trao đổi với đội ngũ của bạn." />}
           {rooms?.map((r) => (
             <div key={r.id} onClick={() => openRoom(r)} style={{ display: 'flex', gap: 12, padding: 12, borderRadius: 14, cursor: 'pointer', alignItems: 'center' }}>
               <div className={`ava ${r.isGroup ? 'violet' : 'mint'}`} style={{ width: 48, height: 48, borderRadius: 15, fontSize: 16 }}>

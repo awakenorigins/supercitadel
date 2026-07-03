@@ -151,10 +151,11 @@ export function Shell({ children, badge, wide }: { children: React.ReactNode; ba
           </div>
           <div className="sb-foot">
             <button className="sb-user" onClick={nav('/settings')} title="Tài khoản">
-              <div className="ava mint" style={{ width: 34, height: 34, borderRadius: 10, fontSize: 14 }}>{(userName || 'C').slice(0, 1)}</div>
+              <div className="sb-ava">{(userName || 'C').slice(0, 1)}</div>
               <div className="sb-ui">
                 <b>{userName || '—'}</b>
-                <span>{roleLabel[role] ?? role} · Cà Phê Nhà Mình</span>
+                <span>Cà Phê Nhà Mình</span>
+                {role && <span className="sb-role">{roleLabel[role] ?? role}</span>}
               </div>
             </button>
             <button className="sb-toggle" onClick={toggleSb} title={collapsed ? 'Mở rộng' : 'Thu gọn'}>

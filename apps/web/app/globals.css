@@ -614,3 +614,33 @@ button { transition: transform var(--dur-1); }
 .empty-state .es-cta { margin-top: 13px; border: none; border-radius: var(--r-md); background: var(--jade); color: #04231f; font-weight: 700; font-size: 12.5px; padding: 10px 18px; transition: box-shadow var(--dur-2), transform var(--dur-1); }
 .empty-state .es-cta:hover { box-shadow: var(--glow); }
 @media (max-width: 480px) { .empty-state { margin: 16px 16px 0; } }
+
+/* ═══════════════ R4 Phase B: component polish toàn cục ═══════════════ */
+/* B1 — OwnedBar chip v2: icon + hover glow + tooltip CSS thuần + active ring */
+.ob-chip { position: relative; }
+.ob-chip .icon { width: 13px; height: 13px; flex-shrink: 0; opacity: .8; transition: opacity var(--dur-1), color var(--dur-1); }
+.ob-chip:hover { border-color: rgba(52,211,184,.4); color: var(--txt); box-shadow: 0 0 16px var(--jade-soft); }
+.ob-chip:hover .icon { opacity: 1; color: var(--jade); }
+.ob-chip.on { border-color: rgba(52,211,184,.35); box-shadow: inset 0 0 0 1px rgba(52,211,184,.22); }
+.ob-chip[data-tip]::after { content: attr(data-tip); position: absolute; left: 50%; top: calc(100% + 7px); transform: translateX(-50%) translateY(-3px); background: var(--elev); color: var(--txt); border: 1px solid var(--bd2); font-size: 10.5px; font-weight: 500; padding: 5px 9px; border-radius: 8px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity var(--dur-1), transform var(--dur-2) var(--ease); z-index: 65; box-shadow: var(--sh-2); }
+.ob-chip[data-tip]:hover::after, .ob-chip[data-tip]:focus-visible::after { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* B2 — Sidebar v2: indicator trượt + icon tint + user card */
+.sb-it::before { content: ''; position: absolute; left: -10px; top: 50%; bottom: auto; height: 0; width: 3px; border-radius: 0 3px 3px 0; background: var(--jade); transform: translateY(-50%); transition: height var(--dur-2) var(--ease); }
+.sb-it.active::before { top: 50%; bottom: auto; height: 60%; }
+.sb-it:hover .icon { color: var(--jade); opacity: 1; }
+.sb-it .icon { transition: color var(--dur-1), opacity var(--dur-1), transform var(--dur-2) var(--ease); }
+.sb-it:hover .icon { transform: translateX(1px); }
+.sb-user { border: 1px solid transparent; }
+.sb-user:hover { background: var(--s2); border-color: var(--bd); }
+.sb-user .sb-ava { width: 34px; height: 34px; border-radius: 11px; flex-shrink: 0; display: grid; place-items: center; font-family: var(--fd); font-weight: 700; font-size: 14px; color: #04231f; background: linear-gradient(135deg, var(--jade), var(--jade-d)); box-shadow: 0 0 14px var(--jade-soft); }
+.sb-role { display: inline-block; font-family: var(--fm); font-size: 8.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; background: var(--jade-soft); color: var(--jade); border-radius: 5px; padding: 2px 6px; margin-top: 3px; }
+
+/* B4 — table polish: sticky header + zebra nhẹ + hover accent-tint */
+.dt-wrap { max-height: none; }
+.dt thead th { position: sticky; top: 0; z-index: 2; }
+.dt tbody tr:nth-child(even) { background: rgba(255,255,255,.012); }
+.dt tbody tr:hover { background: var(--jade-soft); }
+.dt tbody tr:hover td { color: var(--txt); }
+/* tooltip cần thoát overflow — desktop owned-bar không cần scroll ngang */
+@media (min-width: 1024px) { .owned-bar { overflow-x: visible; flex-wrap: wrap; } }

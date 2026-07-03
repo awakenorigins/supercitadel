@@ -3,10 +3,11 @@
 // 🟢 active · ⚪ inactive (bấm = bật ngay) · 🟡 thuê còn hạn · 🔴 thuê ≤3 ngày (bấm = tới gia hạn).
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { Icon } from './Icon';
 import { api, getSession } from '../lib/api';
 
 interface Mod {
-  id: string; name: string; route: string; tier: string; status: string;
+  id: string; name: string; icon: string; route: string; tier: string; status: string;
   active: boolean; purchased: boolean; rentedUntil: string | null; rentDaysLeft: number | null;
 }
 
@@ -58,13 +59,22 @@ export function OwnedBar() {
     router.push(m.route);
   }
 
+  // R4 chip v2: icon module + tooltip CSS thuần (hạn thuê/trạng thái) + ring khi đang ở trang đó
+  const tipOf = (m: Mod): string => {
+    if (m.purchased) return m.active ? `Sở hữu vĩnh viễn · đang bật` : `Sở hữu vĩnh viễn · đang tắt — chạm để bật`;
+    if (m.rentDaysLeft !== null) return `Thuê · còn ${m.rentDaysLeft} ngày${m.rentDaysLeft <= 3 ? ' — chạm để gia hạn' : ''}`;
+    if (m.rentedUntil) return 'Thuê hết hạn — chạm để gia hạn';
+    return m.name;
+  };
   return (
     <div className="owned-bar">
       {owned.map((m) => {
         const d = dotOf(m);
+        const here = path === m.route || path?.startsWith(m.route + '/');
         return (
-          <button key={m.id} className="ob-chip" disabled={busy === m.id} onClick={() => tap(m)}
-            title={m.active ? `Mở ${m.name}` : `Bật ${m.name}`} style={{ opacity: busy === m.id ? .6 : 1 }}>
+          <button key={m.id} className={`ob-chip ${here ? 'on' : ''}`} disabled={busy === m.id} onClick={() => tap(m)}
+            data-tip={tipOf(m)} aria-label={m.active ? `Mở ${m.name}` : `Bật ${m.name}`} style={{ opacity: busy === m.id ? .6 : 1 }}>
+            <Icon name={m.icon} size={13} style={{ width: 13, height: 13 }} />
             <span className="ob-dot" style={{ background: d.color }} />
             {m.name}
             {d.label && <span className="ob-days" style={{ color: d.color }}>{d.label}</span>}
