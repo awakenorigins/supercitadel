@@ -62,7 +62,7 @@ export default function ModulesPage() {
         <div style={{ display: 'flex', gap: 9, padding: '11px 20px 0', overflowX: 'auto' }}>
           {mods === null && [1, 2, 3].map((i) => <div key={i} className="skel" style={{ minWidth: 86, height: 86, borderRadius: 16 }} />)}
           {enabled.map((m) => (
-            <button key={m.id} onClick={() => router.push(m.route)} className="card" style={{ minWidth: 86, padding: '13px 8px', borderRadius: 16, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, borderColor: 'rgba(52,211,184,.25)' }}>
+            <button key={m.id} onClick={() => router.push(m.route)} className="card store-card" style={{ minWidth: 86, padding: '13px 8px', borderRadius: 16, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, borderColor: 'rgba(52,211,184,.25)' }}>
               <div style={{ width: 36, height: 36, borderRadius: 11, background: 'var(--jade-soft)', color: 'var(--jade)', display: 'grid', placeItems: 'center' }}><Icon name={m.icon} size={18} /></div>
               <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--txt)' }}>{m.name}</span>
             </button>
@@ -78,13 +78,13 @@ export default function ModulesPage() {
               <div style={{ padding: '20px 20px 0', fontSize: 11, fontWeight: 700, letterSpacing: '.1em', color: 'var(--faint)', textTransform: 'uppercase' }}>{g}</div>
               <div style={{ padding: '10px 20px 0' }}>
                 {list.map((m) => (
-                  <div key={m.id} className="card" style={{ display: 'flex', gap: 12, padding: 14, borderRadius: 16, marginBottom: 9, alignItems: 'center', opacity: m.status === 'coming_soon' ? .55 : 1 }}>
+                  <div key={m.id} className="card store-card" style={{ display: 'flex', gap: 12, padding: 14, borderRadius: 16, marginBottom: 9, alignItems: 'center', opacity: m.status === 'coming_soon' ? .55 : 1 }}>
                     <div style={{ width: 42, height: 42, borderRadius: 13, background: m.active ? 'var(--jade-soft)' : 'var(--s3)', color: m.active ? 'var(--jade)' : 'var(--dim)', display: 'grid', placeItems: 'center', flexShrink: 0 }}><Icon name={m.icon} size={20} /></div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
                         <b style={{ fontSize: 14 }}>{m.name}</b>
-                        {m.tier === 'core' && <span className="mono" style={{ fontSize: 8.5, color: 'var(--jade)', border: '1px solid rgba(52,211,184,.3)', borderRadius: 5, padding: '1px 6px' }}>CỐT LÕI</span>}
-                        {m.status === 'coming_soon' && <span className="mono" style={{ fontSize: 8.5, color: 'var(--violet)', border: '1px solid rgba(152,137,232,.3)', borderRadius: 5, padding: '1px 6px' }}>SẮP RA</span>}
+                        {m.tier === 'core' && <span className="bdg-s jade">CỐT LÕI</span>}
+                        {m.status === 'coming_soon' && <span className="bdg-s violet">SẮP RA</span>}
                       </div>
                       <div style={{ fontSize: 11.5, color: 'var(--mut)', marginTop: 3 }}>{m.desc}</div>
                       {m.tier === 'paid' && !m.purchased && <div className="mono" style={{ fontSize: 11.5, color: 'var(--amber)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}><Icon name="coin" size={11} /> {m.priceOm} Om · mua 1 lần</div>}
@@ -119,12 +119,12 @@ export default function ModulesPage() {
         <div style={{ padding: '10px 20px 0' }}>
           {storeItems === null && [1, 2].map((i) => <div key={i} className="skel" style={{ height: 68, borderRadius: 16, marginBottom: 9 }} />)}
           {storeItems?.map((it) => (
-            <div key={it.code} className="card" style={{ display: 'flex', gap: 12, padding: 14, borderRadius: 16, marginBottom: 9, alignItems: 'center' }}>
+            <div key={it.code} className="card store-card warm" style={{ display: 'flex', gap: 12, padding: 14, borderRadius: 16, marginBottom: 9, alignItems: 'center' }}>
               <div style={{ width: 42, height: 42, borderRadius: 13, background: 'var(--amber-soft)', color: 'var(--amber)', display: 'grid', placeItems: 'center', flexShrink: 0 }}><Icon name={it.icon ?? 'gift'} size={20} /></div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
                   <b style={{ fontSize: 14 }}>{it.name}</b>
-                  <span className="mono" style={{ fontSize: 8.5, color: 'var(--dim)', border: '1px solid var(--bd)', borderRadius: 5, padding: '1px 6px' }}>{ITEM_CAT_LABEL[it.category] ?? it.category}</span>
+                  <span className="bdg-s mut">{ITEM_CAT_LABEL[it.category] ?? it.category}</span>
                 </div>
                 <div style={{ fontSize: 11.5, color: 'var(--mut)', marginTop: 3 }}>{it.description}</div>
                 <div className="mono" style={{ fontSize: 11.5, color: 'var(--amber)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}><Icon name="coin" size={11} /> {it.price} Om</div>
