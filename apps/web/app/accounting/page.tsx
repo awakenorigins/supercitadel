@@ -1,4 +1,5 @@
 'use client';
+// R2 redesign: .tabs + .dt data tables + bar chart SVG thuần lãi lỗ. Data/endpoint GIỮ NGUYÊN V7A P4.
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Shell } from '../../components/Shell';
@@ -12,8 +13,38 @@ interface PL { totalIncome: number; totalExpense: number; netProfit: number; inc
 
 const today = () => new Date().toISOString().slice(0, 10);
 const vnd = (n: number | string) => Number(n).toLocaleString('vi-VN');
-const inputSt = { padding: '11px 12px', borderRadius: 12, border: '1.5px solid var(--bd)', background: 'var(--s1)', color: 'var(--txt)', fontSize: 13, outline: 'none' } as const;
 const STATUS_VN: Record<string, string> = { unpaid: 'Chưa thu', partly_paid: 'Thu 1 phần', paid: 'Đã tất toán', cancelled: 'Đã hủy' };
+const STATUS_BDG: Record<string, string> = { unpaid: 'amber', partly_paid: 'sky', paid: 'jade', cancelled: 'mut' };
+
+/** Bar chart SVG thuần — doanh thu vs chi phí theo hạng mục (lãi lỗ tháng). */
+function PLBarChart({ pl }: { pl: PL }) {
+  const rows = [
+    ...pl.income.map((r) => ({ ...r, kind: 'thu' as const })),
+    ...pl.expense.map((r) => ({ ...r, kind: 'chi' as const })),
+  ];
+  if (!rows.length) return null;
+  const max = Math.max(...rows.map((r) => r.amount), 1);
+  const BH = 20, GAP = 10, LBL = 12;
+  const H = rows.length * (BH + GAP + LBL) + 4;
+  return (
+    <svg viewBox={`0 0 320 ${H}`} width="100%" role="img" aria-label="Biểu đồ lãi lỗ theo hạng mục" style={{ display: 'block' }}>
+      {rows.map((r, i) => {
+        const y = i * (BH + GAP + LBL);
+        const w = Math.max(4, (r.amount / max) * 318);
+        const col = r.kind === 'thu' ? 'var(--jade)' : 'var(--amber)';
+        return (
+          <g key={r.kind + r.name}>
+            <text x="0" y={y + 10} fontSize="10" fill="var(--mut)" fontFamily="var(--fm)">{r.kind === 'thu' ? '+' : '−'} {r.name}</text>
+            <rect x="0" y={y + LBL + 2} width="318" height={BH} rx="5" fill="var(--s2)" />
+            <rect x="0" y={y + LBL + 2} width={w} height={BH} rx="5" fill={col} opacity=".82" />
+            <text x={w > 240 ? w - 6 : w + 6} y={y + LBL + 16} fontSize="10.5" fontWeight="700"
+              fill={w > 240 ? '#04231f' : col} textAnchor={w > 240 ? 'end' : 'start'} fontFamily="var(--fm)">{vnd(r.amount)}</text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
 
 export default function AccountingPage() {
   const router = useRouter();
@@ -79,7 +110,7 @@ export default function AccountingPage() {
     } catch (e: any) { setMsg({ t: e.message, ok: false }); }
   }
 
-  // ── Excel connect (V7A P4) ──
+  // ── Excel connect (V7A P4) — logic GIỮ NGUYÊN ──
   const [xlsOpen, setXlsOpen] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importRes, setImportRes] = useState<{ created: number; errors: string[] } | null>(null);
@@ -119,27 +150,27 @@ export default function AccountingPage() {
 
   const tabs = [['quy', 'Thu Chi'], ['congno', 'Công nợ'], ['baocao', 'Báo cáo']] as const;
   return (
-    <Shell>
+    <Shell wide>
       <div className="scroll">
         <div className="pg-h"><div className="k">Tài chính · fork ERPNext Accounts</div><h1>Kế Toán</h1></div>
         {locked ? <ModuleLocked name="Kế Toán" /> : (
           <>
-            <div style={{ display: 'flex', gap: 7, padding: '13px 20px 0' }}>
+            <div className="tabs">
               {tabs.map(([k, label]) => (
-                <button key={k} onClick={() => setTab(k)} style={{ flex: 1, padding: '9px 0', borderRadius: 12, fontSize: 12.5, fontWeight: 700, border: '1px solid', borderColor: tab === k ? 'rgba(52,211,184,.4)' : 'var(--bd)', background: tab === k ? 'var(--jade-soft)' : 'var(--s1)', color: tab === k ? 'var(--jade)' : 'var(--dim)' }}>{label}</button>
+                <button key={k} onClick={() => setTab(k)} className={`tab ${tab === k ? 'on' : ''}`}>{label}</button>
               ))}
             </div>
             {msg && <div className="card" style={{ margin: '11px 20px 0', padding: '10px 13px', fontSize: 12.5, color: msg.ok ? 'var(--jade)' : 'var(--amber)', borderColor: msg.ok ? 'rgba(52,211,184,.3)' : 'rgba(232,179,102,.35)' }}>{msg.t}</div>}
 
             {/* Excel connect: xuất 4 báo cáo + nhập hóa đơn (V7A P4 — G7) */}
             <div style={{ margin: '11px 20px 0', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7, position: 'relative' }}>
-              <button onClick={() => setXlsOpen(!xlsOpen)} style={{ padding: '9px 0', borderRadius: 11, fontWeight: 700, fontSize: 12, border: '1px solid var(--bd)', background: 'var(--s1)', color: 'var(--dim)' }}>⤓ Xuất Excel</button>
-              <label style={{ padding: '9px 0', borderRadius: 11, fontWeight: 700, fontSize: 12, border: '1px solid var(--bd)', background: 'var(--s1)', color: 'var(--dim)', textAlign: 'center', cursor: 'pointer', opacity: importing ? .5 : 1 }}>
+              <button onClick={() => setXlsOpen(!xlsOpen)} className="tab" style={{ padding: '9px 0' }}>⤓ Xuất Excel</button>
+              <label className="tab" style={{ padding: '9px 0', textAlign: 'center', cursor: 'pointer', opacity: importing ? .5 : 1 }}>
                 {importing ? 'Đang nhập…' : '⤒ Nhập hóa đơn từ Excel'}
                 <input type="file" accept=".xlsx" style={{ display: 'none' }} disabled={importing} onChange={(e) => { const f = e.target.files?.[0]; if (f) importXlsx(f); e.target.value = ''; }} />
               </label>
               {xlsOpen && (
-                <div className="card" style={{ position: 'absolute', top: 42, left: 0, right: '50%', zIndex: 5, padding: 6, borderRadius: 13 }}>
+                <div className="card scale-in" style={{ position: 'absolute', top: 42, left: 0, width: 'min(240px, 50%)', zIndex: 5, padding: 6, borderRadius: 13, boxShadow: 'var(--sh-3)' }}>
                   {EXPORTS.map(([kind, label, fn]) => (
                     <button key={kind} onClick={() => downloadXlsx(kind, fn)} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '9px 11px', borderRadius: 9, border: 'none', background: 'transparent', color: 'var(--txt)', fontSize: 12.5, fontWeight: 600 }}>{label} (.xlsx)</button>
                   ))}
@@ -161,33 +192,42 @@ export default function AccountingPage() {
 
             {tab === 'quy' && (
               <>
-                <div style={{ margin: '13px 20px 0', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9 }}>
-                  <div className="card" style={{ padding: 13, borderRadius: 14 }}><div className="mono" style={{ fontWeight: 700, fontSize: 17, color: 'var(--jade)' }}>{cash === null ? '—' : vnd(cash)}</div><div style={{ fontSize: 10.5, color: 'var(--mut)', marginTop: 2 }}>111 · Tiền mặt (₫)</div></div>
-                  <div className="card" style={{ padding: 13, borderRadius: 14 }}><div className="mono" style={{ fontWeight: 700, fontSize: 17, color: 'var(--sky)' }}>{bank === null ? '—' : vnd(bank)}</div><div style={{ fontSize: 10.5, color: 'var(--mut)', marginTop: 2 }}>112 · Ngân hàng (₫)</div></div>
+                <div className="stat-row c2">
+                  <div className="stat"><div className="sv" style={{ color: 'var(--jade)' }}>{cash === null ? '—' : vnd(cash)}</div><div className="sl">111 · Tiền mặt (₫)</div></div>
+                  <div className="stat"><div className="sv" style={{ color: 'var(--sky)' }}>{bank === null ? '—' : vnd(bank)}</div><div className="sl">112 · Ngân hàng (₫)</div></div>
                 </div>
                 <div style={{ margin: '13px 20px 0', display: 'grid', gap: 7 }}>
                   <div style={{ display: 'flex', gap: 7 }}>
-                    <button onClick={() => setPType('receive')} style={{ flex: 1, padding: '9px 0', borderRadius: 11, fontWeight: 700, fontSize: 12, border: '1px solid', borderColor: pType === 'receive' ? 'rgba(52,211,184,.4)' : 'var(--bd)', background: pType === 'receive' ? 'var(--jade-soft)' : 'var(--s1)', color: pType === 'receive' ? 'var(--jade)' : 'var(--dim)' }}>PHIẾU THU</button>
-                    <button onClick={() => setPType('pay')} style={{ flex: 1, padding: '9px 0', borderRadius: 11, fontWeight: 700, fontSize: 12, border: '1px solid', borderColor: pType === 'pay' ? 'rgba(232,179,102,.4)' : 'var(--bd)', background: pType === 'pay' ? 'var(--amber-soft)' : 'var(--s1)', color: pType === 'pay' ? 'var(--amber)' : 'var(--dim)' }}>PHIẾU CHI</button>
+                    <button onClick={() => setPType('receive')} className={`tab ${pType === 'receive' ? 'on' : ''}`}>PHIẾU THU</button>
+                    <button onClick={() => setPType('pay')} className={`tab ${pType === 'pay' ? 'on warm' : ''}`}>PHIẾU CHI</button>
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: 7 }}>
-                    <input value={pParty} onChange={(e) => setPParty(e.target.value)} placeholder="Đối tượng (vd: Tiền điện)" style={inputSt} />
-                    <input value={pAmt} onChange={(e) => setPAmt(e.target.value)} placeholder="Số tiền ₫" inputMode="numeric" style={inputSt} />
+                    <input value={pParty} onChange={(e) => setPParty(e.target.value)} placeholder="Đối tượng (vd: Tiền điện)" className="inp" />
+                    <input value={pAmt} onChange={(e) => setPAmt(e.target.value)} placeholder="Số tiền ₫" inputMode="numeric" className="inp" />
                   </div>
-                  <input value={pNote} onChange={(e) => setPNote(e.target.value)} placeholder="Ghi chú (tuỳ chọn)" style={inputSt} />
+                  <input value={pNote} onChange={(e) => setPNote(e.target.value)} placeholder="Ghi chú (tuỳ chọn)" className="inp" />
                   <button onClick={quickPay} className="btn-p" style={{ opacity: pParty.trim() && pAmt ? 1 : .5 }}>Ghi sổ ({pType === 'pay' ? 'Nợ 642 / Có 111' : 'Nợ 111 / Có 511'})</button>
                 </div>
-                <div style={{ padding: '14px 20px 0', fontSize: 12.5, fontWeight: 700, color: 'var(--dim)' }}>Phiếu gần đây</div>
-                <div style={{ padding: '8px 20px 0' }}>
-                  {pays?.length === 0 && <p className="mut" style={{ padding: 8, fontSize: 12.5 }}>Chưa có phiếu thu/chi.</p>}
-                  {pays?.slice(0, 8).map((p) => (
-                    <div key={p.id} className="card" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 13px', borderRadius: 13, marginBottom: 7, opacity: p.status === 'cancelled' ? .5 : 1 }}>
-                      <div style={{ width: 32, height: 32, borderRadius: 10, display: 'grid', placeItems: 'center', background: p.paymentType === 'receive' ? 'var(--jade-soft)' : 'var(--amber-soft)', color: p.paymentType === 'receive' ? 'var(--jade)' : 'var(--amber)', fontWeight: 800, fontSize: 14 }}>{p.paymentType === 'receive' ? '+' : '−'}</div>
-                      <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 600 }}>{p.partyName}</div><div className="mono" style={{ fontSize: 10, color: 'var(--mut)' }}>{p.postingDate}</div></div>
-                      <span className="mono" style={{ fontWeight: 700, fontSize: 13.5, color: p.paymentType === 'receive' ? 'var(--jade)' : 'var(--amber)' }}>{vnd(p.amount)}₫</span>
-                    </div>
-                  ))}
-                </div>
+                <div className="sect">Phiếu gần đây</div>
+                {pays === null && <div className="skel" style={{ height: 120, margin: '10px 20px 0', borderRadius: 16 }} />}
+                {pays?.length === 0 && <p className="mut" style={{ padding: '12px 22px', fontSize: 12.5 }}>Chưa có phiếu thu/chi.</p>}
+                {pays && pays.length > 0 && (
+                  <div className="dt-wrap fade-up">
+                    <table className="dt">
+                      <thead><tr><th>Loại</th><th>Đối tượng</th><th>Ngày</th><th className="num">Số tiền (₫)</th></tr></thead>
+                      <tbody>
+                        {pays.slice(0, 10).map((p) => (
+                          <tr key={p.id} style={{ opacity: p.status === 'cancelled' ? .5 : 1 }}>
+                            <td><span className={`bdg-s ${p.paymentType === 'receive' ? 'jade' : 'amber'}`}>{p.paymentType === 'receive' ? 'THU' : 'CHI'}</span></td>
+                            <td style={{ fontWeight: 600 }}>{p.partyName}</td>
+                            <td className="mono" style={{ color: 'var(--mut)', fontSize: 11 }}>{p.postingDate}</td>
+                            <td className="num" style={{ fontWeight: 700, color: p.paymentType === 'receive' ? 'var(--jade)' : 'var(--amber)' }}>{p.paymentType === 'receive' ? '+' : '−'}{vnd(p.amount)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </>
             )}
 
@@ -195,56 +235,62 @@ export default function AccountingPage() {
               <>
                 <div style={{ margin: '13px 20px 0', display: 'grid', gap: 7 }}>
                   <div style={{ display: 'flex', gap: 7 }}>
-                    <button onClick={() => setIType('sales')} style={{ flex: 1, padding: '9px 0', borderRadius: 11, fontWeight: 700, fontSize: 12, border: '1px solid', borderColor: iType === 'sales' ? 'rgba(52,211,184,.4)' : 'var(--bd)', background: iType === 'sales' ? 'var(--jade-soft)' : 'var(--s1)', color: iType === 'sales' ? 'var(--jade)' : 'var(--dim)' }}>HĐ BÁN (phải thu)</button>
-                    <button onClick={() => setIType('purchase')} style={{ flex: 1, padding: '9px 0', borderRadius: 11, fontWeight: 700, fontSize: 12, border: '1px solid', borderColor: iType === 'purchase' ? 'rgba(152,137,232,.4)' : 'var(--bd)', background: iType === 'purchase' ? 'rgba(152,137,232,.12)' : 'var(--s1)', color: iType === 'purchase' ? 'var(--violet)' : 'var(--dim)' }}>HĐ MUA (phải trả)</button>
+                    <button onClick={() => setIType('sales')} className={`tab ${iType === 'sales' ? 'on' : ''}`}>HĐ BÁN (phải thu)</button>
+                    <button onClick={() => setIType('purchase')} className={`tab ${iType === 'purchase' ? 'on cool' : ''}`}>HĐ MUA (phải trả)</button>
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: 7 }}>
-                    <input value={iParty} onChange={(e) => setIParty(e.target.value)} placeholder={iType === 'sales' ? 'Tên khách hàng' : 'Tên nhà cung cấp'} style={inputSt} />
-                    <input value={iAmt} onChange={(e) => setIAmt(e.target.value)} placeholder="Tổng ₫" inputMode="numeric" style={inputSt} />
+                    <input value={iParty} onChange={(e) => setIParty(e.target.value)} placeholder={iType === 'sales' ? 'Tên khách hàng' : 'Tên nhà cung cấp'} className="inp" />
+                    <input value={iAmt} onChange={(e) => setIAmt(e.target.value)} placeholder="Tổng ₫" inputMode="numeric" className="inp" />
                   </div>
-                  <input value={iDesc} onChange={(e) => setIDesc(e.target.value)} placeholder="Nội dung (vd: Tiệc 20 người)" style={inputSt} />
+                  <input value={iDesc} onChange={(e) => setIDesc(e.target.value)} placeholder="Nội dung (vd: Tiệc 20 người)" className="inp" />
                   <button onClick={addInvoice} className="btn-p" style={{ opacity: iParty.trim() && iAmt ? 1 : .5 }}>Tạo hóa đơn (ghi công nợ)</button>
                 </div>
-                <div style={{ padding: '14px 20px 0' }}>
-                  {invs?.length === 0 && <p className="mut" style={{ padding: 8, fontSize: 12.5 }}>Chưa có hóa đơn.</p>}
-                  {invs?.map((i) => (
-                    <div key={i.id} className="card" style={{ padding: 13, borderRadius: 14, marginBottom: 9, opacity: i.status === 'cancelled' ? .5 : 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-                        <span className="mono" style={{ fontSize: 9, padding: '2px 7px', borderRadius: 6, background: i.invoiceType === 'sales' ? 'var(--jade-soft)' : 'rgba(152,137,232,.12)', color: i.invoiceType === 'sales' ? 'var(--jade)' : 'var(--violet)' }}>{i.invoiceType === 'sales' ? 'BÁN' : 'MUA'}</span>
-                        <b style={{ fontSize: 13.5, flex: 1 }}>{i.partyName}</b>
-                        <span className="mono" style={{ fontSize: 9.5, color: 'var(--mut)' }}>{STATUS_VN[i.status]}</span>
-                      </div>
-                      <div className="mono" style={{ fontSize: 11.5, marginTop: 6, color: 'var(--dim)' }}>Tổng {vnd(i.grandTotal)}₫ · còn nợ <b style={{ color: Number(i.outstanding) > 0 ? 'var(--amber)' : 'var(--jade)' }}>{vnd(i.outstanding)}₫</b></div>
-                      {Number(i.outstanding) > 0 && i.status !== 'cancelled' && (
-                        <button onClick={() => settle(i)} style={{ marginTop: 9, width: '100%', padding: '8px 0', borderRadius: 11, border: '1px solid rgba(52,211,184,.3)', background: 'var(--jade-soft)', color: 'var(--jade)', fontWeight: 700, fontSize: 12 }}>{i.invoiceType === 'sales' ? 'Thu tiền' : 'Trả tiền'} (knock-off)</button>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                {invs === null && <div className="skel" style={{ height: 120, margin: '14px 20px 0', borderRadius: 16 }} />}
+                {invs?.length === 0 && <p className="mut" style={{ padding: '14px 22px', fontSize: 12.5 }}>Chưa có hóa đơn.</p>}
+                {invs && invs.length > 0 && (
+                  <div className="dt-wrap fade-up" style={{ marginTop: 14 }}>
+                    <table className="dt">
+                      <thead><tr><th>Loại</th><th>Đối tác</th><th>Trạng thái</th><th className="num">Tổng (₫)</th><th className="num">Còn nợ (₫)</th><th></th></tr></thead>
+                      <tbody>
+                        {invs.map((i) => (
+                          <tr key={i.id} style={{ opacity: i.status === 'cancelled' ? .5 : 1 }}>
+                            <td><span className={`bdg-s ${i.invoiceType === 'sales' ? 'jade' : 'violet'}`}>{i.invoiceType === 'sales' ? 'BÁN' : 'MUA'}</span></td>
+                            <td style={{ fontWeight: 600 }}>{i.partyName}</td>
+                            <td><span className={`bdg-s ${STATUS_BDG[i.status] ?? 'mut'}`}>{STATUS_VN[i.status] ?? i.status}</span></td>
+                            <td className="num">{vnd(i.grandTotal)}</td>
+                            <td className="num" style={{ fontWeight: 700, color: Number(i.outstanding) > 0 ? 'var(--amber)' : 'var(--jade)' }}>{vnd(i.outstanding)}</td>
+                            <td>
+                              {Number(i.outstanding) > 0 && i.status !== 'cancelled' && (
+                                <button onClick={() => settle(i)} className="bdg-s jade" style={{ border: '1px solid rgba(52,211,184,.3)', cursor: 'pointer', padding: '5px 10px' }}>{i.invoiceType === 'sales' ? 'Thu tiền' : 'Trả tiền'}</button>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </>
             )}
 
             {tab === 'baocao' && (
-              <div style={{ padding: '13px 20px 0' }}>
-                <div className="card" style={{ padding: 15, borderRadius: 16 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <b className="fd" style={{ fontSize: 14 }}>Lãi lỗ tháng này</b>
-                    {tbOk !== null && <span className="mono" style={{ marginLeft: 'auto', fontSize: 9, padding: '2px 8px', borderRadius: 6, background: tbOk ? 'var(--jade-soft)' : 'rgba(240,98,116,.12)', color: tbOk ? 'var(--jade)' : 'var(--rose)' }}>{tbOk ? 'SỔ CÂN' : 'SỔ LỆCH'}</span>}
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginTop: 12 }}>
-                    <div><div className="mono" style={{ fontWeight: 700, fontSize: 15, color: 'var(--jade)' }}>{pl ? vnd(pl.totalIncome) : '—'}</div><div style={{ fontSize: 9.5, color: 'var(--mut)' }}>Doanh thu</div></div>
-                    <div><div className="mono" style={{ fontWeight: 700, fontSize: 15, color: 'var(--amber)' }}>{pl ? vnd(pl.totalExpense) : '—'}</div><div style={{ fontSize: 9.5, color: 'var(--mut)' }}>Chi phí</div></div>
-                    <div><div className="mono" style={{ fontWeight: 700, fontSize: 15, color: pl && pl.netProfit >= 0 ? 'var(--jade)' : 'var(--rose)' }}>{pl ? vnd(pl.netProfit) : '—'}</div><div style={{ fontSize: 9.5, color: 'var(--mut)' }}>Lãi ròng</div></div>
-                  </div>
+              <>
+                <div className="stat-row c3">
+                  <div className="stat"><div className="sv" style={{ color: 'var(--jade)' }}>{pl ? vnd(pl.totalIncome) : '—'}</div><div className="sl">Doanh thu tháng (₫)</div></div>
+                  <div className="stat"><div className="sv" style={{ color: 'var(--amber)' }}>{pl ? vnd(pl.totalExpense) : '—'}</div><div className="sl">Chi phí tháng (₫)</div></div>
+                  <div className="stat"><div className="sv" style={{ color: pl && pl.netProfit >= 0 ? 'var(--jade)' : 'var(--rose)' }}>{pl ? vnd(pl.netProfit) : '—'}</div><div className="sl">Lãi ròng (₫)</div></div>
                 </div>
-                {pl && (pl.income.length > 0 || pl.expense.length > 0) && (
-                  <div className="card" style={{ padding: 15, borderRadius: 16, marginTop: 10 }}>
-                    {pl.income.map((r) => <div key={r.name} style={{ display: 'flex', fontSize: 12, padding: '5px 0', borderBottom: '1px solid var(--line)' }}><span style={{ color: 'var(--dim)' }}>{r.name}</span><span className="mono" style={{ marginLeft: 'auto', color: 'var(--jade)' }}>+{vnd(r.amount)}</span></div>)}
-                    {pl.expense.map((r) => <div key={r.name} style={{ display: 'flex', fontSize: 12, padding: '5px 0', borderBottom: '1px solid var(--line)' }}><span style={{ color: 'var(--dim)' }}>{r.name}</span><span className="mono" style={{ marginLeft: 'auto', color: 'var(--amber)' }}>−{vnd(r.amount)}</span></div>)}
+                <div className="card fade-up" style={{ margin: '11px 20px 0', padding: 16, borderRadius: 16 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                    <b className="fd" style={{ fontSize: 14 }}>Lãi lỗ tháng này</b>
+                    {tbOk !== null && <span className={`bdg-s ${tbOk ? 'jade' : 'rose'}`} style={{ marginLeft: 'auto' }}>{tbOk ? 'SỔ CÂN' : 'SỔ LỆCH'}</span>}
                   </div>
-                )}
-                <p className="mono" style={{ padding: '12px 2px', fontSize: 10, color: 'var(--faint)' }}>Tính trực tiếp từ sổ cái GL (Σ Nợ = Σ Có). Sổ quỹ, công nợ, P&L cùng một nguồn sự thật.</p>
-              </div>
+                  {pl && (pl.income.length > 0 || pl.expense.length > 0)
+                    ? <PLBarChart pl={pl} />
+                    : <p className="mut" style={{ fontSize: 12.5, padding: '6px 0' }}>Chưa có bút toán trong tháng — ghi thu/chi hoặc tạo hóa đơn để thấy biểu đồ.</p>}
+                </div>
+                <p className="mono" style={{ padding: '12px 22px', fontSize: 10, color: 'var(--faint)' }}>Tính trực tiếp từ sổ cái GL (Σ Nợ = Σ Có). Sổ quỹ, công nợ, P&L cùng một nguồn sự thật.</p>
+              </>
             )}
           </>
         )}
