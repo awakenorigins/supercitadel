@@ -242,12 +242,24 @@ function TieuTamSheet({ open, onClose }: { open: boolean; onClose: () => void })
     setStreaming(true);
     const s = getSession();
     try {
-      const res = await fetch(`${API}/api/v1/tieu-tam/chat/stream`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${s?.jwt ?? ''}` },
-        body: JSON.stringify({ message: q, userName: s?.user.displayName ?? undefined }),
-      });
-      if (!res.ok || !res.body) throw new Error('stream fail');
+      // retry 1 lần khi lỗi mạng thoáng qua — 401/403 thì báo hết phiên ngay, không retry
+      let res: Response | null = null;
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          res = await fetch(`${API}/api/v1/tieu-tam/chat/stream`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${s?.jwt ?? ''}` },
+            body: JSON.stringify({ message: q, userName: s?.user.displayName ?? undefined }),
+          });
+        } catch { res = null; }
+        if (res && (res.ok || res.status === 401 || res.status === 403)) break;
+        if (attempt === 0) await new Promise((r) => setTimeout(r, 700));
+      }
+      if (res && (res.status === 401 || res.status === 403)) {
+        setMsgs((m) => [...m.slice(0, -1), { who: 'ai', text: 'Phiên đăng nhập đã hết hạn — đăng nhập lại giúp em nha (mở trang đăng nhập, dán token của bạn). 🔑' }]);
+        return;
+      }
+      if (!res || !res.ok || !res.body) throw new Error('stream fail');
       const reader = res.body.getReader();
       const dec = new TextDecoder();
       let buf = '';
@@ -270,7 +282,7 @@ function TieuTamSheet({ open, onClose }: { open: boolean; onClose: () => void })
         }
       }
     } catch {
-      setMsgs((m) => [...m.slice(0, -1), { who: 'ai', text: 'Không kết nối được. Kiểm tra đăng nhập / API.' }]);
+      setMsgs((m) => [...m.slice(0, -1), { who: 'ai', text: 'Mạng đang chập chờn, em chưa nhận được câu này — bấm gửi lại giúp em nha. Các lệnh nghiệp vụ (tạo phiếu, thêm khách, nhập kho…) vẫn chạy bình thường. 📡', suggestions: [q] }]);
     } finally { setStreaming(false); }
   }
 

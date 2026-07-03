@@ -81,6 +81,38 @@ export class StubAdapterB implements EngineAdapter {
 // ─── Live adapters — key từ env, KHÔNG hardcode ─────────────────
 // Render WorkProfile → system prompt tại adapter (persona là data, render là việc của động cơ).
 
+/** Ráp response SSE (chat.completion.chunk) thành một completion message — phòng khi proxy lờ stream:false. */
+function parseSseCompletion(raw: string): any {
+  let text = '';
+  const toolCalls: any[] = [];
+  let finish: string | null = null;
+  for (const line of raw.split('\n')) {
+    const s = line.trim();
+    if (!s.startsWith('data:')) continue;
+    const payload = s.slice(5).trim();
+    if (!payload || payload === '[DONE]') continue;
+    try {
+      const chunk = JSON.parse(payload);
+      const choice = chunk.choices?.[0];
+      const delta = choice?.delta ?? choice?.message ?? {};
+      if (typeof delta.content === 'string') text += delta.content;
+      if (Array.isArray(delta.tool_calls)) {
+        for (const tc of delta.tool_calls) {
+          const i = tc.index ?? 0;
+          if (!toolCalls[i]) toolCalls[i] = { id: tc.id ?? `call_${i}`, type: 'function', function: { name: '', arguments: '' } };
+          if (tc.id) toolCalls[i].id = tc.id;
+          if (tc.function?.name) toolCalls[i].function.name += tc.function.name;
+          if (tc.function?.arguments) toolCalls[i].function.arguments += tc.function.arguments;
+        }
+      }
+      if (choice?.finish_reason) finish = choice.finish_reason;
+    } catch { /* chunk rác — bỏ qua */ }
+  }
+  const message: any = { role: 'assistant', content: text };
+  if (toolCalls.length) message.tool_calls = toolCalls.filter(Boolean);
+  return { choices: [{ message, finish_reason: finish ?? 'stop' }] };
+}
+
 function renderSystemPrompt(profile: WorkProfile): string {
   const parts = [renderPersonaText(profile.persona)];
   parts.push('SUPERCITADEL: Tiểu Tâm là thư ký điều hành của tổ chức. Khi người dùng yêu cầu tạo/sửa/ghi nhận nghiệp vụ thật, hãy dùng tools được cấp để thao tác dữ liệu thật thay người dùng. Luôn xác nhận bằng số liệu thật, mã chứng từ/tên bản ghi nếu có. Nếu module chưa bật, nói rõ cần bật module trong Cửa hàng Module.');
@@ -113,11 +145,14 @@ export class OpenAiAdapter implements EngineAdapter {
         messages: [{ role: 'system', content: renderSystemPrompt(profile) }, ...messages],
         temperature: 0.7,
         max_tokens: 2048,
+        stream: false, // BẮT BUỘC — proxy nội bộ mặc định stream SSE nếu thiếu → res.json() nổ
         ...(opts?.tools?.length ? { tools: opts.tools, tool_choice: opts.toolChoice ?? 'auto' } : {}),
       }),
     });
     if (!res.ok) throw new Error(`OpenAI ${res.status}: ${(await res.text()).slice(0, 200)}`);
-    const data = (await res.json()) as any;
+    const raw = await res.text();
+    // Phòng hờ: proxy vẫn trả SSE (content-type event-stream hoặc body bắt đầu "data:") → ráp chunks lại
+    const data = raw.trimStart().startsWith('data:') ? parseSseCompletion(raw) : (JSON.parse(raw) as any);
     const msg = data.choices?.[0]?.message ?? {};
     return { text: msg.content ?? '', mode: 'live', rawMessage: msg };
   }
