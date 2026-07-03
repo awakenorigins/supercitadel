@@ -696,3 +696,9 @@ button { transition: transform var(--dur-1); }
 .att-it .at-t b { display: block; font-size: 13px; font-weight: 600; }
 .att-it .at-t span { display: block; font-size: 11px; color: var(--mut); margin-top: 2px; }
 .att-it .at-n { font-family: var(--fm); font-weight: 800; font-size: 17px; flex-shrink: 0; }
+
+/* ═══════════════ R5: HR row flash · confirm popup · confetti · secretary widget · tutorial ═══════════════ */
+/* Phase A — flash xanh trên row khi check-in/out thành công */
+.row-flash { animation: rowFlash 1.25s ease-out; }
+@keyframes rowFlash { 0% { background: rgba(52,211,184,.22); } 100% { background: transparent; } }
+@media (prefers-reduced-motion: reduce) { .row-flash { animation: none; } }

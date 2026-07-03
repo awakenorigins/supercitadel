@@ -79,7 +79,7 @@ export async function checkOut(db: DB, orgId: string, d: { employeeId: string; a
   if (existing.checkOut) throw Errors.conflict('Đã check-out rồi');
   const hours = Math.max(0, (now.getTime() - new Date(existing.checkIn).getTime()) / 3_600_000);
   const [row] = await db.update(hrAttendance)
-    .set({ checkOut: now, workingHours: hours.toFixed(2) })
+    .set({ checkOut: now, workingHours: hours.toFixed(2), status: 'checked_out' })
     .where(eq(hrAttendance.id, existing.id)).returning();
   return row;
 }

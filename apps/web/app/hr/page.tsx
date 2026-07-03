@@ -65,9 +65,14 @@ export default function HrPage() {
     await api('/api/v1/hr/employees', { method: 'POST', body: JSON.stringify({ fullName: empNm, roleTitle: empRole || undefined }) }).catch(() => {});
     setEmpNm(''); setEmpRole(''); setSheet(''); loadAll();
   }
+  const [flashId, setFlashId] = useState('');
   async function doCheck(empId: string, dir: 'in' | 'out') {
-    try { await api(`/api/v1/hr/attendance/check-${dir}`, { method: 'POST', body: JSON.stringify({ employeeId: empId }) }); setMsg(''); }
-    catch (e: any) { setMsg(e.message); }
+    try {
+      await api(`/api/v1/hr/attendance/check-${dir}`, { method: 'POST', body: JSON.stringify({ employeeId: empId }) });
+      setMsg('');
+      setFlashId(empId);
+      setTimeout(() => setFlashId(''), 1300);
+    } catch (e: any) { setMsg(e.message); }
     loadAll();
   }
   const attOf = (empId: string) => atts?.find((a) => a.employeeId === empId);
@@ -88,8 +93,8 @@ export default function HrPage() {
     loadAll();
   }
 
-  const STATUS_VN: Record<string, string> = { present: 'Có mặt', on_leave: 'Nghỉ phép', absent: 'Vắng', half_day: 'Nửa ngày', open: 'Chờ duyệt', approved: 'Đã duyệt', rejected: 'Từ chối' };
-  const ATT_BDG: Record<string, string> = { present: 'jade', on_leave: 'violet', absent: 'rose', half_day: 'sky' };
+  const STATUS_VN: Record<string, string> = { present: 'Có mặt', checked_out: 'Đã về', on_leave: 'Nghỉ phép', absent: 'Vắng', half_day: 'Nửa ngày', open: 'Chờ duyệt', approved: 'Đã duyệt', rejected: 'Từ chối' };
+  const ATT_BDG: Record<string, string> = { present: 'jade', checked_out: 'sky', on_leave: 'violet', absent: 'rose', half_day: 'sky' };
   const LV_BDG: Record<string, string> = { open: 'amber', approved: 'jade', rejected: 'rose' };
   const tabs = [['cong', 'Chấm công'], ['ca', 'Ca làm'], ['phep', 'Nghỉ phép']] as const;
   const presentCount = atts?.filter((a) => a.checkIn).length ?? 0;
@@ -130,7 +135,7 @@ export default function HrPage() {
                         {emps.map((e, i) => {
                           const a = attOf(e.id);
                           return (
-                            <tr key={e.id}>
+                            <tr key={e.id} className={flashId === e.id ? 'row-flash' : ''}>
                               <td style={{ fontWeight: 600 }}>
                                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 9 }}>
                                   <span className={`ava ${AVA[i % AVA.length]}`} style={{ width: 30, height: 30, borderRadius: 9, fontSize: 10 }}>{e.fullName.slice(0, 2)}</span>
@@ -239,7 +244,7 @@ export default function HrPage() {
               <div className="as-kpis">
                 <div className="as-kpi">
                   <div className="ii" style={{ background: 'var(--jade-soft)', color: 'var(--jade)' }}><Icon name="check" size={14} /></div>
-                  <div className="v" style={{ color: 'var(--jade)' }}>{atts ? presentCount : '—'}</div>
+                  <div className="v" style={{ color: 'var(--jade)' }}>{atts ? atts.filter((a) => a.checkIn && !a.checkOut).length : '—'}</div>
                   <div className="l">Đang làm việc</div>
                 </div>
                 <div className="as-kpi">

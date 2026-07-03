@@ -39,6 +39,7 @@ await expectErr(() => checkIn(db, ORG, { employeeId: lan.id, at: new Date(lateTi
 const outTime = new Date(lateTime.getTime() + 3.5 * 3_600_000);
 const att2 = await checkOut(db, ORG, { employeeId: lan.id, at: outTime });
 assert(Number(att2.workingHours) === 3.5, `check-out → working_hours 3.5 (=${att2.workingHours})`);
+assert(att2.status === 'checked_out', `check-out → status 'checked_out' (=${att2.status})`);
 await expectErr(() => checkOut(db, ORG, { employeeId: lan.id, at: outTime }), 409, 'check-out lần 2 → 409');
 const board = await attendanceByDate(db, ORG, today);
 assert(board.length === 1 && board[0].employeeName === 'Lan Phạm', 'bảng chấm công hôm nay join tên');
