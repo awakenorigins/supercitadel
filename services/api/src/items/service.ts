@@ -30,24 +30,28 @@ export async function getCatalogItem(db: DB, code: string) {
 
 /**
  * Mua vật phẩm: trừ Om THẬT qua ledger (chặn thiếu tiền) + cộng vào kho — 1 transaction (hiến pháp #5).
- * Kho gộp theo (org, user, item_code): mua lại → qty + 1.
+ * Kho gộp theo (org, user, item_code): mua lại → qty cộng dồn.
+ * R5: hỗ trợ mua NHIỀU (qty 1..99) trong 1 giao dịch — trừ Om đúng tổng qty × giá.
  */
-export async function buyItem(db: DB, orgId: string, userId: string, code: string) {
+export async function buyItem(db: DB, orgId: string, userId: string, code: string, qty = 1) {
   const item = await getCatalogItem(db, code);
   if (!item) throw Errors.notFound('Vật phẩm không tồn tại hoặc đã ngừng bán');
+  const n = Math.floor(Number(qty));
+  if (!Number.isFinite(n) || n < 1 || n > 99) throw Errors.validation('Số lượng mua phải từ 1 đến 99', 'qty');
+  const total = item.price * n;
   return db.transaction(async (tx: DB) => {
-    // trừ Om thật — throw conflict "Không đủ Om (cần X, có Y)" nếu thiếu
-    const pay = await spend(tx, orgId, item.price, `Mua vật phẩm ${item.name}`, 'store');
+    // trừ Om thật ĐÚNG TỔNG — throw conflict "Không đủ Om (cần X, có Y)" nếu thiếu
+    const pay = await spend(tx, orgId, total, n > 1 ? `Mua ${n} × ${item.name}` : `Mua vật phẩm ${item.name}`, 'store');
     const [existing] = await tx.select().from(userItems)
       .where(and(eq(userItems.orgId, orgId), eq(userItems.userId, userId), eq(userItems.itemCode, code)));
     let owned;
     if (existing) {
-      [owned] = await tx.update(userItems).set({ qty: existing.qty + 1 })
+      [owned] = await tx.update(userItems).set({ qty: existing.qty + n })
         .where(and(eq(userItems.id, existing.id), eq(userItems.orgId, orgId))).returning();
     } else {
-      [owned] = await tx.insert(userItems).values({ orgId, userId, itemCode: code, qty: 1 }).returning();
+      [owned] = await tx.insert(userItems).values({ orgId, userId, itemCode: code, qty: n }).returning();
     }
-    return { item, owned, paidOm: item.price, balance: pay.balance };
+    return { item, owned, paidOm: total, qtyBought: n, balance: pay.balance };
   });
 }
 

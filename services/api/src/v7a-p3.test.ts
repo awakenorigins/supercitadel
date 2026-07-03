@@ -81,6 +81,24 @@ r = await appB.request('/inventory-items');
 d = await r.json() as any;
 assert(d.items.length === 0, 'tenant isolation: org B KHÔNG thấy đồ của org A');
 
+// ── 4b) R5: mua qty>1 trong 1 giao dịch — trừ Om đúng tổng, gộp kho đúng ──
+{
+  const balBefore = await getBalance(db, orgA.id);
+  r = await appA.request('/store/items/mochi/buy', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ qty: 3 }) });
+  d = await r.json() as any;
+  assert(r.status === 200 && d.qtyBought === 3 && d.paidOm === 90, 'R5 mua 3 × Mochi: paidOm = 90 (3×30)');
+  assert(await getBalance(db, orgA.id) === balBefore - 90, 'R5 mua qty 3: số dư trừ đúng tổng 90');
+  assert(d.qty === 5, 'R5 kho gộp mochi 2+3 = 5');
+  // qty không hợp lệ → 400 validation rõ ràng
+  r = await appA.request('/store/items/mochi/buy', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ qty: 0 }) });
+  assert(r.status === 400, 'R5 qty=0 → 400 validation');
+  r = await appA.request('/store/items/mochi/buy', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ qty: 100 }) });
+  assert(r.status === 400, 'R5 qty=100 → 400 validation (max 99)');
+  // trả kho về trạng thái cũ để các assert sau (qty 2→1) vẫn đúng
+  await db.update(userItems).set({ qty: 2 }).where(and(eq(userItems.orgId, orgA.id), eq(userItems.userId, userA.id), eq(userItems.itemCode, 'mochi')));
+  await topup(db, orgA.id, 90); // hoàn lại 90 Om để số dư khớp assert sau
+}
+
 // ── 5) Use item của người khác → 404 (tenant isolation qua use) ──
 r = await appB.request(`/inventory-items/${km.id}/use`, { method: 'POST' });
 assert(r.status === 404, 'org B use item của org A → 404');

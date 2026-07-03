@@ -28,6 +28,10 @@ export default function ModulesPage() {
   const [confirmOff, setConfirmOff] = useState('');           // id module đang hỏi "Tắt module này?"
   const [rentSheet, setRentSheet] = useState<Mod | null>(null); // sheet thuê/gia hạn
   const [rentDays, setRentDays] = useState(30);
+  // R5 Phase B: popup xác nhận mua vật phẩm + số lượng + hiệu ứng thành công
+  const [buySheet, setBuySheet] = useState<StoreItem | null>(null);
+  const [buyQty, setBuyQty] = useState(1);
+  const [justBought, setJustBought] = useState('');           // code vật phẩm vừa mua — nút ✓ + confetti
 
   const load = () => {
     api<{ modules: Mod[] }>('/api/v1/modules').then((d) => setMods(d.modules)).catch(() => setMods([]));
@@ -68,11 +72,18 @@ export default function ModulesPage() {
     finally { setBusy(''); }
   }
 
-  async function buyItem(it: StoreItem) {
+  // R5: xác nhận mua từ popup — gửi qty, hiệu ứng ✓ + confetti + ticker ví
+  async function confirmBuy() {
+    if (!buySheet) return;
+    const it = buySheet;
     setBusy(it.code); setMsg('');
     try {
-      const d = await api<any>(`/api/v1/store/items/${it.code}/buy`, { method: 'POST' });
-      setMsg(d.message ?? `Đã mua ${it.name}`);
+      const d = await api<any>(`/api/v1/store/items/${it.code}/buy`, { method: 'POST', body: JSON.stringify({ qty: buyQty }) });
+      setBuySheet(null);
+      setMsg(`Đã mua ${d.qtyBought > 1 ? `${d.qtyBought} × ` : ''}${it.name} (−${d.paidOm} Om)`);
+      setJustBought(it.code);
+      setTimeout(() => setJustBought(''), 1600);
+      if (typeof d.balance === 'number') setBal(d.balance);
       load();
     } catch (e: any) { setMsg(e.message); }
     finally { setBusy(''); }
@@ -197,15 +208,58 @@ export default function ModulesPage() {
                 <div style={{ fontSize: 11.5, color: 'var(--mut)', marginTop: 3 }}>{it.description}</div>
                 <div className="mono" style={{ fontSize: 11.5, color: 'var(--amber)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}><Icon name="coin" size={11} /> {it.price} Om</div>
               </div>
-              <button disabled={busy === it.code} onClick={() => buyItem(it)}
-                style={{ border: 'none', borderRadius: 11, padding: '9px 14px', fontWeight: 700, fontSize: 12, background: 'var(--amber)', color: '#2a1c08', opacity: busy === it.code ? .6 : 1 }}>
-                Mua
+              <button disabled={busy === it.code} onClick={() => { setBuySheet(it); setBuyQty(1); }}
+                style={{ position: 'relative', border: 'none', borderRadius: 11, padding: '9px 14px', fontWeight: 700, fontSize: 12, background: justBought === it.code ? 'var(--jade)' : 'var(--amber)', color: justBought === it.code ? '#04231f' : '#2a1c08', opacity: busy === it.code ? .6 : 1, transition: 'background .25s' }}>
+                {justBought === it.code ? <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Icon name="check" size={13} /> Đã mua</span> : 'Mua'}
+                {justBought === it.code && <span className="confetti-burst"><i /><i /><i /><i /><i /><i /><i /><i /></span>}
               </button>
             </div>
           ))}
         </div>
         <div style={{ height: 14 }} />
       </div>
+
+      {/* ── R5: popup xác nhận mua vật phẩm — stepper số lượng + tổng Om ── */}
+      {buySheet && (
+        <div className="sh-scrim" onClick={() => setBuySheet(null)}>
+          <div className="sh-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="sh-head">
+              <div className="sh-ico" style={{ background: 'var(--amber-soft)', color: 'var(--amber)' }}><Icon name={buySheet.icon ?? 'gift'} size={19} /></div>
+              <div>
+                <b className="fd" style={{ fontSize: 16 }}>Mua {buySheet.name}</b>
+                <div style={{ fontSize: 11.5, color: 'var(--mut)', marginTop: 2 }}>{ITEM_CAT_LABEL[buySheet.category] ?? buySheet.category} · {buySheet.price} Om/cái</div>
+              </div>
+              <button className="sh-x" onClick={() => setBuySheet(null)}><Icon name="x" size={14} /></button>
+            </div>
+            <p style={{ fontSize: 12.5, color: 'var(--mut)', margin: '12px 2px 0', lineHeight: 1.5 }}>{buySheet.description}</p>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16 }}>
+              <span style={{ fontSize: 13, fontWeight: 600 }}>Số lượng</span>
+              <div className="qty-step">
+                <button aria-label="Giảm" disabled={buyQty <= 1} onClick={() => setBuyQty((q) => Math.max(1, q - 1))}>−</button>
+                <span className="qty-n">{buyQty}</span>
+                <button aria-label="Tăng" disabled={buyQty >= 99} onClick={() => setBuyQty((q) => Math.min(99, q + 1))}>+</button>
+              </div>
+            </div>
+            <div className="card" style={{ marginTop: 14, padding: '12px 14px', display: 'flex', alignItems: 'center', background: 'var(--amber-soft)', borderColor: 'rgba(232,179,102,.25)' }}>
+              <span style={{ fontSize: 12.5, color: 'var(--mut)' }}>Tổng thanh toán</span>
+              <span className="mono" style={{ marginLeft: 'auto', fontSize: 16, fontWeight: 800, color: 'var(--amber)', display: 'flex', alignItems: 'center', gap: 5 }}>
+                <Icon name="coin" size={14} /> {(buyQty * buySheet.price).toLocaleString('vi')} Om
+              </span>
+            </div>
+            {bal !== null && buyQty * buySheet.price > bal && (
+              <div style={{ marginTop: 9, padding: '9px 12px', borderRadius: 11, background: 'rgba(236,106,133,.12)', color: 'var(--rose)', fontSize: 12 }}>Không đủ Om — số dư hiện có {bal.toLocaleString('vi')} Om</div>
+            )}
+            <div style={{ display: 'flex', gap: 9, marginTop: 14 }}>
+              <button onClick={() => setBuySheet(null)} style={{ flex: 1, borderRadius: 13, padding: '13px 0', fontWeight: 700, fontSize: 13.5, background: 'var(--s3)', border: '1px solid var(--bd)', color: 'var(--dim)' }}>Hủy</button>
+              <button className="btn-p" disabled={busy === buySheet.code || (bal !== null && buyQty * buySheet.price > bal)} onClick={confirmBuy}
+                style={{ flex: 2, opacity: busy === buySheet.code || (bal !== null && buyQty * buySheet.price > bal) ? .55 : 1 }}>
+                {busy === buySheet.code ? 'Đang mua…' : `Xác nhận mua · ${(buyQty * buySheet.price).toLocaleString('vi')} Om`}
+              </button>
+            </div>
+            {bal !== null && <div style={{ fontSize: 11, color: 'var(--mut)', textAlign: 'center', marginTop: 9 }}>Số dư ví: {bal.toLocaleString('vi')} Om</div>}
+          </div>
+        </div>
+      )}
 
       {/* ── sheet thuê/gia hạn module (pattern sh-scrim/sh-panel DS v2) ── */}
       {rentSheet && (

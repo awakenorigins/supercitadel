@@ -21,18 +21,21 @@ export function buildStoreItemRoutes(deps: { db: any; requireAuth: MiddlewareHan
   // Catalog vật phẩm đang bán
   r.get('/items', async (c) => c.json({ items: await listCatalog(deps.db) }));
 
-  // Mua — trừ Om thật, cộng kho, audit
+  // Mua — trừ Om thật (R5: body {qty} mua nhiều trong 1 giao dịch), cộng kho, audit
   r.post('/items/:code/buy', async (c) => {
     const code = c.req.param('code');
-    const res = await buyItem(deps.db, orgOf(c), userOf(c), code);
-    await deps.audit?.(c, { action: 'store.item_purchase', resource: 'item_catalog', resourceId: code, detail: { paidOm: res.paidOm, qty: res.owned.qty } });
+    const body = await c.req.json().catch(() => ({}));
+    const qty = body?.qty === undefined ? 1 : Number(body.qty);
+    const res = await buyItem(deps.db, orgOf(c), userOf(c), code, qty);
+    await deps.audit?.(c, { action: 'store.item_purchase', resource: 'item_catalog', resourceId: code, detail: { paidOm: res.paidOm, qtyBought: res.qtyBought, qty: res.owned.qty } });
     return c.json({
       ok: true,
       item: { code: res.item.code, name: res.item.name },
       paidOm: res.paidOm,
+      qtyBought: res.qtyBought,
       balance: res.balance,
       qty: res.owned.qty,
-      message: `Đã mua ${res.item.name} (−${res.paidOm} Om · còn ${res.balance.toLocaleString('vi')}) — vào Kho vật phẩm để dùng nha!`,
+      message: `Đã mua ${res.qtyBought > 1 ? `${res.qtyBought} × ` : ''}${res.item.name} (−${res.paidOm} Om · còn ${res.balance.toLocaleString('vi')}) — vào Kho vật phẩm để dùng nha!`,
     });
   });
 

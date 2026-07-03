@@ -702,3 +702,32 @@ button { transition: transform var(--dur-1); }
 .row-flash { animation: rowFlash 1.25s ease-out; }
 @keyframes rowFlash { 0% { background: rgba(52,211,184,.22); } 100% { background: transparent; } }
 @media (prefers-reduced-motion: reduce) { .row-flash { animation: none; } }
+
+/* ── R5 Phase B: stepper số lượng + confetti burst + success glow ── */
+.qty-step { display: flex; align-items: center; gap: 0; border: 1.5px solid var(--bd2); border-radius: 13px; overflow: hidden; background: var(--s1); }
+.qty-step button { width: 44px; height: 44px; border: none; background: none; color: var(--txt); font-size: 20px; font-weight: 700; display: grid; place-items: center; cursor: pointer; transition: background var(--dur-1); }
+.qty-step button:hover:not(:disabled) { background: var(--s3); }
+.qty-step button:disabled { color: var(--faint); cursor: default; }
+.qty-step .qty-n { min-width: 52px; text-align: center; font-family: var(--fm); font-size: 17px; font-weight: 800; }
+
+/* confetti burst CSS thuần — vài chấm bay từ tâm nút */
+.confetti-burst { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
+.confetti-burst i { position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; border-radius: 2px; opacity: 0; animation: cfb .8s ease-out forwards; }
+.confetti-burst i:nth-child(1) { background: var(--jade); --dx: -46px; --dy: -38px; animation-delay: 0s; }
+.confetti-burst i:nth-child(2) { background: var(--amber); --dx: 42px; --dy: -46px; animation-delay: .04s; }
+.confetti-burst i:nth-child(3) { background: var(--sky, #5fb8f0); --dx: -30px; --dy: -56px; animation-delay: .02s; border-radius: 50%; }
+.confetti-burst i:nth-child(4) { background: var(--violet, #9889e8); --dx: 54px; --dy: -26px; animation-delay: .07s; }
+.confetti-burst i:nth-child(5) { background: var(--rose, #e87a8a); --dx: -56px; --dy: -12px; animation-delay: .05s; border-radius: 50%; }
+.confetti-burst i:nth-child(6) { background: var(--jade); --dx: 24px; --dy: -60px; animation-delay: .09s; }
+.confetti-burst i:nth-child(7) { background: var(--amber); --dx: -14px; --dy: -50px; animation-delay: .12s; border-radius: 50%; }
+.confetti-burst i:nth-child(8) { background: var(--sky, #5fb8f0); --dx: 36px; --dy: -54px; animation-delay: .1s; }
+@keyframes cfb {
+  0% { opacity: 1; transform: translate(-50%, -50%) scale(.5) rotate(0deg); }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1) rotate(200deg); }
+}
+@media (prefers-reduced-motion: reduce) { .confetti-burst i { animation: none; opacity: 0; } }
+
+/* glow xanh khi dùng vật phẩm thành công */
+.use-glow { animation: useGlow 1s ease-out; }
+@keyframes useGlow { 0% { box-shadow: 0 0 0 0 rgba(52,211,184,.55); } 100% { box-shadow: 0 0 0 22px rgba(52,211,184,0); } }
+@media (prefers-reduced-motion: reduce) { .use-glow { animation: none; } }

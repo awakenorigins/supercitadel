@@ -31,6 +31,7 @@ export default function ItemsPage() {
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<{ t: string; ok: boolean } | null>(null);
   const [energy, setEnergy] = useState<number | null>(null);
+  const [justUsed, setJustUsed] = useState(''); // R5: itemCode vừa dùng — glow card thành công
 
   const load = () => {
     api<{ items: OwnedItem[] }>('/api/v1/inventory-items').then((d) => setItems(d.items)).catch(() => setItems([]));
@@ -46,6 +47,8 @@ export default function ItemsPage() {
       if (typeof d.energy === 'number') setEnergy(d.energy); // energy bar update NGAY
       setToast({ t: d.message, ok: true });
       setSel(null);
+      setJustUsed(it.itemCode);           // R5: glow xanh trên card vừa dùng
+      setTimeout(() => setJustUsed(''), 1100);
       load();
     } catch (e: any) { setToast({ t: e.message, ok: false }); }
     finally { setBusy(false); }
@@ -82,7 +85,7 @@ export default function ItemsPage() {
         <div style={{ padding: '14px 20px 0', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           {items === null && [1, 2, 3, 4].map((i) => <div key={i} className="skel" style={{ height: 120, borderRadius: 16 }} />)}
           {items?.map((it) => (
-            <button key={it.id} onClick={() => setSel(it)} className="card" style={{ padding: 14, borderRadius: 16, textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 9 }}>
+            <button key={it.id} onClick={() => setSel(it)} className={`card${justUsed === it.itemCode ? ' use-glow' : ''}`} style={{ padding: 14, borderRadius: 16, textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 9 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ width: 38, height: 38, borderRadius: 12, background: 'var(--s3)', color: CAT_COLOR[it.category] ?? 'var(--jade)', display: 'grid', placeItems: 'center' }}>
                   <Icon name={it.icon ?? 'gift'} size={19} />
@@ -118,9 +121,13 @@ export default function ItemsPage() {
               <Icon name="spark" size={15} style={{ color: 'var(--jade)' }} />
               <span style={{ fontSize: 12.5, color: 'var(--jade)', fontWeight: 600 }}>{effectText(sel.effect)}</span>
             </div>
-            <button disabled={busy} onClick={() => use(sel)} className="btn-p" style={{ marginTop: 16, opacity: busy ? .6 : 1 }}>
-              {busy ? 'Đang dùng…' : 'Sử dụng'}
-            </button>
+            {/* R5: cặp nút xác nhận Hủy/Dùng rõ ràng — popup này chính là bước xác nhận */}
+            <div style={{ display: 'flex', gap: 9, marginTop: 16 }}>
+              <button onClick={() => setSel(null)} style={{ flex: 1, borderRadius: 13, padding: '13px 0', fontWeight: 700, fontSize: 13.5, background: 'var(--s3)', border: '1px solid var(--bd)', color: 'var(--dim)' }}>Hủy</button>
+              <button disabled={busy} onClick={() => use(sel)} className="btn-p" style={{ flex: 2, opacity: busy ? .6 : 1 }}>
+                {busy ? 'Đang dùng…' : 'Xác nhận dùng'}
+              </button>
+            </div>
             <div style={{ height: 10 }} />
           </div>
         </div>
