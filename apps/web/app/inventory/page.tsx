@@ -1,4 +1,6 @@
 'use client';
+// R2 redesign: .dt data table + .stat-row + form thêm hàng → .sheet thống nhất + .bdg-s semantic.
+// Data/endpoint GIỮ NGUYÊN.
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Shell } from '../../components/Shell';
@@ -12,6 +14,7 @@ export default function InventoryPage() {
   const router = useRouter();
   const [items, setItems] = useState<Item[] | null>(null);
   const [locked, setLocked] = useState(false);
+  const [showAdd, setShowAdd] = useState(false);
   const [nm, setNm] = useState(''); const [q0, setQ0] = useState(''); const [th, setTh] = useState('');
   const load = () => api<{ items: Item[] }>('/api/v1/inventory/items').then((d) => { setItems(d.items); setLocked(false); })
     .catch((e) => { if (String(e.message).includes('kích hoạt')) setLocked(true); else setItems([]); });
@@ -20,7 +23,7 @@ export default function InventoryPage() {
   async function add() {
     if (!nm.trim()) return;
     await api('/api/v1/inventory/items', { method: 'POST', body: JSON.stringify({ name: nm, qty: Number(q0) || 0, lowThreshold: Number(th) || 5 }) }).catch(() => {});
-    setNm(''); setQ0(''); setTh(''); load();
+    setNm(''); setQ0(''); setTh(''); setShowAdd(false); load();
   }
   async function adj(it: Item, delta: number) {
     setItems((p) => p?.map((x) => x.id === it.id ? { ...x, qty: Math.max(0, x.qty + delta) } : x) ?? null);
@@ -34,45 +37,87 @@ export default function InventoryPage() {
     await api(`/api/v1/inventory/items/${it.id}`, { method: 'PATCH', body: JSON.stringify({ lowThreshold: n }) }).catch(() => load());
   }
 
-  const inputSt = { padding: '11px 12px', borderRadius: 12, border: '1.5px solid var(--bd)', background: 'var(--s1)', color: 'var(--txt)', fontSize: 13, outline: 'none' } as const;
+  const lowCount = items?.filter((i) => i.qty <= i.lowThreshold).length ?? 0;
+  const totalQty = items?.reduce((s, i) => s + i.qty, 0) ?? 0;
+  const adjBtn = (bg: string, bd: string, color: string) => ({ width: 28, height: 28, borderRadius: 8, background: bg, border: `1px solid ${bd}`, color, fontSize: 15, fontWeight: 700, lineHeight: 1 } as const);
+
   return (
-    <Shell>
+    <Shell wide>
       <div className="scroll">
-        <div className="pg-h"><div className="k">Vận hành</div><h1>Kho Hàng</h1></div>
+        <div className="pg-h" style={{ display: 'flex', alignItems: 'flex-end', gap: 8 }}>
+          <div style={{ flex: 1 }}><div className="k">Vận hành</div><h1>Kho Hàng</h1></div>
+          <button onClick={() => setShowAdd(true)} style={{ background: 'var(--jade)', border: 'none', borderRadius: 99, padding: '7px 13px', color: '#04231f', fontWeight: 700, fontSize: 12 }}>+ Mặt hàng</button>
+        </div>
         {locked ? <ModuleLocked name="Kho Hàng" /> : (
           <>
-            <div style={{ margin: '14px 20px 0', display: 'grid', gridTemplateColumns: '1fr 64px 64px 42px', gap: 7 }}>
-              <input value={nm} onChange={(e) => setNm(e.target.value)} placeholder="Tên mặt hàng…" style={inputSt} />
-              <input value={q0} onChange={(e) => setQ0(e.target.value)} placeholder="SL" inputMode="numeric" style={inputSt} />
-              <input value={th} onChange={(e) => setTh(e.target.value)} placeholder="Báo ≤" inputMode="numeric" style={inputSt} />
-              <button onClick={add} style={{ borderRadius: 12, border: 'none', background: 'var(--jade)', color: '#04231f', display: 'grid', placeItems: 'center' }}><Icon name="plus" size={18} /></button>
+            <div className="stat-row c3">
+              <div className="stat"><div className="sv">{items?.length ?? '—'}</div><div className="sl">Mặt hàng</div></div>
+              <div className="stat"><div className="sv" style={{ color: 'var(--jade)' }}>{items ? totalQty : '—'}</div><div className="sl">Tổng tồn</div></div>
+              <div className="stat"><div className="sv" style={{ color: lowCount > 0 ? 'var(--amber)' : 'var(--jade)' }}>{items ? lowCount : '—'}</div><div className="sl">Sắp hết</div></div>
             </div>
-            <p className="mono" style={{ padding: '7px 22px 0', fontSize: 10, color: 'var(--faint)' }}>SL = tồn ban đầu · "Báo ≤" = ngưỡng cảnh báo sắp hết (không phải giới hạn — tồn kho không giới hạn)</p>
-            <div style={{ padding: '12px 20px 0' }}>
-              {items === null && [1, 2].map((i) => <div key={i} className="skel" style={{ height: 64, marginBottom: 9 }} />)}
-              {items?.length === 0 && <p className="mut" style={{ padding: 12, fontSize: 13 }}>Kho trống — thêm mặt hàng đầu tiên ở trên.</p>}
-              {items?.map((it) => {
-                const low = it.qty <= it.lowThreshold;
-                return (
-                  <div key={it.id} className="card" style={{ display: 'flex', alignItems: 'center', gap: 11, padding: 13, borderRadius: 15, marginBottom: 9, ...(low ? { borderColor: 'rgba(232,179,102,.35)', background: 'linear-gradient(160deg,var(--amber-soft),var(--s1))' } : {}) }}>
-                    <div style={{ width: 38, height: 38, borderRadius: 12, background: low ? 'var(--amber-soft)' : 'var(--s3)', color: low ? 'var(--amber)' : 'var(--dim)', display: 'grid', placeItems: 'center', flexShrink: 0 }}><Icon name="box" size={18} /></div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 14, fontWeight: 600 }}>{it.name}</div>
-                      <button onClick={() => editTh(it)} className="mono" style={{ fontSize: 10.5, color: low ? 'var(--amber)' : 'var(--mut)', marginTop: 2, background: 'none', border: 'none', padding: 0, textDecoration: 'underline dotted', cursor: 'pointer' }}>
-                        {low ? 'SẮP HẾT · ' : ''}báo khi ≤ {it.lowThreshold} {it.unit} · sửa
-                      </button>
-                    </div>
-                    <button onClick={() => adj(it, -1)} style={{ width: 32, height: 32, borderRadius: 9, background: 'var(--s2)', border: '1px solid var(--bd)', color: 'var(--dim)', fontSize: 17, fontWeight: 700 }}>−</button>
-                    <span className="mono" style={{ fontWeight: 700, fontSize: 17, minWidth: 40, textAlign: 'center', color: low ? 'var(--amber)' : 'var(--txt)' }}>{it.qty}</span>
-                    <button onClick={() => adj(it, +1)} style={{ width: 32, height: 32, borderRadius: 9, background: 'var(--jade-soft)', border: '1px solid rgba(52,211,184,.3)', color: 'var(--jade)', fontSize: 17, fontWeight: 700 }}>+</button>
-                  </div>
-                );
-              })}
-            </div>
+
+            {items === null && <div className="skel" style={{ height: 140, margin: '13px 20px 0', borderRadius: 16 }} />}
+            {items?.length === 0 && <p className="mut" style={{ padding: '16px 22px', fontSize: 13 }}>Kho trống — bấm "+ Mặt hàng" để thêm mặt hàng đầu tiên.</p>}
+            {items && items.length > 0 && (
+              <div className="dt-wrap fade-up">
+                <table className="dt">
+                  <thead><tr><th>Mặt hàng</th><th>Trạng thái</th><th>Ngưỡng báo</th><th className="num">Tồn</th><th style={{ textAlign: 'center' }}>Điều chỉnh</th></tr></thead>
+                  <tbody>
+                    {items.map((it) => {
+                      const low = it.qty <= it.lowThreshold;
+                      return (
+                        <tr key={it.id}>
+                          <td style={{ fontWeight: 600 }}>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 9 }}>
+                              <span style={{ width: 30, height: 30, borderRadius: 9, background: low ? 'var(--amber-soft)' : 'var(--s3)', color: low ? 'var(--amber)' : 'var(--dim)', display: 'grid', placeItems: 'center' }}><Icon name="box" size={15} /></span>
+                              {it.name}
+                            </span>
+                          </td>
+                          <td><span className={`bdg-s ${low ? 'amber' : 'jade'}`}>{low ? 'SẮP HẾT' : 'ĐỦ HÀNG'}</span></td>
+                          <td>
+                            <button onClick={() => editTh(it)} className="mono" style={{ fontSize: 11, color: 'var(--mut)', background: 'none', border: 'none', padding: 0, textDecoration: 'underline dotted', cursor: 'pointer' }}>
+                              ≤ {it.lowThreshold} {it.unit} · sửa
+                            </button>
+                          </td>
+                          <td className="num" style={{ fontWeight: 700, fontSize: 15, color: low ? 'var(--amber)' : 'var(--txt)' }}>{it.qty}</td>
+                          <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
+                            <button onClick={() => adj(it, -1)} style={adjBtn('var(--s2)', 'var(--bd)', 'var(--dim)')}>−</button>
+                            <span style={{ display: 'inline-block', width: 8 }} />
+                            <button onClick={() => adj(it, +1)} style={adjBtn('var(--jade-soft)', 'rgba(52,211,184,.3)', 'var(--jade)')}>+</button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            <p className="mono" style={{ padding: '10px 22px 0', fontSize: 10, color: 'var(--faint)' }}>Ngưỡng báo = cảnh báo sắp hết (không phải giới hạn — tồn kho không giới hạn)</p>
           </>
         )}
         <div style={{ height: 14 }} />
       </div>
+
+      {/* Form thêm — .sheet thống nhất */}
+      {showAdd && (
+        <div className="sh-scrim" onClick={() => setShowAdd(false)}>
+          <div className="sh-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="sh-head">
+              <div className="sh-ico" style={{ background: 'var(--jade-soft)', color: 'var(--jade)' }}><Icon name="box" size={18} /></div>
+              <b style={{ fontSize: 15 }}>Thêm mặt hàng</b>
+              <button className="sh-x" onClick={() => setShowAdd(false)}><Icon name="x" size={15} /></button>
+            </div>
+            <div style={{ display: 'grid', gap: 9 }}>
+              <input value={nm} onChange={(e) => setNm(e.target.value)} placeholder="Tên mặt hàng…" className="inp" autoFocus />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9 }}>
+                <input value={q0} onChange={(e) => setQ0(e.target.value)} placeholder="Tồn ban đầu" inputMode="numeric" className="inp" />
+                <input value={th} onChange={(e) => setTh(e.target.value)} placeholder="Báo khi ≤ (mặc định 5)" inputMode="numeric" className="inp" />
+              </div>
+              <button onClick={add} className="btn-p" style={{ opacity: nm.trim() ? 1 : .5 }}><Icon name="plus" size={15} /> Thêm vào kho</button>
+            </div>
+          </div>
+        </div>
+      )}
     </Shell>
   );
 }
