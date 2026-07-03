@@ -752,3 +752,17 @@ button { transition: transform var(--dur-1); }
 .warn-pop { text-align: center; }
 .warn-pop .wp-ico { width: 58px; height: 58px; border-radius: 18px; margin: 4px auto 0; background: var(--amber-soft); color: var(--amber); display: grid; place-items: center; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── R5 Phase D: tutorial spotlight kiểu game ── */
+.tut-layer { position: fixed; inset: 0; z-index: 120; }
+.tut-dim { position: absolute; inset: 0; background: rgba(4, 6, 10, .72); backdrop-filter: blur(2px); animation: fadeUp .25s ease both; }
+.tut-hole { position: absolute; border-radius: 14px; box-shadow: 0 0 0 9999px rgba(4, 6, 10, .72); outline: 2px solid rgba(52,211,184,.75); outline-offset: 2px; transition: top .3s var(--ease), left .3s var(--ease), width .3s var(--ease), height .3s var(--ease); pointer-events: none; animation: tutPulse 1.8s ease-in-out infinite; }
+@keyframes tutPulse { 0%, 100% { outline-color: rgba(52,211,184,.75); } 50% { outline-color: rgba(52,211,184,.3); } }
+.tut-card { position: absolute; width: min(320px, calc(100vw - 24px)); background: var(--base); border: 1px solid var(--bd2); border-radius: 16px; padding: 16px; box-shadow: var(--sh-3), 0 0 30px rgba(52,211,184,.1); animation: scaleIn .28s var(--ease) both; }
+.tut-step { font-size: 10px; font-weight: 800; color: var(--jade); background: var(--jade-soft); border-radius: 99px; padding: 3px 8px; flex-shrink: 0; }
+.tut-next { border: none; border-radius: 11px; padding: 9px 16px; font-weight: 700; font-size: 12.5px; background: var(--jade); color: #04231f; cursor: pointer; }
+.tut-next:hover { filter: brightness(1.08); }
+.tut-skip { border: 1px solid var(--bd); border-radius: 11px; padding: 9px 13px; font-weight: 600; font-size: 12px; background: var(--s2); color: var(--dim); cursor: pointer; }
+.tut-kill { border: none; background: none; font-size: 11px; color: var(--faint); cursor: pointer; padding: 4px 0; }
+.tut-kill:hover { color: var(--rose); text-decoration: underline; }
+@media (prefers-reduced-motion: reduce) { .tut-hole { animation: none; transition: none; } .tut-dim, .tut-card { animation: none; } }

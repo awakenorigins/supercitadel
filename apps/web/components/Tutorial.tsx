@@ -1,0 +1,203 @@
+'use client';
+// R5 Phase D — Tutorial hệ thống kiểu game: overlay tối + spotlight cutout quanh element
+// (box-shadow 0 0 0 9999px trên hole đặt theo getBoundingClientRect) + tooltip card + Tiếp/Bỏ qua/Tắt hẳn.
+// Lưu localStorage 'citadel.tutorial' = { done: {tourId:true}, off: boolean }.
+// Mở lại: event 'citadel:tutorial-start' (nút "?" header) — chạy lại tour trang hiện tại kể cả đã done.
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
+import { Icon } from './Icon';
+
+interface Step { sel?: string; title: string; text: string }
+interface Tour { id: string; steps: Step[] }
+
+const LS_KEY = 'citadel.tutorial';
+
+export const TOURS: Record<string, Tour> = {
+  '/home': {
+    id: 'home',
+    steps: [
+      { title: 'Chào mừng đến SUPERCITADEL 🏯', text: 'Pháo đài quản trị cho quán của bạn — kế toán, CRM, kho, nhân sự chạy trên data thật, cùng trợ lý AI Tiểu Tâm. Đi một vòng 2 phút nhé!' },
+      { sel: '.owned-bar', title: 'Thanh module sở hữu', text: 'Các module bạn đang sở hữu/thuê nằm ở đây. Màu chấm cho biết trạng thái: xanh = đang bật, vàng = đang thuê, đỏ = sắp hết hạn. Chạm để mở nhanh.' },
+      { sel: '.sidebar', title: 'Điều hướng nhóm nghiệp vụ', text: 'Sidebar chia theo nhóm: Tổng quan, Nghiệp vụ (Kế toán/CRM/Kho/Nhân sự), Kinh tế. Có thể thu gọn bằng nút ở góc dưới.' },
+      { sel: '[data-tut="nav-om"]', title: 'Ví Om — tiền tệ nội bộ', text: 'Om là đồng tiền trong SUPERCITADEL: dùng mua/thuê module và mua vật phẩm cho Tiểu Tâm. Nạp, xem lịch sử thu chi trong Ví Om.' },
+      { sel: '[data-tut="nav-modules"]', title: 'Cửa hàng Module', text: 'Mua đứt hoặc THUÊ module theo gói 7/30/90 ngày. Thuê rẻ hơn để dùng thử, hết hạn thì gia hạn — không mất data.' },
+      { sel: '[data-tut="biz-group"]', title: 'Trang nghiệp vụ — data thật', text: 'Kế toán sổ kép, CRM pipeline, Kho hàng cảnh báo sắp hết, Nhân sự chấm công ca. Mọi con số đều là dữ liệu thật của tổ chức bạn.' },
+      { sel: '.tb-energy', title: 'Tiểu Tâm AI 🦊', text: 'Trợ lý AI của quán — hỏi doanh thu, deal, tồn kho bằng tiếng Việt. Tương lai còn có Automato Thư Ký: nhân viên AI phụ trách từng bộ phận.' },
+      { title: 'Bắt đầu thôi! 🚀', text: 'Bạn có thể xem lại hướng dẫn bất cứ lúc nào bằng nút "?" trên đầu trang, hoặc tắt hẳn trong Cài đặt → Hướng dẫn sử dụng.' },
+    ],
+  },
+  '/accounting': {
+    id: 'accounting',
+    steps: [
+      { sel: '.tabs', title: 'Tab nghiệp vụ kế toán', text: 'Thu Chi (phiếu thu/chi ghi sổ kép), Công nợ theo đối tượng, Báo cáo lãi lỗ theo tháng.' },
+      { sel: '[data-tut="excel"]', title: 'Kết nối Excel', text: 'Xuất 4 báo cáo ra .xlsx, tải file mẫu nhập hóa đơn, điền rồi nạp lên — hệ thống tự ghi sổ.' },
+      { sel: '.biz-aside', title: 'Sổ bên phải', text: 'Panel tổng hợp: sổ gần đây, số dư quỹ tiền mặt/ngân hàng — cập nhật ngay khi bạn ghi sổ.' },
+    ],
+  },
+  '/modules': {
+    id: 'modules',
+    steps: [
+      { sel: '.mod-grid', title: 'Mua / Thuê / Bật-tắt', text: 'Mỗi module có giá mua đứt và gói thuê 7/30/90 ngày. Switch trên đầu card để bật/tắt module đã sở hữu.' },
+      { sel: '.owned-bar', title: 'Thanh sở hữu', text: 'Module mua/thuê xong sẽ hiện ở thanh này trên mọi trang — chạm để nhảy thẳng vào module.' },
+    ],
+  },
+  '/crm': {
+    id: 'crm',
+    steps: [
+      { sel: '.biz-main', title: 'CRM — khách hàng & pipeline', text: 'Danh sách khách, deal theo giai đoạn đàm phán. Data thật từ tổ chức bạn.' },
+      { sel: '.biz-aside', title: 'Thống kê nhanh', text: 'Pipeline theo giai đoạn + khách mới nhất nằm ở panel bên phải.' },
+    ],
+  },
+  '/inventory': {
+    id: 'inventory',
+    steps: [
+      { sel: '.biz-main', title: 'Kho hàng', text: 'Tồn kho từng mặt hàng, nhập hàng, và cảnh báo sắp hết tự động.' },
+      { sel: '.biz-aside', title: 'Cảnh báo low-stock', text: 'Mặt hàng dưới ngưỡng an toàn hiện ở đây — nhập thêm trước khi hết.' },
+    ],
+  },
+  '/hr': {
+    id: 'hr',
+    steps: [
+      { sel: '.biz-main', title: 'Nhân sự & ca làm', text: 'Chấm công check-in/check-out, phân ca, duyệt đơn nghỉ phép. Sau check-out nhân viên hiện badge "Đã về".' },
+      { sel: '.biz-aside', title: 'Hôm nay', text: 'Ai đang làm ca, đơn nghỉ chờ duyệt — nhìn một phát là biết.' },
+    ],
+  },
+  '/om': {
+    id: 'om',
+    steps: [
+      { sel: '.scroll', title: 'Ví Om', text: 'Số dư, nạp Om, lịch sử thu chi. Om dùng để mua/thuê module và mua vật phẩm cho Tiểu Tâm.' },
+    ],
+  },
+  '/items': {
+    id: 'items',
+    steps: [
+      { sel: '.scroll', title: 'Kho vật phẩm', text: 'Đồ đã mua từ Cửa hàng nằm ở đây. Chạm vật phẩm → xác nhận Dùng → hiệu ứng thật (hồi năng lượng Tiểu Tâm, đổi theme).' },
+    ],
+  },
+};
+
+interface TutState { done: Record<string, boolean>; off: boolean }
+export function loadTut(): TutState {
+  try { const raw = localStorage.getItem(LS_KEY); if (raw) return { done: {}, off: false, ...JSON.parse(raw) }; } catch {}
+  return { done: {}, off: false };
+}
+export function saveTut(s: TutState) { try { localStorage.setItem(LS_KEY, JSON.stringify(s)); } catch {} }
+
+export function Tutorial() {
+  const path = usePathname();
+  const [tour, setTour] = useState<Tour | null>(null);
+  const [i, setI] = useState(0);
+  const [rect, setRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
+  const [cardPos, setCardPos] = useState<{ top: number; left: number } | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  const tourFor = useCallback((p: string | null): Tour | null => {
+    if (!p) return null;
+    const key = Object.keys(TOURS).find((k) => p === k || p.startsWith(k + '/'));
+    return key ? TOURS[key] : null;
+  }, []);
+
+  // auto-start lần đầu vào trang (nếu chưa done + chưa tắt)
+  useEffect(() => {
+    setTour(null); setI(0); setRect(null); setCardPos(null);
+    const t = tourFor(path);
+    if (!t) return;
+    const st = loadTut();
+    if (st.off || st.done[t.id]) return;
+    const h = setTimeout(() => { setTour(t); setI(0); }, 650); // chờ trang render
+    return () => clearTimeout(h);
+  }, [path, tourFor]);
+
+  // nút "?" header — chạy lại tour trang hiện tại (bỏ qua done/off)
+  useEffect(() => {
+    const start = () => { const t = tourFor(path); if (t) { setTour(t); setI(0); } };
+    window.addEventListener('citadel:tutorial-start', start);
+    return () => window.removeEventListener('citadel:tutorial-start', start);
+  }, [path, tourFor]);
+
+  // đo spotlight + đặt tooltip mỗi khi đổi bước
+  useEffect(() => {
+    if (!tour) return;
+    const step = tour.steps[i];
+    if (!step) return;
+    let raf = 0;
+    const measure = () => {
+      let r: DOMRect | null = null;
+      if (step.sel) {
+        const el = document.querySelector(step.sel) as HTMLElement | null;
+        if (el) {
+          const b = el.getBoundingClientRect();
+          if (b.width > 4 && b.height > 4 && b.bottom > 0 && b.top < window.innerHeight + 400) {
+            el.scrollIntoView({ block: 'nearest', behavior: 'auto' });
+            r = el.getBoundingClientRect();
+          }
+        }
+      }
+      if (r) {
+        const pad = 8;
+        const hole = { x: Math.max(4, r.left - pad), y: Math.max(4, r.top - pad), w: Math.min(window.innerWidth - 8, r.width + pad * 2), h: r.height + pad * 2 };
+        setRect(hole);
+        // tooltip: dưới hole nếu đủ chỗ, không thì trên
+        const ch = cardRef.current?.offsetHeight ?? 190;
+        const cw = Math.min(320, window.innerWidth - 24);
+        const below = hole.y + hole.h + 14;
+        const top = below + ch < window.innerHeight - 12 ? below : Math.max(12, hole.y - ch - 14);
+        const left = Math.min(Math.max(12, hole.x + hole.w / 2 - cw / 2), window.innerWidth - cw - 12);
+        setCardPos({ top, left });
+      } else {
+        setRect(null); setCardPos(null); // bước center (welcome/kết) hoặc element ẩn (mobile)
+      }
+    };
+    raf = requestAnimationFrame(() => setTimeout(measure, 80));
+    window.addEventListener('resize', measure);
+    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', measure); };
+  }, [tour, i]);
+
+  if (!tour) return null;
+  const step = tour.steps[i];
+  const last = i === tour.steps.length - 1;
+
+  const finish = (markDone: boolean) => {
+    if (markDone) { const st = loadTut(); st.done[tour.id] = true; saveTut(st); }
+    setTour(null); setRect(null); setCardPos(null);
+  };
+  const killAll = () => { const st = loadTut(); st.off = true; st.done[tour.id] = true; saveTut(st); setTour(null); };
+
+  const card = (
+    <div ref={cardRef} className="tut-card" style={cardPos ? { top: cardPos.top, left: cardPos.left } : { top: '50%', left: '50%', transform: 'translate(-50%,-50%)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span className="tut-step mono">{i + 1}/{tour.steps.length}</span>
+        <b style={{ fontSize: 14.5 }}>{step.title}</b>
+      </div>
+      <p style={{ fontSize: 12.5, color: 'var(--mut)', lineHeight: 1.6, margin: '9px 0 0' }}>{step.text}</p>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 14 }}>
+        <button className="tut-kill" onClick={killAll}>Tắt hẳn</button>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+          {!last && <button className="tut-skip" onClick={() => finish(true)}>Bỏ qua</button>}
+          <button className="tut-next" onClick={() => last ? finish(true) : setI(i + 1)}>
+            {last ? 'Hoàn tất ✓' : 'Tiếp →'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="tut-layer" role="dialog" aria-label="Hướng dẫn sử dụng">
+      {rect
+        ? <div className="tut-hole" style={{ top: rect.y, left: rect.x, width: rect.w, height: rect.h }} />
+        : <div className="tut-dim" />}
+      {card}
+    </div>
+  );
+}
+
+/** Nút "?" ở header Shell — mở lại tour trang hiện tại. */
+export function TutorialHelpButton() {
+  return (
+    <button className="tb-act" title="Hướng dẫn trang này" aria-label="Hướng dẫn trang này"
+      onClick={() => window.dispatchEvent(new Event('citadel:tutorial-start'))}>
+      <Icon name="help" size={16} />
+    </button>
+  );
+}

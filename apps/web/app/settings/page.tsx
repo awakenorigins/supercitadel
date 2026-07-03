@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { Shell } from '../../components/Shell';
 import { Icon } from '../../components/Icon';
 import { getSession, clearSession, api } from '../../lib/api';
+import { loadTut, saveTut } from '../../components/Tutorial';
 
 interface Me {
   id: string; role: string;
@@ -23,13 +24,32 @@ export default function SettingsPage() {
   const [email, setEmail] = useState(''); const [phone, setPhone] = useState('');
   const [busy, setBusy] = useState('');
   const [msg, setMsg] = useState<{ t: string; ok: boolean } | null>(null);
+  // R5 Phase D: tutorial toggle
+  const [tutOff, setTutOff] = useState(false);
+  const [tutMsg, setTutMsg] = useState('');
 
   useEffect(() => {
     const s = getSession();
     if (!s) { router.replace('/'); return; }
     setName(s.user.displayName ?? 'Người dùng'); setRole(s.user.role);
     api<Me>('/api/v1/me').then(setMe).catch(() => {});
+    setTutOff(loadTut().off);
   }, [router]);
+
+  // R5: bật/tắt toàn bộ tutorial
+  function toggleTut() {
+    const st = loadTut();
+    st.off = !st.off;
+    saveTut(st);
+    setTutOff(st.off);
+    setTutMsg(st.off ? 'Đã tắt toàn bộ hướng dẫn.' : 'Đã bật lại hướng dẫn — tour sẽ hiện ở trang chưa xem.');
+  }
+  // R5: xem lại từ đầu — xóa trạng thái done của mọi tour
+  function resetTut() {
+    saveTut({ done: {}, off: false });
+    setTutOff(false);
+    setTutMsg('Đã đặt lại — vào Trang chủ để xem tour chào mừng, hoặc bấm nút "?" trên đầu trang bất kỳ.');
+  }
 
   async function bind(kind: 'email' | 'phone') {
     const value = kind === 'email' ? email.trim() : phone.trim();
@@ -94,6 +114,24 @@ export default function SettingsPage() {
                 <button onClick={() => bind('phone')} disabled={busy === 'phone'} className="btn-p" style={{ width: 'auto', padding: '0 16px', fontSize: 13, opacity: busy === 'phone' ? .6 : 1 }}>{busy === 'phone' ? '…' : 'Gắn'}</button>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* ── R5: Hướng dẫn sử dụng (tutorial) ── */}
+        <div style={{ margin: '20px 20px 0' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.1em', color: 'var(--faint)', textTransform: 'uppercase', padding: '0 4px 8px' }}>Hướng dẫn sử dụng</div>
+          <div className="card" style={{ borderRadius: 16, padding: 16, display: 'grid', gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 13 }}>
+              <div style={{ width: 32, height: 32, borderRadius: 9, background: tutOff ? 'var(--s3)' : 'var(--jade-soft)', color: tutOff ? 'var(--dim)' : 'var(--jade)', display: 'grid', placeItems: 'center', flexShrink: 0 }}><Icon name="help" size={16} /></div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 14, fontWeight: 600 }}>Tutorial từng trang</div>
+                <div className="mut" style={{ fontSize: 11.5, marginTop: 1 }}>{tutOff ? 'Đang TẮT — không hiện hướng dẫn tự động' : 'Hiện tour spotlight lần đầu vào mỗi trang'}</div>
+              </div>
+              <button role="switch" aria-checked={!tutOff} aria-label={tutOff ? 'Bật tutorial' : 'Tắt toàn bộ tutorial'}
+                className={`sw ${tutOff ? '' : 'on'}`} onClick={toggleTut} />
+            </div>
+            {tutMsg && <div style={{ padding: '9px 12px', borderRadius: 11, fontSize: 12.5, background: 'var(--jade-soft)', color: 'var(--jade)' }}>{tutMsg}</div>}
+            <button onClick={resetTut} className="chip" style={{ width: 'fit-content', fontSize: 12, padding: '8px 14px' }}>Xem lại hướng dẫn từ đầu</button>
           </div>
         </div>
 

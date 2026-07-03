@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Icon } from './Icon';
 import { OwnedBar } from './OwnedBar';
 import { SecretaryWidget } from './SecretaryWidget';
+import { Tutorial, TutorialHelpButton } from './Tutorial';
 import { API, api, getSession } from '../lib/api';
 import { applyTheme, applyStoredTheme } from '../lib/theme';
 
@@ -126,10 +127,11 @@ export function Shell({ children, badge, wide }: { children: React.ReactNode; ba
           </div>
           <div className="sb-body">
             {NAV_GROUPS.map((g) => (
-              <div key={g.label}>
+              <div key={g.label} {...(g.label === 'Nghiệp vụ' ? { 'data-tut': 'biz-group' } : {})}>
                 <div className="sb-gl">{g.label}</div>
                 {g.items.map((it) => (
-                  <button key={it.to} className={`sb-it ${is(it.to) ? 'active' : ''}`} onClick={nav(it.to)} title={it.label}>
+                  <button key={it.to} className={`sb-it ${is(it.to) ? 'active' : ''}`} onClick={nav(it.to)} title={it.label}
+                    {...(it.to === '/om' ? { 'data-tut': 'nav-om' } : it.to === '/modules' ? { 'data-tut': 'nav-modules' } : {})}>
                     <Icon name={it.icon} /><span className="sb-lb">{it.label}</span>
                     {it.to === '/chat' && badge ? <span className="sb-dot" style={{ background: 'var(--rose)' }} /> : null}
                   </button>
@@ -174,6 +176,7 @@ export function Shell({ children, badge, wide }: { children: React.ReactNode; ba
               <span className="sep">/</span><b>{pageLabel}</b>
             </div>
             <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 9 }}>
+              <TutorialHelpButton />
               <button className="tb-act" onClick={nav('/search')} title="Tìm kiếm"><Icon name="search" size={16} /></button>
               <button className="tb-act" onClick={nav('/notifications')} title="Thông báo">
                 <Icon name="bell" size={16} />
@@ -207,6 +210,7 @@ export function Shell({ children, badge, wide }: { children: React.ReactNode; ba
       </div>
       <TieuTamSheet open={ttOpen} onClose={() => setTtOpen(false)} />
       <SecretaryWidget />
+      <Tutorial />
     </>
   );
 }

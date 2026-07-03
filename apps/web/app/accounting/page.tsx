@@ -177,7 +177,7 @@ export default function AccountingPage() {
             {msg && <div className="card" style={{ margin: '11px 20px 0', padding: '10px 13px', fontSize: 12.5, color: msg.ok ? 'var(--jade)' : 'var(--amber)', borderColor: msg.ok ? 'rgba(52,211,184,.3)' : 'rgba(232,179,102,.35)' }}>{msg.t}</div>}
 
             {/* Excel connect: xuất 4 báo cáo + nhập hóa đơn (V7A P4 — G7) */}
-            <div style={{ margin: '11px 20px 0', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7, position: 'relative' }}>
+            <div data-tut="excel" style={{ margin: '11px 20px 0', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7, position: 'relative' }}>
               <button onClick={() => setXlsOpen(!xlsOpen)} className="tab" style={{ padding: '9px 0' }}>⤓ Xuất Excel</button>
               <label className="tab" style={{ padding: '9px 0', textAlign: 'center', cursor: 'pointer', opacity: importing ? .5 : 1 }}>
                 {importing ? 'Đang nhập…' : '⤒ Nhập hóa đơn từ Excel'}
