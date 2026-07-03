@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation';
 import { Shell } from '../../components/Shell';
 import { Icon } from '../../components/Icon';
 import { api, getSession } from '../../lib/api';
-import { applyTheme } from '../../lib/theme';
+import { applyTheme, THEMES } from '../../lib/theme';
+import { ThemedAvatar } from '../../components/ThemedAvatar';
 
 interface Soul {
   mood: string; energy: number; status: string;
@@ -38,60 +39,7 @@ const ENGINES = [
   { v: 'anthropic', label: 'Anthropic — Claude' },
 ];
 
-/** Avatar cáo SVG sống theo mood — vẽ tay theo design system (stroke 1.6, jade accent). */
-function FoxAvatar({ status }: { status: string }) {
-  const c = STATUS_COLOR[status] ?? 'var(--jade)';
-  const sleeping = status === 'kiet_suc';
-  const tired = status === 'met';
-  return (
-    <div className={`fox-stage fox-${status}`}>
-      <div className="fox-ring" style={{ borderColor: c }} />
-      <div className="fox-ring r2" style={{ borderColor: c }} />
-      <svg viewBox="0 0 120 120" className="fox-svg" aria-label="Tiểu Tâm">
-        {/* tai */}
-        <path d="M30 44 L22 16 L48 32 Z" fill="var(--s3)" stroke={c} strokeWidth="2.4" strokeLinejoin="round" />
-        <path d="M90 44 L98 16 L72 32 Z" fill="var(--s3)" stroke={c} strokeWidth="2.4" strokeLinejoin="round" />
-        <path d="M31 38 L27 24 L42 33 Z" fill={c} opacity=".55" />
-        <path d="M89 38 L93 24 L78 33 Z" fill={c} opacity=".55" />
-        {/* đầu */}
-        <path d="M60 26 C86 26 100 44 100 62 C100 84 84 100 60 104 C36 100 20 84 20 62 C20 44 34 26 60 26 Z"
-          fill="var(--s2)" stroke={c} strokeWidth="2.6" strokeLinejoin="round" />
-        {/* má trắng */}
-        <path d="M60 66 C74 66 84 74 84 84 C84 94 74 101 60 103 C46 101 36 94 36 84 C36 74 46 66 60 66 Z" fill="var(--s3)" opacity=".8" />
-        {/* mắt */}
-        {sleeping ? (
-          <>
-            <path d="M40 62 Q46 67 52 62" fill="none" stroke="var(--txt)" strokeWidth="2.6" strokeLinecap="round" />
-            <path d="M68 62 Q74 67 80 62" fill="none" stroke="var(--txt)" strokeWidth="2.6" strokeLinecap="round" />
-          </>
-        ) : tired ? (
-          <>
-            <path d="M40 60 Q46 64 52 60" fill="none" stroke="var(--txt)" strokeWidth="2.6" strokeLinecap="round" />
-            <circle cx="74" cy="61" r="4" fill="var(--txt)" className="fox-eye" />
-          </>
-        ) : (
-          <>
-            <circle cx="46" cy="61" r="4.4" fill="var(--txt)" className="fox-eye" />
-            <circle cx="74" cy="61" r="4.4" fill="var(--txt)" className="fox-eye" />
-            <circle cx="47.5" cy="59.5" r="1.4" fill="var(--base)" />
-            <circle cx="75.5" cy="59.5" r="1.4" fill="var(--base)" />
-          </>
-        )}
-        {/* mũi + miệng */}
-        <path d="M56 76 L64 76 L60 81 Z" fill={c} />
-        {status === 'tran_day'
-          ? <path d="M52 86 Q60 93 68 86" fill="none" stroke="var(--txt)" strokeWidth="2.4" strokeLinecap="round" />
-          : sleeping
-            ? <ellipse cx="60" cy="88" rx="3.6" ry="4.6" fill="none" stroke="var(--txt)" strokeWidth="2.2" />
-            : <path d="M54 87 Q60 90 66 87" fill="none" stroke="var(--txt)" strokeWidth="2.2" strokeLinecap="round" />}
-        {/* râu */}
-        <path d="M28 74 L38 76 M28 82 L38 81" stroke="var(--mut)" strokeWidth="1.6" strokeLinecap="round" />
-        <path d="M92 74 L82 76 M92 82 L82 81" stroke="var(--mut)" strokeWidth="1.6" strokeLinecap="round" />
-      </svg>
-      {sleeping && <span className="fox-zzz mono">z z z</span>}
-    </div>
-  );
-}
+// R7.7: FoxAvatar cũ thay bằng ThemedAvatar (fox/tiger/crane biến hình theo theme).
 
 export default function TieuTamPage() {
   const router = useRouter();
@@ -99,6 +47,7 @@ export default function TieuTamPage() {
   const [foods, setFoods] = useState<OwnedItem[] | null>(null);
   const [mems, setMems] = useState<Memory[] | null>(null);
   const [feedOpen, setFeedOpen] = useState(false);
+  const [ownedThemes, setOwnedThemes] = useState<string[]>(['jade']);
   const [busy, setBusy] = useState('');
   const [toast, setToast] = useState<{ t: string; ok: boolean } | null>(null);
 
@@ -108,6 +57,7 @@ export default function TieuTamPage() {
       .then((d) => setFoods(d.items.filter((i) => i.category === 'food' || i.category === 'boost')))
       .catch(() => setFoods([]));
     api<{ memories: Memory[] }>('/api/v1/tieu-tam/memories').then((d) => setMems(d.memories)).catch(() => setMems([]));
+    api<{ owned: string[] }>('/api/v1/inventory-items/themes').then((d) => setOwnedThemes(d.owned ?? ['jade'])).catch(() => setOwnedThemes(['jade']));
   }, []);
 
   useEffect(() => {
@@ -128,6 +78,21 @@ export default function TieuTamPage() {
       say(d.message);
       load();
     } catch (e: any) { say(e.message ?? 'Có lỗi xảy ra — thử lại nhé', false); }
+    finally { setBusy(''); }
+  }
+
+  // R7.7: chọn theme đã sở hữu / về Cơ Bản — đổi giao diện + avatar ngay, KHÔNG tiêu hao
+  async function pickTheme(theme: string) {
+    if (!soul || busy) return;
+    if (theme === soul.theme) return;
+    if (!ownedThemes.includes(theme)) { say('Bạn chưa sở hữu theme này — mua trong Cửa hàng Vật phẩm nha', false); return; }
+    setBusy('theme-' + theme);
+    applyTheme(theme); // áp tức thì cho đã mắt
+    try {
+      const d = await api<{ theme: string; message: string }>('/api/v1/inventory-items/themes/select', { method: 'POST', body: JSON.stringify({ theme }) });
+      setSoul((s) => (s ? { ...s, theme: d.theme } : s));
+      say(d.message);
+    } catch (e: any) { applyTheme(soul.theme ?? 'jade'); say(e.message ?? 'Không đổi được theme', false); }
     finally { setBusy(''); }
   }
 
@@ -166,8 +131,9 @@ export default function TieuTamPage() {
           </div>
         )}
 
-        {/* ── Hero: avatar sống + mood + energy ── */}
-        <div style={{ margin: '16px 20px 0', background: 'linear-gradient(150deg,var(--s2),var(--base))', border: '1px solid var(--bd2)', borderRadius: 26, padding: '26px 20px 22px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+        {/* ── Hero: avatar sống + mood + energy (R7.7: veil theme + shimmer) ── */}
+        <div className="theme-shimmer-bar" style={{ margin: '16px 20px 0', background: 'linear-gradient(150deg,var(--s2),var(--base))', border: '1px solid var(--bd2)', borderRadius: 26, padding: '26px 20px 22px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+          <div className="theme-veil-bg" style={{ borderRadius: 26 }} />
           {soul === null ? (
             <>
               <div className="skel" style={{ width: 128, height: 128, borderRadius: '50%', margin: '0 auto' }} />
@@ -176,7 +142,7 @@ export default function TieuTamPage() {
             </>
           ) : (
             <>
-              <FoxAvatar status={soul.status} />
+              <ThemedAvatar status={soul.status} theme={soul.theme ?? 'jade'} size={128} />
               <div className="fd" style={{ fontWeight: 800, fontSize: 21, marginTop: 14 }}>Tiểu Tâm</div>
               <div style={{ marginTop: 4, fontSize: 12.5, fontWeight: 700, color }}>
                 {soul.statusLabel}{soul.betaMode ? ' · beta' : ''}
@@ -235,6 +201,33 @@ export default function TieuTamPage() {
           <p style={{ fontSize: 10.5, color: 'var(--faint)', padding: '8px 4px 0', lineHeight: 1.5 }}>
             Trí nhớ thuộc về mình — xóa mảnh nào là em quên hẳn mảnh đó. Đổi bộ não bên dưới không ảnh hưởng trí nhớ.
           </p>
+        </div>
+
+        {/* ── R7.7: Theme picker — khoác da giao diện + avatar biến hình ── */}
+        <div style={{ margin: '22px 20px 0' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.1em', color: 'var(--faint)', textTransform: 'uppercase', padding: '0 4px 8px' }}>Giao diện & hình dạng</div>
+          <div className="card" style={{ borderRadius: 16, padding: 16 }}>
+            <div className="thm-row">
+              {Object.entries(THEMES).map(([id, t]) => {
+                const owned = ownedThemes.includes(id);
+                const active = (soul?.theme ?? 'jade') === id;
+                return (
+                  <button key={id} className={`thm${active ? ' active' : ''}${owned ? '' : ' locked'}`}
+                    disabled={busy.startsWith('theme') || soul === null}
+                    onClick={() => owned ? pickTheme(id) : router.push('/items')}
+                    title={owned ? (active ? 'Đang dùng' : `Đổi sang ${t.label}`) : `Mua ${t.label} trong Cửa hàng`}>
+                    {!owned && <span className="thm-lock">🔒</span>}
+                    <span className="thm-dot" style={{ background: t.gradient }} />
+                    <span className="thm-name">{t.label}</span>
+                    <span style={{ fontSize: 9.5, color: 'var(--faint)' }}>{id === 'jade' ? 'Cơ Bản' : active ? 'đang dùng' : owned ? 'chạm để khoác' : 'chưa có'}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <p style={{ fontSize: 10.5, color: 'var(--faint)', padding: '10px 4px 0', lineHeight: 1.5 }}>
+              Theme mua rồi là của mình vĩnh viễn — khoác vào hay về Cơ Bản bao nhiêu lần cũng được. Đổi theme, Tiểu Tâm cũng biến hình theo ✨
+            </p>
+          </div>
         </div>
 
         {/* ── Engine switcher ── */}

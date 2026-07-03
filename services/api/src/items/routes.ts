@@ -5,7 +5,7 @@
 // POST /inventory-items/:id/use → hiệu ứng THẬT (energy/theme) + trừ qty + audit
 import { Hono, type Context, type MiddlewareHandler } from 'hono';
 import { AppError, type JwtPayload } from '@citadel/core';
-import { listCatalog, buyItem, listOwned, useItem } from './service.js';
+import { listCatalog, buyItem, listOwned, useItem, listOwnedThemes, selectTheme } from './service.js';
 
 declare module 'hono' { interface ContextVariableMap { auth: JwtPayload; } }
 const orgOf = (c: any) => (c.get('auth') as JwtPayload).orgId;
@@ -49,6 +49,21 @@ export function buildInventoryItemRoutes(deps: { db: any; requireAuth: Middlewar
 
   // Kho của user — info đầy đủ từ catalog
   r.get('/', async (c) => c.json({ items: await listOwned(deps.db, orgOf(c), userOf(c)) }));
+
+  // R7.7: danh sách theme dùng được (jade Cơ Bản + theme đã sở hữu) + theme đang bật
+  r.get('/themes', async (c) => {
+    const owned = await listOwnedThemes(deps.db, orgOf(c), userOf(c));
+    return c.json({ owned });
+  });
+
+  // R7.7: chọn theme đã sở hữu / về Cơ Bản (jade) — KHÔNG tiêu hao vật phẩm
+  r.post('/themes/select', async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    const theme = String(body?.theme ?? 'jade');
+    const res = await selectTheme(deps.db, orgOf(c), userOf(c), theme);
+    await deps.audit?.(c, { action: 'tieu_tam.theme_select', resource: 'tt_soul_state', detail: { theme } });
+    return c.json({ ok: true, theme: res.theme, message: theme === 'jade' ? 'Đã về Theme Cơ Bản 🦊' : 'Đã đổi theme — giao diện + avatar thay ngay ✨' });
+  });
 
   // Sử dụng — hiệu ứng thật + trừ qty + audit
   r.post('/:id/use', async (c) => {

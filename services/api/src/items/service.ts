@@ -17,6 +17,28 @@ export interface ItemEffect {
 
 export const ITEM_THEMES = ['jade', 'gold', 'sage'] as const;
 
+/** R7.7: map theme id → item_code (theme mua trong Kho). jade = Cơ Bản, luôn miễn phí. */
+const THEME_ITEM_CODE: Record<string, string> = { gold: 'theme-ho-phach', sage: 'theme-sage' };
+
+/** Danh sách theme user DÙNG ĐƯỢC: jade (Cơ Bản, free) + các theme decor đã sở hữu trong kho. */
+export async function listOwnedThemes(db: DB, orgId: string, userId: string): Promise<string[]> {
+  const owned = await listOwned(db, orgId, userId);
+  const themes = new Set<string>(['jade']); // Cơ Bản luôn có
+  for (const it of owned) {
+    const eff = it.effect as ItemEffect;
+    if (eff?.type === 'decor' && eff.theme) themes.add(String(eff.theme));
+  }
+  return [...themes];
+}
+
+/** R7.7: chọn theme đã sở hữu (hoặc jade Cơ Bản) — KHÔNG tiêu hao. Chặn theme chưa mua. */
+export async function selectTheme(db: DB, orgId: string, userId: string, theme: string): Promise<{ theme: string; soul: SoulState }> {
+  const allowed = await listOwnedThemes(db, orgId, userId);
+  if (!allowed.includes(theme)) throw Errors.forbidden(theme === 'jade' ? 'Theme Cơ Bản luôn có sẵn' : 'Bạn chưa sở hữu theme này — mua trong Cửa hàng Vật phẩm trước nha');
+  const soul = await setTheme(db, orgId, userId, theme);
+  return { theme, soul };
+}
+
 /** Catalog đang bán (active) — toàn cục, không tenant data. */
 export async function listCatalog(db: DB) {
   return db.select().from(itemCatalog).where(eq(itemCatalog.active, true)).orderBy(asc(itemCatalog.price));
@@ -130,7 +152,8 @@ export async function useItem(db: DB, orgId: string, userId: string, ownedId: st
       theme = String(effect.theme ?? 'jade');
       soul = await setTheme(db, orgId, userId, theme);
       message = `Đã khoác ${row.name} — giao diện đổi màu ngay ✨`;
-      break;
+      // R7.7: theme là vật phẩm BỀN — dùng KHÔNG tiêu hao, giữ trong kho để bật/tắt lại bất kỳ lúc nào
+      return { item: { code: row.itemCode, name: row.name, category: row.category }, effect, message, theme, soul, qtyLeft: row.qty };
     }
     default:
       throw Errors.validation(`Hiệu ứng vật phẩm không hợp lệ: ${(effect as any)?.type ?? '?'}`);
