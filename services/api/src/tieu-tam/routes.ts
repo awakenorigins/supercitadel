@@ -114,7 +114,21 @@ export function buildTieuTamRoutes({ db, requireAuth = defaultRequireAuth, audit
       actionResults = [r];
       reply = { text: r.message + ' ✓', mode: 'live' as const };
     } else {
-      reply = await engine.complete(profile, messages, { tools: ACTION_TOOLS, toolChoice: 'auto' });
+      try {
+        reply = await engine.complete(profile, messages, { tools: ACTION_TOOLS, toolChoice: 'auto' });
+      } catch (err) {
+        console.warn('[tieu-tam] live chat failed, retrying once', err);
+        try {
+          reply = await engine.complete(profile, messages, { tools: ACTION_TOOLS, toolChoice: 'auto' });
+        } catch (err2) {
+          console.error('[tieu-tam] live chat failed after retry', err2);
+          reply = {
+            text: 'Em đang nghẽn kết nối AI, thử lại sau nhé — các lệnh nghiệp vụ (tạo phiếu, thêm khách, nhập kho...) vẫn chạy bình thường.',
+            suggestions: ['Tạo phiếu thu', 'Thêm khách hàng', 'Nhập kho'],
+            mode: 'live' as const,
+          };
+        }
+      }
       const calls = (reply as any).rawMessage?.tool_calls ?? [];
       if (Array.isArray(calls) && calls.length) {
         for (const tc of calls.slice(0, 5)) {

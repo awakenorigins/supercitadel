@@ -46,8 +46,10 @@ const defs: TieuTamAction[] = [
   { name:'report.summary', description:'Tóm tắt nhanh dữ liệu dashboard', requiredModule:'core', parameters:{type:'object',properties:{}}, async execute(ctx,p){ const [contacts,items,emps,balance]=await Promise.all([listContacts(ctx.db,ctx.orgId).catch(()=>[]),listItems(ctx.db,ctx.orgId).catch(()=>[]),listEmployees(ctx.db,ctx.orgId).catch(()=>[]),getBalance(ctx.db,ctx.orgId).catch(()=>0)]); await audit(ctx,this.name,p); return result(this.name,'report',`Tóm tắt: ${contacts.length} khách, ${items.length} mặt hàng, ${emps.length} nhân viên, ${balance} Om`,{contacts:contacts.length,items:items.length,employees:emps.length,balance}); } },
 ];
 export const ACTION_REGISTRY = new Map(defs.map(d=>[d.name,d]));
-export const ACTION_TOOLS = defs.map(a=>({ type:'function', function:{ name:a.name, description:a.description, parameters:a.parameters } }));
-export async function executeAction(ctx:TieuTamActionCtx, name:string, params:any){ const a=ACTION_REGISTRY.get(name); if(!a) throw Errors.validation(`Action không hợp lệ: ${name}`); return a.execute(ctx, params ?? {}); }
+export function toolSafeName(name:string){ return name.replace(/[^a-zA-Z0-9_-]/g, '_'); }
+const SAFE_TO_ACTION = new Map(defs.map(d=>[toolSafeName(d.name), d.name]));
+export const ACTION_TOOLS = defs.map(a=>({ type:'function', function:{ name:toolSafeName(a.name), description:a.description, parameters:a.parameters } }));
+export async function executeAction(ctx:TieuTamActionCtx, name:string, params:any){ const realName = SAFE_TO_ACTION.get(name) ?? name; const a=ACTION_REGISTRY.get(realName); if(!a) throw Errors.validation(`Action không hợp lệ: ${name}`); return a.execute(ctx, params ?? {}); }
 export function detectAction(message:string): {name:string; params:any} | null {
   const m=message.trim(); let x;
   if((x=/tạo\s+phiếu\s+thu\s+([\d.,]+)\s+(?:cho|từ)\s+(.+)/i.exec(m))) return {name:'acc.create_receipt',params:{amount:x[1].replace(/\D/g,''),partyName:x[2].trim()}};
