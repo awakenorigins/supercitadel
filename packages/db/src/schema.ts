@@ -135,7 +135,23 @@ export const userItems = pgTable(
   (t) => ({ orgUserIdx: index('user_items_org_user_idx').on(t.orgId, t.userId) }),
 );
 
-export const schema = { orgs, users, tokens, auditLogs, ttMemories, ttSoulState, itemCatalog, userItems };
+// ─── R7 · Module Company forge requests ─────────────────────────
+export const companyModuleRequests = pgTable(
+  'company_module_requests',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    orgId: uuid('org_id').notNull().references(() => orgs.id, { onDelete: 'cascade' }),
+    companyName: text('company_name').notNull(),
+    payload: jsonb('payload').notNull(),
+    status: varchar('status', { length: 16 }).notNull().default('received'),
+    termsAcceptedAt: timestamp('terms_accepted_at', { withTimezone: true }).notNull(),
+    createdBy: uuid('created_by'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({ orgIdx: index('company_module_requests_org_idx').on(t.orgId) }),
+);
+
+export const schema = { orgs, users, tokens, auditLogs, ttMemories, ttSoulState, itemCatalog, userItems, companyModuleRequests };
 export type DB = typeof schema;
 
 // ── Module registry (v6) ──
