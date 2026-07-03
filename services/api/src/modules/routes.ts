@@ -86,7 +86,9 @@ export function buildModuleRoutes(deps: { db: any; requireAuth: MiddlewareHandle
     const id = c.req.param('id');
     const def = MODULE_CATALOG.find((m) => m.id === id);
     if (!def) throw Errors.notFound('Module không tồn tại');
+    if (def.status === 'demo') throw Errors.validation('Module đang xây dựng — hiện chỉ xem demo, chưa mua/thuê được');
     if (def.status !== 'ready') throw Errors.validation('Module sắp ra mắt, chưa mua được');
+    if (def.rentOnly) throw Errors.validation('Module này chỉ cho thuê — không bán đứt');
     if (def.tier !== 'paid') throw Errors.validation('Module này miễn phí — chỉ cần bật');
     const orgId = orgOf(c);
     const [existing] = await deps.db.select().from(orgModules).where(and(eq(orgModules.orgId, orgId), eq(orgModules.moduleId, id)));
@@ -108,6 +110,7 @@ export function buildModuleRoutes(deps: { db: any; requireAuth: MiddlewareHandle
     const id = c.req.param('id');
     const def = MODULE_CATALOG.find((m) => m.id === id);
     if (!def) throw Errors.notFound('Module không tồn tại');
+    if (def.status === 'demo') throw Errors.validation('Module đang xây dựng — hiện chỉ xem demo, chưa mua/thuê được');
     if (def.status !== 'ready') throw Errors.validation('Module sắp ra mắt, chưa thuê được');
     if (def.tier !== 'paid') throw Errors.validation('Module này miễn phí — chỉ cần bật');
     const body = await c.req.json().catch(() => ({}));
@@ -144,6 +147,7 @@ export function buildModuleRoutes(deps: { db: any; requireAuth: MiddlewareHandle
     const id = c.req.param('id');
     const def = MODULE_CATALOG.find((m) => m.id === id);
     if (!def) throw Errors.notFound('Module không tồn tại');
+    if (def.status === 'demo') throw Errors.validation('Module đang xây dựng — hiện chỉ xem demo');
     if (def.status !== 'ready') throw Errors.validation('Module sắp ra mắt');
     if (def.tier === 'core') return c.json({ ok: true, module: id, note: 'Module cốt lõi luôn bật' });
     const orgId = orgOf(c);

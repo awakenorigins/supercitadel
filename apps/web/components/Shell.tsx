@@ -5,6 +5,7 @@ import { useState, useRef, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Icon } from './Icon';
 import { OwnedBar } from './OwnedBar';
+import { SecretaryWidget } from './SecretaryWidget';
 import { API, api, getSession } from '../lib/api';
 import { applyTheme, applyStoredTheme } from '../lib/theme';
 
@@ -205,6 +206,7 @@ export function Shell({ children, badge, wide }: { children: React.ReactNode; ba
         </div>
       </div>
       <TieuTamSheet open={ttOpen} onClose={() => setTtOpen(false)} />
+      <SecretaryWidget />
     </>
   );
 }

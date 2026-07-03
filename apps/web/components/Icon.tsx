@@ -40,6 +40,10 @@ const PATHS: Record<string, React.ReactNode> = {
   alert: <path d="M12 3 2.5 20h19L12 3Zm0 7v4m0 3h.01" />,
   clock: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3.5 2" /></>,
   quote: <path d="M5 7h5v5H7a3 3 0 0 0 3 3v2a5 5 0 0 1-5-5V7Zm9 0h5v5h-3a3 3 0 0 0 3 3v2a5 5 0 0 1-5-5V7Z" />,
+  // R5 — Automato Thư Ký + tutorial
+  robot: <><rect x="5" y="8" width="14" height="11" rx="3" /><path d="M12 8V5M12 5a1.5 1.5 0 1 0-.01-3A1.5 1.5 0 0 0 12 5ZM2.5 12v3M21.5 12v3M9 15.5h6" /><circle cx="9" cy="12" r=".9" /><circle cx="15" cy="12" r=".9" /></>,
+  minus: <path d="M5 12h14" />,
+  help: <><circle cx="12" cy="12" r="9" /><path d="M9.5 9.3a2.5 2.5 0 0 1 4.9.6c0 1.6-2.4 2.1-2.4 3.6M12 16.8h.01" /></>,
 };
 
 export function Icon({ name, size, style }: { name: string; size?: number; style?: React.CSSProperties }) {

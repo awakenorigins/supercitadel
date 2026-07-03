@@ -106,4 +106,23 @@ assert(r.status === 409, 'đã mua đứt → rent 409');
 
 assert(await getBalance(db, orgA.id) === 1000 - 40 - 100 - 40 + 1000 - 250, 'số dư cuối chính xác tuyệt đối');
 
+// ── 8) R5: module demo (automato-secretary) — chặn purchase/rent/activate 400, KHÔNG trừ Om ──
+{
+  const balBefore = await getBalance(db, orgA.id);
+  r = await post('/modules/automato-secretary/purchase');
+  let dd = await r.json() as any;
+  assert(r.status === 400 && /đang xây dựng/.test(dd.error?.message ?? ''), 'demo purchase → 400 "Module đang xây dựng"');
+  r = await post('/modules/automato-secretary/rent', { days: 7 });
+  dd = await r.json() as any;
+  assert(r.status === 400 && /đang xây dựng/.test(dd.error?.message ?? ''), 'demo rent → 400 "Module đang xây dựng"');
+  r = await post('/modules/automato-secretary/activate');
+  assert(r.status === 400, 'demo activate → 400');
+  assert(await getBalance(db, orgA.id) === balBefore, 'demo module: KHÔNG trừ Om');
+  // catalog trả module demo cho FE render
+  r = await app.request('/modules');
+  d = await r.json() as any;
+  const auto = d.modules.find((m: any) => m.id === 'automato-secretary');
+  assert(auto && auto.status === 'demo' && auto.rentOnly === true && auto.group === 'AI Automation', 'GET /modules trả automato-secretary status demo, rentOnly, group AI Automation');
+}
+
 console.log('\nv8-rent: ALL PASS');

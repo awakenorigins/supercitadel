@@ -5,7 +5,7 @@ import { Shell } from '../../components/Shell';
 import { Icon } from '../../components/Icon';
 import { api, getSession } from '../../lib/api';
 
-interface Mod { id: string; name: string; icon: string; desc: string; tier: string; priceOm: number; group: string; route: string; status: string; active: boolean; purchased: boolean; rentedUntil: string | null; rentDaysLeft: number | null }
+interface Mod { id: string; name: string; icon: string; desc: string; tier: string; priceOm: number; group: string; route: string; status: string; rentOnly?: boolean; active: boolean; purchased: boolean; rentedUntil: string | null; rentDaysLeft: number | null }
 
 const RENT_PLANS = [
   { days: 7, pct: 0.10, label: '7 ngày' },
@@ -32,6 +32,9 @@ export default function ModulesPage() {
   const [buySheet, setBuySheet] = useState<StoreItem | null>(null);
   const [buyQty, setBuyQty] = useState(1);
   const [justBought, setJustBought] = useState('');           // code vật phẩm vừa mua — nút ✓ + confetti
+  // R5 Phase C: demo flow Automato Thư Ký — loading giả lập → popup ⚠️ → widget
+  const [demoLoading, setDemoLoading] = useState(false);
+  const [demoWarn, setDemoWarn] = useState(false);
 
   const load = () => {
     api<{ modules: Mod[] }>('/api/v1/modules').then((d) => setMods(d.modules)).catch(() => setMods([]));
@@ -89,8 +92,19 @@ export default function ModulesPage() {
     finally { setBusy(''); }
   }
 
+  // R5: demo flow Automato Thư Ký — KHÔNG gọi API thật, chỉ FE
+  function startSecretaryDemo() {
+    setDemoLoading(true);
+    setTimeout(() => { setDemoLoading(false); setDemoWarn(true); }, 1500);
+  }
+  function ackSecretaryWarn() {
+    setDemoWarn(false);
+    window.dispatchEvent(new Event('citadel:secretary-demo')); // Shell → SecretaryWidget xuất hiện
+  }
+
   const enabled = mods?.filter((m) => m.active) ?? [];
-  const groups = ['Kinh doanh', 'Tài chính', 'Vận hành', 'Nhân sự', 'Cốt lõi'];
+  const renting = mods?.filter((m) => !m.purchased && m.rentedUntil && m.rentDaysLeft !== null) ?? []; // R5: đang thuê còn hạn
+  const groups = ['AI Automation', 'Kinh doanh', 'Tài chính', 'Vận hành', 'Nhân sự', 'Cốt lõi'];
 
   return (
     <Shell wide>
@@ -113,6 +127,32 @@ export default function ModulesPage() {
           ))}
         </div>
 
+        {/* R5: Đang thuê — chỉ hiện khi có module thuê còn hạn, kèm ngày hết hạn + nút gia hạn */}
+        {renting.length > 0 && (
+          <>
+            <div style={{ padding: '20px 20px 0', fontSize: 13, fontWeight: 700, color: 'var(--dim)', display: 'flex', alignItems: 'center', gap: 7 }}>
+              <Icon name="clock" size={14} style={{ color: 'var(--amber)' }} /> Đang thuê
+            </div>
+            <div style={{ padding: '11px 20px 0', display: 'grid', gap: 9 }}>
+              {renting.map((m) => (
+                <div key={m.id} className="card" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 14px', borderRadius: 16, borderColor: (m.rentDaysLeft ?? 0) <= 3 ? 'rgba(236,106,133,.35)' : 'rgba(232,179,102,.3)' }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--amber-soft)', color: 'var(--amber)', display: 'grid', placeItems: 'center', flexShrink: 0 }}><Icon name={m.icon} size={19} /></div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <b style={{ fontSize: 13.5 }}>{m.name}</b>
+                    <div style={{ fontSize: 11, marginTop: 2, color: (m.rentDaysLeft ?? 0) <= 3 ? 'var(--rose)' : 'var(--mut)' }}>
+                      Còn {m.rentDaysLeft} ngày · hết hạn {m.rentedUntil ? fmtDate(new Date(m.rentedUntil)) : '—'}
+                    </div>
+                  </div>
+                  <button className="chip" style={{ fontSize: 11.5, padding: '7px 13px', color: 'var(--amber)', borderColor: 'rgba(232,179,102,.4)' }}
+                    onClick={() => { setRentSheet(m); setRentDays(30); }}>
+                    Gia hạn
+                  </button>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
         {/* Cửa hàng theo nhóm — R4: mod-card grid (icon lớn, giá nổi bật, switch/badge trên đầu card) */}
         {groups.map((g) => {
           const list = mods?.filter((m) => m.group === g) ?? [];
@@ -130,6 +170,7 @@ export default function ModulesPage() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 5, flexWrap: 'wrap' }}>
                           {m.tier === 'core' && <span className="bdg-s jade">CỐT LÕI</span>}
                           {m.status === 'coming_soon' && <span className="bdg-s violet">SẮP RA</span>}
+                          {m.status === 'demo' && <span className="bdg-s violet">DEMO</span>}
                           {m.tier === 'paid' && m.purchased && <span className="bdg-s jade">SỞ HỮU</span>}
                           {m.tier === 'paid' && !m.purchased && m.rentedUntil && (
                             m.rentDaysLeft !== null
@@ -155,7 +196,15 @@ export default function ModulesPage() {
                     </div>
                     <div className="mod-desc">{m.desc}</div>
                     <div className="mod-foot">
-                      {m.tier === 'paid' && !m.purchased
+                      {m.status === 'demo' ? (
+                        <>
+                          <span className="mod-price"><Icon name="coin" size={14} /> {m.priceOm} <small>Om · thuê — đang xây dựng</small></span>
+                          <button disabled={demoLoading} onClick={startSecretaryDemo}
+                            style={{ marginLeft: 'auto', border: 'none', borderRadius: 11, padding: '8px 14px', fontWeight: 700, fontSize: 12, background: 'linear-gradient(135deg, var(--jade), var(--violet, #9889e8))', color: '#04231f', display: 'flex', alignItems: 'center', gap: 6, opacity: demoLoading ? .7 : 1 }}>
+                            {demoLoading ? <><span className="spin" style={{ width: 13, height: 13, border: '2px solid rgba(4,35,31,.35)', borderTopColor: '#04231f', borderRadius: '50%', display: 'inline-block', animation: 'spin .7s linear infinite' }} /> Khởi tạo…</> : 'Dùng thử'}
+                          </button>
+                        </>
+                      ) : m.tier === 'paid' && !m.purchased
                         ? <span className="mod-price"><Icon name="coin" size={14} /> {m.priceOm} <small>Om · mua 1 lần</small></span>
                         : m.tier === 'core'
                           ? <span className="mono" style={{ fontSize: 11, color: 'var(--jade)', fontWeight: 700 }}>Luôn bật</span>
@@ -218,6 +267,20 @@ export default function ModulesPage() {
         </div>
         <div style={{ height: 14 }} />
       </div>
+
+      {/* ── R5: popup cảnh báo ⚠️ demo Automato Thư Ký ── */}
+      {demoWarn && (
+        <div className="sh-scrim" onClick={ackSecretaryWarn}>
+          <div className="sh-panel warn-pop" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 420 }}>
+            <div className="wp-ico"><Icon name="alert" size={30} /></div>
+            <b className="fd" style={{ display: 'block', fontSize: 17, marginTop: 14 }}>Automato Thư Ký — bản demo</b>
+            <p style={{ fontSize: 13, color: 'var(--mut)', lineHeight: 1.6, margin: '10px 4px 0' }}>
+              Đây là thư ký auto — đang trong quá trình build. Tương lai sẽ có model LLM riêng.
+            </p>
+            <button className="btn-p" style={{ marginTop: 18 }} onClick={ackSecretaryWarn}>Đã hiểu</button>
+          </div>
+        </div>
+      )}
 
       {/* ── R5: popup xác nhận mua vật phẩm — stepper số lượng + tổng Om ── */}
       {buySheet && (

@@ -117,7 +117,7 @@ async function main() {
 
   // ═══ MODULE REGISTRY (4) + GATE FLOW ═══
   { const r = await app.request('/api/v1/crm/deals', { headers: H }); row('GATE', 'crm trước khi mua → 403', r.status, r.status === 403, 'MODULE_INACTIVE'); }
-  { const { st, d } = await J(await app.request('/api/v1/modules', { headers: H })); row('GET', '/api/v1/modules', st, st === 200 && d.modules?.length === 8, 'catalog 8'); }
+  { const { st, d } = await J(await app.request('/api/v1/modules', { headers: H })); row('GET', '/api/v1/modules', st, st === 200 && d.modules?.length === 9, 'catalog 9 (R5 +automato-secretary)'); }
   { const { st, d } = await J(await app.request('/api/v1/om/topup', { method: 'POST', headers: H, body: JSON.stringify({ amount: 99999 }) })); row('POST', '/om/topup (cấp 99999)', st, st === 200 && d.balance === 99999, 'admin Om'); }
   { const { st, d } = await J(await app.request('/api/v1/modules/crm/purchase', { method: 'POST', headers: H })); row('POST', '/modules/crm/purchase', st, st === 200 && d.balance === 99599, 'trừ 400 Om thật'); }
   { const { st, d } = await J(await app.request('/api/v1/modules/inventory/purchase', { method: 'POST', headers: H })); row('POST', '/modules/inventory/purchase', st, st === 200 && d.balance === 99299, 'trừ 300'); }

@@ -731,3 +731,24 @@ button { transition: transform var(--dur-1); }
 .use-glow { animation: useGlow 1s ease-out; }
 @keyframes useGlow { 0% { box-shadow: 0 0 0 0 rgba(52,211,184,.55); } 100% { box-shadow: 0 0 0 22px rgba(52,211,184,0); } }
 @media (prefers-reduced-motion: reduce) { .use-glow { animation: none; } }
+
+/* ── R5 Phase C: Automato Thư Ký floating widget ── */
+.secw { position: fixed; right: 18px; bottom: 88px; width: min(320px, calc(100vw - 28px)); z-index: 85; background: var(--base); border: 1px solid var(--bd2); border-radius: 18px; box-shadow: var(--sh-3), 0 0 34px rgba(52,211,184,.12); animation: secwIn .38s var(--ease) both; overflow: hidden; }
+@media (min-width: 1024px) { .secw { bottom: 22px; } }
+@keyframes secwIn { from { opacity: 0; transform: translateY(16px) scale(.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.secw-head { display: flex; align-items: center; gap: 10px; padding: 12px 12px 10px 14px; border-bottom: 1px solid var(--line); background: linear-gradient(135deg, rgba(52,211,184,.09), rgba(152,137,232,.07)); }
+.secw-ava { width: 36px; height: 36px; border-radius: 12px; background: linear-gradient(135deg, var(--jade), var(--violet, #9889e8)); color: #04231f; display: grid; place-items: center; flex-shrink: 0; }
+.secw-act { width: 28px; height: 28px; border-radius: 9px; border: none; background: var(--s2); color: var(--dim); display: grid; place-items: center; cursor: pointer; transition: background var(--dur-1); }
+.secw-act:hover { background: var(--s3); }
+.secw-body { padding: 14px; min-height: 64px; }
+.secw-bub { background: var(--s1); border: 1px solid var(--bd); border-radius: 4px 14px 14px 14px; padding: 11px 13px; font-size: 12.5px; line-height: 1.55; color: var(--txt); animation: fadeUp .3s var(--ease) both; }
+.secw-foot { padding: 0 14px 12px; }
+.secw-fab { position: fixed; right: 18px; bottom: 88px; z-index: 85; width: 52px; height: 52px; border-radius: 50%; border: 1px solid var(--bd2); background: linear-gradient(135deg, var(--jade), var(--violet, #9889e8)); color: #04231f; display: grid; place-items: center; cursor: pointer; box-shadow: var(--sh-2), 0 0 22px rgba(52,211,184,.28); animation: secwIn .3s var(--ease) both; }
+@media (min-width: 1024px) { .secw-fab { bottom: 22px; } }
+.secw-fab-dot { position: absolute; top: 3px; right: 3px; width: 11px; height: 11px; border-radius: 50%; background: var(--jade); border: 2px solid var(--base); }
+@media (prefers-reduced-motion: reduce) { .secw, .secw-fab, .secw-bub { animation: none; } }
+
+/* popup cảnh báo demo ⚠️ */
+.warn-pop { text-align: center; }
+.warn-pop .wp-ico { width: 58px; height: 58px; border-radius: 18px; margin: 4px auto 0; background: var(--amber-soft); color: var(--amber); display: grid; place-items: center; }
+@keyframes spin { to { transform: rotate(360deg); } }
