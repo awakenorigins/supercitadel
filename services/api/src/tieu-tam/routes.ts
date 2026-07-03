@@ -10,6 +10,7 @@ import {
   getSoulState, tickEnergy, setEngine, learnFromMessage, recall, forget,
   detectIntent, STATUS_LABEL, STATUS_MESSAGE, isBetaMode,
 } from '@citadel/tieu-tam';
+import { ACTION_TOOLS, detectAction, executeAction } from './actions.js';
 import { requireAuth as defaultRequireAuth, orgOf } from '../auth/middleware.js';
 import { AppError, Errors } from '@citadel/core';
 import type { AuditFn } from '../audit/service.js';
@@ -104,14 +105,37 @@ export function buildTieuTamRoutes({ db, requireAuth = defaultRequireAuth, audit
     const profile = await buildWorkProfile(db, orgId, auth.sub, { memoryLimit: 30 });
     const engine = getEngine(profile.engine);
     const messages: EngineMessage[] = [{ role: 'user', content: message }];
-    const reply = await engine.complete(profile, messages);
+    const actionCtx = { db, orgId, userId: auth.sub, audit: audit ? (e: any) => audit(c, e) : undefined };
+    const direct = detectAction(message);
+    let actionResults: any[] = [];
+    let reply: any;
+    if (direct) {
+      const r = await executeAction(actionCtx, direct.name, direct.params);
+      actionResults = [r];
+      reply = { text: r.message + ' ✓', mode: 'live' as const };
+    } else {
+      reply = await engine.complete(profile, messages, { tools: ACTION_TOOLS, toolChoice: 'auto' });
+      const calls = (reply as any).rawMessage?.tool_calls ?? [];
+      if (Array.isArray(calls) && calls.length) {
+        for (const tc of calls.slice(0, 5)) {
+          const name = tc.function?.name;
+          const args = JSON.parse(tc.function?.arguments || '{}');
+          const r = await executeAction(actionCtx, name, args);
+          actionResults.push(r);
+          messages.push({ role: 'assistant', content: reply.text || '', tool_calls: [tc] } as any);
+          messages.push({ role: 'tool', tool_call_id: tc.id, name, content: JSON.stringify(r) } as any);
+        }
+        const final = await engine.complete(profile, messages, { toolChoice: 'none' });
+        reply = { ...final, text: final.text || actionResults.map((r) => r.message).join(' · ') + ' ✓' };
+      }
+    }
     // học chảy ngược về hồn (best-effort, không gãy chat)
     await learnFromMessage(db, orgId, auth.sub, message);
     // Mệt → nhắc nhẹ sắp cần nghỉ (không chặn)
     const text = tick.note && tick.state.status === 'met' && !isBetaMode()
       ? `${reply.text}\n\n(${tick.note})`
       : reply.text;
-    return { reply: { ...reply, text }, tick, refused: false };
+    return { reply: { ...reply, text, toolCalls: actionResults.length ? actionResults.map((r) => ({ tool: r.action, module: r.module, result: r })) : reply.toolCalls }, tick, refused: false };
   }
 
   /** Non-streaming reply. */

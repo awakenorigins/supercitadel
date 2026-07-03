@@ -30,6 +30,7 @@ const KIND_COLOR: Record<string, string> = {
   person: 'var(--jade)', fact: 'var(--sky)', topic: 'var(--violet)', summary: 'var(--amber)', preference: 'var(--rose)',
 };
 const ENGINES = [
+  { v: 'sonnet-4.6', label: 'Sonnet 4.6 ⭐ (mặc định)' },
   { v: 'stub-a', label: 'Stub A — bộ não thử nghiệm' },
   { v: 'stub-b', label: 'Stub B — bộ não thử nghiệm' },
   { v: 'openai', label: 'OpenAI — GPT' },
@@ -247,11 +248,11 @@ export default function TieuTamPage() {
               </div>
             </div>
             <select
-              value={soul?.engine ?? 'stub-a'}
+              value={soul?.engine ?? 'sonnet-4.6'}
               disabled={busy === 'engine' || soul === null}
               onChange={(e) => switchEngine(e.target.value)}
               style={{ width: '100%', background: 'var(--s2)', border: '1px solid var(--bd)', borderRadius: 12, padding: '12px 13px', color: 'var(--txt)', fontSize: 13.5, fontFamily: 'var(--fb)', outline: 'none', appearance: 'none' }}>
-              {ENGINES.map((e) => <option key={e.v} value={e.v}>{e.label}</option>)}
+              {ENGINES.map((e) => <option key={e.v} value={e.v}>{e.label}{soul?.engine === e.v ? ' — đang active' : ''}</option>)}
             </select>
           </div>
         </div>

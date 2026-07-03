@@ -8,12 +8,12 @@ import { detectIntent } from './intent.js';
 import { CANNED, type ChatContext } from './canned.js';
 import { answerFromDocs } from './docs.js';
 
-export interface EngineMessage { role: 'user' | 'assistant'; content: string }
+export interface EngineMessage { role: 'system' | 'user' | 'assistant' | 'tool'; content: string; tool_call_id?: string; name?: string; tool_calls?: any[] }
 
 export interface EngineAdapter {
   /** Tên engine — vd 'stub-a', 'stub-b', 'openai', 'anthropic'. */
   readonly name: string;
-  complete(profile: WorkProfile, messages: EngineMessage[]): Promise<TieuTamReply>;
+  complete(profile: WorkProfile, messages: EngineMessage[], opts?: { tools?: any[]; toolChoice?: 'auto' | 'none' }): Promise<TieuTamReply & { rawMessage?: any }>;
 }
 
 // ─── Stub adapters — trả lời từ TRÍ NHỚ trong WorkProfile ───────
@@ -83,6 +83,7 @@ export class StubAdapterB implements EngineAdapter {
 
 function renderSystemPrompt(profile: WorkProfile): string {
   const parts = [renderPersonaText(profile.persona)];
+  parts.push('SUPERCITADEL: Tiểu Tâm là thư ký điều hành của tổ chức. Khi người dùng yêu cầu tạo/sửa/ghi nhận nghiệp vụ thật, hãy dùng tools được cấp để thao tác dữ liệu thật thay người dùng. Luôn xác nhận bằng số liệu thật, mã chứng từ/tên bản ghi nếu có. Nếu module chưa bật, nói rõ cần bật module trong Cửa hàng Module.');
   if (profile.memories.length) {
     parts.push('Trí nhớ về người dùng/tổ chức (dùng khi liên quan):');
     parts.push(...profile.memories.map((m) => `- [${m.kind}] ${m.content}`));
@@ -101,21 +102,24 @@ function renderSystemPrompt(profile: WorkProfile): string {
 
 export class OpenAiAdapter implements EngineAdapter {
   readonly name = 'openai';
-  constructor(private apiKey = process.env.OPENAI_API_KEY ?? '', private model = process.env.OPENAI_MODEL ?? 'gpt-4o-mini') {}
-  async complete(profile: WorkProfile, messages: EngineMessage[]): Promise<TieuTamReply> {
+  constructor(private apiKey = process.env.OPENAI_API_KEY ?? '', private model = process.env.OPENAI_MODEL ?? 'gpt-4o-mini', private baseUrl = process.env.OPENAI_BASE_URL ?? 'https://api.openai.com/v1') {}
+  async complete(profile: WorkProfile, messages: EngineMessage[], opts?: { tools?: any[]; toolChoice?: 'auto' | 'none' }): Promise<TieuTamReply & { rawMessage?: any }> {
     if (!this.apiKey) throw new Error('OPENAI_API_KEY chưa cấu hình');
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    const res = await fetch(`${this.baseUrl.replace(/\/$/, '')}/chat/completions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${this.apiKey}` },
       body: JSON.stringify({
         model: this.model,
         messages: [{ role: 'system', content: renderSystemPrompt(profile) }, ...messages],
         temperature: 0.7,
+        max_tokens: 2048,
+        ...(opts?.tools?.length ? { tools: opts.tools, tool_choice: opts.toolChoice ?? 'auto' } : {}),
       }),
     });
     if (!res.ok) throw new Error(`OpenAI ${res.status}: ${(await res.text()).slice(0, 200)}`);
     const data = (await res.json()) as any;
-    return { text: data.choices?.[0]?.message?.content ?? '', mode: 'live' };
+    const msg = data.choices?.[0]?.message ?? {};
+    return { text: msg.content ?? '', mode: 'live', rawMessage: msg };
   }
 }
 
@@ -145,6 +149,7 @@ const ADAPTERS: Record<string, () => EngineAdapter> = {
   'stub-a': () => new StubAdapterA(),
   'stub-b': () => new StubAdapterB(),
   openai: () => new OpenAiAdapter(),
+  'sonnet-4.6': () => new OpenAiAdapter(process.env.LLM_API_KEY ?? '', process.env.LLM_MODEL ?? 'cc/claude-sonnet-4-6', process.env.LLM_BASE_URL ?? 'http://100.65.135.62:20131/v1'),
   anthropic: () => new AnthropicAdapter(),
 };
 

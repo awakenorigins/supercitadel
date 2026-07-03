@@ -64,7 +64,7 @@ assert(prefs.length === 1 && prefs[0].kind === 'preference', 'learnFromMessage g
 console.log('── SWAP TEST: đổi động cơ, hồn giữ nguyên ──');
 // remember facts qua flow bình thường (engine stub-a đang active mặc định)
 const soul0 = await getSoulState(db, orgA.id, an.id);
-assert(soul0.engine === 'stub-a', 'engine mặc định stub-a');
+assert(soul0.engine === 'stub-a', 'engine mặc định sonnet-4.6');
 await learnFromMessage(db, orgA.id, an.id, 'tôi tên là Khoa nhé em');
 await remember(db, orgA.id, an.id, 'topic', 'Dự án Citadel tới bước Phase 2', 0.8); // idempotent
 

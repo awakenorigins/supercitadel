@@ -18,7 +18,7 @@ process.env.BETA_MODE = 'false'; // test enforce thật; beta test riêng bên d
 const client = new PGlite();
 const mig = (f: string) => readFileSync(new URL(`../../../packages/db/migrations/${f}`, import.meta.url), 'utf8')
   .replace(/CREATE EXTENSION IF NOT EXISTS vector;\s*/i, '');
-for (const f of ['0001_init.sql', '0002_org_modules.sql', '0003_super_admin.sql', '0004_v7a_p1.sql', '0005_v7a_p2.sql', '0006_v7a_p3.sql', '0007_module_rental.sql']) await client.exec(mig(f));
+for (const f of ['0001_init.sql', '0002_org_modules.sql', '0003_super_admin.sql', '0004_v7a_p1.sql', '0005_v7a_p2.sql', '0006_v7a_p3.sql', '0007_module_rental.sql', '0008_r6_sonnet_default.sql']) await client.exec(mig(f));
 const db = drizzle(client, { schema }) as any;
 
 const [orgA] = await db.insert(orgs).values({ name: 'Org A', slug: 'org-a' }).returning();
@@ -35,11 +35,12 @@ const H = { 'Content-Type': 'application/json' };
 let r = await app.request('/tieu-tam/state');
 assert(r.status === 200, 'GET /state → 200');
 let d = await r.json() as any;
-assert(d.energy === 100 && d.status === 'tran_day' && d.engine === 'stub-a', 'state khởi tạo: 100 / Tràn đầy / stub-a');
+assert(d.energy === 100 && d.status === 'tran_day' && d.engine === 'sonnet-4.6', 'state khởi tạo: 100 / Tràn đầy / sonnet-4.6');
 assert(d.statusLabel === 'Tràn đầy' && typeof d.statusMessage === 'string', 'state có label + message tiếng Việt');
 assert(d.betaMode === false, 'state phản ánh BETA_MODE=false');
 
 // ── 2) Chat trừ energy + học ngược về hồn ──
+await db.update(ttSoulState).set({ engine: 'stub-a' }).where(and(eq(ttSoulState.orgId, orgA.id), eq(ttSoulState.userId, userA.id)));
 await remember(db, orgA.id, userA.id, 'topic', 'Dự án Citadel tới bước Phase 2', 0.8);
 r = await app.request('/tieu-tam/chat', { method: 'POST', headers: H, body: JSON.stringify({ message: 'tôi tên là Khoa, dự án Citadel tới đâu rồi?' }) });
 d = await r.json() as any;
