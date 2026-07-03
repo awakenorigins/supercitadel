@@ -126,6 +126,8 @@ export function buildTieuTamRoutes({ db, requireAuth = defaultRequireAuth, audit
     const history = await loadChatHistory(db, orgId, auth.sub, 20).catch(() => []);
     const messages: EngineMessage[] = [
       ...history.map((h: any) => ({ role: h.role as 'user' | 'assistant', content: h.content })),
+      // chặn lặp hành động: model thấy yêu cầu cũ trong lịch sử dễ gọi tool lần nữa → duplicate DB
+      ...(history.length ? [{ role: 'system' as const, content: 'Lưu ý: mọi yêu cầu/hành động trong lịch sử hội thoại phía trên ĐÃ ĐƯỢC THỰC HIỆN XONG. Chỉ dùng lịch sử để nhớ ngữ cảnh. Chỉ thực hiện hành động (gọi tool) cho tin nhắn MỚI NHẤT dưới đây.' }] : []),
       { role: 'user', content: message },
     ];
     const actionCtx = { db, orgId, userId: auth.sub, audit: audit ? (e: any) => audit(c, e) : undefined };
