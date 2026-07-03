@@ -36,7 +36,7 @@ export default function CrmPage() {
 
   const load = useCallback(() => {
     api<{ deals: Deal[] }>('/api/v1/crm/deals').then((d) => { setDeals(d.deals); setLocked(false); })
-      .catch((e) => { if (String(e.message).includes('kích hoạt')) setLocked(true); else setDeals([]); });
+      .catch((e) => { if (/kích hoạt|hết hạn thuê/.test(String(e.message))) setLocked(true); else setDeals([]); });
     api<{ contacts: Contact[] }>('/api/v1/crm/contacts').then((d) => setContacts(d.contacts)).catch(() => {});
     api<{ openDeals: number; totalValueVnd: number }>('/api/v1/crm/stats').then(setStats).catch(() => {});
   }, []);
@@ -88,7 +88,7 @@ export default function CrmPage() {
             <button onClick={() => { setShowAdd('contact'); setMsg(null); }} style={{ background: 'var(--s1)', border: '1px solid var(--bd2)', borderRadius: 99, padding: '7px 13px', color: 'var(--txt)', fontWeight: 600, fontSize: 12 }}>+ Khách</button>
           </div>
         </div>
-        {locked ? <ModuleLocked name="CRM" /> : (
+        {locked ? <ModuleLocked name="CRM" id="crm" /> : (
           <>
             {msg && <div className="card" style={{ margin: '11px 20px 0', padding: '10px 13px', fontSize: 12.5, color: msg.ok ? 'var(--jade)' : 'var(--amber)', borderColor: msg.ok ? 'rgba(52,211,184,.3)' : 'rgba(232,179,102,.35)' }}>{msg.t}</div>}
 

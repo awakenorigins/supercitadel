@@ -69,7 +69,7 @@ export default function AccountingPage() {
       api<{ invoices: Inv[] }>('/api/v1/accounting/invoices').then((d) => setInvs(d.invoices)).catch(() => {});
       api<PL>(`/api/v1/accounting/reports/profit-loss?from=${today().slice(0, 8)}01&to=${today()}`).then(setPl).catch(() => {});
       api<{ balanced: boolean }>('/api/v1/accounting/reports/trial-balance').then((d) => setTbOk(d.balanced)).catch(() => {});
-    } catch (e: any) { if (String(e.message).includes('kích hoạt')) setLocked(true); }
+    } catch (e: any) { if (/kích hoạt|hết hạn thuê/.test(String(e.message))) setLocked(true); }
   }, []);
   useEffect(() => { if (!getSession()) { router.replace('/'); return; } load(); }, [router, load]);
 
@@ -153,7 +153,7 @@ export default function AccountingPage() {
     <Shell wide>
       <div className="scroll">
         <div className="pg-h"><div className="k">Tài chính · fork ERPNext Accounts</div><h1>Kế Toán</h1></div>
-        {locked ? <ModuleLocked name="Kế Toán" /> : (
+        {locked ? <ModuleLocked name="Kế Toán" id="accounting" /> : (
           <>
             <div className="tabs">
               {tabs.map(([k, label]) => (

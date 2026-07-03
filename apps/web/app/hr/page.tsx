@@ -31,7 +31,7 @@ export default function HrPage() {
   const [msg, setMsg] = useState('');
   const [sheet, setSheet] = useState<'' | 'emp' | 'shift' | 'leave'>('');
 
-  const gate = (e: any) => { if (String(e.message).includes('kích hoạt')) setLocked(true); };
+  const gate = (e: any) => { if (/kích hoạt|hết hạn thuê/.test(String(e.message))) setLocked(true); };
   const loadAll = useCallback(() => {
     api<{ shifts: Shift[] }>('/api/v1/hr/shifts').then((d) => { setShifts(d.shifts); setLocked(false); }).catch(gate);
     api<{ employees: Emp[] }>('/api/v1/hr/employees?status=active').then((d) => setEmps(d.employees)).catch(gate);
@@ -45,8 +45,10 @@ export default function HrPage() {
   const [nm, setNm] = useState(''); const [dt, setDt] = useState(today()); const [t1, setT1] = useState('08:00'); const [t2, setT2] = useState('17:00');
   async function addShift() {
     if (!nm.trim()) return;
-    await api('/api/v1/hr/shifts', { method: 'POST', body: JSON.stringify({ name: nm, shiftDate: dt, startTime: t1, endTime: t2, staff: [] }) }).catch(() => {});
-    setNm(''); setSheet(''); loadAll();
+    try {
+      await api('/api/v1/hr/shifts', { method: 'POST', body: JSON.stringify({ name: nm, shiftDate: dt, startTime: t1, endTime: t2, staff: [] }) });
+      setMsg(''); setNm(''); setSheet(''); loadAll();
+    } catch (e: any) { setMsg(e.message); }
   }
   async function addPerson(s: Shift) {
     const name = window.prompt('Tên người vào ' + s.name + ':'); if (!name?.trim()) return;
@@ -95,7 +97,7 @@ export default function HrPage() {
     <Shell wide>
       <div className="scroll">
         <div className="pg-h"><div className="k">Nhân sự v2 · fork hrms</div><h1>Nhân Sự</h1></div>
-        {locked ? <ModuleLocked name="Nhân Sự & Ca" /> : (
+        {locked ? <ModuleLocked name="Nhân Sự & Ca" id="hr" /> : (
           <>
             <div className="tabs">
               {tabs.map(([k, label]) => (

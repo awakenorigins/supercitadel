@@ -5,7 +5,15 @@ import { Shell } from '../../components/Shell';
 import { Icon } from '../../components/Icon';
 import { api, getSession } from '../../lib/api';
 
-interface Mod { id: string; name: string; icon: string; desc: string; tier: string; priceOm: number; group: string; route: string; status: string; active: boolean; purchased: boolean }
+interface Mod { id: string; name: string; icon: string; desc: string; tier: string; priceOm: number; group: string; route: string; status: string; active: boolean; purchased: boolean; rentedUntil: string | null; rentDaysLeft: number | null }
+
+const RENT_PLANS = [
+  { days: 7, pct: 0.10, label: '7 ngày' },
+  { days: 30, pct: 0.25, label: '30 ngày' },
+  { days: 90, pct: 0.60, label: '90 ngày' },
+];
+const rentPrice = (priceOm: number, pct: number) => Math.ceil(priceOm * pct);
+const fmtDate = (d: Date) => d.toLocaleDateString('vi-VN', { day: 'numeric', month: 'numeric', year: 'numeric' });
 interface StoreItem { code: string; name: string; description: string; category: string; price: number; icon: string | null }
 
 const ITEM_CAT_LABEL: Record<string, string> = { food: 'Đồ ăn', decor: 'Trang trí', boost: 'Tăng lực' };
@@ -17,6 +25,9 @@ export default function ModulesPage() {
   const [bal, setBal] = useState<number | null>(null);
   const [busy, setBusy] = useState('');
   const [msg, setMsg] = useState('');
+  const [confirmOff, setConfirmOff] = useState('');           // id module đang hỏi "Tắt module này?"
+  const [rentSheet, setRentSheet] = useState<Mod | null>(null); // sheet thuê/gia hạn
+  const [rentDays, setRentDays] = useState(30);
 
   const load = () => {
     api<{ modules: Mod[] }>('/api/v1/modules').then((d) => setMods(d.modules)).catch(() => setMods([]));
@@ -25,11 +36,33 @@ export default function ModulesPage() {
   };
   useEffect(() => { if (!getSession()) { router.replace('/'); return; } load(); }, [router]);
 
+  // ?rent=<id> — OwnedBar/ModuleGate nhảy tới đây để mở sheet gia hạn ngay
+  useEffect(() => {
+    if (!mods) return;
+    const id = new URLSearchParams(window.location.search).get('rent');
+    if (!id) return;
+    const m = mods.find((x) => x.id === id && x.tier === 'paid' && !x.purchased);
+    if (m) { setRentSheet(m); setRentDays(30); }
+    window.history.replaceState(null, '', '/modules');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mods === null]);
+
   async function act(m: Mod, action: 'purchase' | 'activate' | 'deactivate') {
-    setBusy(m.id); setMsg('');
+    setBusy(m.id); setMsg(''); setConfirmOff('');
     try {
       const d = await api<any>(`/api/v1/modules/${m.id}/${action}`, { method: 'POST' });
       if (action === 'purchase') setMsg(`Đã mua ${m.name} (−${d.paidOm} Om · còn ${d.balance.toLocaleString('vi')})`);
+      load();
+    } catch (e: any) { setMsg(e.message); }
+    finally { setBusy(''); }
+  }
+
+  async function doRent(m: Mod, days: number) {
+    setBusy(m.id); setMsg('');
+    try {
+      const d = await api<any>(`/api/v1/modules/${m.id}/rent`, { method: 'POST', body: JSON.stringify({ days }) });
+      setMsg(`Đã thuê ${m.name} ${days} ngày (−${d.paidOm} Om · còn ${d.balance.toLocaleString('vi')}) · hạn ${fmtDate(new Date(d.rentedUntil))}`);
+      setRentSheet(null);
       load();
     } catch (e: any) { setMsg(e.message); }
     finally { setBusy(''); }
@@ -87,19 +120,45 @@ export default function ModulesPage() {
                         {m.status === 'coming_soon' && <span className="bdg-s violet">SẮP RA</span>}
                       </div>
                       <div style={{ fontSize: 11.5, color: 'var(--mut)', marginTop: 3 }}>{m.desc}</div>
-                      {m.tier === 'paid' && !m.purchased && <div className="mono" style={{ fontSize: 11.5, color: 'var(--amber)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}><Icon name="coin" size={11} /> {m.priceOm} Om · mua 1 lần</div>}
+                      {m.tier === 'paid' && !m.purchased && !m.rentedUntil && <div className="mono" style={{ fontSize: 11.5, color: 'var(--amber)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}><Icon name="coin" size={11} /> {m.priceOm} Om · mua 1 lần</div>}
+                      {m.tier === 'paid' && !m.purchased && m.rentedUntil && (
+                        m.rentDaysLeft !== null
+                          ? <span className={`bdg-s ${m.rentDaysLeft <= 3 ? 'rose' : 'amber'}`} style={{ marginTop: 5 }}>THUÊ · còn {m.rentDaysLeft} ngày</span>
+                          : <span className="bdg-s rose" style={{ marginTop: 5 }}>THUÊ · HẾT HẠN</span>
+                      )}
                     </div>
                     {m.status === 'ready' && m.tier !== 'core' && (
-                      m.purchased ? (
-                        <button disabled={busy === m.id} onClick={() => act(m, m.active ? 'deactivate' : 'activate')}
-                          style={{ border: 'none', borderRadius: 11, padding: '9px 14px', fontWeight: 700, fontSize: 12, background: m.active ? 'var(--s3)' : 'var(--jade)', color: m.active ? 'var(--dim)' : '#04231f', opacity: busy === m.id ? .6 : 1 }}>
-                          {m.active ? 'Tắt' : 'Bật'}
-                        </button>
+                      (m.purchased || (m.rentDaysLeft !== null)) ? (
+                        // đã sở hữu (mua hoặc thuê còn hạn) → switch bật/tắt (+ Gia hạn nếu đang thuê)
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 9, flexShrink: 0 }}>
+                          {!m.purchased && (
+                            <button className="chip" onClick={() => { setRentSheet(m); setRentDays(30); }} style={{ fontSize: 11, padding: '5px 10px' }}>Gia hạn</button>
+                          )}
+                          {confirmOff === m.id ? (
+                            <div className="sw-confirm">
+                              <span>Tắt module này?</span>
+                              <button className="no" onClick={() => setConfirmOff('')}>Hủy</button>
+                              <button className="yes" disabled={busy === m.id} onClick={() => act(m, 'deactivate')}>Tắt</button>
+                            </div>
+                          ) : (
+                            <button role="switch" aria-checked={m.active} aria-label={`${m.active ? 'Tắt' : 'Bật'} ${m.name}`}
+                              className={`sw ${m.active ? 'on' : ''}`} disabled={busy === m.id}
+                              onClick={() => m.active ? setConfirmOff(m.id) : act(m, 'activate')} />
+                          )}
+                        </div>
                       ) : (
-                        <button disabled={busy === m.id} onClick={() => act(m, 'purchase')}
-                          style={{ border: 'none', borderRadius: 11, padding: '9px 14px', fontWeight: 700, fontSize: 12, background: 'var(--amber)', color: '#2a1c08', opacity: busy === m.id ? .6 : 1 }}>
-                          Mua
-                        </button>
+                        <div style={{ display: 'flex', gap: 7, flexShrink: 0 }}>
+                          {m.tier === 'paid' && (
+                            <button disabled={busy === m.id} onClick={() => { setRentSheet(m); setRentDays(30); }}
+                              style={{ borderRadius: 11, padding: '9px 13px', fontWeight: 700, fontSize: 12, background: 'transparent', border: '1.5px solid rgba(232,179,102,.4)', color: 'var(--amber)', opacity: busy === m.id ? .6 : 1 }}>
+                              Thuê
+                            </button>
+                          )}
+                          <button disabled={busy === m.id} onClick={() => m.tier === 'paid' ? act(m, 'purchase') : act(m, 'activate')}
+                            style={{ border: 'none', borderRadius: 11, padding: '9px 14px', fontWeight: 700, fontSize: 12, background: 'var(--amber)', color: '#2a1c08', opacity: busy === m.id ? .6 : 1 }}>
+                            {m.tier === 'paid' ? 'Mua' : 'Bật'}
+                          </button>
+                        </div>
                       )
                     )}
                   </div>
@@ -138,6 +197,46 @@ export default function ModulesPage() {
         </div>
         <div style={{ height: 14 }} />
       </div>
+
+      {/* ── sheet thuê/gia hạn module (pattern sh-scrim/sh-panel DS v2) ── */}
+      {rentSheet && (
+        <div className="sh-scrim" onClick={() => setRentSheet(null)}>
+          <div className="sh-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="sh-head">
+              <div className="sh-ico" style={{ background: 'var(--amber-soft)', color: 'var(--amber)' }}><Icon name={rentSheet.icon} size={19} /></div>
+              <div>
+                <b className="fd" style={{ fontSize: 16 }}>{rentSheet.rentedUntil ? 'Gia hạn' : 'Thuê'} {rentSheet.name}</b>
+                <div style={{ fontSize: 11.5, color: 'var(--mut)', marginTop: 2 }}>
+                  Giá mua đứt: {rentSheet.priceOm} Om
+                  {rentSheet.rentDaysLeft !== null && ` · đang thuê còn ${rentSheet.rentDaysLeft} ngày`}
+                </div>
+              </div>
+              <button className="sh-x" onClick={() => setRentSheet(null)}><Icon name="x" size={14} /></button>
+            </div>
+            {RENT_PLANS.map((p) => {
+              const price = rentPrice(rentSheet.priceOm, p.pct);
+              const base = rentSheet.rentDaysLeft !== null && rentSheet.rentedUntil
+                ? new Date(rentSheet.rentedUntil) : new Date();
+              const until = new Date(base.getTime() + p.days * 86_400_000);
+              return (
+                <button key={p.days} className={`rent-opt ${rentDays === p.days ? 'sel' : ''}`} onClick={() => setRentDays(p.days)}>
+                  <div style={{ width: 40, height: 40, borderRadius: 12, background: rentDays === p.days ? 'var(--jade-soft)' : 'var(--s3)', color: rentDays === p.days ? 'var(--jade)' : 'var(--dim)', display: 'grid', placeItems: 'center', fontWeight: 800, fontSize: 13, flexShrink: 0 }} className="mono">{p.days}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <b style={{ fontSize: 13.5 }}>{p.label}</b>
+                    <div style={{ fontSize: 11, color: 'var(--mut)', marginTop: 2 }}>Hạn dự kiến: {fmtDate(until)}</div>
+                  </div>
+                  <span className="mono" style={{ color: 'var(--amber)', fontWeight: 700, fontSize: 13, display: 'flex', alignItems: 'center', gap: 4 }}><Icon name="coin" size={12} /> {price}</span>
+                </button>
+              );
+            })}
+            <button className="btn-p" disabled={busy === rentSheet.id} style={{ marginTop: 10, opacity: busy === rentSheet.id ? .6 : 1 }}
+              onClick={() => doRent(rentSheet, rentDays)}>
+              {busy === rentSheet.id ? 'Đang xử lý…' : `Xác nhận ${rentSheet.rentedUntil ? 'gia hạn' : 'thuê'} ${rentDays} ngày · ${rentPrice(rentSheet.priceOm, RENT_PLANS.find((p) => p.days === rentDays)!.pct)} Om`}
+            </button>
+            {bal !== null && <div style={{ fontSize: 11, color: 'var(--mut)', textAlign: 'center', marginTop: 9 }}>Số dư ví: {bal.toLocaleString('vi')} Om</div>}
+          </div>
+        </div>
+      )}
     </Shell>
   );
 }

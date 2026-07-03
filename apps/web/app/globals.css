@@ -385,6 +385,40 @@ input, select, textarea { font-family: var(--fb); }
 .btn-demo:hover { box-shadow: 0 0 26px var(--amber-soft); }
 .btn-demo:active { transform: scale(.98); }
 
+/* ═══════════════ R3: SWITCH · OWNED-BAR · RENT ═══════════════ */
+/* switch toggle — port ý tưởng originui switch (base-ui) sang CSS thuần DS v2 */
+.sw { position: relative; width: 40px; height: 23px; border-radius: var(--r-full); border: 1px solid var(--bd2); background: var(--s3); padding: 0; flex-shrink: 0; transition: background var(--dur-2), border-color var(--dur-2), box-shadow var(--dur-2); }
+.sw::after { content: ''; position: absolute; top: 2px; left: 2px; width: 17px; height: 17px; border-radius: 50%; background: var(--dim); transition: transform .18s var(--ease), background var(--dur-2), width .12s; will-change: transform; }
+.sw:active::after { width: 20px; }
+.sw.on { background: var(--jade); border-color: var(--jade); box-shadow: 0 0 14px var(--jade-soft); }
+.sw.on::after { transform: translateX(17px); background: #04231f; }
+.sw.on:active::after { transform: translateX(14px); }
+.sw:disabled { opacity: .55; cursor: not-allowed; }
+.sw:focus-visible { outline: 2px solid var(--jade); outline-offset: 2px; }
+
+/* confirm inline (tắt module) */
+.sw-confirm { display: flex; align-items: center; gap: 7px; animation: scaleIn var(--dur-1) var(--ease) both; }
+.sw-confirm span { font-size: 11.5px; color: var(--dim); white-space: nowrap; }
+.sw-confirm button { border: none; border-radius: 9px; padding: 7px 11px; font-weight: 700; font-size: 11.5px; }
+.sw-confirm .no { background: var(--s3); color: var(--dim); }
+.sw-confirm .yes { background: var(--rose); color: #2a080f; }
+
+/* owned bar — chip module sở hữu, scroll ngang mobile */
+.owned-bar { display: flex; align-items: center; gap: 7px; padding: 9px 20px 0; overflow-x: auto; scrollbar-width: none; }
+.owned-bar::-webkit-scrollbar { display: none; }
+.ob-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 11px; border-radius: var(--r-full); background: var(--s1); border: 1px solid var(--bd); font-size: 11.5px; font-weight: 600; color: var(--dim); white-space: nowrap; transition: border-color var(--dur-1), color var(--dur-1), transform var(--dur-1), box-shadow var(--dur-2); }
+.ob-chip:hover { border-color: var(--bd2); color: var(--txt); transform: translateY(-1px); box-shadow: var(--sh-1); }
+.ob-chip:active { transform: scale(.97); }
+.ob-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.ob-chip .ob-days { font-family: var(--fm); font-size: 10px; opacity: .9; }
+@media (max-width: 480px) { .owned-bar { padding: 9px 16px 0; } }
+
+/* rent plan option trong sheet */
+.rent-opt { display: flex; align-items: center; gap: 12px; width: 100%; padding: 13px 14px; border-radius: var(--r-md); border: 1.5px solid var(--bd); background: var(--s2); color: var(--txt); text-align: left; margin-bottom: 8px; transition: border-color var(--dur-1), background var(--dur-1), transform var(--dur-1); }
+.rent-opt:hover { border-color: var(--bd2); }
+.rent-opt:active { transform: scale(.98); }
+.rent-opt.sel { border-color: var(--jade); background: var(--jade-soft); }
+
 /* ── mobile 480px polish ── */
 @media (max-width: 480px) {
   .tabs { padding: 13px 16px 0; }

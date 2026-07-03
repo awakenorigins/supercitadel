@@ -4,6 +4,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Icon } from './Icon';
+import { OwnedBar } from './OwnedBar';
 import { API, api, getSession } from '../lib/api';
 import { applyTheme, applyStoredTheme } from '../lib/theme';
 
@@ -185,6 +186,7 @@ export function Shell({ children, badge, wide }: { children: React.ReactNode; ba
           </header>
 
           <div className={`shell${wide ? ' wide' : ''}`}>
+            <OwnedBar />
             {children}
             <nav className="botnav">
               <button className={`bn ${is('/home') ? 'active' : ''}`} onClick={nav('/home')}><Icon name="home" />Trang chủ</button>

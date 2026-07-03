@@ -17,7 +17,7 @@ export default function InventoryPage() {
   const [showAdd, setShowAdd] = useState(false);
   const [nm, setNm] = useState(''); const [q0, setQ0] = useState(''); const [th, setTh] = useState('');
   const load = () => api<{ items: Item[] }>('/api/v1/inventory/items').then((d) => { setItems(d.items); setLocked(false); })
-    .catch((e) => { if (String(e.message).includes('kích hoạt')) setLocked(true); else setItems([]); });
+    .catch((e) => { if (/kích hoạt|hết hạn thuê/.test(String(e.message))) setLocked(true); else setItems([]); });
   useEffect(() => { if (!getSession()) { router.replace('/'); return; } load(); }, [router]);
 
   async function add() {
@@ -48,7 +48,7 @@ export default function InventoryPage() {
           <div style={{ flex: 1 }}><div className="k">Vận hành</div><h1>Kho Hàng</h1></div>
           <button onClick={() => setShowAdd(true)} style={{ background: 'var(--jade)', border: 'none', borderRadius: 99, padding: '7px 13px', color: '#04231f', fontWeight: 700, fontSize: 12 }}>+ Mặt hàng</button>
         </div>
-        {locked ? <ModuleLocked name="Kho Hàng" /> : (
+        {locked ? <ModuleLocked name="Kho Hàng" id="inventory" /> : (
           <>
             <div className="stat-row c3">
               <div className="stat"><div className="sv">{items?.length ?? '—'}</div><div className="sl">Mặt hàng</div></div>
