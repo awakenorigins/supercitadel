@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Shell } from '../../components/Shell';
 import { Icon } from '../../components/Icon';
 import { ModuleLocked } from '../../components/ModuleGate';
+import { EmptyState } from '../../components/EmptyState';
 import { api, getSession } from '../../lib/api';
 
 interface Deal { id: string; title: string; valueVnd: number; stage: string }
@@ -89,15 +90,9 @@ export default function CrmPage() {
           </div>
         </div>
         {locked ? <ModuleLocked name="CRM" id="crm" /> : (
-          <>
+          <div className="biz-cols">
+          <div className="biz-main">
             {msg && <div className="card" style={{ margin: '11px 20px 0', padding: '10px 13px', fontSize: 12.5, color: msg.ok ? 'var(--jade)' : 'var(--amber)', borderColor: msg.ok ? 'rgba(52,211,184,.3)' : 'rgba(232,179,102,.35)' }}>{msg.t}</div>}
-
-            {/* Stat row */}
-            <div className="stat-row c3">
-              <div className="stat"><div className="sv" style={{ color: 'var(--jade)' }}>{stats?.openDeals ?? '—'}</div><div className="sl">Deal đang mở</div></div>
-              <div className="stat"><div className="sv" style={{ color: 'var(--amber)' }}>{stats ? fmt(stats.totalValueVnd) : '—'}</div><div className="sl">Tổng giá trị mở</div></div>
-              <div className="stat"><div className="sv" style={{ color: 'var(--sky)' }}>{deals ? fmt(wonValue) : '—'}</div><div className="sl">Đã thắng</div></div>
-            </div>
 
             {/* Khách hàng */}
             <button onClick={() => setShowContacts((v) => !v)} style={{ margin: '14px 20px 0', width: 'calc(100% - 40px)', display: 'flex', alignItems: 'center', gap: 8, padding: '11px 14px', borderRadius: 13, background: 'var(--s1)', border: '1px solid var(--bd)', color: 'var(--txt)', fontSize: 13, fontWeight: 700 }}>
@@ -106,7 +101,9 @@ export default function CrmPage() {
             </button>
             {showContacts && (
               <div style={{ padding: '8px 20px 0' }}>
-                {contacts?.length === 0 && <p className="mut" style={{ padding: 8, fontSize: 12.5 }}>Chưa có khách — bấm "+ Khách" ở trên.</p>}
+                {contacts?.length === 0 && (
+                  <EmptyState icon="people" title="Chưa có khách hàng" sub="Thêm khách đầu tiên để bắt đầu chăm sóc và gắn deal." cta="+ Thêm khách" onCta={() => { setShowAdd('contact'); setMsg(null); }} />
+                )}
                 {contacts && contacts.length > 0 && (
                   <div className="dt-wrap" style={{ margin: 0 }}>
                     <table className="dt">
@@ -132,6 +129,9 @@ export default function CrmPage() {
             )}
 
             {/* Kanban 5 cột — DS .kb */}
+            {deals !== null && deals.length === 0 && (
+              <EmptyState icon="search" title="Pipeline đang trống" sub="Tạo deal đầu tiên — deal mới vào cột Liên hệ, chạm để chuyển bước." cta="+ Tạo deal" onCta={() => { setShowAdd('deal'); setMsg(null); }} />
+            )}
             <div className="kb">
               {STAGES.map(([key, label, color]) => {
                 const col = deals?.filter((d) => d.stage === key) ?? [];
@@ -165,7 +165,65 @@ export default function CrmPage() {
                 );
               })}
             </div>
-          </>
+          </div>
+
+          {/* ── R4 aside: thống kê pipeline + khách mới nhất ── */}
+          <aside className="biz-aside">
+            <div className="as-panel">
+              <div className="as-h"><Icon name="target" /> Pipeline</div>
+              <div className="as-kpis">
+                <div className="as-kpi">
+                  <div className="ii" style={{ background: 'var(--jade-soft)', color: 'var(--jade)' }}><Icon name="target" size={14} /></div>
+                  <div className="v" style={{ color: 'var(--jade)' }}>{stats?.openDeals ?? '—'}</div>
+                  <div className="l">Deal đang mở</div>
+                </div>
+                <div className="as-kpi">
+                  <div className="ii" style={{ background: 'var(--amber-soft)', color: 'var(--amber)' }}><Icon name="coin" size={14} /></div>
+                  <div className="v" style={{ color: 'var(--amber)' }}>{stats ? fmt(stats.totalValueVnd) : '—'}</div>
+                  <div className="l">Giá trị mở</div>
+                </div>
+                <div className="as-kpi">
+                  <div className="ii" style={{ background: 'var(--sky-soft)', color: 'var(--sky)' }}><Icon name="check" size={14} /></div>
+                  <div className="v" style={{ color: 'var(--sky)' }}>{deals ? fmt(wonValue) : '—'}</div>
+                  <div className="l">Đã thắng</div>
+                </div>
+                <div className="as-kpi">
+                  <div className="ii" style={{ background: 'var(--violet-soft)', color: 'var(--violet)' }}><Icon name="users" size={14} /></div>
+                  <div className="v" style={{ color: 'var(--violet)' }}>{contacts?.length ?? '—'}</div>
+                  <div className="l">Khách hàng</div>
+                </div>
+              </div>
+              {/* giá trị từng stage — bar mini */}
+              <div style={{ marginTop: 12 }}>
+                {STAGES.map(([key, label, color]) => {
+                  const val = deals?.filter((d) => d.stage === key).reduce((s, d) => s + d.valueVnd, 0) ?? 0;
+                  const maxVal = Math.max(...STAGES.map(([k]) => deals?.filter((d) => d.stage === k).reduce((s, d) => s + d.valueVnd, 0) ?? 0), 1);
+                  return (
+                    <div key={key} className="as-bar">
+                      <span className="lb">{label}</span>
+                      <span className="tr"><i style={{ width: `${Math.max(2, (val / maxVal) * 100)}%`, background: color }} /></span>
+                      <span className="n">{val > 0 ? fmt(val) : '—'}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="as-panel">
+              <div className="as-h"><Icon name="users" /> Khách mới nhất
+                <button className="as-more" onClick={() => setShowContacts(true)}>tất cả <Icon name="chevron" size={11} /></button>
+              </div>
+              {contacts === null && <div className="skel" style={{ height: 80, borderRadius: 12 }} />}
+              {contacts?.length === 0 && <p className="mut" style={{ fontSize: 12, padding: '4px 0' }}>Chưa có khách nào.</p>}
+              {contacts?.slice(0, 5).map((c) => (
+                <div key={c.id} className="as-it">
+                  <span className={`ava ${c.tag === 'vip' ? 'amber' : 'mint'}`} style={{ width: 30, height: 30, borderRadius: 9, fontSize: 10 }}>{c.name.slice(0, 2)}</span>
+                  <div className="ai-t"><b>{c.name}</b><span>{c.phone ?? 'chưa có SĐT'}</span></div>
+                  <span className={`bdg-s ${c.tag === 'vip' ? 'amber' : 'mut'}`}>{c.tag.toUpperCase()}</span>
+                </div>
+              ))}
+            </div>
+          </aside>
+          </div>
         )}
         <div style={{ height: 14 }} />
       </div>

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Shell } from '../../components/Shell';
 import { Icon } from '../../components/Icon';
 import { ModuleLocked } from '../../components/ModuleGate';
+import { EmptyState } from '../../components/EmptyState';
 import { api, getSession, API } from '../../lib/api';
 
 interface Inv { id: string; invoiceType: string; partyName: string; grandTotal: string; outstanding: string; status: string; postingDate: string }
@@ -154,7 +155,8 @@ export default function AccountingPage() {
       <div className="scroll">
         <div className="pg-h"><div className="k">Tài chính · fork ERPNext Accounts</div><h1>Kế Toán</h1></div>
         {locked ? <ModuleLocked name="Kế Toán" id="accounting" /> : (
-          <>
+          <div className="biz-cols">
+          <div className="biz-main">
             <div className="tabs">
               {tabs.map(([k, label]) => (
                 <button key={k} onClick={() => setTab(k)} className={`tab ${tab === k ? 'on' : ''}`}>{label}</button>
@@ -192,10 +194,6 @@ export default function AccountingPage() {
 
             {tab === 'quy' && (
               <>
-                <div className="stat-row c2">
-                  <div className="stat"><div className="sv" style={{ color: 'var(--jade)' }}>{cash === null ? '—' : vnd(cash)}</div><div className="sl">111 · Tiền mặt (₫)</div></div>
-                  <div className="stat"><div className="sv" style={{ color: 'var(--sky)' }}>{bank === null ? '—' : vnd(bank)}</div><div className="sl">112 · Ngân hàng (₫)</div></div>
-                </div>
                 <div style={{ margin: '13px 20px 0', display: 'grid', gap: 7 }}>
                   <div style={{ display: 'flex', gap: 7 }}>
                     <button onClick={() => setPType('receive')} className={`tab ${pType === 'receive' ? 'on' : ''}`}>PHIẾU THU</button>
@@ -210,7 +208,9 @@ export default function AccountingPage() {
                 </div>
                 <div className="sect">Phiếu gần đây</div>
                 {pays === null && <div className="skel" style={{ height: 120, margin: '10px 20px 0', borderRadius: 16 }} />}
-                {pays?.length === 0 && <p className="mut" style={{ padding: '12px 22px', fontSize: 12.5 }}>Chưa có phiếu thu/chi.</p>}
+                {pays?.length === 0 && (
+                  <EmptyState icon="receipt" title="Chưa có phiếu thu/chi" sub="Ghi phiếu đầu tiên bằng form phía trên — sổ cái cập nhật ngay." />
+                )}
                 {pays && pays.length > 0 && (
                   <div className="dt-wrap fade-up">
                     <table className="dt">
@@ -246,7 +246,9 @@ export default function AccountingPage() {
                   <button onClick={addInvoice} className="btn-p" style={{ opacity: iParty.trim() && iAmt ? 1 : .5 }}>Tạo hóa đơn (ghi công nợ)</button>
                 </div>
                 {invs === null && <div className="skel" style={{ height: 120, margin: '14px 20px 0', borderRadius: 16 }} />}
-                {invs?.length === 0 && <p className="mut" style={{ padding: '14px 22px', fontSize: 12.5 }}>Chưa có hóa đơn.</p>}
+                {invs?.length === 0 && (
+                  <EmptyState icon="doc" title="Chưa có hóa đơn" sub="Tạo hóa đơn bán/mua để theo dõi công nợ từng đối tác." />
+                )}
                 {invs && invs.length > 0 && (
                   <div className="dt-wrap fade-up" style={{ marginTop: 14 }}>
                     <table className="dt">
@@ -292,7 +294,59 @@ export default function AccountingPage() {
                 <p className="mono" style={{ padding: '12px 22px', fontSize: 10, color: 'var(--faint)' }}>Tính trực tiếp từ sổ cái GL (Σ Nợ = Σ Có). Sổ quỹ, công nợ, P&L cùng một nguồn sự thật.</p>
               </>
             )}
-          </>
+          </div>
+
+          {/* ── R4 aside: sổ gần đây + số dư quỹ + trial balance ── */}
+          <aside className="biz-aside">
+            <div className="as-panel">
+              <div className="as-h"><Icon name="coin" /> Số dư quỹ
+                {tbOk !== null && <span className={`bdg-s ${tbOk ? 'jade' : 'rose'}`} style={{ marginLeft: 'auto' }}>{tbOk ? 'SỔ CÂN' : 'SỔ LỆCH'}</span>}
+              </div>
+              <div className="as-kpis">
+                <div className="as-kpi">
+                  <div className="ii" style={{ background: 'var(--jade-soft)', color: 'var(--jade)' }}><Icon name="coin" size={14} /></div>
+                  <div className="v" style={{ color: 'var(--jade)' }}>{cash === null ? '—' : vnd(cash)}</div>
+                  <div className="l">111 · Tiền mặt (₫)</div>
+                </div>
+                <div className="as-kpi">
+                  <div className="ii" style={{ background: 'var(--sky-soft)', color: 'var(--sky)' }}><Icon name="bank" size={14} /></div>
+                  <div className="v" style={{ color: 'var(--sky)' }}>{bank === null ? '—' : vnd(bank)}</div>
+                  <div className="l">112 · Ngân hàng (₫)</div>
+                </div>
+              </div>
+              {pl && (
+                <div className="as-kpis" style={{ marginTop: 9 }}>
+                  <div className="as-kpi">
+                    <div className="v" style={{ color: 'var(--jade)', fontSize: 14 }}>{vnd(pl.totalIncome)}</div>
+                    <div className="l">Thu tháng này (₫)</div>
+                    <div className="d" style={{ color: 'var(--jade)' }}><Icon name="up" size={10} /> doanh thu</div>
+                  </div>
+                  <div className="as-kpi">
+                    <div className="v" style={{ color: pl.netProfit >= 0 ? 'var(--jade)' : 'var(--rose)', fontSize: 14 }}>{vnd(pl.netProfit)}</div>
+                    <div className="l">Lãi ròng (₫)</div>
+                    <div className="d" style={{ color: pl.netProfit >= 0 ? 'var(--jade)' : 'var(--rose)' }}>{pl.netProfit >= 0 ? '▲ dương' : '▼ âm'}</div>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="as-panel">
+              <div className="as-h"><Icon name="book" /> Sổ gần đây
+                <button className="as-more" onClick={() => setTab('quy')}>xem sổ <Icon name="chevron" size={11} /></button>
+              </div>
+              {pays === null && <div className="skel" style={{ height: 90, borderRadius: 12 }} />}
+              {pays?.length === 0 && <p className="mut" style={{ fontSize: 12, padding: '4px 0' }}>Chưa có bút toán nào.</p>}
+              {pays?.slice(0, 6).map((p) => (
+                <div key={p.id} className="as-it">
+                  <div className="ai-ico" style={{ background: p.paymentType === 'receive' ? 'var(--jade-soft)' : 'var(--amber-soft)', color: p.paymentType === 'receive' ? 'var(--jade)' : 'var(--amber)' }}>
+                    <Icon name={p.paymentType === 'receive' ? 'up' : 'coin'} size={14} />
+                  </div>
+                  <div className="ai-t"><b>{p.partyName}</b><span>{p.postingDate}</span></div>
+                  <div className="ai-r" style={{ color: p.paymentType === 'receive' ? 'var(--jade)' : 'var(--amber)' }}>{p.paymentType === 'receive' ? '+' : '−'}{vnd(p.amount)}</div>
+                </div>
+              ))}
+            </div>
+          </aside>
+          </div>
         )}
         <div style={{ height: 14 }} />
       </div>

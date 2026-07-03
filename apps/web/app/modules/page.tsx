@@ -82,7 +82,7 @@ export default function ModulesPage() {
   const groups = ['Kinh doanh', 'Tài chính', 'Vận hành', 'Nhân sự', 'Cốt lõi'];
 
   return (
-    <Shell>
+    <Shell wide>
       <div className="scroll">
         <div className="pg-h" style={{ display: 'flex', alignItems: 'flex-end' }}>
           <div style={{ flex: 1 }}><div className="k">Marketplace</div><h1>Cửa Hàng Module</h1></div>
@@ -102,65 +102,74 @@ export default function ModulesPage() {
           ))}
         </div>
 
-        {/* Cửa hàng theo nhóm */}
+        {/* Cửa hàng theo nhóm — R4: mod-card grid (icon lớn, giá nổi bật, switch/badge trên đầu card) */}
         {groups.map((g) => {
           const list = mods?.filter((m) => m.group === g) ?? [];
           if (!list.length && mods !== null) return null;
           return (
             <div key={g}>
               <div style={{ padding: '20px 20px 0', fontSize: 11, fontWeight: 700, letterSpacing: '.1em', color: 'var(--faint)', textTransform: 'uppercase' }}>{g}</div>
-              <div style={{ padding: '10px 20px 0' }}>
+              <div className="mod-grid">
                 {list.map((m) => (
-                  <div key={m.id} className="card store-card" style={{ display: 'flex', gap: 12, padding: 14, borderRadius: 16, marginBottom: 9, alignItems: 'center', opacity: m.status === 'coming_soon' ? .55 : 1 }}>
-                    <div style={{ width: 42, height: 42, borderRadius: 13, background: m.active ? 'var(--jade-soft)' : 'var(--s3)', color: m.active ? 'var(--jade)' : 'var(--dim)', display: 'grid', placeItems: 'center', flexShrink: 0 }}><Icon name={m.icon} size={20} /></div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                        <b style={{ fontSize: 14 }}>{m.name}</b>
-                        {m.tier === 'core' && <span className="bdg-s jade">CỐT LÕI</span>}
-                        {m.status === 'coming_soon' && <span className="bdg-s violet">SẮP RA</span>}
+                  <div key={m.id} className={`mod-card ${m.status === 'coming_soon' ? 'off' : ''}`}>
+                    <div className="mod-top">
+                      <div className="mod-ico" style={{ background: m.active ? 'var(--jade-soft)' : 'var(--s3)', color: m.active ? 'var(--jade)' : 'var(--dim)' }}><Icon name={m.icon} size={23} /></div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div className="mod-name">{m.name}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 5, flexWrap: 'wrap' }}>
+                          {m.tier === 'core' && <span className="bdg-s jade">CỐT LÕI</span>}
+                          {m.status === 'coming_soon' && <span className="bdg-s violet">SẮP RA</span>}
+                          {m.tier === 'paid' && m.purchased && <span className="bdg-s jade">SỞ HỮU</span>}
+                          {m.tier === 'paid' && !m.purchased && m.rentedUntil && (
+                            m.rentDaysLeft !== null
+                              ? <span className={`bdg-s ${m.rentDaysLeft <= 3 ? 'rose' : 'amber'}`}>THUÊ · còn {m.rentDaysLeft} ngày</span>
+                              : <span className="bdg-s rose">THUÊ · HẾT HẠN</span>
+                          )}
+                          {m.tier === 'free' && m.status === 'ready' && !m.active && <span className="bdg-s mut">MIỄN PHÍ</span>}
+                        </div>
                       </div>
-                      <div style={{ fontSize: 11.5, color: 'var(--mut)', marginTop: 3 }}>{m.desc}</div>
-                      {m.tier === 'paid' && !m.purchased && !m.rentedUntil && <div className="mono" style={{ fontSize: 11.5, color: 'var(--amber)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}><Icon name="coin" size={11} /> {m.priceOm} Om · mua 1 lần</div>}
-                      {m.tier === 'paid' && !m.purchased && m.rentedUntil && (
-                        m.rentDaysLeft !== null
-                          ? <span className={`bdg-s ${m.rentDaysLeft <= 3 ? 'rose' : 'amber'}`} style={{ marginTop: 5 }}>THUÊ · còn {m.rentDaysLeft} ngày</span>
-                          : <span className="bdg-s rose" style={{ marginTop: 5 }}>THUÊ · HẾT HẠN</span>
+                      {m.status === 'ready' && m.tier !== 'core' && (m.purchased || m.rentDaysLeft !== null) && (
+                        confirmOff === m.id ? (
+                          <div className="sw-confirm">
+                            <span>Tắt?</span>
+                            <button className="no" onClick={() => setConfirmOff('')}>Hủy</button>
+                            <button className="yes" disabled={busy === m.id} onClick={() => act(m, 'deactivate')}>Tắt</button>
+                          </div>
+                        ) : (
+                          <button role="switch" aria-checked={m.active} aria-label={`${m.active ? 'Tắt' : 'Bật'} ${m.name}`}
+                            className={`sw ${m.active ? 'on' : ''}`} disabled={busy === m.id}
+                            onClick={() => m.active ? setConfirmOff(m.id) : act(m, 'activate')} />
+                        )
                       )}
                     </div>
-                    {m.status === 'ready' && m.tier !== 'core' && (
-                      (m.purchased || (m.rentDaysLeft !== null)) ? (
-                        // đã sở hữu (mua hoặc thuê còn hạn) → switch bật/tắt (+ Gia hạn nếu đang thuê)
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 9, flexShrink: 0 }}>
-                          {!m.purchased && (
-                            <button className="chip" onClick={() => { setRentSheet(m); setRentDays(30); }} style={{ fontSize: 11, padding: '5px 10px' }}>Gia hạn</button>
-                          )}
-                          {confirmOff === m.id ? (
-                            <div className="sw-confirm">
-                              <span>Tắt module này?</span>
-                              <button className="no" onClick={() => setConfirmOff('')}>Hủy</button>
-                              <button className="yes" disabled={busy === m.id} onClick={() => act(m, 'deactivate')}>Tắt</button>
-                            </div>
-                          ) : (
-                            <button role="switch" aria-checked={m.active} aria-label={`${m.active ? 'Tắt' : 'Bật'} ${m.name}`}
-                              className={`sw ${m.active ? 'on' : ''}`} disabled={busy === m.id}
-                              onClick={() => m.active ? setConfirmOff(m.id) : act(m, 'activate')} />
-                          )}
-                        </div>
-                      ) : (
-                        <div style={{ display: 'flex', gap: 7, flexShrink: 0 }}>
-                          {m.tier === 'paid' && (
-                            <button disabled={busy === m.id} onClick={() => { setRentSheet(m); setRentDays(30); }}
-                              style={{ borderRadius: 11, padding: '9px 13px', fontWeight: 700, fontSize: 12, background: 'transparent', border: '1.5px solid rgba(232,179,102,.4)', color: 'var(--amber)', opacity: busy === m.id ? .6 : 1 }}>
-                              Thuê
+                    <div className="mod-desc">{m.desc}</div>
+                    <div className="mod-foot">
+                      {m.tier === 'paid' && !m.purchased
+                        ? <span className="mod-price"><Icon name="coin" size={14} /> {m.priceOm} <small>Om · mua 1 lần</small></span>
+                        : m.tier === 'core'
+                          ? <span className="mono" style={{ fontSize: 11, color: 'var(--jade)', fontWeight: 700 }}>Luôn bật</span>
+                          : <span className="mono" style={{ fontSize: 11, color: 'var(--mut)', fontWeight: 600 }}>{m.active ? 'Đang hoạt động' : m.purchased ? 'Đã mua · đang tắt' : m.tier === 'free' ? '0 Om' : ''}</span>}
+                      <div style={{ marginLeft: 'auto', display: 'flex', gap: 7 }}>
+                        {m.status === 'ready' && m.tier === 'paid' && !m.purchased && m.rentDaysLeft !== null && (
+                          <button className="chip" onClick={() => { setRentSheet(m); setRentDays(30); }} style={{ fontSize: 11, padding: '6px 11px' }}>Gia hạn</button>
+                        )}
+                        {m.status === 'ready' && m.tier !== 'core' && !m.purchased && m.rentDaysLeft === null && (
+                          <>
+                            {m.tier === 'paid' && (
+                              <button disabled={busy === m.id} onClick={() => { setRentSheet(m); setRentDays(30); }}
+                                style={{ borderRadius: 11, padding: '8px 13px', fontWeight: 700, fontSize: 12, background: 'transparent', border: '1.5px solid rgba(232,179,102,.4)', color: 'var(--amber)', opacity: busy === m.id ? .6 : 1 }}>
+                                Thuê
+                              </button>
+                            )}
+                            <button disabled={busy === m.id} onClick={() => m.tier === 'paid' ? act(m, 'purchase') : act(m, 'activate')}
+                              style={{ border: 'none', borderRadius: 11, padding: '8px 14px', fontWeight: 700, fontSize: 12, background: 'var(--amber)', color: '#2a1c08', opacity: busy === m.id ? .6 : 1 }}>
+                              {m.tier === 'paid' ? 'Mua' : 'Bật'}
                             </button>
-                          )}
-                          <button disabled={busy === m.id} onClick={() => m.tier === 'paid' ? act(m, 'purchase') : act(m, 'activate')}
-                            style={{ border: 'none', borderRadius: 11, padding: '9px 14px', fontWeight: 700, fontSize: 12, background: 'var(--amber)', color: '#2a1c08', opacity: busy === m.id ? .6 : 1 }}>
-                            {m.tier === 'paid' ? 'Mua' : 'Bật'}
-                          </button>
-                        </div>
-                      )
-                    )}
+                          </>
+                        )}
+                        {m.active && <button className="chip" onClick={() => router.push(m.route)} style={{ fontSize: 11, padding: '6px 11px' }}>Mở →</button>}
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>

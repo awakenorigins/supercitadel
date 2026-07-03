@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Shell } from '../../components/Shell';
 import { Icon } from '../../components/Icon';
 import { ModuleLocked } from '../../components/ModuleGate';
+import { EmptyState } from '../../components/EmptyState';
 import { api, getSession } from '../../lib/api';
 
 interface Shift { id: string; name: string; shiftDate: string; startTime: string; endTime: string; staff: string }
@@ -98,7 +99,8 @@ export default function HrPage() {
       <div className="scroll">
         <div className="pg-h"><div className="k">Nhân sự v2 · fork hrms</div><h1>Nhân Sự</h1></div>
         {locked ? <ModuleLocked name="Nhân Sự & Ca" id="hr" /> : (
-          <>
+          <div className="biz-cols">
+          <div className="biz-main">
             <div className="tabs">
               {tabs.map(([k, label]) => (
                 <button key={k} onClick={() => setTab(k)} className={`tab ${tab === k ? 'on' : ''}`}>{label}</button>
@@ -117,7 +119,9 @@ export default function HrPage() {
                   </div>
                 </div>
                 {emps === null && <div className="skel" style={{ height: 120, margin: '13px 20px 0', borderRadius: 16 }} />}
-                {emps?.length === 0 && <p className="mut" style={{ padding: '14px 22px', fontSize: 13 }}>Chưa có nhân viên — bấm "Thêm nhân viên" ở trên.</p>}
+                {emps?.length === 0 && (
+                  <EmptyState icon="people" title="Chưa có nhân viên" sub="Thêm hồ sơ đầu tiên để chấm công, xếp ca và duyệt nghỉ phép." cta="+ Thêm nhân viên" onCta={() => setSheet('emp')} />
+                )}
                 {emps && emps.length > 0 && (
                   <div className="dt-wrap fade-up">
                     <table className="dt">
@@ -161,7 +165,9 @@ export default function HrPage() {
                 </div>
                 <div style={{ padding: '10px 20px 0' }}>
                   {shifts === null && <div className="skel" style={{ height: 90, borderRadius: 16 }} />}
-                  {shifts?.length === 0 && <p className="mut" style={{ padding: 10, fontSize: 13 }}>Chưa có ca.</p>}
+                  {shifts?.length === 0 && (
+                    <EmptyState icon="doc" title="Chưa có ca làm" sub="Tạo ca đầu tiên rồi xếp người vào — lịch ca hiện ngay tại đây." cta="+ Tạo ca mới" onCta={() => setSheet('shift')} />
+                  )}
                   {shifts?.map((s) => {
                     const people = s.staff ? s.staff.split(',').map((x) => x.trim()).filter(Boolean) : [];
                     return (
@@ -192,7 +198,9 @@ export default function HrPage() {
                   <button onClick={() => setSheet('leave')} style={chipBtn}><Icon name="plus" size={12} /> Nộp đơn xin nghỉ</button>
                 </div>
                 {apps === null && <div className="skel" style={{ height: 100, margin: '10px 20px 0', borderRadius: 16 }} />}
-                {apps?.length === 0 && <p className="mut" style={{ padding: '12px 22px', fontSize: 13 }}>Chưa có đơn nghỉ phép nào.</p>}
+                {apps?.length === 0 && (
+                  <EmptyState icon="doc" title="Chưa có đơn nghỉ phép" sub="Nộp đơn đầu tiên — quản lý duyệt ngay trên bảng này." cta="+ Nộp đơn" onCta={() => setSheet('leave')} />
+                )}
                 {apps && apps.length > 0 && (
                   <div className="dt-wrap fade-up" style={{ marginTop: 10 }}>
                     <table className="dt">
@@ -222,7 +230,56 @@ export default function HrPage() {
                 )}
               </>
             )}
-          </>
+          </div>
+
+          {/* ── R4 aside: hôm nay — ai đang làm, ai nghỉ, đơn chờ duyệt ── */}
+          <aside className="biz-aside">
+            <div className="as-panel">
+              <div className="as-h"><Icon name="clock" /> Hôm nay</div>
+              <div className="as-kpis">
+                <div className="as-kpi">
+                  <div className="ii" style={{ background: 'var(--jade-soft)', color: 'var(--jade)' }}><Icon name="check" size={14} /></div>
+                  <div className="v" style={{ color: 'var(--jade)' }}>{atts ? presentCount : '—'}</div>
+                  <div className="l">Đang làm việc</div>
+                </div>
+                <div className="as-kpi">
+                  <div className="ii" style={{ background: 'var(--violet-soft)', color: 'var(--violet)' }}><Icon name="leaf" size={14} /></div>
+                  <div className="v" style={{ color: 'var(--violet)' }}>{atts ? atts.filter((a) => a.status === 'on_leave').length : '—'}</div>
+                  <div className="l">Nghỉ phép hôm nay</div>
+                </div>
+              </div>
+              <div style={{ marginTop: 10 }}>
+                {atts === null && <div className="skel" style={{ height: 60, borderRadius: 12 }} />}
+                {atts !== null && atts.filter((a) => a.checkIn && !a.checkOut).length === 0 && (
+                  <p className="mut" style={{ fontSize: 12, padding: '4px 0' }}>Chưa ai check-in đang trong ca.</p>
+                )}
+                {atts?.filter((a) => a.checkIn && !a.checkOut).slice(0, 6).map((a, i) => (
+                  <div key={a.id} className="as-it">
+                    <span className={`ava ${AVA[i % AVA.length]}`} style={{ width: 30, height: 30, borderRadius: 9, fontSize: 10 }}>{a.employeeName.slice(0, 2)}</span>
+                    <div className="ai-t"><b>{a.employeeName}</b><span>{a.roleTitle}{a.lateEntry ? ' · đi trễ' : ''}</span></div>
+                    <span className="mono" style={{ fontSize: 10.5, color: 'var(--jade)' }}>{hhmm(a.checkIn)} →</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="as-panel">
+              <div className="as-h"><Icon name="bell" /> Đơn chờ duyệt
+                <span className={`bdg-s ${(apps?.filter((a) => a.status === 'open').length ?? 0) > 0 ? 'amber' : 'jade'}`} style={{ marginLeft: 'auto' }}>{apps ? apps.filter((a) => a.status === 'open').length : '—'}</span>
+              </div>
+              {apps === null && <div className="skel" style={{ height: 60, borderRadius: 12 }} />}
+              {apps !== null && apps.filter((a) => a.status === 'open').length === 0 && (
+                <p className="mut" style={{ fontSize: 12, padding: '4px 0' }}>Không có đơn nào chờ duyệt.</p>
+              )}
+              {apps?.filter((a) => a.status === 'open').slice(0, 5).map((a) => (
+                <div key={a.id} className="as-it">
+                  <div className="ai-ico" style={{ background: 'var(--amber-soft)', color: 'var(--amber)' }}><Icon name="leaf" size={14} /></div>
+                  <div className="ai-t"><b>{a.employeeName}</b><span>{a.typeName} · {a.fromDate} → {a.toDate}</span></div>
+                  <button onClick={() => decide(a.id, true)} className="bdg-s jade" style={{ border: '1px solid rgba(52,211,184,.3)', cursor: 'pointer', padding: '5px 9px' }}>Duyệt</button>
+                </div>
+              ))}
+            </div>
+          </aside>
+          </div>
         )}
         <div style={{ height: 14 }} />
       </div>

@@ -529,3 +529,88 @@ button { transition: transform var(--dur-1); }
   .kpi .kv { font-size: 19px; }
   .kpi.hero .kv { font-size: 24px; }
 }
+
+/* ═══════════════ R4: LỘT SÂU — business 2-col layout + aside panels ═══════════════ */
+:root { --s0: #0d1219; }
+
+/* 2 cột: main 1fr + aside 360px (desktop ≥1100px) · mobile stack dọc */
+.biz-cols { display: block; }
+.biz-main { min-width: 0; }
+.biz-aside { display: flex; flex-direction: column; gap: 12px; padding: 14px 20px 0; }
+@media (min-width: 1100px) {
+  .app .shell.wide { max-width: 1340px; }
+  .biz-cols { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 0 4px; align-items: start; }
+  .biz-aside { position: sticky; top: calc(var(--topbar-h) + 6px); padding: 14px 20px 0 0; max-height: calc(100dvh - var(--topbar-h) - 14px); overflow-y: auto; }
+}
+@media (max-width: 480px) { .biz-aside { padding: 14px 16px 0; } }
+
+/* aside panel — tầng s0 sâu hơn card main (dark depth) */
+.as-panel { background: var(--s0); border: 1px solid var(--bd); border-radius: var(--r-lg); padding: 15px; box-shadow: var(--sh-1); }
+.as-h { display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 700; color: var(--dim); margin-bottom: 11px; }
+.as-h .icon { width: 15px; height: 15px; color: var(--jade); flex-shrink: 0; }
+.as-h .as-more { margin-left: auto; font-size: 11px; font-weight: 600; color: var(--mut); background: none; border: none; display: inline-flex; align-items: center; gap: 3px; transition: color var(--dur-1); }
+.as-h .as-more:hover { color: var(--jade); }
+
+/* mini KPI trong aside — icon + delta màu */
+.as-kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.as-kpi { background: var(--s1); border: 1px solid var(--bd); border-radius: var(--r-md); padding: 11px 12px; transition: border-color var(--dur-2), box-shadow var(--dur-2); }
+.as-kpi:hover { border-color: var(--bd2); box-shadow: var(--sh-1); }
+.as-kpi .ii { width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; margin-bottom: 8px; }
+.as-kpi .v { font-family: var(--fm); font-weight: 700; font-size: 16px; letter-spacing: -.01em; }
+.as-kpi .l { font-size: 10px; color: var(--mut); margin-top: 3px; }
+.as-kpi .d { font-family: var(--fm); font-size: 10px; margin-top: 4px; display: flex; align-items: center; gap: 3px; }
+
+/* list item trong aside */
+.as-it { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); }
+.as-it:last-child { border-bottom: none; padding-bottom: 2px; }
+.as-it .ai-ico { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; flex-shrink: 0; }
+.as-it .ai-t { flex: 1; min-width: 0; }
+.as-it .ai-t b { display: block; font-size: 12.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.as-it .ai-t span { display: block; font-size: 10.5px; color: var(--mut); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.as-it .ai-r { font-family: var(--fm); font-size: 12px; font-weight: 700; flex-shrink: 0; }
+
+/* pipeline bar mini (SVG-free, CSS grow) */
+.as-bar { display: flex; align-items: center; gap: 8px; padding: 6px 0; }
+.as-bar .lb { font-size: 11px; color: var(--dim); width: 74px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.as-bar .tr { flex: 1; height: 7px; border-radius: 4px; background: var(--s2); overflow: hidden; }
+.as-bar .tr i { display: block; height: 100%; border-radius: 4px; animation: barGrow .7s var(--ease) both; }
+@keyframes barGrow { from { width: 0; } }
+.as-bar .n { font-family: var(--fm); font-size: 10.5px; color: var(--mut); min-width: 44px; text-align: right; flex-shrink: 0; }
+@media (prefers-reduced-motion: reduce) { .as-bar .tr i { animation: none; } }
+
+/* wallet hero v2 (Om) — gradient border + số dư lớn (port ý tưởng kokonutui currency-transfer) */
+.wallet-hero { position: relative; border-radius: var(--r-xl); padding: 1.5px; background: linear-gradient(140deg, rgba(232,179,102,.6), rgba(232,179,102,.1) 38%, rgba(52,211,184,.28)); box-shadow: var(--sh-2); }
+.wallet-hero .wh-in { border-radius: calc(var(--r-xl) - 1.5px); background: linear-gradient(155deg, #241d0e, #0d1219 68%); padding: 22px 20px; position: relative; overflow: hidden; }
+.wallet-hero .wh-in::after { content: ''; position: absolute; top: -70px; right: -50px; width: 210px; height: 210px; border-radius: 50%; background: radial-gradient(circle, rgba(232,179,102,.17), transparent 70%); pointer-events: none; }
+.wh-bal { font-family: var(--fm); font-weight: 700; font-size: 42px; color: var(--amber); line-height: 1; letter-spacing: -.01em; }
+.wh-btn { flex: 1; border: none; font-weight: 700; font-size: 13px; padding: 12px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; transition: transform var(--dur-1), box-shadow var(--dur-2); }
+.wh-btn.p { background: var(--amber); color: #2a1c08; }
+.wh-btn.p:hover { box-shadow: 0 0 22px var(--amber-soft); }
+.wh-btn.s { background: rgba(255,255,255,.05); border: 1px solid var(--bd2); color: var(--txt); }
+.wh-btn.s:hover { border-color: rgba(232,179,102,.4); }
+
+/* module card v2 — grid, icon lớn, giá nổi bật, switch trên đầu */
+.mod-grid { display: grid; grid-template-columns: 1fr; gap: 11px; padding: 10px 20px 0; }
+@media (min-width: 640px) { .mod-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1100px) { .mod-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 480px) { .mod-grid { padding: 10px 16px 0; } }
+.mod-card { display: flex; flex-direction: column; background: var(--s1); border: 1px solid var(--bd); border-radius: var(--r-lg); padding: 16px; position: relative; overflow: hidden; transition: border-color var(--dur-2), box-shadow var(--dur-2), transform var(--dur-2) var(--ease); }
+.mod-card:hover { border-color: rgba(52,211,184,.3); box-shadow: var(--sh-2), 0 0 24px var(--jade-soft); transform: translateY(-2px); }
+.mod-card.off { opacity: .6; }
+.mod-card.off:hover { opacity: 1; }
+.mod-top { display: flex; align-items: flex-start; gap: 11px; }
+.mod-ico { width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; flex-shrink: 0; }
+.mod-name { font-family: var(--fd); font-weight: 700; font-size: 15px; }
+.mod-desc { font-size: 11.5px; color: var(--mut); line-height: 1.5; margin-top: 8px; flex: 1; }
+.mod-foot { display: flex; align-items: center; gap: 9px; margin-top: 13px; padding-top: 12px; border-top: 1px solid var(--line); }
+.mod-price { font-family: var(--fm); color: var(--amber); font-weight: 800; font-size: 15px; display: inline-flex; align-items: center; gap: 5px; }
+.mod-price small { font-size: 10px; color: var(--mut); font-weight: 500; }
+
+/* R4 empty state — illustration + headline + CTA */
+.empty-state { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px; margin: 16px 20px 0; padding: 30px 20px 26px; background: var(--s0); border: 1px dashed var(--bd2); border-radius: var(--r-lg); color: var(--faint); }
+.empty-state svg { color: var(--mut); opacity: .8; margin-bottom: 8px; }
+.empty-state b { font-family: var(--fd); font-size: 14px; font-weight: 700; color: var(--dim); }
+.empty-state p { font-size: 12px; color: var(--mut); max-width: 300px; line-height: 1.55; margin-top: 2px; }
+.empty-state .es-cta { margin-top: 13px; border: none; border-radius: var(--r-md); background: var(--jade); color: #04231f; font-weight: 700; font-size: 12.5px; padding: 10px 18px; transition: box-shadow var(--dur-2), transform var(--dur-1); }
+.empty-state .es-cta:hover { box-shadow: var(--glow); }
+@media (max-width: 480px) { .empty-state { margin: 16px 16px 0; } }

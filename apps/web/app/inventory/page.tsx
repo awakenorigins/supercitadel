@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Shell } from '../../components/Shell';
 import { Icon } from '../../components/Icon';
 import { ModuleLocked } from '../../components/ModuleGate';
+import { EmptyState } from '../../components/EmptyState';
 import { api, getSession } from '../../lib/api';
 
 interface Item { id: string; name: string; unit: string; qty: number; lowThreshold: number }
@@ -49,15 +50,12 @@ export default function InventoryPage() {
           <button onClick={() => setShowAdd(true)} style={{ background: 'var(--jade)', border: 'none', borderRadius: 99, padding: '7px 13px', color: '#04231f', fontWeight: 700, fontSize: 12 }}>+ Mặt hàng</button>
         </div>
         {locked ? <ModuleLocked name="Kho Hàng" id="inventory" /> : (
-          <>
-            <div className="stat-row c3">
-              <div className="stat"><div className="sv">{items?.length ?? '—'}</div><div className="sl">Mặt hàng</div></div>
-              <div className="stat"><div className="sv" style={{ color: 'var(--jade)' }}>{items ? totalQty : '—'}</div><div className="sl">Tổng tồn</div></div>
-              <div className="stat"><div className="sv" style={{ color: lowCount > 0 ? 'var(--amber)' : 'var(--jade)' }}>{items ? lowCount : '—'}</div><div className="sl">Sắp hết</div></div>
-            </div>
-
+          <div className="biz-cols">
+          <div className="biz-main">
             {items === null && <div className="skel" style={{ height: 140, margin: '13px 20px 0', borderRadius: 16 }} />}
-            {items?.length === 0 && <p className="mut" style={{ padding: '16px 22px', fontSize: 13 }}>Kho trống — bấm "+ Mặt hàng" để thêm mặt hàng đầu tiên.</p>}
+            {items?.length === 0 && (
+              <EmptyState icon="box" title="Kho đang trống" sub="Thêm mặt hàng đầu tiên để theo dõi tồn kho và nhận cảnh báo sắp hết." cta="+ Thêm mặt hàng" onCta={() => setShowAdd(true)} />
+            )}
             {items && items.length > 0 && (
               <div className="dt-wrap fade-up">
                 <table className="dt">
@@ -93,7 +91,51 @@ export default function InventoryPage() {
               </div>
             )}
             <p className="mono" style={{ padding: '10px 22px 0', fontSize: 10, color: 'var(--faint)' }}>Ngưỡng báo = cảnh báo sắp hết (không phải giới hạn — tồn kho không giới hạn)</p>
-          </>
+          </div>
+
+          {/* ── R4 aside: tổng quan kho + cảnh báo sắp hết ── */}
+          <aside className="biz-aside">
+            <div className="as-panel">
+              <div className="as-h"><Icon name="box" /> Tổng quan kho</div>
+              <div className="as-kpis">
+                <div className="as-kpi">
+                  <div className="ii" style={{ background: 'var(--s3)', color: 'var(--dim)' }}><Icon name="grid" size={14} /></div>
+                  <div className="v">{items?.length ?? '—'}</div>
+                  <div className="l">Mặt hàng (SKU)</div>
+                </div>
+                <div className="as-kpi">
+                  <div className="ii" style={{ background: 'var(--jade-soft)', color: 'var(--jade)' }}><Icon name="box" size={14} /></div>
+                  <div className="v" style={{ color: 'var(--jade)' }}>{items ? totalQty : '—'}</div>
+                  <div className="l">Tổng tồn kho</div>
+                </div>
+              </div>
+            </div>
+            <div className="as-panel">
+              <div className="as-h" style={{ color: lowCount > 0 ? 'var(--amber)' : undefined }}>
+                <Icon name="alert" /> Cảnh báo sắp hết
+                <span className={`bdg-s ${lowCount > 0 ? 'amber' : 'jade'}`} style={{ marginLeft: 'auto' }}>{items ? lowCount : '—'}</span>
+              </div>
+              {items === null && <div className="skel" style={{ height: 70, borderRadius: 12 }} />}
+              {items !== null && lowCount === 0 && <p className="mut" style={{ fontSize: 12, padding: '4px 0' }}>Kho ổn định — không mặt hàng nào dưới ngưỡng.</p>}
+              {items?.filter((i) => i.qty <= i.lowThreshold).slice(0, 7).map((it) => {
+                const zero = it.qty === 0;
+                return (
+                  <div key={it.id} className="as-it">
+                    <div className="ai-ico" style={{ background: zero ? 'var(--rose-soft)' : 'var(--amber-soft)', color: zero ? 'var(--rose)' : 'var(--amber)' }}>
+                      <Icon name="alert" size={14} />
+                    </div>
+                    <div className="ai-t"><b>{it.name}</b><span>ngưỡng ≤ {it.lowThreshold} {it.unit}</span></div>
+                    <div className="ai-r" style={{ color: zero ? 'var(--rose)' : 'var(--amber)' }}>{it.qty}</div>
+                  </div>
+                );
+              })}
+              {items && lowCount > 0 && (
+                <button className="es-cta" style={{ width: '100%', marginTop: 12, border: 'none', borderRadius: 12, background: 'var(--amber-soft)', color: 'var(--amber)', fontWeight: 700, fontSize: 12, padding: '10px 0' }}
+                  onClick={() => setShowAdd(true)}>+ Nhập thêm hàng</button>
+              )}
+            </div>
+          </aside>
+          </div>
         )}
         <div style={{ height: 14 }} />
       </div>

@@ -35,6 +35,11 @@ const PATHS: Record<string, React.ReactNode> = {
   target: <><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1" /></>,
   panel: <><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M9 4v16M14 12h4m0 0-1.8-1.8M18 12l-1.8 1.8" /></>,
   fox: <path d="M5 4c2 2.2 4.3 3 7 3s5-.8 7-3c.6 3 .3 5.8-1 8.2 1 1.5 1 3.3.2 4.8-1.3 2.4-3.6 4-6.2 4s-4.9-1.6-6.2-4c-.8-1.5-.8-3.3.2-4.8C4.7 9.8 4.4 7 5 4ZM9.5 12.5h.01M14.5 12.5h.01M12 15.5l-1-1h2l-1 1Z" />,
+  // R4 — aside panels
+  bank: <path d="M3 9.5 12 4l9 5.5M4.5 9.5V18M9 9.5V18M15 9.5V18M19.5 9.5V18M3 18h18M3 21h18" />,
+  alert: <path d="M12 3 2.5 20h19L12 3Zm0 7v4m0 3h.01" />,
+  clock: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3.5 2" /></>,
+  quote: <path d="M5 7h5v5H7a3 3 0 0 0 3 3v2a5 5 0 0 1-5-5V7Zm9 0h5v5h-3a3 3 0 0 0 3 3v2a5 5 0 0 1-5-5V7Z" />,
 };
 
 export function Icon({ name, size, style }: { name: string; size?: number; style?: React.CSSProperties }) {
