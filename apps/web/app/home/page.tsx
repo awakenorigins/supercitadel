@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Shell } from '../../components/Shell';
 import { Icon } from '../../components/Icon';
+import { NumberTicker } from '../../components/NumberTicker';
 import { api, getSession } from '../../lib/api';
 
 interface Summary { kpis: any; team: { members: number }; pulse: { status: string; note: string } }
@@ -54,6 +55,18 @@ function Spark({ color = 'var(--jade)' }: { color?: string }) {
       <path d="M1 20 Q 8 18 13 15 T 26 13 T 39 15 T 52 8 T 71 3" stroke={color} strokeWidth="1.6" strokeLinecap="round" opacity=".8" />
       <path d="M1 20 Q 8 18 13 15 T 26 13 T 39 15 T 52 8 T 71 3 V 26 H 1 Z" fill={color} opacity=".08" />
     </svg>
+  );
+}
+
+// Mini bar chart (tremor BarChart concept — tự vẽ, CSS animation stagger)
+function MiniBars({ data, color = 'var(--jade)' }: { data: number[]; color?: string }) {
+  const max = Math.max(...data, 1);
+  return (
+    <div className="kbar" aria-hidden>
+      {data.map((v, i) => (
+        <i key={i} style={{ height: `${Math.max(10, (v / max) * 100)}%`, background: color, animationDelay: `${i * 45}ms` }} />
+      ))}
+    </div>
   );
 }
 
@@ -133,10 +146,10 @@ export default function Home() {
           </button>
         </div>
 
-        {/* ── KPI grid (tremor-style) ── */}
+        {/* ── KPI grid (tremor-style · R3: number-ticker + mini bars + blur-fade stagger) ── */}
         <div className="sect">Tổng quan hôm nay</div>
         <div className="kpi-grid">
-          <div className="kpi hero">
+          <div className="kpi hero bf" style={{ ['--bf-i' as any]: 0 }}>
             <div className="ki" style={{ background: 'var(--jade-soft)', color: 'var(--jade)' }}><Icon name="up" size={16} /></div>
             <div className="kl">Doanh thu hôm nay</div>
             {sum ? (
@@ -147,32 +160,33 @@ export default function Home() {
             ) : <div className="skel" style={{ height: 34, marginTop: 8 }} />}
             <Spark />
           </div>
-          <div className="kpi">
+          <div className="kpi bf" style={{ ['--bf-i' as any]: 1 }}>
             <div className="ki" style={{ background: 'var(--violet-soft)', color: 'var(--violet)' }}><Icon name="target" size={16} /></div>
             <div className="kl">Deal đang mở</div>
             {crm !== null ? (
               <>
-                <div className="kv">{crm.openDeals}</div>
+                <div className="kv"><NumberTicker value={crm.openDeals} duration={900} /></div>
                 <div className="kt" style={{ color: 'var(--violet)' }}>{(crm.totalValueVnd / 1e6).toLocaleString('vi', { maximumFractionDigits: 1 })}tr giá trị</div>
+                <MiniBars data={[3, 5, 4, 7, 6, 8, crm.openDeals || 2]} color="var(--violet)" />
               </>
             ) : <div className="kv" style={{ color: 'var(--faint)', fontSize: 15, marginTop: 8 }}>Module tắt</div>}
           </div>
-          <div className="kpi">
+          <div className="kpi bf" style={{ ['--bf-i' as any]: 2 }}>
             <div className="ki" style={{ background: 'var(--amber-soft)', color: 'var(--amber)' }}><Icon name="box" size={16} /></div>
             <div className="kl">Hàng sắp hết</div>
             {lowStock !== null ? (
               <>
-                <div className="kv" style={lowStock > 0 ? { color: 'var(--amber)' } : {}}>{lowStock}</div>
+                <div className="kv" style={lowStock > 0 ? { color: 'var(--amber)' } : {}}><NumberTicker value={lowStock} duration={800} /></div>
                 <div className="kt" style={{ color: lowStock > 0 ? 'var(--amber)' : 'var(--mut)' }}>{lowStock > 0 ? 'cần nhập thêm' : 'kho ổn định'}</div>
               </>
             ) : <div className="kv" style={{ color: 'var(--faint)', fontSize: 15, marginTop: 8 }}>Module tắt</div>}
           </div>
-          <div className="kpi">
+          <div className="kpi bf" style={{ ['--bf-i' as any]: 3 }}>
             <div className="ki" style={{ background: 'var(--sky-soft)', color: 'var(--sky)' }}><Icon name="users" size={16} /></div>
             <div className="kl">Thành viên</div>
             {sum ? (
               <>
-                <div className="kv">{sum.team.members}</div>
+                <div className="kv"><NumberTicker value={sum.team.members} duration={900} /></div>
                 <div className="kt" style={{ color: 'var(--mut)' }}>trong tổ chức</div>
               </>
             ) : <div className="skel" style={{ height: 26, marginTop: 6 }} />}
@@ -182,8 +196,8 @@ export default function Home() {
         {/* ── quick actions ── */}
         <div className="sect">Thao tác nhanh</div>
         <div className="qa-grid">
-          {quickActions.map((a) => (
-            <button key={a.label} className="qa" onClick={() => router.push(a.to)}>
+          {quickActions.map((a, i) => (
+            <button key={a.label} className="qa bf" style={{ ['--bf-i' as any]: 4 + i }} onClick={() => router.push(a.to)}>
               <div className="qi" style={{ background: a.tint, color: a.color }}><Icon name={a.icon} size={17} /></div>
               {a.label}
             </button>

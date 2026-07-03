@@ -385,6 +385,35 @@ input, select, textarea { font-family: var(--fb); }
 .btn-demo:hover { box-shadow: 0 0 26px var(--amber-soft); }
 .btn-demo:active { transform: scale(.98); }
 
+/* ═══════════════ R3: MICRO-INTERACTIONS TOÀN APP ═══════════════ */
+/* blur-fade entrance (port ý tưởng magicui blur-fade — CSS thuần, stagger qua --bf-i) */
+@keyframes blurFade { from { opacity: 0; filter: blur(5px); transform: translateY(9px); } to { opacity: 1; filter: blur(0); transform: translateY(0); } }
+.bf { animation: blurFade .55s var(--ease) both; animation-delay: calc(var(--bf-i, 0) * 70ms); }
+/* button press scale toàn app */
+button:not(:disabled):active { transform: scale(.97); }
+button { transition: transform var(--dur-1); }
+/* hover lift + border glow cho card/kpi/qa */
+.card, .kpi, .qa, .feed-it { transition: border-color var(--dur-2), transform var(--dur-2) var(--ease), box-shadow var(--dur-2), background var(--dur-2); }
+.kpi:hover, .qa:hover { border-color: rgba(52, 211, 184, .28); transform: translateY(-2px); box-shadow: var(--sh-2), 0 0 20px var(--jade-soft); }
+.feed-it:hover { border-color: var(--bd2); transform: translateX(2px); }
+/* skeleton shimmer nâng cấp — sóng chéo mềm hơn */
+.skel { position: relative; overflow: hidden; background: var(--s1); }
+.skel::after { content: ''; position: absolute; inset: 0; background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,.045) 50%, transparent 70%); background-size: 220% 100%; animation: shimmer 1.5s ease-in-out infinite; }
+/* sidebar item + tab chuyển mượt */
+.sb-it, .tabs button, .bn { transition: background var(--dur-2), color var(--dur-2), border-color var(--dur-2), transform var(--dur-1); }
+@media (prefers-reduced-motion: reduce) {
+  .bf { animation-duration: .01s; animation-delay: 0s; }
+  .skel::after { animation: none; }
+  button:not(:disabled):active { transform: none; }
+}
+
+/* mini bar chart SVG thuần (tremor BarChart concept) trong KPI */
+.kbar { display: flex; align-items: flex-end; gap: 3px; height: 26px; margin-top: 10px; }
+.kbar i { flex: 1; border-radius: 2px 2px 0 0; background: var(--jade); opacity: .28; min-height: 3px; transform-origin: bottom; animation: barUp .6s var(--ease) both; }
+.kbar i:last-child { opacity: .9; }
+@keyframes barUp { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@media (prefers-reduced-motion: reduce) { .kbar i { animation: none; } }
+
 /* ═══════════════ R3: LANDING PUBLIC (hero + bento + ticker) ═══════════════ */
 .ld { position: relative; min-height: 100dvh; overflow-x: hidden; }
 .ld-hero { position: relative; min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 24px; text-align: center; }
