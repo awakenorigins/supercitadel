@@ -114,7 +114,18 @@ export default function AccountingPage() {
   // ── Excel connect (V7A P4) — logic GIỮ NGUYÊN ──
   const [xlsOpen, setXlsOpen] = useState(false);
   const [importing, setImporting] = useState(false);
-  const [importRes, setImportRes] = useState<{ created: number; errors: string[] } | null>(null);
+  // Kết quả import lưu localStorage — sống qua refresh để user luôn biết lần nhập gần nhất ra sao (fix UX 03/07)
+  const IMPORT_KEY = 'citadel.acc.lastImport';
+  const [importRes, setImportResRaw] = useState<{ created: number; errors: string[]; at?: string } | null>(null);
+  useEffect(() => {
+    try { const raw = localStorage.getItem(IMPORT_KEY); if (raw) setImportResRaw(JSON.parse(raw)); } catch {}
+  }, []);
+  function setImportRes(v: { created: number; errors: string[] } | null) {
+    if (v === null) { setImportResRaw(null); try { localStorage.removeItem(IMPORT_KEY); } catch {} return; }
+    const withTime = { ...v, at: new Date().toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }) };
+    setImportResRaw(withTime);
+    try { localStorage.setItem(IMPORT_KEY, JSON.stringify(withTime)); } catch {}
+  }
   const EXPORTS = [
     ['general-ledger', 'Sổ cái GL', 'so-cai-gl.xlsx'],
     ['invoices', 'Hóa đơn', 'hoa-don.xlsx'],
@@ -125,7 +136,8 @@ export default function AccountingPage() {
     setXlsOpen(false);
     try {
       const s = getSession();
-      const r = await fetch(`${API}/api/v1/accounting/export/${kind}.xlsx`, { headers: s ? { Authorization: `Bearer ${s.jwt}` } : {} });
+      const path = kind.startsWith('/') ? kind : `/api/v1/accounting/export/${kind}.xlsx`;
+      const r = await fetch(`${API}${path}`, { headers: s ? { Authorization: `Bearer ${s.jwt}` } : {} });
       if (!r.ok) { const d = await r.json().catch(() => ({} as any)); throw new Error((d as any)?.error?.message ?? `Lỗi ${r.status}`); }
       const blob = await r.blob();
       const url = URL.createObjectURL(blob);
@@ -171,6 +183,7 @@ export default function AccountingPage() {
                 {importing ? 'Đang nhập…' : '⤒ Nhập hóa đơn từ Excel'}
                 <input type="file" accept=".xlsx" style={{ display: 'none' }} disabled={importing} onChange={(e) => { const f = e.target.files?.[0]; if (f) importXlsx(f); e.target.value = ''; }} />
               </label>
+              <button onClick={() => downloadXlsx('/api/v1/accounting/import/template.xlsx', 'mau-nhap-hoa-don.xlsx')} className="tab" style={{ padding: '9px 0', gridColumn: '1 / -1', fontSize: 12, color: 'var(--jade)' }}>⤓ Tải file mẫu nhập hóa đơn (.xlsx) — điền theo rồi nạp lên</button>
               {xlsOpen && (
                 <div className="card scale-in" style={{ position: 'absolute', top: 42, left: 0, width: 'min(240px, 50%)', zIndex: 5, padding: 6, borderRadius: 13, boxShadow: 'var(--sh-3)' }}>
                   {EXPORTS.map(([kind, label, fn]) => (
@@ -181,7 +194,10 @@ export default function AccountingPage() {
             </div>
             {importRes && (
               <div className="card" style={{ margin: '9px 20px 0', padding: '10px 13px', borderRadius: 13 }}>
-                <div style={{ fontSize: 12.5, fontWeight: 700, color: importRes.created > 0 ? 'var(--jade)' : 'var(--dim)' }}>Kết quả nhập: {importRes.created} hóa đơn thành công · {importRes.errors.length} lỗi</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ fontSize: 12.5, fontWeight: 700, color: importRes.created > 0 ? 'var(--jade)' : 'var(--rose)', flex: 1 }}>Kết quả nhập{importRes.at ? ` (${importRes.at})` : ''}: {importRes.created} hóa đơn thành công · {importRes.errors.length} lỗi{importRes.created === 0 && importRes.errors.length > 0 ? ' — KHÔNG có gì được ghi vào sổ' : ''}</div>
+                  <button onClick={() => setImportRes(null)} style={{ border: 'none', background: 'transparent', color: 'var(--mut)', fontSize: 11, cursor: 'pointer' }}>✕ Ẩn</button>
+                </div>
                 {importRes.errors.length > 0 && (
                   <div style={{ marginTop: 6 }}>
                     {importRes.errors.slice(0, 10).map((er, i) => <div key={i} style={{ fontSize: 11.5, color: 'var(--amber)', padding: '2px 0' }}>• {er}</div>)}

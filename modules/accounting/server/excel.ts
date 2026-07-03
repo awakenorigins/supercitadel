@@ -117,6 +117,16 @@ function normType(v: unknown): 'sales' | 'purchase' | null {
   return null;
 }
 
+/** File mẫu nhập hóa đơn — header chuẩn + 2 dòng ví dụ để user điền theo. */
+export function importTemplateXlsx(): Uint8Array {
+  const aoa: (string | number)[][] = [
+    IMPORT_COLUMNS as unknown as string[],
+    ['bán', 'Công ty ABC', '03/07/2026', 'Cà phê hạt rang 1kg', 2, 150000, ''],
+    ['mua', 'Nhà cung cấp XYZ', '03/07/2026', 'Sữa đặc nguyên liệu', 10, 25000, '642'],
+  ];
+  return toBuffer(aoa, 'Mau nhap hoa don');
+}
+
 export interface ImportResult {
   created: any[];
   errors: string[]; // tiếng Việt, kèm số dòng Excel

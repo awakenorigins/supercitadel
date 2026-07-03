@@ -2,7 +2,7 @@ import { Hono, type Context, type MiddlewareHandler } from 'hono';
 import { AppError, Errors, type JwtPayload } from '@citadel/core';
 import { seedChart, listAccounts, createJournal, createInvoice, listInvoices, createPayment, listPayments, cancelVoucher, listVouchers, voucherType } from './service.js';
 import { generalLedger, trialBalance, profitLoss, partyOutstanding, accountBalance } from './reports.js';
-import { XLSX_MIME, exportGeneralLedgerXlsx, exportGeneralLedgerJson, exportInvoicesXlsx, exportTrialBalanceXlsx, exportProfitLossXlsx, importInvoicesXlsx } from './excel.js';
+import { XLSX_MIME, exportGeneralLedgerXlsx, exportGeneralLedgerJson, exportInvoicesXlsx, exportTrialBalanceXlsx, exportProfitLossXlsx, importInvoicesXlsx, importTemplateXlsx } from './excel.js';
 declare module 'hono' { interface ContextVariableMap { auth: JwtPayload; } }
 const orgOf = (c: any) => (c.get('auth') as JwtPayload).orgId;
 const q = (c: any, k: string, dft: string) => c.req.query(k) ?? dft;
@@ -70,6 +70,9 @@ export function buildAccountingRoutes(deps: {
     xlsxRes(c, await exportTrialBalanceXlsx(deps.db, orgOf(c), q(c, 'from', '1970-01-01'), q(c, 'to', today())), 'can-doi-thu.xlsx'));
   r.get('/export/profit-loss.xlsx', async (c) =>
     xlsxRes(c, await exportProfitLossXlsx(deps.db, orgOf(c), q(c, 'from', '1970-01-01'), q(c, 'to', today())), 'lai-lo.xlsx'));
+  // File mẫu nhập hóa đơn — header đúng format + 2 dòng ví dụ (bán/mua)
+  r.get('/import/template.xlsx', async (c) =>
+    xlsxRes(c, importTemplateXlsx(), 'mau-nhap-hoa-don.xlsx'));
   // JSON machine-friendly — cầu cho AI làm việc trên bảng tính ("Claude trên Excel")
   r.get('/export/general-ledger.json', async (c) =>
     c.json(await exportGeneralLedgerJson(deps.db, orgOf(c), q(c, 'from', '1970-01-01'), q(c, 'to', today()))));
