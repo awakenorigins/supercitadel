@@ -1,6 +1,17 @@
-# DEPLOY — Chỉ thị cho OpenClaw
+# DEPLOY — SUPERCITADEL (R8+)
 
-Đây là SUPERCITADEL (bản demo M3: nền + Tiểu Tâm + Chat real-time).
+Hướng dẫn deploy SUPERCITADEL — business OS đầy đủ (9+ module, Tiểu Tâm 2 engine, theme, module company).
+
+## ⚡ Production (khuyến nghị)
+```bash
+cp .env.example .env      # điền JWT_SECRET + DB_PASSWORD thật + CORS_ORIGIN=https://domain-cua-ban
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+```
+- Prod overlay KHÔNG expose Postgres/Redis; API/WS/Web chỉ bind 127.0.0.1 — public qua Caddy/Nginx (80/443).
+- API tự fail-fast nếu JWT_SECRET/DB_PASSWORD còn default khi NODE_ENV=production.
+- Health: `GET /health`.
+
+## 🧪 Dev/demo nhanh
 
 ## Việc cần làm (chạy đúng thứ tự)
 1. Giải nén file zip này (nếu chưa).

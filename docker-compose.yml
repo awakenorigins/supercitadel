@@ -39,6 +39,8 @@ services:
       LLM2_BASE_URL: ${LLM2_BASE_URL:-}
       LLM2_MODEL: ${LLM2_MODEL:-cx/gpt-5.5}
       LLM2_API_KEY: ${LLM2_API_KEY:-}
+      NODE_ENV: ${NODE_ENV:-development}
+      CORS_ORIGIN: ${CORS_ORIGIN:-}
       PORT: 3001
     depends_on:
       postgres: { condition: service_healthy }

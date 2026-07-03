@@ -28,11 +28,34 @@ import { bindEmail, bindPhone, securityInfo, assertSecurityLevel, SENSITIVE_OM_T
 import { getBalance } from '@citadel/module-om/server/service.js';
 import { ROLE_RANK, Errors, type Role } from '@citadel/core';
 
+// R8: fail-fast — production KHÔNG được chạy với secret default (người clone deploy trần là tự mở két)
+if (process.env.NODE_ENV === 'production') {
+  const jwt = process.env.JWT_SECRET ?? '';
+  const dbUrl = process.env.DATABASE_URL ?? '';
+  const bad: string[] = [];
+  const JWT_PLACEHOLDERS = ['dev_secret_change_me', 'change_me_to_a_long_random_string', 'doi_thanh_chuoi_ngau_nhien_dai_32_ky_tu_tro_len'];
+  if (!jwt || JWT_PLACEHOLDERS.includes(jwt) || jwt.length < 16) bad.push('JWT_SECRET (thiếu/default/quá ngắn <16)');
+  if (dbUrl.includes('citadel_dev') || dbUrl.includes('doi_mat_khau_nay')) bad.push('DB_PASSWORD (còn default/placeholder)');
+  if (bad.length) {
+    console.error(`[api] FATAL: production chạy với secret default — ${bad.join(' · ')}. Set env thật trong .env rồi khởi động lại.`);
+    process.exit(1);
+  }
+}
+
 const app = new Hono();
 
-// CORS — cho browser (web :3000) gọi API. Prod: set CORS_ORIGIN trong .env.
+// CORS (R8) — production: CHỈ allow origin trong CORS_ORIGIN (danh sách phᡉy). Dev: localhost.
+// Không còn wildcard '*' ở production — origin lạ bị reject (trả null → không có CORS header).
+const IS_PROD = process.env.NODE_ENV === 'production';
+const CORS_ALLOWED = (process.env.CORS_ORIGIN ?? '').split(',').map((s) => s.trim()).filter(Boolean);
+const DEV_ORIGINS = ['http://localhost:3000', 'http://127.0.0.1:3000'];
 app.use('*', cors({
-  origin: (origin) => origin ?? '*',
+  origin: (origin) => {
+    if (!origin) return IS_PROD ? (CORS_ALLOWED[0] ?? '') : '*'; // same-origin/curl không gửi Origin
+    if (CORS_ALLOWED.includes(origin)) return origin;
+    if (!IS_PROD && DEV_ORIGINS.includes(origin)) return origin;
+    return ''; // origin lạ → không cấp CORS header
+  },
   allowHeaders: ['Content-Type', 'Authorization'],
   allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
 }));
