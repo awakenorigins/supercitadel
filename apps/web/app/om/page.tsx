@@ -24,7 +24,7 @@ export default function OmPage() {
     <Shell>
       <div className="scroll">
         <div className="pg-h"><div className="k">Om Economy</div><h1>Ví Om</h1></div>
-        <div style={{ margin: '16px 20px 0', background: 'linear-gradient(150deg,#27210f,#11151c)', border: '1px solid rgba(232,179,102,.3)', borderRadius: 24, padding: 22, position: 'relative', overflow: 'hidden' }}>
+        <div className="wallet fade-up">
           <div style={{ position: 'absolute', bottom: -40, right: -20, color: 'var(--amber)', opacity: .07 }}><Icon name="coin" size={170} /></div>
           <div style={{ fontSize: 12, color: 'var(--amber)', fontWeight: 600, letterSpacing: '.05em' }}>SỐ DƯ KHẢ DỤNG</div>
           {bal !== null
@@ -35,7 +35,7 @@ export default function OmPage() {
             <button onClick={topup} style={{ flex: 1, border: 'none', fontWeight: 700, fontSize: 13.5, padding: 13, borderRadius: 13, background: 'var(--amber)', color: '#2a1c08', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}><Icon name="plus" size={16} /> Nạp 500 Om</button>
           </div>
         </div>
-        <div style={{ padding: '22px 20px 0', fontSize: 13, fontWeight: 700, color: 'var(--dim)' }}>Giao dịch gần đây</div>
+        <div className="sect">Giao dịch gần đây</div>
         <div style={{ padding: '8px 20px 0' }}>
           {txns === null && [1, 2].map((i) => <div key={i} className="skel" style={{ height: 56, marginBottom: 8 }} />)}
           {txns?.length === 0 && <p className="mut" style={{ padding: 12, fontSize: 13 }}>Chưa có giao dịch.</p>}
