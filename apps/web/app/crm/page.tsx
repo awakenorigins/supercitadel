@@ -1,4 +1,6 @@
 'use client';
+// R2 redesign: .kb kanban đủ 5 stage (lead/quote/negotiation/won/lost — khớp enum deal_stage),
+// .stat-row trên đầu, form → .sheet thống nhất. Data/endpoint GIỮ NGUYÊN.
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Shell } from '../../components/Shell';
@@ -8,12 +10,18 @@ import { api, getSession } from '../../lib/api';
 
 interface Deal { id: string; title: string; valueVnd: number; stage: string }
 interface Contact { id: string; name: string; tag: string; phone: string | null }
-const STAGES = [['lead', 'Liên hệ'], ['quote', 'Báo giá'], ['negotiation', 'Đàm phán'], ['won', 'Thành công']] as const;
+// đủ 5 cột — khớp enum deal_stage trong DB ('lead','quote','negotiation','won','lost')
+const STAGES = [
+  ['lead', 'Liên hệ', 'var(--sky)'],
+  ['quote', 'Báo giá', 'var(--violet)'],
+  ['negotiation', 'Đàm phán', 'var(--amber)'],
+  ['won', 'Thành công', 'var(--jade)'],
+  ['lost', 'Thất bại', 'var(--rose)'],
+] as const;
 const ORDER = ['lead', 'quote', 'negotiation', 'won'];
 const fmt = (v: number) => (v / 1e6).toFixed(1) + 'tr';
 /** "22", "22.5", "22,5", "22tr" → 22.5 (triệu) */
 const parseTr = (s: string) => { const n = parseFloat(s.replace(',', '.').replace(/[^\d.]/g, '')); return Number.isFinite(n) ? n : 0; };
-const inputSt = { padding: '10px 12px', borderRadius: 11, border: '1.5px solid var(--bd)', background: 'var(--s2)', color: 'var(--txt)', fontSize: 13, outline: 'none' } as const;
 
 export default function CrmPage() {
   const router = useRouter();
@@ -50,22 +58,28 @@ export default function CrmPage() {
     } catch (e: any) { setMsg({ t: e.message, ok: false }); } // KHÔNG đóng form khi lỗi
   }
 
-  async function moveStage(d: Deal) {
-    const idx = ORDER.indexOf(d.stage);
-    if (idx < 0 || idx >= ORDER.length - 1) return;
-    const next = ORDER[idx + 1];
+  async function setStage(d: Deal, next: string) {
+    const prev = d.stage;
     setDeals((p) => p?.map((x) => x.id === d.id ? { ...x, stage: next } : x) ?? null);
     try {
       await api(`/api/v1/crm/deals/${d.id}/stage`, { method: 'PATCH', body: JSON.stringify({ stage: next }) });
       api<{ openDeals: number; totalValueVnd: number }>('/api/v1/crm/stats').then(setStats).catch(() => {});
     } catch (e: any) {
-      setDeals((p) => p?.map((x) => x.id === d.id ? { ...x, stage: d.stage } : x) ?? null);
+      setDeals((p) => p?.map((x) => x.id === d.id ? { ...x, stage: prev } : x) ?? null);
       setMsg({ t: e.message, ok: false });
     }
   }
+  // tap card = tiến bước tiếp theo (lead→quote→negotiation→won)
+  function moveStage(d: Deal) {
+    const idx = ORDER.indexOf(d.stage);
+    if (idx < 0 || idx >= ORDER.length - 1) return;
+    setStage(d, ORDER[idx + 1]);
+  }
+
+  const wonValue = deals?.filter((d) => d.stage === 'won').reduce((s, d) => s + d.valueVnd, 0) ?? 0;
 
   return (
-    <Shell>
+    <Shell wide>
       <div className="scroll">
         <div className="pg-h" style={{ display: 'flex', alignItems: 'flex-end', gap: 8, flexWrap: 'wrap' }}>
           <div style={{ flex: 1 }}><div className="k">Kinh doanh</div><h1>CRM</h1></div>
@@ -77,22 +91,12 @@ export default function CrmPage() {
         {locked ? <ModuleLocked name="CRM" /> : (
           <>
             {msg && <div className="card" style={{ margin: '11px 20px 0', padding: '10px 13px', fontSize: 12.5, color: msg.ok ? 'var(--jade)' : 'var(--amber)', borderColor: msg.ok ? 'rgba(52,211,184,.3)' : 'rgba(232,179,102,.35)' }}>{msg.t}</div>}
-            {showAdd && (
-              <div style={{ margin: '12px 20px 0', padding: 13, borderRadius: 15, background: 'var(--s1)', border: '1px solid var(--bd2)', display: 'grid', gap: 8 }}>
-                <b style={{ fontSize: 13 }}>{showAdd === 'deal' ? 'Deal mới (vào cột Liên hệ)' : 'Khách hàng mới'}</b>
-                <input value={f1} onChange={(e) => setF1(e.target.value)} placeholder={showAdd === 'deal' ? 'Tên deal (vd: HĐ Chị Lan)' : 'Tên khách'} style={inputSt} />
-                <input value={f2} onChange={(e) => setF2(e.target.value)} placeholder={showAdd === 'deal' ? 'Giá trị triệu (vd: 22 hoặc 22,5)' : 'Tag (vip / regular)'} style={inputSt} />
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button onClick={submitAdd} className="btn-p" style={{ flex: 1, opacity: f1.trim() ? 1 : .5 }}>{showAdd === 'deal' ? 'Tạo deal' : 'Tạo khách'}</button>
-                  <button onClick={() => { setShowAdd(''); setMsg(null); }} style={{ padding: '0 16px', borderRadius: 12, background: 'var(--s2)', border: '1px solid var(--bd)', color: 'var(--dim)' }}>Hủy</button>
-                </div>
-              </div>
-            )}
 
-            {/* Stats */}
-            <div style={{ margin: '13px 20px 0', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9 }}>
-              <div className="card" style={{ padding: 13, borderRadius: 14 }}><div className="mono" style={{ fontWeight: 700, fontSize: 20, color: 'var(--jade)' }}>{stats?.openDeals ?? '—'}</div><div style={{ fontSize: 10.5, color: 'var(--mut)', marginTop: 2 }}>Deal đang mở</div></div>
-              <div className="card" style={{ padding: 13, borderRadius: 14 }}><div className="mono" style={{ fontWeight: 700, fontSize: 20, color: 'var(--amber)' }}>{stats ? fmt(stats.totalValueVnd) : '—'}</div><div style={{ fontSize: 10.5, color: 'var(--mut)', marginTop: 2 }}>Tổng giá trị mở</div></div>
+            {/* Stat row */}
+            <div className="stat-row c3">
+              <div className="stat"><div className="sv" style={{ color: 'var(--jade)' }}>{stats?.openDeals ?? '—'}</div><div className="sl">Deal đang mở</div></div>
+              <div className="stat"><div className="sv" style={{ color: 'var(--amber)' }}>{stats ? fmt(stats.totalValueVnd) : '—'}</div><div className="sl">Tổng giá trị mở</div></div>
+              <div className="stat"><div className="sv" style={{ color: 'var(--sky)' }}>{deals ? fmt(wonValue) : '—'}</div><div className="sl">Đã thắng</div></div>
             </div>
 
             {/* Khách hàng */}
@@ -103,32 +107,58 @@ export default function CrmPage() {
             {showContacts && (
               <div style={{ padding: '8px 20px 0' }}>
                 {contacts?.length === 0 && <p className="mut" style={{ padding: 8, fontSize: 12.5 }}>Chưa có khách — bấm "+ Khách" ở trên.</p>}
-                {contacts?.map((c) => (
-                  <div key={c.id} className="card" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 13px', borderRadius: 13, marginBottom: 7 }}>
-                    <span className={`ava ${c.tag === 'vip' ? 'amber' : 'mint'}`} style={{ width: 32, height: 32, borderRadius: 10, fontSize: 11 }}>{c.name.slice(0, 2)}</span>
-                    <div style={{ flex: 1 }}><div style={{ fontSize: 13.5, fontWeight: 600 }}>{c.name}</div>{c.phone && <div className="mono" style={{ fontSize: 10.5, color: 'var(--mut)' }}>{c.phone}</div>}</div>
-                    <span className="mono" style={{ fontSize: 9, padding: '2px 8px', borderRadius: 6, background: c.tag === 'vip' ? 'var(--amber-soft)' : 'var(--s3)', color: c.tag === 'vip' ? 'var(--amber)' : 'var(--dim)' }}>{c.tag.toUpperCase()}</span>
+                {contacts && contacts.length > 0 && (
+                  <div className="dt-wrap" style={{ margin: 0 }}>
+                    <table className="dt">
+                      <thead><tr><th>Khách</th><th>SĐT</th><th>Tag</th></tr></thead>
+                      <tbody>
+                        {contacts.map((c) => (
+                          <tr key={c.id}>
+                            <td style={{ fontWeight: 600 }}>
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 9 }}>
+                                <span className={`ava ${c.tag === 'vip' ? 'amber' : 'mint'}`} style={{ width: 28, height: 28, borderRadius: 9, fontSize: 10 }}>{c.name.slice(0, 2)}</span>
+                                {c.name}
+                              </span>
+                            </td>
+                            <td className="mono" style={{ color: 'var(--mut)', fontSize: 11 }}>{c.phone ?? '—'}</td>
+                            <td><span className={`bdg-s ${c.tag === 'vip' ? 'amber' : 'mut'}`}>{c.tag.toUpperCase()}</span></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
-                ))}
+                )}
               </div>
             )}
 
-            {/* Kanban */}
-            <div style={{ display: 'flex', gap: 10, padding: '15px 20px 4px', overflowX: 'auto', alignItems: 'flex-start' }}>
-              {STAGES.map(([key, label]) => {
+            {/* Kanban 5 cột — DS .kb */}
+            <div className="kb">
+              {STAGES.map(([key, label, color]) => {
                 const col = deals?.filter((d) => d.stage === key) ?? [];
                 return (
-                  <div key={key} style={{ minWidth: 200, flexShrink: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '0 2px 9px' }}>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--dim)' }}>{label}</span>
-                      <span className="mono" style={{ fontSize: 10, color: 'var(--faint)' }}>{col.length}</span>
+                  <div key={key} className="kb-col">
+                    <div className="kb-h">
+                      <span className="kb-dot" style={{ background: color }} />
+                      {label}
+                      <span className="kb-n">{col.length}</span>
                     </div>
-                    {deals === null && <div className="skel" style={{ height: 76, borderRadius: 14 }} />}
+                    {deals === null && <div className="skel" style={{ height: 76, borderRadius: 13 }} />}
+                    {deals !== null && col.length === 0 && <div className="mono" style={{ fontSize: 10, color: 'var(--faint)', padding: '6px 4px 10px', textAlign: 'center' }}>trống</div>}
                     {col.map((d) => (
-                      <div key={d.id} onClick={() => moveStage(d)} className="card" style={{ padding: 13, borderRadius: 14, marginBottom: 9, cursor: d.stage !== 'won' ? 'pointer' : 'default', ...(d.title.includes('Hoa') ? { borderColor: 'rgba(232,179,102,.35)', background: 'linear-gradient(160deg,var(--amber-soft),var(--s1))' } : {}) }}>
+                      <div key={d.id} onClick={() => moveStage(d)} className="kb-card" style={{ cursor: ORDER.includes(d.stage) && d.stage !== 'won' ? 'pointer' : 'default' }}>
                         <div style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.35 }}>{d.title}</div>
-                        <div className="mono" style={{ fontWeight: 700, fontSize: 16, color: 'var(--jade)', marginTop: 6 }}>{fmt(d.valueVnd)}</div>
-                        {d.stage !== 'won' && <div className="mono" style={{ fontSize: 9, color: 'var(--faint)', marginTop: 5 }}>chạm = chuyển bước</div>}
+                        <div className="mono" style={{ fontWeight: 700, fontSize: 15, color, marginTop: 6 }}>{fmt(d.valueVnd)}</div>
+                        {d.stage !== 'won' && d.stage !== 'lost' && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 7 }}>
+                            <span className="mono" style={{ fontSize: 9, color: 'var(--faint)', flex: 1 }}>chạm = chuyển bước</span>
+                            <button onClick={(e) => { e.stopPropagation(); setStage(d, 'lost'); }} className="bdg-s rose" title="Đánh dấu thất bại"
+                              style={{ border: '1px solid rgba(236,106,133,.3)', cursor: 'pointer' }}>✕ thua</button>
+                          </div>
+                        )}
+                        {d.stage === 'lost' && (
+                          <button onClick={(e) => { e.stopPropagation(); setStage(d, 'lead'); }} className="bdg-s sky" title="Mở lại deal"
+                            style={{ border: '1px solid rgba(95,184,240,.3)', cursor: 'pointer', marginTop: 7 }}>↺ mở lại</button>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -139,6 +169,24 @@ export default function CrmPage() {
         )}
         <div style={{ height: 14 }} />
       </div>
+
+      {/* Form thêm — .sheet thống nhất */}
+      {showAdd && (
+        <div className="sh-scrim" onClick={() => { setShowAdd(''); setMsg(null); }}>
+          <div className="sh-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="sh-head">
+              <div className="sh-ico" style={{ background: 'var(--jade-soft)', color: 'var(--jade)' }}><Icon name={showAdd === 'deal' ? 'target' : 'users'} size={18} /></div>
+              <b style={{ fontSize: 15 }}>{showAdd === 'deal' ? 'Deal mới (vào cột Liên hệ)' : 'Khách hàng mới'}</b>
+              <button className="sh-x" onClick={() => { setShowAdd(''); setMsg(null); }}><Icon name="x" size={15} /></button>
+            </div>
+            <div style={{ display: 'grid', gap: 9 }}>
+              <input value={f1} onChange={(e) => setF1(e.target.value)} placeholder={showAdd === 'deal' ? 'Tên deal (vd: HĐ Chị Lan)' : 'Tên khách'} className="inp" autoFocus />
+              <input value={f2} onChange={(e) => setF2(e.target.value)} placeholder={showAdd === 'deal' ? 'Giá trị triệu (vd: 22 hoặc 22,5)' : 'Tag (vip / regular)'} className="inp" />
+              <button onClick={submitAdd} className="btn-p" style={{ opacity: f1.trim() ? 1 : .5 }}>{showAdd === 'deal' ? 'Tạo deal' : 'Tạo khách'}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </Shell>
   );
 }
