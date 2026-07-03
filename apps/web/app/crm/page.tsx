@@ -10,7 +10,7 @@ import { EmptyState } from '../../components/EmptyState';
 import { api, getSession } from '../../lib/api';
 
 interface Deal { id: string; title: string; valueVnd: number; stage: string }
-interface Contact { id: string; name: string; tag: string; phone: string | null }
+interface Contact { id: string; name: string; tag: string | null; phone: string | null }
 // đủ 5 cột — khớp enum deal_stage trong DB ('lead','quote','negotiation','won','lost')
 const STAGES = [
   ['lead', 'Liên hệ', 'var(--sky)'],
@@ -118,7 +118,7 @@ export default function CrmPage() {
                               </span>
                             </td>
                             <td className="mono" style={{ color: 'var(--mut)', fontSize: 11 }}>{c.phone ?? '—'}</td>
-                            <td><span className={`bdg-s ${c.tag === 'vip' ? 'amber' : 'mut'}`}>{c.tag.toUpperCase()}</span></td>
+                            <td><span className={`bdg-s ${c.tag === 'vip' ? 'amber' : 'mut'}`}>{(c.tag ?? 'regular').toUpperCase()}</span></td>
                           </tr>
                         ))}
                       </tbody>
@@ -218,7 +218,7 @@ export default function CrmPage() {
                 <div key={c.id} className="as-it">
                   <span className={`ava ${c.tag === 'vip' ? 'amber' : 'mint'}`} style={{ width: 30, height: 30, borderRadius: 9, fontSize: 10 }}>{c.name.slice(0, 2)}</span>
                   <div className="ai-t"><b>{c.name}</b><span>{c.phone ?? 'chưa có SĐT'}</span></div>
-                  <span className={`bdg-s ${c.tag === 'vip' ? 'amber' : 'mut'}`}>{c.tag.toUpperCase()}</span>
+                  <span className={`bdg-s ${c.tag === 'vip' ? 'amber' : 'mut'}`}>{(c.tag ?? 'regular').toUpperCase()}</span>
                 </div>
               ))}
             </div>
