@@ -91,7 +91,43 @@ export default function Landing() {
           </div>
         )}
         {err && <p style={{ marginTop: 14, fontSize: 13, color: 'var(--rose)' }}>{err}</p>}
+        <div className="ld-badges">
+          <span className="ld-bdg warm">✦ Beta mở — miễn phí</span>
+          <span className="ld-bdg cool">● Backend thật 100%</span>
+        </div>
         <div className="ld-scrolldn">▾ CUỘN XUỐNG</div>
+      </section>
+
+      {/* ── MARQUEE MODULE (port magicui marquee → CSS thuần) ── */}
+      <div className="ld-marquee" aria-hidden>
+        <div className="mq-track">
+          {[0, 1].map((rep) => (
+            <span key={rep} style={{ display: 'flex', gap: 14 }}>
+              {[...FEATURES, { icon: 'grid', name: 'Cửa hàng Module', color: 'var(--sky)', tint: '', desc: '' }, { icon: 'bag', name: 'Kho vật phẩm', color: 'var(--violet)', tint: '', desc: '' }].map((f) => (
+                <span key={rep + f.name} className="mq-item"><Icon name={f.icon} style={{ color: f.color }} /> {f.name}</span>
+              ))}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* ── 3 BƯỚC BẮT ĐẦU ── */}
+      <section className="ld-sect">
+        <div className="sh">Bắt đầu trong 3 bước</div>
+        <div className="sd">Không cài đặt, không thẻ tín dụng — vào thẳng bằng trình duyệt.</div>
+        <div className="ld-steps">
+          {[
+            { n: '01', t: 'Vào dùng thử', d: 'Bấm “Vào dùng thử ngay” — hệ thống mở sẵn tài khoản demo với dữ liệu thật.' },
+            { n: '02', t: 'Bật module cần dùng', d: 'Kế toán, CRM, kho, nhân sự… bật tắt như công tắc. Thuê theo ngày bằng đồng Om nếu muốn thử.' },
+            { n: '03', t: 'Hỏi Tiểu Tâm', d: 'Trợ lý AI hiểu số liệu của bạn — doanh thu, deal, tồn kho, ca làm… hỏi gì đáp nấy.' },
+          ].map((s) => (
+            <div key={s.n} className="ld-step">
+              <div className="sn">{s.n}</div>
+              <b>{s.t}</b>
+              <p>{s.d}</p>
+            </div>
+          ))}
+        </div>
       </section>
 
       {/* ── BENTO FEATURES ── */}
@@ -104,6 +140,28 @@ export default function Landing() {
               <div className="ci" style={{ background: f.tint, color: f.color }}><Icon name={f.icon} size={20} /></div>
               <b>{f.name}</b>
               <p>{f.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── TESTIMONIALS ── */}
+      <section className="ld-sect">
+        <div className="sh">Người dùng thử nói gì</div>
+        <div className="sd">Phản hồi từ những chủ quán đầu tiên trong beta.</div>
+        <div className="ld-quotes">
+          {[
+            { q: 'Trước giờ ghi sổ tay, giờ phiếu thu chi vào thẳng sổ cái kép. Cuối tháng nhìn lãi lỗ một phát là ra.', n: 'Chị Lan', r: 'Chủ quán cà phê · Đà Nẵng', ava: 'amber' },
+            { q: 'Thuê CRM 7 ngày bằng Om để thử — hợp thì mua đứt. Không bị ép gói năm như phần mềm khác.', n: 'Anh Minh', r: 'Tiệm bánh · Sài Gòn', ava: 'mint' },
+            { q: 'Tiểu Tâm trả lời “tồn kho sữa còn bao nhiêu” nhanh hơn mình mở bảng tính. Còn nhắc hàng sắp hết.', n: 'Cô Hạnh', r: 'Tạp hóa · Hà Nội', ava: 'violet' },
+          ].map((t) => (
+            <div key={t.n} className="ld-quote">
+              <div className="qi2"><Icon name="quote" size={20} /></div>
+              <p className="qt">“{t.q}”</p>
+              <div className="qa2">
+                <span className={`ava ${t.ava}`} style={{ width: 34, height: 34, borderRadius: 11, fontSize: 12 }}>{t.n.split(' ').pop()!.slice(0, 1)}</span>
+                <span><b>{t.n}</b><span>{t.r}</span></span>
+              </div>
             </div>
           ))}
         </div>

@@ -644,3 +644,55 @@ button { transition: transform var(--dur-1); }
 .dt tbody tr:hover td { color: var(--txt); }
 /* tooltip cần thoát overflow — desktop owned-bar không cần scroll ngang */
 @media (min-width: 1024px) { .owned-bar { overflow-x: visible; flex-wrap: wrap; } }
+
+/* ═══════════════ R4 Phase C: landing steps + testimonials + marquee · home attention ═══════════════ */
+/* hero badges nhỏ */
+.ld-badges { display: flex; gap: 9px; margin-top: 20px; flex-wrap: wrap; justify-content: center; animation: fadeUp .7s var(--ease) .5s both; }
+.ld-bdg { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 700; padding: 6px 13px; border-radius: var(--r-full); border: 1px solid; }
+.ld-bdg.warm { background: var(--amber-soft); border-color: rgba(232,179,102,.3); color: var(--amber); }
+.ld-bdg.cool { background: var(--jade-soft); border-color: rgba(52,211,184,.28); color: var(--jade); }
+
+/* 3 bước bắt đầu — số to + line nối */
+.ld-steps { display: grid; grid-template-columns: 1fr; gap: 26px; margin-top: 40px; position: relative; }
+@media (min-width: 760px) { .ld-steps { grid-template-columns: repeat(3, 1fr); gap: 18px; } }
+.ld-step { position: relative; background: var(--s1); border: 1px solid var(--bd); border-radius: var(--r-lg); padding: 24px 20px; transition: border-color var(--dur-2), transform var(--dur-2) var(--ease), box-shadow var(--dur-2); }
+.ld-step:hover { border-color: rgba(52,211,184,.3); transform: translateY(-3px); box-shadow: var(--sh-2), 0 0 24px var(--jade-soft); }
+.ld-step .sn { font-family: var(--fm); font-weight: 800; font-size: 44px; line-height: 1; color: transparent; -webkit-text-stroke: 1.5px var(--jade); opacity: .85; }
+.ld-step b { display: block; font-family: var(--fd); font-size: 16px; margin-top: 14px; }
+.ld-step p { font-size: 12.5px; color: var(--mut); line-height: 1.55; margin-top: 7px; }
+@media (min-width: 760px) {
+  .ld-step:not(:last-child)::after { content: ''; position: absolute; top: 44px; right: -18px; width: 18px; height: 1.5px; background: linear-gradient(90deg, var(--jade), transparent); opacity: .5; }
+}
+
+/* testimonial cards */
+.ld-quotes { display: grid; grid-template-columns: 1fr; gap: 13px; margin-top: 36px; }
+@media (min-width: 860px) { .ld-quotes { grid-template-columns: repeat(3, 1fr); } }
+.ld-quote { background: var(--s1); border: 1px solid var(--bd); border-radius: var(--r-lg); padding: 20px; display: flex; flex-direction: column; gap: 13px; transition: border-color var(--dur-2), box-shadow var(--dur-2); }
+.ld-quote:hover { border-color: var(--bd2); box-shadow: var(--sh-2); }
+.ld-quote .qt { font-size: 13px; line-height: 1.65; color: var(--dim); flex: 1; }
+.ld-quote .qa2 { display: flex; align-items: center; gap: 10px; }
+.ld-quote .qa2 b { display: block; font-size: 12.5px; }
+.ld-quote .qa2 span { display: block; font-size: 10.5px; color: var(--mut); margin-top: 1px; }
+.ld-quote .qi2 { color: var(--jade); opacity: .6; }
+
+/* marquee logo module — port magicui marquee sang CSS thuần */
+.ld-marquee { position: relative; overflow: hidden; margin-top: 32px; padding: 8px 0;
+  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); }
+.ld-marquee .mq-track { display: flex; gap: 14px; width: max-content; animation: mq 26s linear infinite; }
+.ld-marquee:hover .mq-track { animation-play-state: paused; }
+@keyframes mq { to { transform: translateX(-50%); } }
+.mq-item { display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: var(--r-full); background: var(--s1); border: 1px solid var(--bd); font-size: 12.5px; font-weight: 600; color: var(--dim); white-space: nowrap; }
+.mq-item .icon { width: 15px; height: 15px; }
+@media (prefers-reduced-motion: reduce) { .ld-marquee .mq-track { animation: none; } }
+
+/* home — việc cần chú ý */
+.att-list { padding: 10px 20px 0; display: grid; gap: 8px; }
+@media (max-width: 480px) { .att-list { padding: 10px 16px 0; } }
+.att-it { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: var(--s1); border: 1px solid var(--bd); border-radius: var(--r-md); text-align: left; width: 100%; transition: border-color var(--dur-1), transform var(--dur-2) var(--ease), box-shadow var(--dur-2); }
+.att-it:hover { border-color: rgba(232,179,102,.35); transform: translateX(2px); box-shadow: var(--sh-1); }
+.att-it .at-ico { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; flex-shrink: 0; }
+.att-it .at-t { flex: 1; min-width: 0; }
+.att-it .at-t b { display: block; font-size: 13px; font-weight: 600; }
+.att-it .at-t span { display: block; font-size: 11px; color: var(--mut); margin-top: 2px; }
+.att-it .at-n { font-family: var(--fm); font-weight: 800; font-size: 17px; flex-shrink: 0; }

@@ -75,6 +75,9 @@ export default function Home() {
   const [sum, setSum] = useState<Summary | null>(null);
   const [crm, setCrm] = useState<CrmStats | null>(null);
   const [lowStock, setLowStock] = useState<number | null>(null);
+  const [lowItems, setLowItems] = useState<{ id: string; name: string; qty: number; unit: string }[]>([]);
+  const [pendingLeave, setPendingLeave] = useState<{ id: string; employeeName: string; typeName: string }[]>([]);
+  const [closingDeals, setClosingDeals] = useState<{ id: string; title: string; valueVnd: number }[]>([]);
   const [soul, setSoul] = useState<Soul | null>(null);
   const [logs, setLogs] = useState<AuditLog[] | null>(null);
   const [name, setName] = useState('bạn');
@@ -86,7 +89,9 @@ export default function Home() {
     setName(s.user.displayName ?? 'bạn');
     api<Summary>('/api/v1/dashboard/summary').then(setSum).catch(() => {});
     api<CrmStats>('/api/v1/crm/stats').then(setCrm).catch(() => setCrm(null));           // 403 nếu module tắt → ẩn số
-    api<{ items: any[] }>('/api/v1/inventory/low-stock').then((d) => setLowStock(d.items.length)).catch(() => setLowStock(null));
+    api<{ items: any[] }>('/api/v1/inventory/low-stock').then((d) => { setLowStock(d.items.length); setLowItems(d.items.slice(0, 3)); }).catch(() => setLowStock(null));
+    api<{ applications: any[] }>('/api/v1/hr/leave/applications').then((d) => setPendingLeave(d.applications.filter((a: any) => a.status === 'open').slice(0, 3))).catch(() => {});
+    api<{ deals: any[] }>('/api/v1/crm/deals').then((d) => setClosingDeals(d.deals.filter((x: any) => x.stage === 'negotiation').slice(0, 3))).catch(() => {});
     api<Soul>('/api/v1/tieu-tam/state').then(setSoul).catch(() => {});
     api<{ logs: AuditLog[] }>('/api/v1/audit-logs?limit=6').then((d) => setLogs(d.logs)).catch(() => setLogs([])); // staff không xem được → feed trống
     api<{ notifications: any[] }>('/api/v1/notifications?unread=true').then((d) => setUnread(d.notifications.length)).catch(() => {});
@@ -96,11 +101,18 @@ export default function Home() {
   const greet = hour < 11 ? 'Chào buổi sáng' : hour < 16 ? 'Chào buổi trưa' : hour < 19 ? 'Chào buổi chiều' : 'Chào buổi tối';
 
   const quickActions = [
-    { icon: 'book', label: 'Hóa đơn', to: '/accounting', color: 'var(--jade)', tint: 'var(--jade-soft)' },
-    { icon: 'target', label: 'Deal mới', to: '/crm', color: 'var(--violet)', tint: 'var(--violet-soft)' },
-    { icon: 'box', label: 'Nhập kho', to: '/inventory', color: 'var(--amber)', tint: 'var(--amber-soft)' },
-    { icon: 'users', label: 'Ca làm', to: '/hr', color: 'var(--sky)', tint: 'var(--sky-soft)' },
+    { icon: 'book', label: 'Tạo phiếu thu', to: '/accounting', color: 'var(--jade)', tint: 'var(--jade-soft)' },
+    { icon: 'target', label: 'Thêm khách', to: '/crm', color: 'var(--violet)', tint: 'var(--violet-soft)' },
+    { icon: 'box', label: 'Thêm hàng', to: '/inventory', color: 'var(--amber)', tint: 'var(--amber-soft)' },
+    { icon: 'users', label: 'Tạo ca làm', to: '/hr', color: 'var(--sky)', tint: 'var(--sky-soft)' },
   ];
+
+  // R4 — việc cần chú ý (từ API thật: low-stock, đơn nghỉ chờ duyệt, deal đang đàm phán)
+  const attention: { key: string; icon: string; color: string; tint: string; title: string; sub: string; n: string; to: string }[] = [
+    ...lowItems.map((it) => ({ key: 'low-' + it.id, icon: 'alert', color: 'var(--amber)', tint: 'var(--amber-soft)', title: `${it.name} sắp hết`, sub: 'Nhập thêm để không đứt hàng', n: `${it.qty}`, to: '/inventory' })),
+    ...pendingLeave.map((a) => ({ key: 'lv-' + a.id, icon: 'leaf', color: 'var(--violet)', tint: 'var(--violet-soft)', title: `${a.employeeName} xin nghỉ`, sub: `${a.typeName} · chờ duyệt`, n: '→', to: '/hr' })),
+    ...closingDeals.map((d) => ({ key: 'dl-' + d.id, icon: 'target', color: 'var(--jade)', tint: 'var(--jade-soft)', title: d.title, sub: 'Deal đang đàm phán — sắp đóng', n: `${(d.valueVnd / 1e6).toFixed(1)}tr`, to: '/crm' })),
+  ].slice(0, 5);
 
   return (
     <Shell badge={0}>
@@ -192,6 +204,22 @@ export default function Home() {
             ) : <div className="skel" style={{ height: 26, marginTop: 6 }} />}
           </div>
         </div>
+
+        {/* ── việc cần chú ý (R4 — data thật) ── */}
+        {attention.length > 0 && (
+          <>
+            <div className="sect">Việc cần chú ý <span className="bdg-s amber">{attention.length}</span></div>
+            <div className="att-list">
+              {attention.map((a) => (
+                <button key={a.key} className="att-it" onClick={() => router.push(a.to)}>
+                  <div className="at-ico" style={{ background: a.tint, color: a.color }}><Icon name={a.icon} size={16} /></div>
+                  <div className="at-t"><b>{a.title}</b><span>{a.sub}</span></div>
+                  <div className="at-n" style={{ color: a.color }}>{a.n}</div>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
 
         {/* ── quick actions ── */}
         <div className="sect">Thao tác nhanh</div>
