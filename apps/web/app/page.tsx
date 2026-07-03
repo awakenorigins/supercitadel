@@ -1,19 +1,51 @@
 'use client';
-import { useState, useEffect } from 'react';
+// R3 Landing public — hero animated grid (port ý tưởng magicui animated-grid-pattern, CSS thuần),
+// aurora gradient text, bento features, number-ticker stats. Đã login → redirect /home.
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '../components/Icon';
+import { NumberTicker } from '../components/NumberTicker';
 import { apiLogin, getSession, API, DEMO_TOKEN } from '../lib/api';
 
-export default function Login() {
+const FEATURES = [
+  { icon: 'book', name: 'Kế Toán', desc: 'Sổ cái kép, thu chi, công nợ, lãi lỗ theo thời gian thực.', color: 'var(--jade)', tint: 'var(--jade-soft)' },
+  { icon: 'target', name: 'CRM', desc: 'Pipeline 5 giai đoạn, khách hàng, deal, chăm sóc tự động.', color: 'var(--violet)', tint: 'var(--violet-soft)' },
+  { icon: 'box', name: 'Kho Hàng', desc: 'Tồn kho chính xác, cảnh báo sắp hết, nhập hàng một chạm.', color: 'var(--amber)', tint: 'var(--amber-soft)' },
+  { icon: 'users', name: 'Nhân Sự & Ca', desc: 'Phân ca, chấm công, nghỉ phép — vận hành đội ngũ gọn nhẹ.', color: 'var(--sky)', tint: 'var(--sky-soft)' },
+  { icon: 'coin', name: 'Ví Om', desc: 'Đồng Om nội bộ: mua module, thuê theo ngày, vòng kinh tế khép kín.', color: 'var(--amber)', tint: 'var(--amber-soft)' },
+  { icon: 'spark', name: 'Tiểu Tâm AI', desc: 'Trợ lý cáo nhỏ hiểu số liệu thật của quán — hỏi gì đáp nấy.', color: 'var(--jade)', tint: 'var(--jade-soft)' },
+];
+
+const STATS = [
+  { value: 8, suffix: '', label: 'Module nghiệp vụ sẵn sàng' },
+  { value: 9, suffix: '/9', label: 'Chuẩn nghiệm thu đạt' },
+  { value: 100, suffix: '%', label: 'Dữ liệu thật — không mock' },
+  { value: 13, suffix: '', label: 'Ký tự token là vào ngay' },
+];
+
+// ô sáng ngẫu nhiên trên grid — deterministic per mount, thuần CSS animation
+function useGridCells(n = 14) {
+  return useMemo(() => Array.from({ length: n }, (_, i) => ({
+    id: i,
+    left: Math.floor(Math.random() * 24) * 44,
+    top: Math.floor(Math.random() * 16) * 44,
+    dur: 3.5 + Math.random() * 4,
+    delay: Math.random() * 5,
+  })), [n]);
+}
+
+export default function Landing() {
   const router = useRouter();
+  const [ready, setReady] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
   const [token, setToken] = useState('');
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
-  const [apiUp, setApiUp] = useState<'…' | 'OK' | 'down'>('…');
+  const cells = useGridCells();
 
   useEffect(() => {
     if (getSession()) { router.replace('/home'); return; }
-    fetch(`${API}/health`).then((r) => r.json()).then((d) => setApiUp(d.ok ? 'OK' : 'down')).catch(() => setApiUp('down'));
+    setReady(true);
   }, [router]);
 
   async function go(tok?: string) {
@@ -24,49 +56,76 @@ export default function Login() {
     finally { setBusy(false); }
   }
 
+  if (!ready) return <div className="ld" />;
+
   return (
-    <>
-      <div className="ambient" />
-      <main className="shell" style={{ justifyContent: 'center', padding: 30 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-          <div className="core" style={{ width: 110, height: 110, marginBottom: 26 }}>
-            <div className="pulse" /><div className="pulse" />
-            <div className="orb"><Icon name="spark" size={40} /></div>
-          </div>
-          <div className="mono" style={{ fontSize: 11, color: 'var(--jade)', letterSpacing: '.16em', textTransform: 'uppercase' }}>SUPERCITADEL · Tiểu Tâm-First Business OS</div>
-          <h1 className="fd" style={{ fontWeight: 800, fontSize: 30, lineHeight: 1.1, letterSpacing: '-.03em', marginTop: 12 }}>
-            Chào, tôi là <span style={{ color: 'var(--jade)' }}>Tiểu Tâm</span>.
-          </h1>
-          <p className="dim" style={{ fontSize: 13.5, marginTop: 10, maxWidth: 300, lineHeight: 1.55 }}>
-            Nhập token 13 ký tự để mở khóa pháo đài của bạn.
-          </p>
-          <div style={{ width: '100%', maxWidth: 320, marginTop: 26 }}>
+    <div className="ld">
+      {/* ── HERO ── */}
+      <section className="ld-hero">
+        <div className="ld-grid" aria-hidden>
+          {cells.map((c) => (
+            <i key={c.id} style={{ left: c.left, top: c.top, ['--gd' as any]: `${c.dur}s`, ['--gdel' as any]: `${c.delay}s` }} />
+          ))}
+        </div>
+        <div className="ld-kick"><Icon name="spark" size={13} /> Tiểu Tâm-First Business OS</div>
+        <h1 className="ld-e1"><span className="ld-aurora">SUPERCITADEL</span></h1>
+        <p className="ld-tag ld-e2">Pháo đài quản trị cho doanh nghiệp Việt — kế toán, CRM, kho, nhân sự và trợ lý AI Tiểu Tâm trong một tòa thành.</p>
+        <div className="ld-cta ld-e3">
+          {DEMO_TOKEN && <button className="ld-btn-p" disabled={busy} onClick={() => go(DEMO_TOKEN)}>{busy ? 'Đang vào…' : '🔓 Vào dùng thử ngay'}</button>}
+          <button className="ld-btn-s" onClick={() => setShowLogin((v) => !v)}>Đăng nhập bằng token</button>
+        </div>
+        {showLogin && (
+          <div className="ld-login">
             <input
               value={token}
               onChange={(e) => setToken(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 13))}
               onKeyDown={(e) => e.key === 'Enter' && go()}
               placeholder="A7KX9M2PQ4RB3"
+              autoFocus
               className="mono"
-              style={{ width: '100%', padding: 15, borderRadius: 13, border: '1.5px solid var(--bd2)', background: 'var(--s1)', color: 'var(--jade)', fontSize: 18, letterSpacing: 5, textAlign: 'center', outline: 'none' }}
+              style={{ width: '100%', padding: 15, borderRadius: 13, border: '1.5px solid var(--bd2)', background: 'var(--s1)', color: 'var(--jade)', fontSize: 17, letterSpacing: 5, textAlign: 'center', outline: 'none' }}
             />
-            <button className="btn-p" onClick={() => go()} disabled={busy} style={{ marginTop: 14, opacity: busy ? .6 : 1 }}>
+            <button className="btn-p" onClick={() => go()} disabled={busy} style={{ marginTop: 11, opacity: busy ? .6 : 1 }}>
               {busy ? 'Đang mở khóa…' : 'Mở khóa pháo đài'}
             </button>
-            {DEMO_TOKEN && (
-              <>
-                <div className="beta-banner">🔓 BETA MỞ — dùng thử không cần token</div>
-                <button className="btn-demo" disabled={busy} onClick={() => go(DEMO_TOKEN)}>
-                  {busy ? 'Đang vào…' : 'Vào dùng thử ngay'}
-                </button>
-              </>
-            )}
-            {err && <p style={{ marginTop: 12, fontSize: 13, color: 'var(--rose)' }}>{err}</p>}
-            <p className="mut" style={{ fontSize: 11.5, marginTop: 16 }}>
-              API: <b style={{ color: apiUp === 'OK' ? 'var(--jade)' : apiUp === 'down' ? 'var(--rose)' : 'var(--mut)' }}>{apiUp}</b>
-            </p>
           </div>
+        )}
+        {err && <p style={{ marginTop: 14, fontSize: 13, color: 'var(--rose)' }}>{err}</p>}
+        <div className="ld-scrolldn">▾ CUỘN XUỐNG</div>
+      </section>
+
+      {/* ── BENTO FEATURES ── */}
+      <section className="ld-sect">
+        <div className="sh">Một tòa thành, đủ mọi nghiệp vụ</div>
+        <div className="sd">Bật module khi cần, thuê theo ngày khi muốn thử — trả bằng đồng Om.</div>
+        <div className="ld-bento">
+          {FEATURES.map((f) => (
+            <div key={f.name} className="ld-cell" style={{ ['--cell-tint' as any]: f.tint }}>
+              <div className="ci" style={{ background: f.tint, color: f.color }}><Icon name={f.icon} size={20} /></div>
+              <b>{f.name}</b>
+              <p>{f.desc}</p>
+            </div>
+          ))}
         </div>
-      </main>
-    </>
+      </section>
+
+      {/* ── STATS ── */}
+      <section className="ld-sect">
+        <div className="sh">Hoạt động thật, số liệu thật</div>
+        <div className="sd">Không mock, không demo giả — mọi con số chạy trên dữ liệu thật của bạn.</div>
+        <div className="ld-stats">
+          {STATS.map((s) => (
+            <div key={s.label} className="ld-stat">
+              <div className="n"><NumberTicker value={s.value} suffix={s.suffix} /></div>
+              <div className="l">{s.label}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <footer className="ld-foot">
+        <b>SUPERCITADEL</b> · Pháo đài quản trị cho doanh nghiệp Việt · API {API.replace(/^https?:\/\//, '')}
+      </footer>
+    </div>
   );
 }

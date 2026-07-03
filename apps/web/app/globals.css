@@ -385,6 +385,63 @@ input, select, textarea { font-family: var(--fb); }
 .btn-demo:hover { box-shadow: 0 0 26px var(--amber-soft); }
 .btn-demo:active { transform: scale(.98); }
 
+/* ═══════════════ R3: LANDING PUBLIC (hero + bento + ticker) ═══════════════ */
+.ld { position: relative; min-height: 100dvh; overflow-x: hidden; }
+.ld-hero { position: relative; min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 24px; text-align: center; }
+/* animated grid pattern — port ý tưởng magicui animated-grid-pattern sang CSS thuần (không dep) */
+.ld-grid { position: absolute; inset: 0; pointer-events: none; overflow: hidden;
+  background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(ellipse 90% 65% at 50% 42%, #000 30%, transparent 75%);
+  -webkit-mask-image: radial-gradient(ellipse 90% 65% at 50% 42%, #000 30%, transparent 75%); }
+.ld-grid i { position: absolute; width: 43px; height: 43px; background: var(--jade-soft); opacity: 0; animation: gridCell var(--gd, 5s) ease-in-out var(--gdel, 0s) infinite; }
+@keyframes gridCell { 0%, 100% { opacity: 0; } 42% { opacity: .55; } }
+/* aurora gradient text — port magicui aurora-text */
+.ld-aurora { background-image: linear-gradient(120deg, var(--jade), var(--sky), var(--violet), var(--amber), var(--jade)); background-size: 220% auto; -webkit-background-clip: text; background-clip: text; color: transparent; animation: aurora 9s linear infinite; }
+@keyframes aurora { to { background-position: 220% center; } }
+.ld-hero h1 { font-family: var(--fd); font-weight: 800; font-size: clamp(38px, 8vw, 74px); letter-spacing: -.035em; line-height: 1.02; }
+.ld-tag { font-size: clamp(15px, 2.4vw, 19px); color: var(--dim); margin-top: 18px; max-width: 480px; line-height: 1.55; }
+.ld-kick { font-family: var(--fm); font-size: 11.5px; letter-spacing: .18em; text-transform: uppercase; color: var(--jade); display: inline-flex; align-items: center; gap: 8px; padding: 7px 15px; border-radius: var(--r-full); border: 1px solid rgba(52,211,184,.25); background: var(--jade-soft); margin-bottom: 26px; animation: fadeUp .7s var(--ease) both; }
+.ld-cta { display: flex; gap: 12px; margin-top: 34px; flex-wrap: wrap; justify-content: center; }
+.ld-btn-p { padding: 15px 30px; border-radius: var(--r-md); border: none; background: var(--jade); color: #04231f; font-weight: 800; font-size: 15.5px; transition: transform var(--dur-1), box-shadow var(--dur-2); box-shadow: var(--glow); }
+.ld-btn-p:hover { box-shadow: var(--glow-strong); transform: translateY(-1px); }
+.ld-btn-p:active { transform: scale(.97); }
+.ld-btn-s { padding: 15px 26px; border-radius: var(--r-md); border: 1.5px solid var(--bd2); background: rgba(18,24,32,.6); color: var(--txt); font-weight: 700; font-size: 15px; backdrop-filter: blur(6px); transition: border-color var(--dur-1), transform var(--dur-1); }
+.ld-btn-s:hover { border-color: var(--jade); }
+.ld-btn-s:active { transform: scale(.97); }
+.ld-scrolldn { position: absolute; bottom: 26px; left: 50%; transform: translateX(-50%); color: var(--faint); font-size: 11px; letter-spacing: .1em; animation: fadeUp 1s var(--ease) .9s both; }
+.ld-e1 { animation: fadeUp .7s var(--ease) .12s both; }
+.ld-e2 { animation: fadeUp .7s var(--ease) .26s both; }
+.ld-e3 { animation: fadeUp .7s var(--ease) .4s both; }
+/* login sheet trên landing */
+.ld-login { width: 100%; max-width: 340px; margin: 22px auto 0; animation: scaleIn var(--dur-2) var(--ease) both; }
+/* bento grid — port magicui bento-grid concept */
+.ld-sect { position: relative; max-width: 1020px; margin: 0 auto; padding: 70px 24px 10px; }
+.ld-sect .sh { font-family: var(--fd); font-weight: 800; font-size: clamp(24px, 4.5vw, 34px); letter-spacing: -.025em; text-align: center; }
+.ld-sect .sd { text-align: center; color: var(--mut); font-size: 14px; margin-top: 10px; }
+.ld-bento { display: grid; grid-template-columns: repeat(2, 1fr); gap: 13px; margin-top: 36px; }
+@media (min-width: 860px) { .ld-bento { grid-template-columns: repeat(3, 1fr); } }
+.ld-cell { position: relative; overflow: hidden; background: var(--s1); border: 1px solid var(--bd); border-radius: var(--r-lg); padding: 22px 20px; min-height: 172px; display: flex; flex-direction: column; justify-content: flex-end; transition: border-color var(--dur-2), transform var(--dur-2) var(--ease), box-shadow var(--dur-2); }
+.ld-cell::before { content: ''; position: absolute; top: -46px; right: -36px; width: 150px; height: 150px; border-radius: 50%; background: radial-gradient(circle, var(--cell-tint, var(--jade-soft)), transparent 70%); opacity: .7; transition: opacity var(--dur-2), transform var(--dur-3) var(--ease); }
+.ld-cell:hover { border-color: var(--bd2); transform: translateY(-3px); box-shadow: var(--sh-2), 0 0 30px var(--cell-tint, var(--jade-soft)); }
+.ld-cell:hover::before { opacity: 1; transform: scale(1.25); }
+.ld-cell .ci { width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center; margin-bottom: auto; }
+.ld-cell b { font-family: var(--fd); font-size: 16.5px; margin-top: 16px; }
+.ld-cell p { font-size: 12.5px; color: var(--mut); margin-top: 6px; line-height: 1.5; }
+/* number ticker stats */
+.ld-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 13px; margin-top: 36px; }
+@media (min-width: 700px) { .ld-stats { grid-template-columns: repeat(4, 1fr); } }
+.ld-stat { background: var(--s1); border: 1px solid var(--bd); border-radius: var(--r-lg); padding: 24px 18px; text-align: center; transition: border-color var(--dur-2), box-shadow var(--dur-2); }
+.ld-stat:hover { border-color: rgba(52,211,184,.3); box-shadow: var(--glow); }
+.ld-stat .n { font-family: var(--fm); font-weight: 700; font-size: clamp(26px, 4vw, 36px); color: var(--jade); font-variant-numeric: tabular-nums; }
+.ld-stat .l { font-size: 11.5px; color: var(--mut); margin-top: 8px; letter-spacing: .02em; }
+.ld-foot { text-align: center; padding: 60px 24px 36px; color: var(--faint); font-size: 12px; }
+.ld-foot b { color: var(--dim); }
+@media (prefers-reduced-motion: reduce) {
+  .ld-grid i, .ld-aurora { animation: none !important; }
+  .ld-e1, .ld-e2, .ld-e3, .ld-kick, .ld-scrolldn { animation-duration: .01s !important; animation-delay: 0s !important; }
+}
+
 /* ═══════════════ R3: SWITCH · OWNED-BAR · RENT ═══════════════ */
 /* switch toggle — port ý tưởng originui switch (base-ui) sang CSS thuần DS v2 */
 .sw { position: relative; width: 40px; height: 23px; border-radius: var(--r-full); border: 1px solid var(--bd2); background: var(--s3); padding: 0; flex-shrink: 0; transition: background var(--dur-2), border-color var(--dur-2), box-shadow var(--dur-2); }
