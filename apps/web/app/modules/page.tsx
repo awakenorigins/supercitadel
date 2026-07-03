@@ -300,7 +300,7 @@ export default function ModulesPage() {
               <div className="qty-step">
                 <button aria-label="Giảm" disabled={buyQty <= 1} onClick={() => setBuyQty((q) => Math.max(1, q - 1))}>−</button>
                 <span className="qty-n">{buyQty}</span>
-                <button aria-label="Tăng" disabled={buyQty >= 99} onClick={() => setBuyQty((q) => Math.min(99, q + 1))}>+</button>
+                <button aria-label="Tăng" onClick={() => setBuyQty((q) => Math.min(99, q + 1))} disabled={buyQty >= 99}>+</button>
               </div>
             </div>
             <div className="card" style={{ marginTop: 14, padding: '12px 14px', display: 'flex', alignItems: 'center', background: 'var(--amber-soft)', borderColor: 'rgba(232,179,102,.25)' }}>
@@ -314,7 +314,7 @@ export default function ModulesPage() {
             )}
             <div style={{ display: 'flex', gap: 9, marginTop: 14 }}>
               <button onClick={() => setBuySheet(null)} style={{ flex: 1, borderRadius: 13, padding: '13px 0', fontWeight: 700, fontSize: 13.5, background: 'var(--s3)', border: '1px solid var(--bd)', color: 'var(--dim)' }}>Hủy</button>
-              <button className="btn-p" disabled={busy === buySheet.code || (bal !== null && buyQty * buySheet.price > bal)} onClick={confirmBuy}
+              <button className="btn-p" onClick={confirmBuy} disabled={busy === buySheet.code || (bal !== null && buyQty * buySheet.price > bal)}
                 style={{ flex: 2, opacity: busy === buySheet.code || (bal !== null && buyQty * buySheet.price > bal) ? .55 : 1 }}>
                 {busy === buySheet.code ? 'Đang mua…' : `Xác nhận mua · ${(buyQty * buySheet.price).toLocaleString('vi')} Om`}
               </button>

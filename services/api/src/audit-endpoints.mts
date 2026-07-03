@@ -21,6 +21,9 @@ import { buildInventoryRoutes } from '@citadel/module-inventory/server/routes.js
 import { buildHrRoutes } from '@citadel/module-hr/server/routes.js';
 import { buildModuleRoutes, requireModule } from './modules/routes.js';
 import { buildAccountingRoutes } from '@citadel/module-accounting/server/routes.js';
+import { buildStoreItemRoutes, buildInventoryItemRoutes } from './items/routes.js';
+import { buildAuditRoutes } from './audit/routes.js';
+import { orgModules } from '@citadel/db';
 import { startWsServer } from '../../ws/src/index.js';
 import { eq, sql as dsql } from 'drizzle-orm';
 
@@ -36,8 +39,8 @@ function row(method: string, path: string, status: number | string, ok: boolean,
 async function main() {
   // ── DB thật + migrations đầy đủ ──
   const pg = new PGlite();
-  for (const f of ['packages/db/migrations/0001_init.sql', 'modules/chat/migrations/0001_chat.sql', 'modules/crm/migrations/0001_crm.sql', 'modules/om/migrations/0001_om.sql', 'modules/notification/migrations/0001_notification.sql', 'packages/db/migrations/0002_org_modules.sql', 'modules/inventory/migrations/0001_inventory.sql', 'modules/hr/migrations/0001_hr.sql', 'modules/hr/migrations/0002_hr_v2.sql', 'modules/accounting/migrations/0001_accounting.sql']) {
-    await pg.exec(readFileSync('/home/claude/citadel-build/' + f, 'utf8').replace(/CREATE EXTENSION IF NOT EXISTS vector;\s*/i, ''));
+  for (const f of ['packages/db/migrations/0001_init.sql', 'modules/chat/migrations/0001_chat.sql', 'modules/crm/migrations/0001_crm.sql', 'modules/om/migrations/0001_om.sql', 'modules/notification/migrations/0001_notification.sql', 'packages/db/migrations/0002_org_modules.sql', 'packages/db/migrations/0003_super_admin.sql', 'packages/db/migrations/0004_v7a_p1.sql', 'packages/db/migrations/0005_v7a_p2.sql', 'packages/db/migrations/0006_v7a_p3.sql', 'packages/db/migrations/0007_module_rental.sql', 'modules/inventory/migrations/0001_inventory.sql', 'modules/hr/migrations/0001_hr.sql', 'modules/hr/migrations/0002_hr_v2.sql', 'modules/accounting/migrations/0001_accounting.sql']) {
+    await pg.exec(readFileSync(new URL('../../../' + f, import.meta.url), 'utf8').replace(/CREATE EXTENSION IF NOT EXISTS vector;\s*/i, ''));
   }
   const db = drizzle(pg, { schema: dbschema }) as any;
 
@@ -80,6 +83,9 @@ async function main() {
   app.route('/api/v1/inventory', buildInventoryRoutes({ db, requireAuth, gate: requireModule(db, 'inventory') }));
   app.route('/api/v1/hr', buildHrRoutes({ db, requireAuth, gate: requireModule(db, 'hr') }));
   app.route('/api/v1/accounting', buildAccountingRoutes({ db, requireAuth, gate: requireModule(db, 'accounting') }));
+  app.route('/api/v1/store', buildStoreItemRoutes({ db, requireAuth }));
+  app.route('/api/v1/inventory-items', buildInventoryItemRoutes({ db, requireAuth }));
+  app.route('/api/v1/audit-logs', buildAuditRoutes({ db, requireAuth }));
   app.get('/api/v1/users', requireAuth, async (c) => {
     const rows = await db.select().from(dbschema.users).where(eq(dbschema.users.orgId, orgOf(c)));
     return c.json({ users: rows.map((u: any) => ({ id: u.id, displayName: u.displayName, role: u.role })) });
@@ -147,7 +153,7 @@ async function main() {
   { const { st, d } = await J(await app.request('/api/v1/hr/employees?status=active', { headers: H })); row('GET', '/api/v1/hr/employees', st, st === 200 && d.employees?.length === 1, 'list active'); }
   { const { st, d } = await J(await app.request(`/api/v1/hr/employees/${empId}`, { method: 'PATCH', headers: H, body: JSON.stringify({ roleTitle: 'Quản lý' }) })); row('PATCH', '/hr/employees/:id', st, st === 200 && d.employee?.roleTitle === 'Quản lý', 'sửa chức danh'); }
   { const { st, d } = await J(await app.request('/api/v1/hr/attendance/check-in', { method: 'POST', headers: H, body: JSON.stringify({ employeeId: empId }) })); row('POST', '/hr/attendance/check-in', st, st === 201 && d.attendance?.status === 'present', 'vào ca'); }
-  { const { st, d } = await J(await app.request('/api/v1/hr/attendance/check-out', { method: 'POST', headers: H, body: JSON.stringify({ employeeId: empId }) })); row('POST', '/hr/attendance/check-out', st, st === 200 && d.attendance?.checkOut, 'ra ca + giờ công'); }
+  { const { st, d } = await J(await app.request('/api/v1/hr/attendance/check-out', { method: 'POST', headers: H, body: JSON.stringify({ employeeId: empId }) })); row('POST', '/hr/attendance/check-out', st, st === 200 && d.attendance?.checkOut && d.attendance?.status === 'checked_out', 'ra ca + status checked_out (R5-A)'); }
   { const { st, d } = await J(await app.request('/api/v1/hr/attendance', { headers: H })); row('GET', '/api/v1/hr/attendance', st, st === 200 && d.attendance?.length === 1 && d.attendance[0].employeeName === 'Lan Phạm', 'bảng công hôm nay'); }
   { const { st, d } = await J(await app.request('/api/v1/hr/leave/types', { method: 'POST', headers: H, body: JSON.stringify({ name: 'Phép năm', daysPerYear: 12 }) })); ltId = d.type?.id; row('POST', '/api/v1/hr/leave/types', st, st === 201 && !!ltId, 'loại phép'); }
   { const { st, d } = await J(await app.request('/api/v1/hr/leave/types', { headers: H })); row('GET', '/api/v1/hr/leave/types', st, st === 200 && d.types?.length === 1, 'list loại'); }
@@ -177,6 +183,53 @@ async function main() {
   { const jv2 = await J(await app.request('/api/v1/accounting/journal', { method: 'POST', headers: H, body: JSON.stringify({ postingDate: '2026-06-10', lines: [{ accountNumber: '642', debit: 1000000 }, { accountNumber: '111', credit: 1000000 }] }) }));
     const { st, d } = await J(await app.request(`/api/v1/accounting/vouchers/${jv2.d.voucher.id}/cancel`, { method: 'POST', headers: H })); row('POST', '/vouchers/:id/cancel', st, st === 200 && d.voucher?.status === 'cancelled', 'bút toán đảo'); }
 
+  // ═══ ACCOUNTING EXCEL (2 — R5 audit bổ sung) ═══
+  { const r = await app.request('/api/v1/accounting/import/template.xlsx', { headers: H });
+    const ct = r.headers.get('content-type') ?? '';
+    const buf = await r.arrayBuffer();
+    row('GET', '/accounting/import/template.xlsx', r.status, r.status === 200 && ct.includes('spreadsheet') && buf.byteLength > 500, `file mẫu ${buf.byteLength}B`); }
+  { const r = await app.request('/api/v1/accounting/export/general-ledger.json?from=2026-01-01&to=2026-12-31', { headers: H });
+    const d = await r.json().catch(() => ({})) as any;
+    row('GET', '/accounting/export/general-ledger.json', r.status, r.status === 200 && Array.isArray(d.entries), 'export JSON'); }
+
+  // ═══ STORE ITEMS + INVENTORY ITEMS (5 — R5 audit bổ sung) ═══
+  let ownedId = '';
+  { const { st, d } = await J(await app.request('/api/v1/store/items', { headers: H })); row('GET', '/api/v1/store/items', st, st === 200 && d.items?.length === 6, 'catalog 6 vật phẩm seed'); }
+  { const { st, d } = await J(await app.request('/api/v1/store/items/mochi/buy', { method: 'POST', headers: H, body: JSON.stringify({ qty: 2 }) })); row('POST', '/store/items/:code/buy {qty:2}', st, st === 200 && d.qtyBought === 2 && d.paidOm === 60, 'R5: mua 2 trừ 60 Om'); }
+  { const { st, d } = await J(await app.request('/api/v1/store/items/mochi/buy', { method: 'POST', headers: H, body: JSON.stringify({ qty: 0 }) })); row('POST', '/store/items buy qty=0', st, st === 400 && /1 đến 99/.test(d.error?.message ?? ''), 'validation 400 rõ ràng'); }
+  { const { st, d } = await J(await app.request('/api/v1/inventory-items', { headers: H })); ownedId = d.items?.[0]?.id; row('GET', '/api/v1/inventory-items', st, st === 200 && d.items?.[0]?.qty === 2, 'kho user qty 2'); }
+  { const { st, d } = await J(await app.request(`/api/v1/inventory-items/${ownedId}/use`, { method: 'POST', headers: H })); row('POST', '/inventory-items/:id/use', st, st === 200 && d.qtyLeft === 1 && typeof d.energyAfter === 'number', 'dùng → energy thật'); }
+
+  // ═══ RENT LIFECYCLE (4 — R5 audit: thuê → hết hạn 403 → gia hạn mở lại) ═══
+  { // dùng org B mới để không đụng purchased CRM của org chính — tạo ở đây dùng chung SEC check sau
+    const { st, d } = await J(await app.request('/api/v1/modules/automato-secretary/purchase', { method: 'POST', headers: H }));
+    row('POST', '/modules/automato-secretary/purchase', st, st === 400 && /đang xây dựng/.test(d.error?.message ?? ''), 'R5: demo chặn 400'); }
+  { const { st, d } = await J(await app.request('/api/v1/modules/automato-secretary/rent', { method: 'POST', headers: H, body: JSON.stringify({ days: 7 }) }));
+    row('POST', '/modules/automato-secretary/rent', st, st === 400 && /đang xây dựng/.test(d.error?.message ?? ''), 'R5: demo rent chặn 400'); }
+  { // pos coming_soon vẫn chặn đúng
+    const { st } = await J(await app.request('/api/v1/modules/pos/purchase', { method: 'POST', headers: H }));
+    row('POST', '/modules/pos/purchase', st, st === 400, 'coming_soon chặn 400'); }
+  { // rent thật: mua module chưa sở hữu bằng rent — org này đã purchased 4 module ready, chỉ còn pos (coming_soon).
+    // → test rent lifecycle bằng org B riêng ở dưới (SEC block đã tạo orgB) — đánh dấu ở đây qua orgModules trực tiếp:
+    const [orgR] = await db.insert(dbschema.orgs).values({ name: 'RentOrg', slug: 'rent-audit' }).returning();
+    const [uR] = await db.insert(dbschema.users).values({ orgId: orgR.id, displayName: 'Rin', role: 'owner' }).returning();
+    const tokR = generateToken();
+    await db.insert(dbschema.tokens).values({ orgId: orgR.id, userId: uR.id, tokenPrefix: tokenPrefix(tokR), tokenHash: await hashToken(tokR), role: 'owner' });
+    _resetRateLimit();
+    const lg = await J(await app.request('/api/v1/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: tokR }) }));
+    const HR2 = { 'Content-Type': 'application/json', Authorization: `Bearer ${lg.d.jwt}` };
+    await app.request('/api/v1/om/topup', { method: 'POST', headers: HR2, body: JSON.stringify({ amount: 1000 }) });
+    { const { st, d } = await J(await app.request('/api/v1/modules/crm/rent', { method: 'POST', headers: HR2, body: JSON.stringify({ days: 7 }) })); row('POST', '/modules/crm/rent {days:7}', st, st === 200 && d.paidOm === 40, 'thuê 7 ngày trừ 40 Om'); }
+    { const r = await app.request('/api/v1/crm/deals', { headers: HR2 }); row('GATE', 'crm sau khi thuê → 200', r.status, r.status === 200, 'gate mở theo rent'); }
+    await db.update(orgModules).set({ rentedUntil: new Date(Date.now() - 86_400_000) }).where(eq(orgModules.orgId, orgR.id));
+    { const { st, d } = await J(await app.request('/api/v1/crm/deals', { headers: HR2 })); row('GATE', 'rent hết hạn → 403', st, st === 403 && d.error?.code === 'MODULE_RENT_EXPIRED', 'MODULE_RENT_EXPIRED'); }
+    { const { st, d } = await J(await app.request('/api/v1/modules/crm/rent', { method: 'POST', headers: HR2, body: JSON.stringify({ days: 30 }) })); row('POST', '/modules/crm/rent gia hạn', st, st === 200 && d.paidOm === 100, 'gia hạn sau hết hạn'); }
+    { const r = await app.request('/api/v1/crm/deals', { headers: HR2 }); row('GATE', 'crm sau gia hạn → 200', r.status, r.status === 200, 'gate mở lại'); }
+  }
+
+  // ═══ AUDIT LOGS (1 — R5) ═══
+  { const { st, d } = await J(await app.request('/api/v1/audit-logs', { headers: H })); row('GET', '/api/v1/audit-logs', st, st === 200 && Array.isArray(d.logs), 'owner xem được log (app audit không inject audit fn → có thể rỗng)'); }
+
   // ═══ USERS (1) ═══
   { const { st, d } = await J(await app.request('/api/v1/users', { headers: H })); row('GET', '/api/v1/users', st, st === 200 && d.users?.length === 2, 'list org users'); }
 
@@ -204,8 +257,8 @@ async function main() {
   { const { st, d } = await J(await app.request('/api/v1/crm/stats', { headers: H })); row('GET', '/api/v1/crm/stats', st, st === 200 && d.openDeals === 0, 'stats sau won'); }
 
   // Om (2 còn lại — topup đã audit ở trên)
-  { const { st, d } = await J(await app.request('/api/v1/om/balance', { headers: H })); row('GET', '/api/v1/om/balance', st, st === 200 && d.balance === 98549, 'số dư sau 4 lần mua'); }
-  { const { st, d } = await J(await app.request('/api/v1/om/transactions', { headers: H })); row('GET', '/api/v1/om/transactions', st, st === 200 && d.transactions?.length === 5, '1 nạp + 4 mua'); }
+  { const { st, d } = await J(await app.request('/api/v1/om/balance', { headers: H })); row('GET', '/api/v1/om/balance', st, st === 200 && d.balance === 98489, 'số dư sau 4 module + 2 mochi (98549−60)'); }
+  { const { st, d } = await J(await app.request('/api/v1/om/transactions', { headers: H })); row('GET', '/api/v1/om/transactions', st, st === 200 && d.transactions?.length === 6, '1 nạp + 4 module + 1 mua item'); }
 
   // Notification (3)
   const { createNotification } = await import('@citadel/module-notification/server/service.js');

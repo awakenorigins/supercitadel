@@ -36,7 +36,7 @@ function step(label: string, ok: boolean, detail = '') {
 async function main() {
   const pg = new PGlite();
   for (const f of ['packages/db/migrations/0001_init.sql', 'packages/db/migrations/0002_org_modules.sql', 'modules/chat/migrations/0001_chat.sql', 'modules/crm/migrations/0001_crm.sql', 'modules/om/migrations/0001_om.sql', 'modules/notification/migrations/0001_notification.sql', 'modules/inventory/migrations/0001_inventory.sql', 'modules/hr/migrations/0001_hr.sql', 'modules/hr/migrations/0002_hr_v2.sql', 'modules/accounting/migrations/0001_accounting.sql'])
-    await pg.exec(readFileSync('/home/claude/citadel-build/' + f, 'utf8').replace(/CREATE EXTENSION IF NOT EXISTS vector;\s*/i, ''));
+    await pg.exec(readFileSync(new URL('../../../' + f, import.meta.url), 'utf8').replace(/CREATE EXTENSION IF NOT EXISTS vector;\s*/i, ''));
   const db = drizzle(pg, { schema: dbschema }) as any;
 
   const [org] = await db.insert(dbschema.orgs).values({ name: 'Quán Của Mỗ', slug: 'mo' }).returning();
