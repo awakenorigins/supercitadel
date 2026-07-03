@@ -3,9 +3,11 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Shell } from '../../components/Shell';
 import { Icon } from '../../components/Icon';
+import { CompanyModuleWizard } from '../../components/CompanyModuleWizard';
 import { api, getSession } from '../../lib/api';
 
 interface Mod { id: string; name: string; icon: string; desc: string; tier: string; priceOm: number; group: string; route: string; status: string; rentOnly?: boolean; active: boolean; purchased: boolean; rentedUntil: string | null; rentDaysLeft: number | null }
+interface CompanyReq { id: string; companyName: string; status: string; payload: any; createdAt: string }
 
 const RENT_PLANS = [
   { days: 7, pct: 0.10, label: '7 ngày' },
@@ -35,10 +37,13 @@ export default function ModulesPage() {
   // R5 Phase C: demo flow Automato Thư Ký — loading giả lập → popup ⚠️ → widget
   const [demoLoading, setDemoLoading] = useState(false);
   const [demoWarn, setDemoWarn] = useState(false);
+  const [companyWizard, setCompanyWizard] = useState(false);
+  const [companyRequests, setCompanyRequests] = useState<CompanyReq[]>([]);
 
   const load = () => {
     api<{ modules: Mod[] }>('/api/v1/modules').then((d) => setMods(d.modules)).catch(() => setMods([]));
     api<{ items: StoreItem[] }>('/api/v1/store/items').then((d) => setStoreItems(d.items)).catch(() => setStoreItems([]));
+    api<{ requests: CompanyReq[] }>('/api/v1/company-module/requests').then((d) => setCompanyRequests(d.requests)).catch(() => setCompanyRequests([]));
     api<{ balance: number }>('/api/v1/om/balance').then((d) => setBal(d.balance)).catch(() => {});
   };
   useEffect(() => { if (!getSession()) { router.replace('/'); return; } load(); }, [router]);
@@ -104,7 +109,7 @@ export default function ModulesPage() {
 
   const enabled = mods?.filter((m) => m.active) ?? [];
   const renting = mods?.filter((m) => !m.purchased && m.rentedUntil && m.rentDaysLeft !== null) ?? []; // R5: đang thuê còn hạn
-  const groups = ['AI Automation', 'Kinh doanh', 'Tài chính', 'Vận hành', 'Nhân sự', 'Cốt lõi'];
+  const groups = ['May Đo Doanh Nghiệp', 'AI Automation', 'Kinh doanh', 'Tài chính', 'Vận hành', 'Nhân sự', 'Cốt lõi'];
 
   return (
     <Shell wide>
@@ -162,7 +167,7 @@ export default function ModulesPage() {
               <div style={{ padding: '20px 20px 0', fontSize: 11, fontWeight: 700, letterSpacing: '.1em', color: 'var(--faint)', textTransform: 'uppercase' }}>{g}</div>
               <div className="mod-grid">
                 {list.map((m) => (
-                  <div key={m.id} className={`mod-card ${m.status === 'coming_soon' ? 'off' : ''}`}>
+                  <div key={m.id} data-tut={m.id === 'company-module' ? 'company-module-card' : undefined} className={`mod-card ${m.status === 'coming_soon' ? 'off' : ''} ${m.id === 'company-module' ? 'company-custom' : ''}`}>
                     <div className="mod-top">
                       <div className="mod-ico" style={{ background: m.active ? 'var(--jade-soft)' : 'var(--s3)', color: m.active ? 'var(--jade)' : 'var(--dim)' }}><Icon name={m.icon} size={23} /></div>
                       <div style={{ flex: 1, minWidth: 0 }}>
@@ -178,6 +183,8 @@ export default function ModulesPage() {
                               : <span className="bdg-s rose">THUÊ · HẾT HẠN</span>
                           )}
                           {m.tier === 'free' && m.status === 'ready' && !m.active && <span className="bdg-s mut">MIỄN PHÍ</span>}
+                          {m.tier === 'custom' && <span className="bdg-s jade">MAY ĐO</span>}
+                          {m.id === 'company-module' && companyRequests[0] && <span className="bdg-s amber">HỒ SƠ · {companyRequests[0].status}</span>}
                         </div>
                       </div>
                       {m.status === 'ready' && m.tier !== 'core' && (m.purchased || m.rentDaysLeft !== null) && (
@@ -196,7 +203,12 @@ export default function ModulesPage() {
                     </div>
                     <div className="mod-desc">{m.desc}</div>
                     <div className="mod-foot">
-                      {m.status === 'demo' ? (
+                      {m.id === 'company-module' ? (
+                        <>
+                          <span className="mod-price"><Icon name="coin" size={14} /> Báo giá sau <small>khi nhận hồ sơ</small></span>
+                          {companyRequests[0] ? <button className="chip" onClick={() => setCompanyWizard(true)} style={{ marginLeft: 'auto', fontSize: 11, padding: '7px 12px', color: 'var(--jade)' }}>Hồ sơ {companyRequests[0].companyName}: Đã tiếp nhận ⏳</button> : <button onClick={() => setCompanyWizard(true)} style={{ marginLeft: 'auto', border: 'none', borderRadius: 12, padding: '9px 14px', fontWeight: 800, fontSize: 12, background: 'linear-gradient(135deg,var(--jade),var(--amber))', color: '#04231f' }}>＋ Add Module Company</button>}
+                        </>
+                      ) : m.status === 'demo' ? (
                         <>
                           <span className="mod-price"><Icon name="coin" size={14} /> {m.priceOm} <small>Om · thuê — đang xây dựng</small></span>
                           <button disabled={demoLoading} onClick={startSecretaryDemo}
@@ -363,6 +375,7 @@ export default function ModulesPage() {
           </div>
         </div>
       )}
+    <CompanyModuleWizard open={companyWizard} onClose={() => setCompanyWizard(false)} onCreated={(r) => setCompanyRequests((xs) => [r, ...xs])} />
     </Shell>
   );
 }
