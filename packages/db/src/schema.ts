@@ -90,6 +90,20 @@ export const ttMemories = pgTable(
   (t) => ({ orgUserIdx: index('tt_memories_org_user_idx').on(t.orgId, t.userId) }),
 );
 
+// tt_chat_messages: hội thoại Tiểu Tâm bền vững (R7.6) — mở lại còn nguyên, multi-turn context.
+export const ttChatMessages = pgTable(
+  'tt_chat_messages',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    orgId: uuid('org_id').notNull().references(() => orgs.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id').notNull(),
+    role: varchar('role', { length: 12 }).notNull(), // 'user' | 'assistant'
+    content: text('content').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({ orgUserIdx: index('tt_chat_org_user_idx').on(t.orgId, t.userId, t.createdAt) }),
+);
+
 // tt_soul_state: mood + energy + engine per (org, user) — đổi model = gạt công tắc, hồn giữ nguyên.
 export const ttSoulState = pgTable(
   'tt_soul_state',

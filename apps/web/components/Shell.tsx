@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Icon } from './Icon';
 import { OwnedBar } from './OwnedBar';
 import { SecretaryWidget } from './SecretaryWidget';
-import { Tutorial, TutorialHelpButton } from './Tutorial';
+import { Tutorial, TutorialHelpButton, TutorialFab } from './Tutorial';
 import { API, api, getSession } from '../lib/api';
 import { applyTheme, applyStoredTheme } from '../lib/theme';
 
@@ -211,14 +211,38 @@ export function Shell({ children, badge, wide }: { children: React.ReactNode; ba
       <TieuTamSheet open={ttOpen} onClose={() => setTtOpen(false)} />
       <SecretaryWidget />
       <Tutorial />
+      <TutorialFab />
     </>
   );
 }
 
+/** R7.6: render text AI — đỡ markdown thô: **bold** → <b>, dọn `code`, giữ xuống dòng. */
+function renderAiText(text: string) {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((p, i) => {
+    if (p.startsWith('**') && p.endsWith('**')) return <b key={i}>{p.slice(2, -2)}</b>;
+    return <span key={i}>{p.replace(/`([^`]+)`/g, '$1')}</span>;
+  });
+}
+
+const TT_GREETING: Msg = { who: 'ai', text: 'Chào bạn! Tôi là Tiểu Tâm. Hỏi tôi về doanh thu, deal, tồn kho, ca làm…', suggestions: ['Doanh thu hôm nay', 'Deal đang mở', 'Tồn kho thế nào'] };
+
 function TieuTamSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [msgs, setMsgs] = useState<Msg[]>([
-    { who: 'ai', text: 'Chào bạn! Tôi là Tiểu Tâm. Hỏi tôi về doanh thu, deal, tồn kho, ca làm…', suggestions: ['Doanh thu hôm nay', 'Deal đang mở', 'Tồn kho thế nào'] },
-  ]);
+  const [msgs, setMsgs] = useState<Msg[]>([TT_GREETING]);
+  const [histLoaded, setHistLoaded] = useState(false);
+  // R7.6: mở sheet → load lịch sử hội thoại thật từ backend (chat bền vững như messenger)
+  useEffect(() => {
+    if (!open || histLoaded) return;
+    const s = getSession();
+    if (!s) return;
+    fetch(`${API}/api/v1/tieu-tam/chat/history?limit=40`, { headers: { Authorization: `Bearer ${s.jwt}` } })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.messages?.length) setMsgs([TT_GREETING, ...d.messages.map((m: any) => ({ who: m.role === 'user' ? 'me' as const : 'ai' as const, text: m.content }))]);
+        setHistLoaded(true);
+      })
+      .catch(() => setHistLoaded(true));
+  }, [open, histLoaded]);
   const [draft, setDraft] = useState('');
   const [streaming, setStreaming] = useState(false);
   const [soul, setSoul] = useState<SoulState | null>(null);
@@ -270,11 +294,17 @@ function TieuTamSheet({ open, onClose }: { open: boolean; onClose: () => void })
         const events = buf.split('\n\n'); buf = events.pop() ?? '';
         for (const ev of events) {
           const type = /event: (\w+)/.exec(ev)?.[1];
-          const data = /data: ([\s\S]*)/.exec(ev)?.[1] ?? '';
+          // R7.6: gộp đúng các dòng data: của một event (multi-line SSE) — hết leak "data:" vào bubble
+          const data = ev.split('\n').filter((l) => l.startsWith('data:')).map((l) => l.slice(5).trimStart()).join('\n');
           if (type === 'energy') { try { setSoul((prev) => ({ ...prev, ...JSON.parse(data) })); } catch {} continue; }
           setMsgs((m) => {
             const last = { ...m[m.length - 1] };
-            if (type === 'token') last.text += data;
+            if (type === 'token') {
+              // token mới là JSON string (giữ nguyên newline); fallback raw cho bản cũ
+              let tok = data;
+              try { const p = JSON.parse(data); if (typeof p === 'string') tok = p; } catch {}
+              last.text += tok;
+            }
             if (type === 'tool') { try { last.tool = JSON.parse(data); } catch {} }
             if (type === 'suggestions') { try { last.suggestions = JSON.parse(data); } catch {} }
             return [...m.slice(0, -1), last];
@@ -316,7 +346,7 @@ function TieuTamSheet({ open, onClose }: { open: boolean; onClose: () => void })
                 ? <div style={{ width: 28, height: 28, borderRadius: 9, background: 'linear-gradient(135deg,var(--jade),var(--jade-d))', display: 'grid', placeItems: 'center', alignSelf: 'flex-end', color: '#04231f', flexShrink: 0 }}><Icon name="spark" size={15} /></div>
                 : <div className="ava sky" style={{ width: 28, height: 28, fontSize: 11, alignSelf: 'flex-end' }}>{'M'}</div>}
               <div style={{ minWidth: 0 }}>
-                {m.text || m.who === 'me' ? <div className={`bub ${m.who === 'me' ? 'me' : 'ai'}`}>{m.text}{m.who === 'ai' && streaming && i === msgs.length - 1 ? <span className="blink" /> : null}</div>
+                {m.text || m.who === 'me' ? <div className={`bub ${m.who === 'me' ? 'me' : 'ai'}`} style={{ whiteSpace: 'pre-wrap' }}>{m.who === 'ai' ? renderAiText(m.text) : m.text}{m.who === 'ai' && streaming && i === msgs.length - 1 ? <span className="blink" /> : null}</div>
                   : <div className="typing"><span /><span /><span /></div>}
                 {m.tool && (
                   <div className="tcard"><div className="th">{m.tool[0]?.tool} · {m.tool[0]?.module} <span style={{ marginLeft: 'auto', width: 6, height: 6, borderRadius: '50%', background: 'var(--jade)' }} /></div>
@@ -333,8 +363,9 @@ function TieuTamSheet({ open, onClose }: { open: boolean; onClose: () => void })
         </div>
         <div style={{ padding: '12px 14px', borderTop: '1px solid var(--line)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--s1)', border: '1.5px solid var(--bd)', borderRadius: 14, padding: '7px 7px 7px 14px' }}>
-            <input value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && ask(draft)} placeholder="Hỏi Tiểu Tâm bất cứ điều gì…" style={{ flex: 1, background: 'none', border: 'none', color: 'var(--txt)', fontSize: 14, outline: 'none' }} />
-            <button onClick={() => ask(draft)} style={{ width: 36, height: 36, borderRadius: 10, border: 'none', background: 'var(--jade)', color: '#04231f', display: 'grid', placeItems: 'center' }}><Icon name="send" size={17} /></button>
+            <input value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && ask(draft)} placeholder="Hỏi Tiểu Tâm bất cứ điều gì…" style={{ flex: 1, background: 'none', border: 'none', color: 'var(--txt)', fontSize: 14, outline: 'none', minWidth: 0 }} />
+            {/* R7.6: touch target 46px — dễ bấm trên điện thoại */}
+            <button onClick={() => ask(draft)} disabled={streaming} aria-label="Gửi tin nhắn" style={{ width: 46, height: 46, borderRadius: 13, border: 'none', background: streaming ? 'var(--s3)' : 'var(--jade)', color: streaming ? 'var(--dim)' : '#04231f', display: 'grid', placeItems: 'center', flexShrink: 0, cursor: 'pointer', touchAction: 'manipulation' }}><Icon name="send" size={20} /></button>
           </div>
         </div>
       </div>

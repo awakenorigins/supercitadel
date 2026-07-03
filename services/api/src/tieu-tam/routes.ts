@@ -14,6 +14,24 @@ import { ACTION_TOOLS, detectAction, executeAction } from './actions.js';
 import { requireAuth as defaultRequireAuth, orgOf } from '../auth/middleware.js';
 import { AppError, Errors } from '@citadel/core';
 import type { AuditFn } from '../audit/service.js';
+import { ttChatMessages } from '@citadel/db';
+import { and, eq, desc } from 'drizzle-orm';
+
+/** R7.6: lịch sử hội thoại bền vững — lấy N lượt gần nhất (cũ → mới). */
+async function loadChatHistory(db: any, orgId: string, userId: string, limit = 20) {
+  const rows = await db.select().from(ttChatMessages)
+    .where(and(eq(ttChatMessages.orgId, orgId), eq(ttChatMessages.userId, userId)))
+    .orderBy(desc(ttChatMessages.createdAt)).limit(limit);
+  return rows.reverse();
+}
+async function saveChatTurn(db: any, orgId: string, userId: string, userText: string, aiText: string) {
+  try {
+    await db.insert(ttChatMessages).values([
+      { orgId, userId, role: 'user', content: userText },
+      { orgId, userId, role: 'assistant', content: aiText },
+    ]);
+  } catch (e) { console.warn('[tieu-tam] save chat history failed', e); }
+}
 
 /** Lượt "nặng" = câu hỏi nghiệp vụ (tool/dữ liệu); "nhẹ" = chào hỏi/tán gẫu. */
 function loadOf(message: string): 'light' | 'heavy' {
@@ -104,7 +122,12 @@ export function buildTieuTamRoutes({ db, requireAuth = defaultRequireAuth, audit
     // Không dùng ILIKE nguyên câu (sẽ miss) — lấy top memories, adapter tự khớp token.
     const profile = await buildWorkProfile(db, orgId, auth.sub, { memoryLimit: 30 });
     const engine = getEngine(profile.engine);
-    const messages: EngineMessage[] = [{ role: 'user', content: message }];
+    // R7.6: multi-turn context — nạp ~10 lượt gần nhất để Tiểu Tâm nhớ câu trước
+    const history = await loadChatHistory(db, orgId, auth.sub, 20).catch(() => []);
+    const messages: EngineMessage[] = [
+      ...history.map((h: any) => ({ role: h.role as 'user' | 'assistant', content: h.content })),
+      { role: 'user', content: message },
+    ];
     const actionCtx = { db, orgId, userId: auth.sub, audit: audit ? (e: any) => audit(c, e) : undefined };
     const direct = detectAction(message);
     let actionResults: any[] = [];
@@ -145,12 +168,30 @@ export function buildTieuTamRoutes({ db, requireAuth = defaultRequireAuth, audit
     }
     // học chảy ngược về hồn (best-effort, không gãy chat)
     await learnFromMessage(db, orgId, auth.sub, message);
+    // R7.6: lưu lượt chat vào lịch sử bền vững (best-effort)
+    await saveChatTurn(db, orgId, auth.sub, message, reply.text ?? '');
     // Mệt → nhắc nhẹ sắp cần nghỉ (không chặn)
     const text = tick.note && tick.state.status === 'met' && !isBetaMode()
       ? `${reply.text}\n\n(${tick.note})`
       : reply.text;
     return { reply: { ...reply, text, toolCalls: actionResults.length ? actionResults.map((r) => ({ tool: r.action, module: r.module, result: r })) : reply.toolCalls }, tick, refused: false };
   }
+
+  /** R7.6: lịch sử hội thoại — FE load khi mở sheet, chat liền mạch như messenger. */
+  app.get('/chat/history', async (c) => {
+    const auth = c.get('auth');
+    const limit = Math.min(Number(c.req.query('limit') ?? 40) || 40, 100);
+    const rows = await loadChatHistory(db, orgOf(c), auth.sub, limit);
+    return c.json({ messages: rows.map((m: any) => ({ role: m.role, content: m.content, at: m.createdAt })) });
+  });
+
+  /** R7.6: xóa lịch sử hội thoại — người dùng làm chủ dữ liệu. */
+  app.delete('/chat/history', async (c) => {
+    const auth = c.get('auth');
+    await db.delete(ttChatMessages).where(and(eq(ttChatMessages.orgId, orgOf(c)), eq(ttChatMessages.userId, auth.sub)));
+    await audit?.(c, { action: 'tieu_tam.chat_clear', resource: 'tt_chat_messages' });
+    return c.json({ ok: true, message: 'Em đã dọn sạch hội thoại cũ rồi nha 🦊' });
+  });
 
   /** Non-streaming reply. */
   app.post('/chat', async (c) => {
@@ -177,9 +218,10 @@ export function buildTieuTamRoutes({ db, requireAuth = defaultRequireAuth, audit
         event: 'energy',
         data: JSON.stringify({ energy: Math.round(tick.state.energy), status: tick.state.status, statusLabel: STATUS_LABEL[tick.state.status], mood: tick.state.mood, refused }),
       });
+      // R7.6: token JSON-encode — newline trong text không phá khung SSE (hết leak "data:" trên UI)
       const words = reply.text.split(' ');
       for (const w of words) {
-        await stream.writeSSE({ event: 'token', data: w + ' ' });
+        await stream.writeSSE({ event: 'token', data: JSON.stringify(w + ' ') });
         await stream.sleep(35);
       }
       if (reply.toolCalls?.length)

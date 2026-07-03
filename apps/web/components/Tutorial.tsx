@@ -193,8 +193,10 @@ export function Tutorial() {
   };
   const killAll = () => { const st = loadTut(); st.off = true; st.done[doneKey(tour)] = true; saveTut(st); setTour(null); };
 
+  // R7.6: bước không có element (welcome/kết) — dùng class center, KHÔNG inline transform
+  // (animation scaleIn fill both ghi đè transform inline → card văng góc phải trên mobile)
   const card = (
-    <div ref={cardRef} className="tut-card" style={cardPos ? { top: cardPos.top, left: cardPos.left } : { top: '50%', left: '50%', transform: 'translate(-50%,-50%)' }}>
+    <div ref={cardRef} className={`tut-card${cardPos ? '' : ' center'}`} style={cardPos ? { top: cardPos.top, left: cardPos.left } : undefined}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <span className="tut-step mono">{i + 1}/{tour.steps.length}</span>
         <b style={{ fontSize: 14.5 }}>{step.title}</b>
@@ -228,6 +230,19 @@ export function TutorialHelpButton() {
     <button className="tb-act" title="Hướng dẫn trang này" aria-label="Hướng dẫn trang này"
       onClick={() => window.dispatchEvent(new Event('citadel:tutorial-start'))}>
       <Icon name="help" size={16} />
+    </button>
+  );
+}
+
+/** R7.6: nút "?" nổi cho MOBILE (topbar desktop ẩn <1024px nên trước đây không gọi lại tour được). */
+export function TutorialFab() {
+  const path = usePathname();
+  const has = Boolean(path && Object.keys(TOURS).find((k) => !k.startsWith('@') && (path === k || path.startsWith(k + '/'))));
+  if (!has) return null;
+  return (
+    <button className="tut-fab" title="Gọi hướng dẫn trang này" aria-label="Gọi hướng dẫn trang này"
+      onClick={() => window.dispatchEvent(new Event('citadel:tutorial-start'))}>
+      <Icon name="help" size={17} />
     </button>
   );
 }
