@@ -1,5 +1,5 @@
 'use client';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Icon } from './Icon';
 import { api } from '../lib/api';
 
@@ -22,6 +22,8 @@ export function CompanyModuleWizard({ open, onClose, onCreated }:{ open:boolean;
  const total=6; const pct=Math.round(((step+1)/total)*100);
  const valid=useMemo(()=> step===0?!!(form.companyName&&form.business):step===1?!!(form.departments&&form.permissions):step===2?!!(form.workflow&&form.painPoints):step===3?!!(form.manageNeeds&&form.reports):step===4?!!(form.mustHave&&form.taboo):agree,[step,form,agree]);
  const set=(k:string,v:any)=>setForm(f=>({...f,[k]:v}));
+ // R7.5: mở wizard → xin tour hướng dẫn điền hồ sơ (Tutorial tự bỏ qua nếu đã xem/đã tắt)
+ useEffect(()=>{ if(open&&!done) window.dispatchEvent(new CustomEvent('citadel:tutorial-tour',{detail:{id:'company-wizard'}})); },[open,done]);
  async function submit(){ setBusy(true); setErr(''); try{ const d=await api<any>('/api/v1/company-module/requests',{method:'POST',body:JSON.stringify({company_name:form.companyName,payload:form,termsAccepted:true})}); setDone(d.request); onCreated(d.request); setTimeout(()=>{},2500);}catch(e:any){setErr(e.message)} finally{setBusy(false)} }
  if(!open) return null;
  return <div className="sh-scrim cmw-scrim"><div className="cmw-sheet" onClick={e=>e.stopPropagation()}>

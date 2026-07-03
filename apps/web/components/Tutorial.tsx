@@ -8,9 +8,11 @@ import { usePathname } from 'next/navigation';
 import { Icon } from './Icon';
 
 interface Step { sel?: string; title: string; text: string }
-interface Tour { id: string; steps: Step[] }
+interface Tour { id: string; ver?: number; steps: Step[] }
 
 const LS_KEY = 'citadel.tutorial';
+/** Khóa done theo version — bump ver của tour → user cũ được xem lại bản mới 1 lần (R7.5). */
+const doneKey = (t: Tour) => `${t.id}@v${t.ver ?? 1}`;
 
 export const TOURS: Record<string, Tour> = {
   '/home': {
@@ -36,9 +38,21 @@ export const TOURS: Record<string, Tour> = {
   },
   '/modules': {
     id: 'modules',
+    ver: 2, // R7.5: thêm bước Module Company
     steps: [
       { sel: '.mod-grid', title: 'Mua / Thuê / Bật-tắt', text: 'Mỗi module có giá mua đứt và gói thuê 7/30/90 ngày. Switch trên đầu card để bật/tắt module đã sở hữu.' },
+      { sel: '[data-tut="company-module-card"]', title: 'Module Company 🏢 — MAY ĐO', text: 'Mới! Mô tả doanh nghiệp của bạn qua 5 bước — đội Citadel sẽ forge module quản trị riêng và gắn thẳng vào pháo đài. Bấm 「＋ Add」 là có hướng dẫn điền từng bước.' },
       { sel: '.owned-bar', title: 'Thanh sở hữu', text: 'Module mua/thuê xong sẽ hiện ở thanh này trên mọi trang — chạm để nhảy thẳng vào module.' },
+    ],
+  },
+  // Tour riêng Module Company — không gắn path, kích hoạt bằng event khi mở wizard (R7.5)
+  '@company-wizard': {
+    id: 'company-wizard',
+    steps: [
+      { title: 'Hồ sơ may đo Module Company 🏢', text: 'Form này gồm 5 bước — điền như kể chuyện cho người mới vào làm, không cần thuật ngữ. Càng thật càng tốt — đội Citadel thiết kế module dựa đúng trên những gì bạn kể.' },
+      { sel: '.cmw-progress', title: 'Thanh tiến độ', text: '5 bước: Thông tin chung → Phòng ban → Vận hành ⭐ → Dữ liệu & Module → Ưu tiên. Bước 3 (Vận hành) quan trọng nhất — kể một vòng công việc từ lúc có khách đến lúc thu tiền.' },
+      { sel: '.cmw-field', title: 'Điền tự nhiên', text: 'Dấu * là bắt buộc. Viết ngắn cũng được — ví dụ 「quán cà phê 2 chi nhánh, bán tại chỗ + ship」. Không đưa mật khẩu/khóa API vào form.' },
+      { sel: '.cmw-actions', title: 'Tiếp tục → Điều khoản → Add', text: 'Điền đủ bước nào nút Tiếp tục sáng bước đó. Sau bước 5 là điều khoản beta — đồng ý xong bấm 「＋ Add Module Company」, Tiểu Tâm nhận hồ sơ ngay. 🦊' },
     ],
   },
   '/crm': {
@@ -93,7 +107,7 @@ export function Tutorial() {
 
   const tourFor = useCallback((p: string | null): Tour | null => {
     if (!p) return null;
-    const key = Object.keys(TOURS).find((k) => p === k || p.startsWith(k + '/'));
+    const key = Object.keys(TOURS).find((k) => !k.startsWith('@') && (p === k || p.startsWith(k + '/')));
     return key ? TOURS[key] : null;
   }, []);
 
@@ -103,7 +117,7 @@ export function Tutorial() {
     const t = tourFor(path);
     if (!t) return;
     const st = loadTut();
-    if (st.off || st.done[t.id]) return;
+    if (st.off || st.done[doneKey(t)]) return;
     const h = setTimeout(() => { setTour(t); setI(0); }, 650); // chờ trang render
     return () => clearTimeout(h);
   }, [path, tourFor]);
@@ -114,6 +128,22 @@ export function Tutorial() {
     window.addEventListener('citadel:tutorial-start', start);
     return () => window.removeEventListener('citadel:tutorial-start', start);
   }, [path, tourFor]);
+
+  // tour theo tên (R7.5) — component khác (ví dụ wizard Module Company) yêu cầu tour riêng
+  useEffect(() => {
+    const startNamed = (e: Event) => {
+      const id = (e as CustomEvent).detail?.id as string | undefined;
+      if (!id) return;
+      const t = Object.values(TOURS).find((x) => x.id === id);
+      if (!t) return;
+      const st = loadTut();
+      const force = Boolean((e as CustomEvent).detail?.force);
+      if (!force && (st.off || st.done[doneKey(t)])) return;
+      setTimeout(() => { setTour(t); setI(0); }, 450); // chờ sheet render
+    };
+    window.addEventListener('citadel:tutorial-tour', startNamed);
+    return () => window.removeEventListener('citadel:tutorial-tour', startNamed);
+  }, []);
 
   // đo spotlight + đặt tooltip mỗi khi đổi bước
   useEffect(() => {
@@ -158,10 +188,10 @@ export function Tutorial() {
   const last = i === tour.steps.length - 1;
 
   const finish = (markDone: boolean) => {
-    if (markDone) { const st = loadTut(); st.done[tour.id] = true; saveTut(st); }
+    if (markDone) { const st = loadTut(); st.done[doneKey(tour)] = true; saveTut(st); }
     setTour(null); setRect(null); setCardPos(null);
   };
-  const killAll = () => { const st = loadTut(); st.off = true; st.done[tour.id] = true; saveTut(st); setTour(null); };
+  const killAll = () => { const st = loadTut(); st.off = true; st.done[doneKey(tour)] = true; saveTut(st); setTour(null); };
 
   const card = (
     <div ref={cardRef} className="tut-card" style={cardPos ? { top: cardPos.top, left: cardPos.left } : { top: '50%', left: '50%', transform: 'translate(-50%,-50%)' }}>
