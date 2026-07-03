@@ -305,7 +305,97 @@ input, select, textarea { font-family: var(--fb); }
 /* theme accent chuyển mượt (đổi theme không giật) */
 .card, .btn-p, .chip, .bn, .bub.me, .sb-it, .kpi, .qa { transition-property: background, border-color, color, box-shadow, transform; transition-duration: var(--dur-2); transition-timing-function: ease; }
 
+/* ═══════════════ R2: BUSINESS PAGES DS (data tables · tabs · badges · sheets · kanban) ═══════════════ */
+/* trang bảng desktop rộng 1200px */
+@media (min-width: 1024px) { .app .shell.wide { max-width: 1200px; } }
+
+/* tabs thống nhất */
+.tabs { display: flex; gap: 7px; padding: 13px 20px 0; }
+.tab { flex: 1; padding: 9px 0; border-radius: var(--r-md); font-size: 12.5px; font-weight: 700; border: 1px solid var(--bd); background: var(--s1); color: var(--dim); transition: border-color var(--dur-1), background var(--dur-1), color var(--dur-1); }
+.tab:hover { border-color: var(--bd2); color: var(--txt); }
+.tab.on { border-color: rgba(52, 211, 184, .4); background: var(--jade-soft); color: var(--jade); }
+.tab.on.warm { border-color: rgba(232, 179, 102, .4); background: var(--amber-soft); color: var(--amber); }
+.tab.on.cool { border-color: rgba(152, 137, 232, .4); background: var(--violet-soft); color: var(--violet); }
+
+/* badge semantic */
+.bdg-s { font-family: var(--fm); font-size: 9.5px; font-weight: 700; padding: 3px 8px; border-radius: 6px; letter-spacing: .04em; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; }
+.bdg-s.jade { background: var(--jade-soft); color: var(--jade); }
+.bdg-s.amber { background: var(--amber-soft); color: var(--amber); }
+.bdg-s.rose { background: var(--rose-soft); color: var(--rose); }
+.bdg-s.violet { background: var(--violet-soft); color: var(--violet); }
+.bdg-s.sky { background: var(--sky-soft); color: var(--sky); }
+.bdg-s.mut { background: var(--s3); color: var(--dim); }
+
+/* data table */
+.dt-wrap { margin: 13px 20px 0; background: var(--s1); border: 1px solid var(--bd); border-radius: var(--r-lg); overflow-x: auto; box-shadow: var(--sh-1); }
+.dt { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.dt th { text-align: left; font-size: 10px; font-weight: 700; color: var(--mut); text-transform: uppercase; letter-spacing: .08em; padding: 11px 14px; border-bottom: 1px solid var(--line); background: var(--s2); white-space: nowrap; }
+.dt td { padding: 11px 14px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.dt tbody tr:last-child td { border-bottom: none; }
+.dt tbody tr { transition: background var(--dur-1); }
+.dt tbody tr:hover { background: var(--s2); }
+.dt .num { font-family: var(--fm); text-align: right; white-space: nowrap; }
+.dt th.num { text-align: right; }
+
+/* stat row (mini KPI trên trang nghiệp vụ) */
+.stat-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px; margin: 13px 20px 0; }
+@media (min-width: 1024px) { .stat-row { grid-template-columns: repeat(4, 1fr); } .stat-row.c2 { grid-template-columns: repeat(2, 1fr); } .stat-row.c3 { grid-template-columns: repeat(3, 1fr); } }
+.stat { background: var(--s1); border: 1px solid var(--bd); border-radius: var(--r-md); padding: 13px; transition: border-color var(--dur-2), box-shadow var(--dur-2); }
+.stat:hover { border-color: var(--bd2); box-shadow: var(--sh-2); }
+.stat .sv { font-family: var(--fm); font-weight: 700; font-size: 18px; }
+.stat .sl { font-size: 10.5px; color: var(--mut); margin-top: 3px; }
+
+/* sheet/modal thống nhất */
+.sh-scrim { position: fixed; inset: 0; background: rgba(6, 8, 12, .62); backdrop-filter: blur(4px); z-index: 70; display: flex; align-items: flex-end; justify-content: center; }
+.sh-panel { width: min(480px, 100%); background: var(--base); border: 1px solid var(--bd2); border-bottom: none; border-radius: 22px 22px 0 0; padding: 20px 20px 26px; max-height: 84dvh; overflow-y: auto; animation: sheetin .34s var(--ease) both; box-shadow: var(--sh-3); }
+@keyframes sheetin { from { transform: translateY(36px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@media (min-width: 1024px) { .sh-scrim { align-items: center; } .sh-panel { border-radius: 20px; border-bottom: 1px solid var(--bd2); } }
+.sh-head { display: flex; align-items: center; gap: 11px; margin-bottom: 14px; }
+.sh-ico { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; flex-shrink: 0; }
+.sh-x { width: 32px; height: 32px; border-radius: 10px; background: var(--s3); border: none; color: var(--dim); display: grid; place-items: center; margin-left: auto; }
+
+/* input thống nhất */
+.inp { padding: 11px 12px; border-radius: 12px; border: 1.5px solid var(--bd); background: var(--s2); color: var(--txt); font-size: 13px; outline: none; width: 100%; transition: border-color var(--dur-1); font-family: var(--fb); }
+.inp:focus { border-color: rgba(52, 211, 184, .45); }
+
+/* kanban 5 cột */
+.kb { display: flex; gap: 10px; padding: 15px 20px 4px; overflow-x: auto; align-items: flex-start; }
+.kb-col { min-width: 188px; flex: 1 0 188px; background: rgba(18, 24, 32, .45); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 10px 10px 6px; }
+.kb-h { display: flex; align-items: center; gap: 7px; padding: 2px 4px 10px; font-size: 12px; font-weight: 700; color: var(--dim); }
+.kb-h .kb-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.kb-h .kb-n { font-family: var(--fm); font-size: 10px; color: var(--faint); margin-left: auto; }
+.kb-card { background: var(--s1); border: 1px solid var(--bd); border-radius: var(--r-md); padding: 12px; margin-bottom: 8px; transition: border-color var(--dur-1), transform var(--dur-2) var(--ease), box-shadow var(--dur-2); }
+.kb-card:hover { border-color: var(--bd2); transform: translateY(-1px); box-shadow: var(--sh-2); }
+
+/* wallet hero (Om) */
+.wallet { margin: 16px 20px 0; background: linear-gradient(150deg, #2a2210, #10141b 72%); border: 1px solid rgba(232, 179, 102, .32); border-radius: var(--r-xl); padding: 24px 22px; position: relative; overflow: hidden; box-shadow: var(--sh-2); }
+.wallet::after { content: ''; position: absolute; top: -70px; right: -50px; width: 200px; height: 200px; border-radius: 50%; background: radial-gradient(circle, rgba(232, 179, 102, .16), transparent 70%); pointer-events: none; }
+
+/* store grid glow hover */
+.store-card { transition: border-color var(--dur-2), box-shadow var(--dur-2), transform var(--dur-2) var(--ease); }
+.store-card:hover { border-color: rgba(52, 211, 184, .35); box-shadow: var(--glow); transform: translateY(-2px); }
+.store-card.warm:hover { border-color: rgba(232, 179, 102, .4); box-shadow: 0 0 26px var(--amber-soft); }
+
+/* Tiểu Tâm desktop 2 cột */
+@media (min-width: 1024px) { .tt-cols { display: grid; grid-template-columns: 1.15fr 1fr; gap: 0 10px; align-items: start; } }
+
+/* Beta open access — login */
+.beta-banner { display: inline-flex; align-items: center; gap: 7px; margin-top: 14px; padding: 6px 13px; border-radius: var(--r-full); background: var(--amber-soft); border: 1px solid rgba(232, 179, 102, .3); color: var(--amber); font-size: 11.5px; font-weight: 700; }
+.btn-demo { width: 100%; margin-top: 12px; padding: 14px; border-radius: var(--r-md); border: 1.5px solid rgba(232, 179, 102, .45); background: linear-gradient(150deg, var(--amber-soft), transparent 70%); color: var(--amber); font-weight: 800; font-size: 15px; transition: box-shadow var(--dur-2), transform var(--dur-1); }
+.btn-demo:hover { box-shadow: 0 0 26px var(--amber-soft); }
+.btn-demo:active { transform: scale(.98); }
+
 /* ── mobile 480px polish ── */
+@media (max-width: 480px) {
+  .tabs { padding: 13px 16px 0; }
+  .dt-wrap { margin: 13px 16px 0; }
+  .dt th, .dt td { padding: 10px 11px; }
+  .stat-row { margin: 13px 16px 0; }
+  .kb { padding: 15px 16px 4px; }
+  .kb-col { min-width: 176px; flex: 0 0 176px; }
+  .wallet { margin: 16px 16px 0; padding: 20px 18px; }
+}
+
 @media (max-width: 480px) {
   .pg-h h1 { font-size: 23px; }
   .pg-h { padding: 14px 16px 4px; }
