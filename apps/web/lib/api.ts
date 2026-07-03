@@ -1,6 +1,9 @@
 // API client + auth state. JWT in localStorage; helpers for fetch with bearer.
 export const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 export const WS_URL = process.env.NEXT_PUBLIC_WS_URL ?? 'ws://localhost:3002';
+// BETA OPEN ACCESS: nếu set, hiện nút "Vào dùng thử ngay" tự login bằng token demo/guest có sẵn
+// (backend KHÔNG đổi — vẫn JWT thật qua /auth/login với token thật, chỉ FE tự điền + submit hộ).
+export const DEMO_TOKEN = process.env.NEXT_PUBLIC_DEMO_TOKEN ?? '';
 
 export interface Session {
   jwt: string;

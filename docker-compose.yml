@@ -50,10 +50,17 @@ services:
     ports: ["3002:3002"]
 
   web:
-    build: { context: ., dockerfile: apps/web/Dockerfile }
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:3001}
+        NEXT_PUBLIC_WS_URL: ${PUBLIC_WS_URL:-ws://localhost:3002}
+        NEXT_PUBLIC_DEMO_TOKEN: ${DEMO_TOKEN:-}
     environment:
       NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:3001}
       NEXT_PUBLIC_WS_URL: ${PUBLIC_WS_URL:-ws://localhost:3002}
+      NEXT_PUBLIC_DEMO_TOKEN: ${DEMO_TOKEN:-}
     depends_on: [api, ws]
     ports: ["3000:3000"]
 

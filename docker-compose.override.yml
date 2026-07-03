@@ -1,34 +1,14 @@
-# NewCitadelV21 — fully isolated host (anh Nấng)
+# SUPERCITADEL — host riêng trên VPS (beta open access)
+# Public qua host Caddy: https://supercitadel.62.146.238.213.sslip.io
+#   /api/* → 127.0.0.1:3001 · /ws* → 127.0.0.1:3002 · / → 127.0.0.1:3000
 services:
   postgres:
-    ports: !override ["127.0.0.1:5441:5432"]
+    ports: !override ["127.0.0.1:5442:5432"]
   redis:
-    ports: !override ["127.0.0.1:6391:6379"]
+    ports: !override ["127.0.0.1:6392:6379"]
   api:
-    environment:
-      PUBLIC_API_URL: http://newcitadelv21.62.146.238.213.nip.io:8094
-    ports: !override ["3021:3001"]
+    ports: !override ["127.0.0.1:3001:3001"]
   ws:
-    ports: !override ["3022:3002"]
+    ports: !override ["127.0.0.1:3002:3002"]
   web:
-    build:
-      context: .
-      dockerfile: apps/web/Dockerfile
-      args:
-        NEXT_PUBLIC_API_URL: http://newcitadelv21.62.146.238.213.nip.io:8094
-        NEXT_PUBLIC_WS_URL: ws://newcitadelv21.62.146.238.213.nip.io:8095
-    environment:
-      NEXT_PUBLIC_API_URL: http://newcitadelv21.62.146.238.213.nip.io:8094
-      NEXT_PUBLIC_WS_URL: ws://newcitadelv21.62.146.238.213.nip.io:8095
-    ports: !override ["3020:3000"]
-  caddy:
-    image: caddy:2-alpine
-    container_name: newcitadelv21-caddy
-    restart: unless-stopped
-    depends_on: [web, api, ws]
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-    ports:
-      - "8093:80"
-      - "8094:81"
-      - "8095:82"
+    ports: !override ["127.0.0.1:3000:3000"]

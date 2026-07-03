@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '../components/Icon';
-import { apiLogin, getSession, API } from '../lib/api';
+import { apiLogin, getSession, API, DEMO_TOKEN } from '../lib/api';
 
 export default function Login() {
   const router = useRouter();
@@ -16,10 +16,10 @@ export default function Login() {
     fetch(`${API}/health`).then((r) => r.json()).then((d) => setApiUp(d.ok ? 'OK' : 'down')).catch(() => setApiUp('down'));
   }, [router]);
 
-  async function go() {
+  async function go(tok?: string) {
     if (busy) return;
     setBusy(true); setErr('');
-    try { await apiLogin(token); router.replace('/home'); }
+    try { await apiLogin(tok ?? token); router.replace('/home'); }
     catch (e: any) { setErr(e.message); }
     finally { setBusy(false); }
   }
@@ -49,9 +49,17 @@ export default function Login() {
               className="mono"
               style={{ width: '100%', padding: 15, borderRadius: 13, border: '1.5px solid var(--bd2)', background: 'var(--s1)', color: 'var(--jade)', fontSize: 18, letterSpacing: 5, textAlign: 'center', outline: 'none' }}
             />
-            <button className="btn-p" onClick={go} disabled={busy} style={{ marginTop: 14, opacity: busy ? .6 : 1 }}>
+            <button className="btn-p" onClick={() => go()} disabled={busy} style={{ marginTop: 14, opacity: busy ? .6 : 1 }}>
               {busy ? 'Đang mở khóa…' : 'Mở khóa pháo đài'}
             </button>
+            {DEMO_TOKEN && (
+              <>
+                <div className="beta-banner">🔓 BETA MỞ — dùng thử không cần token</div>
+                <button className="btn-demo" disabled={busy} onClick={() => go(DEMO_TOKEN)}>
+                  {busy ? 'Đang vào…' : 'Vào dùng thử ngay'}
+                </button>
+              </>
+            )}
             {err && <p style={{ marginTop: 12, fontSize: 13, color: 'var(--rose)' }}>{err}</p>}
             <p className="mut" style={{ fontSize: 11.5, marginTop: 16 }}>
               API: <b style={{ color: apiUp === 'OK' ? 'var(--jade)' : apiUp === 'down' ? 'var(--rose)' : 'var(--mut)' }}>{apiUp}</b>
