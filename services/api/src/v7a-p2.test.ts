@@ -18,7 +18,7 @@ process.env.BETA_MODE = 'false'; // test enforce thật; beta test riêng bên d
 const client = new PGlite();
 const mig = (f: string) => readFileSync(new URL(`../../../packages/db/migrations/${f}`, import.meta.url), 'utf8')
   .replace(/CREATE EXTENSION IF NOT EXISTS vector;\s*/i, '');
-for (const f of ['0001_init.sql', '0002_org_modules.sql', '0003_super_admin.sql', '0004_v7a_p1.sql', '0005_v7a_p2.sql', '0006_v7a_p3.sql']) await client.exec(mig(f));
+for (const f of ['0001_init.sql', '0002_org_modules.sql', '0003_super_admin.sql', '0004_v7a_p1.sql', '0005_v7a_p2.sql', '0006_v7a_p3.sql', '0007_module_rental.sql']) await client.exec(mig(f));
 const db = drizzle(client, { schema }) as any;
 
 const [orgA] = await db.insert(orgs).values({ name: 'Org A', slug: 'org-a' }).returning();

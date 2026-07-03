@@ -144,6 +144,7 @@ export const orgModules = pgTable('org_modules', {
   moduleId: varchar('module_id', { length: 40 }).notNull(),
   status: varchar('status', { length: 16 }).notNull().default('inactive'),
   purchased: boolean('purchased').notNull().default(false),
+  rentedUntil: timestamp('rented_until', { withTimezone: true }),
   activatedAt: timestamp('activated_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 }, (t) => ({ pk: primaryKey({ columns: [t.orgId, t.moduleId] }) }));
