@@ -48,7 +48,13 @@
     "subagentAudit": "119.5k (in 112.4k / out 7.1k), runtime 4m10s"
   },
   "docs": ["docs/ADD-MODULE-PLAYBOOK.md", "soul-manager-DEEP-AUDIT.md"],
-  "commits": ["cfd89b4"],
+  "commits": ["cfd89b4", "8d376e2", "c0faf09", "fbc4be7", "9017b3a"],
+  "feFix": {
+    "issue": "User báo 404 khi bấm module — thiếu trang FE apps/web/app/soul-manager/page.tsx (chỉ wire backend+Tiểu Tâm, quên UI). Catalog route /soul-manager → Next 404.",
+    "fix": "Dựng page.tsx 4 tab (nhân viên/tổ chức/nghỉ phép/lương) nối /api/v1/soul-manager/*; đổi manifest.icon → users. Commit 9017b3a.",
+    "verify": "/soul-manager 404→200 live; web build 0; bundle serve chunk soul-manager/page-*.js; catalog active+purchased; CI 9017b3a success.",
+    "lesson": "Thêm mục 6b (trang FE bắt buộc) vào docs/ADD-MODULE-PLAYBOOK.md."
+  },
   "next": "— (done)",
   "lastUpdate": "2026-07-05T18:35:00+02:00"
 }

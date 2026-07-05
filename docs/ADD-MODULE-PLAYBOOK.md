@@ -42,6 +42,13 @@
 - Vẫn nên set GUC per-txn để RLS hoạt động nếu sau này đổi sang role non-bypass:
   `db.transaction(tx => { tx.execute(sql\`SELECT set_config('app.current_org_id', ${orgId}, true)\`); ... })`.
 
+## 6b. Trang FE cho module (BẮT BUỘC — nếu thiếu = 404!)
+- Mọi module PHẢI có `apps/web/app/<id>/page.tsx`. Catalog lấy `route = manifest.routes.replace('/api/v1','')` (vd `/soul-manager`); FE `router.push(m.route)` → thiếu page = **Next.js 404** khi user bấm module.
+- Mẫu: copy `apps/web/app/hr/page.tsx` hoặc `ke-toan-10a/page.tsx`. Dùng `Shell`, `api` (lib/api), `ModuleLocked` (ModuleGate), `EmptyState` (prop `sub`, KHÔNG `hint`), `Icon` (chỉ tên có trong Icon.tsx: users/bank/clock/coin/coffee... KHÔNG `building`/`calendar`).
+- Nối thẳng API `/api/v1/<id>/*`. Gate 403 → hiện `<ModuleLocked name id>`.
+- `manifest.icon` phải là tên icon có thật trong FE Icon.tsx (vd `users`).
+- Verify: web typecheck+build 0; deploy web; `curl /<id>` phải **200** (không 404); bundle serve chunk `<id>/page-*.js`.
+
 ## 7. Tiểu Tâm hấp thụ module
 - **Read tools:** `services/api/src/index.ts` → `<mod>Tools(getDb()).forEach(t => toolRegistry.register(t))`. ToolDef shape: `{ name, module, description, requiresPermission?, handler(input, ctx) }`.
 - **Write actions:** `services/api/src/tieu-tam/actions.ts` → `defs.push(...<mod>TieuTamActions())`. Action shape: `{ name, description, requiredModule, permission, securityLevel, sensitive, parameters, execute(ctx,p) }`.
