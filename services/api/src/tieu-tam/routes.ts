@@ -7,7 +7,7 @@ import { streamSSE } from 'hono/streaming';
 import {
   getProvider, type ChatContext,
   buildWorkProfile, getEngine, ENGINE_NAMES, type EngineMessage,
-  getSoulState, tickEnergy, setEngine, learnFromMessage, recall, forget,
+  getSoulState, tickEnergy, setEngine, setTieuTamSettings, learnFromMessage, recall, forget,
   detectIntent, STATUS_LABEL, STATUS_MESSAGE, isBetaMode,
 } from '@citadel/tieu-tam';
 import { ACTION_TOOLS, detectAction, executeAction } from './actions.js';
@@ -114,7 +114,35 @@ export function buildTieuTamRoutes({ db, requireAuth = defaultRequireAuth, audit
       engine: s.engine,
       theme: s.theme,
       betaMode: s.betaMode,
+      personaMode: s.personaMode,
+      proactive: s.proactive,
     });
+  });
+
+
+
+  /** R11.2: Settings thật cho Tiểu Tâm — persona mode + proactive preference. */
+  app.get('/settings', async (c) => {
+    const auth = c.get('auth');
+    const s = await getSoulState(db, orgOf(c), auth.sub);
+    return c.json({ personaMode: s.personaMode, proactive: s.proactive, proactiveNote: s.proactive ? 'Gợi ý chủ động đang bật (preference đã lưu).' : 'Gợi ý chủ động đang tắt (preference đã lưu).' });
+  });
+
+  app.patch('/settings', async (c) => {
+    const auth = c.get('auth');
+    const b = await c.req.json().catch(() => ({}));
+    const patch: { personaMode?: string; proactive?: boolean } = {};
+    if (b.personaMode !== undefined) {
+      const mode = String(b.personaMode);
+      if (!['friendly', 'professional', 'concise', 'playful'].includes(mode)) throw Errors.validation('Chế độ tính cách không hợp lệ', 'personaMode');
+      patch.personaMode = mode;
+    }
+    if (b.proactive !== undefined) patch.proactive = !!b.proactive;
+    if (patch.personaMode === undefined && patch.proactive === undefined) throw Errors.validation('Không có setting hợp lệ để lưu', 'settings');
+    const prev = await getSoulState(db, orgOf(c), auth.sub);
+    const s = await setTieuTamSettings(db, orgOf(c), auth.sub, patch);
+    await audit?.(c, { action: 'tieu_tam.settings_change', resource: 'tt_soul_state', resourceId: auth.sub, detail: { from: { personaMode: prev.personaMode, proactive: prev.proactive }, to: patch } });
+    return c.json({ ok: true, personaMode: s.personaMode, proactive: s.proactive, message: 'Đã lưu cài đặt Tiểu Tâm' });
   });
 
   /** Trí nhớ — "Em nhớ gì về mình" (V7A P5 — G9). Luôn filter org + user (hiến pháp #1). */

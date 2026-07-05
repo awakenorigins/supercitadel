@@ -10,12 +10,12 @@
   },
   "phases": {
     "pA_audit_map": "done",
-    "pB_backend_endpoints": "pending",
+    "pB_backend_endpoints": "done",
     "pC_wire_fe": "pending",
     "pD_verify_release": "pending"
   },
   "commits": [],
-  "next": "Phase B backend endpoints",
+  "next": "Phase C wire FE",
   "audit": "R11.2-AUDIT.md",
-  "lastUpdate": "2026-07-05T16:20:00+02:00"
+  "lastUpdate": "2026-07-05T16:40:00+02:00"
 }

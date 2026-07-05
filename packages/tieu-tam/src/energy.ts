@@ -46,6 +46,8 @@ export interface SoulState {
   energy: number;
   engine: string;
   theme: string;
+  personaMode: string;
+  proactive: boolean;
   status: EnergyStatus;
   betaMode: boolean;
 }
@@ -54,10 +56,28 @@ function clamp(n: number): number { return Math.max(0, Math.min(100, n)); }
 
 /** Lấy (hoặc tạo) soul state, áp regen lazy theo updated_at. KHÔNG ghi DB nếu không cần. */
 export async function getSoulState(db: any, orgId: string, userId: string): Promise<SoulState> {
-  let [row] = await db.select().from(ttSoulState)
-    .where(and(eq(ttSoulState.orgId, orgId), eq(ttSoulState.userId, userId)));
+  let row: any;
+  try {
+    [row] = await db.select().from(ttSoulState)
+      .where(and(eq(ttSoulState.orgId, orgId), eq(ttSoulState.userId, userId)));
+  } catch (e: any) {
+    if (String(e?.message || e).includes('persona_mode') || String(e?.message || e).includes('proactive')) {
+      await db.execute?.("ALTER TABLE tt_soul_state ADD COLUMN IF NOT EXISTS persona_mode varchar(24) NOT NULL DEFAULT 'friendly'").catch?.(() => {});
+      await db.execute?.("ALTER TABLE tt_soul_state ADD COLUMN IF NOT EXISTS proactive boolean NOT NULL DEFAULT true").catch?.(() => {});
+      [row] = await db.select().from(ttSoulState)
+        .where(and(eq(ttSoulState.orgId, orgId), eq(ttSoulState.userId, userId)));
+    } else throw e;
+  }
   if (!row) {
-    [row] = await db.insert(ttSoulState).values({ orgId, userId }).returning();
+    try {
+      [row] = await db.insert(ttSoulState).values({ orgId, userId }).returning();
+    } catch (e: any) {
+      if (String(e?.message || e).includes('persona_mode') || String(e?.message || e).includes('proactive')) {
+        await db.execute?.("ALTER TABLE tt_soul_state ADD COLUMN IF NOT EXISTS persona_mode varchar(24) NOT NULL DEFAULT 'friendly'").catch?.(() => {});
+        await db.execute?.("ALTER TABLE tt_soul_state ADD COLUMN IF NOT EXISTS proactive boolean NOT NULL DEFAULT true").catch?.(() => {});
+        [row] = await db.insert(ttSoulState).values({ orgId, userId }).returning();
+      } else throw e;
+    }
   }
   // regen lazy: +1/phút kể từ updated_at
   const minutes = Math.floor((Date.now() - new Date(row.updatedAt).getTime()) / 60_000);
@@ -68,6 +88,8 @@ export async function getSoulState(db: any, orgId: string, userId: string): Prom
     energy,
     engine: row.engine,
     theme: row.theme ?? 'jade',
+    personaMode: row.personaMode ?? 'friendly',
+    proactive: row.proactive ?? true,
     status: statusOf(energy),
     betaMode: isBetaMode(),
   };
@@ -138,6 +160,16 @@ export async function setTheme(db: any, orgId: string, userId: string, theme: st
 }
 
 /** Đổi động cơ (engine) — gạt công tắc, hồn giữ nguyên. Validation tên engine ở caller (ENGINE_NAMES). */
+export async function setTieuTamSettings(db: any, orgId: string, userId: string, patch: { personaMode?: string; proactive?: boolean }): Promise<SoulState> {
+  const cur = await getSoulState(db, orgId, userId);
+  const set: Record<string, unknown> = { updatedAt: new Date() };
+  if (patch.personaMode !== undefined) set.personaMode = patch.personaMode;
+  if (patch.proactive !== undefined) set.proactive = patch.proactive;
+  await db.update(ttSoulState).set(set)
+    .where(and(eq(ttSoulState.orgId, orgId), eq(ttSoulState.userId, userId)));
+  return { ...cur, ...patch };
+}
+
 export async function setEngine(db: any, orgId: string, userId: string, engine: string): Promise<SoulState> {
   const cur = await getSoulState(db, orgId, userId); // ensure row exists + regen
   await db.update(ttSoulState).set({ engine })

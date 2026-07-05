@@ -2,8 +2,8 @@ import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { AppError, loadApiEnv } from '@citadel/core';
-import { getDb, users } from '@citadel/db';
-import { sql, eq, and } from 'drizzle-orm';
+import { getDb, users, orgs } from '@citadel/db';
+import { sql, eq, and, count } from 'drizzle-orm';
 import { login } from './auth/service.js';
 import { requireAuth, orgOf, requirePermission } from './auth/middleware.js';
 import { rateLimit } from './middleware/rateLimit.js';
@@ -110,6 +110,38 @@ app.patch('/api/v1/users/:id/role', requireAuth, requirePermission(getDb(), 'cor
   if (!row) throw Errors.notFound('Không tìm thấy thành viên trong tổ chức');
   await audit(c, { action: 'user.role_change', resource: 'user', resourceId: row.id, detail: { role } });
   return c.json({ ok: true, user: { id: row.id, role: row.role } });
+});
+
+
+// R11.2 — org settings thật: xem/sửa thông tin tổ chức + danh sách thành viên scoped.
+app.get('/api/v1/org', requireAuth, async (c) => {
+  const orgId = orgOf(c);
+  const [org] = await getDb().select().from(orgs).where(eq(orgs.id, orgId)).limit(1);
+  if (!org) throw Errors.notFound('Không tìm thấy tổ chức');
+  const [cnt] = await getDb().select({ n: count() }).from(users).where(eq(users.orgId, orgId));
+  return c.json({ org: { id: org.id, name: org.name, slug: org.slug, logoEmoji: org.logoEmoji, createdAt: org.createdAt, memberCount: Number(cnt?.n ?? 0) } });
+});
+
+app.patch('/api/v1/org', requireAuth, async (c) => {
+  const auth = c.get('auth');
+  if (ROLE_RANK[auth.role as Role] < ROLE_RANK.owner) throw Errors.forbidden('Chỉ chủ tổ chức mới sửa thông tin tổ chức');
+  const b = await c.req.json().catch(() => ({}));
+  const name = String(b.name ?? '').trim();
+  const logoEmoji = String(b.logoEmoji ?? '').trim();
+  const patch: Record<string, any> = {};
+  if (name) patch.name = name.slice(0, 120);
+  if (b.logoEmoji !== undefined) patch.logoEmoji = logoEmoji.slice(0, 16) || null;
+  if (!Object.keys(patch).length) throw Errors.validation('Không có thông tin tổ chức hợp lệ để lưu', 'org');
+  const [row] = await getDb().update(orgs).set(patch).where(eq(orgs.id, orgOf(c))).returning();
+  await audit(c, { action: 'org.update', resource: 'org', resourceId: row.id, detail: patch });
+  return c.json({ ok: true, org: { id: row.id, name: row.name, slug: row.slug, logoEmoji: row.logoEmoji, createdAt: row.createdAt } });
+});
+
+app.get('/api/v1/org/members', requireAuth, async (c) => {
+  const auth = c.get('auth');
+  if (ROLE_RANK[auth.role as Role] < ROLE_RANK.manager) throw Errors.forbidden('Chỉ chủ/quản lý được xem thành viên tổ chức');
+  const rows = await getDb().select().from(users).where(eq(users.orgId, orgOf(c)));
+  return c.json({ members: rows.map((u: any) => ({ id: u.id, displayName: u.displayName, role: u.role, avatarColor: u.avatarColor, email: u.email, phone: u.phone, securityLevel: u.securityLevel, createdAt: u.createdAt })) });
 });
 
 app.get('/api/v1/permissions', requireAuth, async (c) => {

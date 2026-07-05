@@ -20,6 +20,8 @@ export interface WorkProfile {
   energy: number;
   status: EnergyStatus;
   engine: string;
+  personaMode: string;
+  proactive: boolean;
 }
 
 /**
@@ -50,5 +52,7 @@ export async function buildWorkProfile(
     energy: soul.energy,
     status: soul.status,
     engine: soul.engine,
+    personaMode: soul.personaMode,
+    proactive: soul.proactive,
   };
 }
