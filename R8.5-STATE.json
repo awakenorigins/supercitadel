@@ -9,11 +9,11 @@
     "inventory": "KHÔNG ĐỤNG logic inventory — chỉ được thêm permission declaration. Phase B only metadata/checks around inv action, no inventory service/data logic changed."
   },
   "phases": {
-    "pA_permission_registry": "implemented; evidence: pnpm --filter @citadel/core test PASS; pnpm --filter @citadel/api typecheck PASS",
-    "pB_tieutam_dryrun": "in_progress; action metadata + executeAction permission/security/dryrun implemented; tests pending",
+    "pA_permission_registry": "implemented; evidence: pnpm --filter @citadel/core test PASS; pnpm --filter @citadel/api typecheck PASS; commit c41c1a8",
+    "pB_tieutam_dryrun": "implemented; evidence: pnpm --filter @citadel/api test PASS including v8_5: staff denied VN/no audit, dry-run no acc_payments row, sensitive preview→confirm exactly one row, no confirm no row, cross-org scoped",
     "pC_fe": "pending",
     "pD_verify_deploy_release": "pending"
   },
-  "commits": [],
-  "next": "Finish B tests/routes, C FE, full D verify/deploy/release. R9 = Module Loader FULL strict. R10 = outbox."
+  "commits": ["c41c1a8"],
+  "next": "Commit Phase B, then implement Phase C FE, then full Phase D verify/deploy/release. R9 = Module Loader FULL strict. R10 = outbox."
 }
