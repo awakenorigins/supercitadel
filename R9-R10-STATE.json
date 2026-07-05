@@ -2,52 +2,23 @@
   "round": "R9+R10",
   "status": "running",
   "startedAt": "2026-07-05T06:05:00+02:00",
+  "updatedAt": "2026-07-05T07:40:00+02:00",
   "sessionKey": "agent:main:telegram:group:-1003720502853:topic:9871",
   "brief": "R9-R10-TASK.md",
   "directives": {
     "order": "Anh Nấng lệnh (msg 10259): chạy tới FINAL R10, update GitHub + release đầy đủ, audit kỹ hoàn hảo chỉnh chu.",
-    "inventory": "KHÔNG ĐỤNG logic inventory — chuẩn hóa manifest data thôi. Module kho anh Nấng cắm vào outbox theo contract R10-B.",
+    "inventory": "KHÔNG ĐỤNG logic inventory — tuân thủ. Module kho anh Nấng cắm vào outbox theo contract R10-B (FORGE-GUIDE mục Outbox).",
     "audit": "Mọi claim = bằng chứng chạy thật (test/curl live/CI/GitHub API)."
   },
   "phases": {
-    "r9A_manifest_schema": "done",
-    "r9B_loader_strict": "done",
-    "r9C_verify_release_v9": "in_progress",
-    "r10A_outbox_core": "pending",
-    "r10B_module_contract": "pending",
-    "r10C_final_verify_release_v10": "pending"
+    "r9A_manifest_schema": "done — commit b31616b; manifest v2 + validateManifest strict + 7 manifest migrate + audit-manifests 7/7",
+    "r9B_loader_strict": "done — commits 6b84467 + 1993d34; loader tự động đọc modules/*, sai chuẩn = từ chối nạp (không crash), catalog từ manifest, loader-status endpoint; full suite xanh",
+    "r9C_verify_release_v9": "done — commit a77cb40; FORGE-GUIDE v2 + CI gate audit-manifests; deploy live; verify-r9.py 11/11 PASS; release v9.0.0; CI run 28730136780 SUCCESS",
+    "r10A_outbox_core": "done — commit a89e711; outbox_events migration 0011 + emitEvent trong tx + dispatcher SKIP LOCKED retry/dead-letter + subscriber notification/WS + emit từ accounting/om/hr; validator wildcard fix (emits exact, subscribes cho phép module.*); v10.test.ts + full suite xanh",
+    "r10B_module_contract": "done — commit 2eef46a; manifest events auto-wire qua server/events.js eventHandlers, dogfood notification; FORGE-GUIDE mục Outbox (contract module kho)",
+    "r10C_final_verify_release_v10": "in_progress — commit 88fb459 (docs final + gates: build, acceptance 9/9, audit-buttons, audit-manifests, audit-module-docs); deploy live + migration 0011 áp DB thật; verify-r10.py PASS 7/7 (fix: postingDate bắt buộc + 201 accepted; invoice 500 ban đầu = thiếu postingDate từ script, không phải bug API; dispatcher lỗi 42P01 lúc boot trước migration → hết sau restart); TỔNG NGHIỆM THU LIVE: verify-r8 PASS, verify-r85 7/7, verify-r9 11/11, verify-r10 7/7 (429 rate-limit khi chạy liên tiếp → spacing 65s là PASS, không phải lỗi). CÒN LẠI: commit verify-r10.py + STATE, push, release v10.0.0, CI SUCCESS."
   },
-  "commits": [
-    {
-      "phase": "r9B_loader_strict",
-      "hash": "6b84467",
-      "message": "SUPERCITADEL-R9: Phase B loader strict auto"
-    }
-  ],
-  "releases": [],
-  "next": "done = toàn bộ R9+R10 verified live + CI SUCCESS + releases v9.0.0 & v10.0.0",
-  "evidence": {
-    "r9A_manifest_schema": [
-      "packages/core/src/manifest.ts validateManifest strict",
-      "7 module manifests migrated to v2",
-      "audit-manifests PASS 7/7",
-      "pnpm -r typecheck/test/build PASS before commit"
-    ],
-    "r9B_loader_strict": [
-      "services/api/src/modules/loader.ts strict loader reads modules/*/manifest.json, validates, rejects invalid/dependsOn/missing builder without crashing",
-      "mountLoadedModules auto-mounts 7 manifest-backed modules; loader-status route mounted before /api/v1/modules catalog route",
-      "catalog.ts derives real modules from manifests and appends external/non-mounted demo/custom/coming entries (automato-secretary, company-module, pos)",
-      "pnpm -r typecheck PASS",
-      "pnpm -r test PASS incl rl, v7a-p1..p6, v8-rent, v8_5, v9",
-      "pnpm build PASS",
-      "./node_modules/.pnpm/node_modules/.bin/tsx scripts/audit-manifests.mts PASS 7/7"
-    ],
-    "r9C_verify_release_v9": [
-      "pnpm -r typecheck PASS (rerun before R9-C commit)",
-      "tsx scripts/audit-manifests.mts PASS 7/7 (rerun before R9-C commit)",
-      "CI includes Gate — manifest module strict (R9) before audit-module-docs",
-      "docker compose -p supercitadel up -d --build api web PASS; containers healthy",
-      "scripts/verify-r9.py live PASS 11/11 against https://supercitadel.62.146.238.213.sslip.io"
-    ]
-  }
+  "commits": ["b31616b", "6b84467", "1993d34", "a77cb40", "a89e711", "2eef46a", "88fb459"],
+  "releases": ["v9.0.0"],
+  "next": "push + release v10.0.0 + CI SUCCESS → status=done"
 }
