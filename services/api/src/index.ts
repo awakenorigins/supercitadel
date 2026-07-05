@@ -11,6 +11,7 @@ import { buildTieuTamRoutes } from './tieu-tam/routes.js';
 import { dashboard } from './dashboard/routes.js';
 import { crmTools } from '@citadel/module-crm/server/tools.js';
 import { keToan10aTools } from '@citadel/module-ke-toan-10a/server/tools.js';
+import { soulManagerTools } from '@citadel/module-soul-manager/server/host-adapter.js';
 import { buildModuleRoutes, requireModule } from './modules/routes.js';
 import { mountLoadedModules } from './modules/loader.js';
 import { buildCompanyModuleRoutes } from './company-module-routes.js';
@@ -175,6 +176,7 @@ app.get('/api/v1/users', requireAuth, async (c) => {
 // register CRM tools so Tiểu Tâm can read live CRM data
 try { crmTools(getDb()).forEach((t) => toolRegistry.register(t)); } catch (e) { /* idempotent */ }
 try { keToan10aTools(getDb()).forEach((t) => toolRegistry.register(t)); } catch (e) { /* idempotent */ }
+try { soulManagerTools(getDb()).forEach((t) => toolRegistry.register(t as any)); } catch (e) { /* idempotent */ }
 
 // fail-fast env validation at boot
 const env = loadApiEnv();

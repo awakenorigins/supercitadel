@@ -5,8 +5,9 @@ import { join } from 'node:path';
 import { loadModuleManifests, getLoaderState, buildCatalogFromManifests } from './modules/loader.js';
 
 const state = loadModuleManifests(join(process.cwd(), '..', '..', 'modules'));
-assert.equal(state.loaded.length, 8);
+assert.equal(state.loaded.length, 9); // + soul-manager (R11.3)
 assert.equal(state.rejected.length, 0);
+assert.equal(state.loaded.find(m=>m.id==='soul-manager')?.routes, '/api/v1/soul-manager');
 const cat = buildCatalogFromManifests();
 assert.equal(cat.find(m=>m.id==='accounting')?.priceOm, 500);
 assert.equal(cat.find(m=>m.id==='chat')?.tier, 'core');

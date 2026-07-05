@@ -1,0 +1,33 @@
+{
+  "name": "@citadel/module-soul-manager",
+  "version": "1.0.0",
+  "description": "Soul-Manager — Module Quản lý Nhân sự (HR) cho SuperCitadel",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./routes.js": "./src/routes.ts",
+    "./tools.js": "./src/tools/index.ts",
+    "./schema.js": "./src/db/schema.ts",
+    "./server/host-adapter.js": "./server/host-adapter.ts",
+    "./server/tieu-tam-actions.js": "./server/tieu-tam-actions.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "tsx tests/payroll.test.ts && tsx tests/smoke.test.ts",
+    "test:smoke": "tsx tests/smoke.test.ts",
+    "test:payroll": "tsx tests/payroll.test.ts",
+    "audit": "node scripts/audit.mjs"
+  },
+  "dependencies": {
+    "@citadel/core": "workspace:*",
+    "drizzle-orm": "^0.36.0",
+    "hono": "^4.6.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "@types/node": "^22.0.0",
+    "@electric-sql/pglite": "^0.2.0"
+  }
+}

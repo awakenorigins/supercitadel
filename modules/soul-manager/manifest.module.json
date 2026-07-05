@@ -1,0 +1,99 @@
+{
+  "id": "soul-manager",
+  "name": "Soul-Manager — Quản lý Nhân sự",
+  "version": "1.0.0",
+  "description": "Module Nhân sự (HRM) thế hệ mới cho SuperCitadel — đầy đủ nghiệp vụ chuẩn Việt Nam: hồ sơ nhân viên, cơ cấu tổ chức, chấm công + OT 3 hệ số, nghỉ phép theo BLLĐ 2019, bảng lương tự động (BHXH/BHYT/BHTN trần đóng effective-dated, thuế TNCN lũy tiến 5 bậc Luật 109/2025/QH15, giảm trừ gia cảnh 15,5tr/6,2tr, OT miễn thuế phần phụ trội, luật 14 ngày không đóng BH), tuyển dụng pipeline, đào tạo. RLS fail-closed, mọi con số pháp lý cấu hình được qua policy.",
+  "dependencies": [],
+  "conflicts": ["hr"],
+  "store": {
+    "listed": true,
+    "category": "module",
+    "pricing": {
+      "currency": "om",
+      "buy": { "price": 1800, "label": "Mua vĩnh viễn — 1.800 Ôm" },
+      "rent": { "price": 250, "period_days": 30, "label": "Thuê 30 ngày — 250 Ôm" }
+    },
+    "trial_days": 7,
+    "tagline": "Phòng nhân sự có hồn: chấm công, nghỉ phép, bảng lương đúng luật VN từng đồng — Tiểu Tâm làm thay bằng tiếng Việt.",
+    "highlights": [
+      "Bảng lương tự động đúng luật 2026: BHXH/BHYT/BHTN đúng trần đóng theo mốc hiệu lực, thuế TNCN lũy tiến 5 bậc, giảm trừ 15,5tr/6,2tr",
+      "Mọi con số pháp lý CẤU HÌNH ĐƯỢC qua policy — luật đổi chỉ cần sửa cấu hình, không đụng code",
+      "Phiếu lương kèm giải thích từng bước tiếng Việt — Tiểu Tâm trả lời được 'vì sao thuế của tôi cao'",
+      "RLS fail-closed — dữ liệu nhân sự & lương của từng doanh nghiệp cô lập tận tầng database",
+      "Nghỉ phép chuẩn BLLĐ 2019: 12 ngày phép năm + thâm niên, guard số dư phía SQL không bao giờ duyệt lố",
+      "8 read tools + 10 write actions cho Tiểu Tâm, intents Việt/Anh, tuyển dụng & đào tạo kèm sẵn"
+    ]
+  },
+  "permissions": [
+    { "id": "hr.employee.read", "description": "Xem hồ sơ, tìm kiếm nhân viên", "actions": ["read"] },
+    { "id": "hr.employee.write", "description": "Tạo/sửa hồ sơ, điều chuyển, nghỉ việc, người phụ thuộc", "actions": ["create", "update"] },
+    { "id": "hr.org.read", "description": "Xem sơ đồ tổ chức, phòng ban, chức danh", "actions": ["read"] },
+    { "id": "hr.attendance.read", "description": "Xem bảng công, giờ vào ra, OT", "actions": ["read"] },
+    { "id": "hr.attendance.write", "description": "Chấm công, sửa công (allow_update)", "actions": ["create", "update"] },
+    { "id": "hr.leave.read", "description": "Xem số dư phép, đơn nghỉ", "actions": ["read"] },
+    { "id": "hr.leave.write", "description": "Tạo đơn xin nghỉ phép", "actions": ["create"] },
+    { "id": "hr.leave.approve", "description": "Duyệt/từ chối đơn nghỉ phép", "actions": ["update"] },
+    { "id": "hr.payroll.read", "description": "Xem phiếu lương, bảng lương kỳ", "actions": ["read"] },
+    { "id": "hr.payroll.run", "description": "Chạy/tính lại bảng lương kỳ", "actions": ["create", "update"] },
+    { "id": "hr.payroll.approve", "description": "Chốt bảng lương (khóa kỳ)", "actions": ["update"] },
+    { "id": "hr.report.read", "description": "Xem báo cáo nhân sự tổng hợp", "actions": ["read"] },
+    { "id": "hr.recruitment.read", "description": "Xem pipeline tuyển dụng", "actions": ["read"] },
+    { "id": "hr.recruitment.write", "description": "Thêm/chuyển stage ứng viên", "actions": ["create", "update"] },
+    { "id": "hr.training.write", "description": "Tạo khóa học, ghi danh, hoàn thành đào tạo", "actions": ["create", "update"] }
+  ],
+  "tools": [
+    { "name": "hr.employee.search", "kind": "tool", "permission": "hr.employee.read", "inputSchema": "src/validation/schemas.ts#employeeSearchSchema", "docs": "docs/TOOLS.md#hremployeesearch" },
+    { "name": "hr.employee.get", "kind": "tool", "permission": "hr.employee.read", "inputSchema": "src/validation/schemas.ts#employeeGetSchema", "docs": "docs/TOOLS.md#hremployeeget" },
+    { "name": "hr.org.chart", "kind": "tool", "permission": "hr.org.read", "inputSchema": "src/validation/schemas.ts#orgChartSchema", "docs": "docs/TOOLS.md#hrorgchart" },
+    { "name": "hr.attendance.summary", "kind": "tool", "permission": "hr.attendance.read", "inputSchema": "src/validation/schemas.ts#attendanceSummarySchema", "docs": "docs/TOOLS.md#hrattendancesummary" },
+    { "name": "hr.leave.balance", "kind": "tool", "permission": "hr.leave.read", "inputSchema": "src/validation/schemas.ts#leaveBalanceSchema", "docs": "docs/TOOLS.md#hrleavebalance" },
+    { "name": "hr.payroll.payslip", "kind": "tool", "permission": "hr.payroll.read", "inputSchema": "src/validation/schemas.ts#payslipGetSchema", "docs": "docs/TOOLS.md#hrpayrollpayslip" },
+    { "name": "hr.report.headcount", "kind": "tool", "permission": "hr.report.read", "inputSchema": "src/validation/schemas.ts#headcountReportSchema", "docs": "docs/TOOLS.md#hrreportheadcount" },
+    { "name": "hr.recruitment.pipeline", "kind": "tool", "permission": "hr.recruitment.read", "inputSchema": "src/validation/schemas.ts#recruitmentPipelineSchema", "docs": "docs/TOOLS.md#hrrecruitmentpipeline" },
+    { "name": "hr.employee.create", "kind": "action", "permission": "hr.employee.write", "inputSchema": "src/validation/schemas.ts#employeeCreateSchema", "docs": "docs/TOOLS.md#hremployeecreate" },
+    { "name": "hr.employee.update", "kind": "action", "permission": "hr.employee.write", "inputSchema": "src/validation/schemas.ts#employeeUpdateSchema", "docs": "docs/TOOLS.md#hremployeeupdate" },
+    { "name": "hr.dependent.register", "kind": "action", "permission": "hr.employee.write", "inputSchema": "src/validation/schemas.ts#dependentRegisterSchema", "docs": "docs/TOOLS.md#hrdependentregister" },
+    { "name": "hr.attendance.record", "kind": "action", "permission": "hr.attendance.write", "inputSchema": "src/validation/schemas.ts#attendanceRecordSchema", "docs": "docs/TOOLS.md#hrattendancerecord" },
+    { "name": "hr.leave.request", "kind": "action", "permission": "hr.leave.write", "inputSchema": "src/validation/schemas.ts#leaveRequestSchema", "docs": "docs/TOOLS.md#hrleaverequest" },
+    { "name": "hr.leave.decide", "kind": "action", "permission": "hr.leave.approve", "inputSchema": "src/validation/schemas.ts#leaveDecideSchema", "docs": "docs/TOOLS.md#hrleavedecide" },
+    { "name": "hr.payroll.run", "kind": "action", "permission": "hr.payroll.run", "inputSchema": "src/validation/schemas.ts#payrollRunSchema", "docs": "docs/TOOLS.md#hrpayrollrun" },
+    { "name": "hr.payroll.approve", "kind": "action", "permission": "hr.payroll.approve", "inputSchema": "src/validation/schemas.ts#payrollApproveSchema", "docs": "docs/TOOLS.md#hrpayrollapprove" },
+    { "name": "hr.candidate.advance", "kind": "action", "permission": "hr.recruitment.write", "inputSchema": "src/validation/schemas.ts#candidateAdvanceSchema", "docs": "docs/TOOLS.md#hrcandidateadvance" },
+    { "name": "hr.training.manage", "kind": "action", "permission": "hr.training.write", "inputSchema": "src/validation/schemas.ts#trainingManageSchema", "docs": "docs/TOOLS.md#hrtrainingmanage" }
+  ],
+  "intents": "src/intents.ts#hrIntents",
+  "routes": [
+    { "method": "GET", "path": "/hr/employees", "permission": "hr.employee.read" },
+    { "method": "POST", "path": "/hr/employees", "permission": "hr.employee.write" },
+    { "method": "GET", "path": "/hr/employees/:code", "permission": "hr.employee.read" },
+    { "method": "PATCH", "path": "/hr/employees/:code", "permission": "hr.employee.write" },
+    { "method": "POST", "path": "/hr/employees/:code/dependents", "permission": "hr.employee.write" },
+    { "method": "GET", "path": "/hr/org/chart", "permission": "hr.org.read" },
+    { "method": "POST", "path": "/hr/attendance", "permission": "hr.attendance.write" },
+    { "method": "GET", "path": "/hr/attendance/summary", "permission": "hr.attendance.read" },
+    { "method": "GET", "path": "/hr/leave/balance", "permission": "hr.leave.read" },
+    { "method": "POST", "path": "/hr/leave/requests", "permission": "hr.leave.write" },
+    { "method": "POST", "path": "/hr/leave/requests/:id/decide", "permission": "hr.leave.approve" },
+    { "method": "POST", "path": "/hr/payroll/run", "permission": "hr.payroll.run" },
+    { "method": "POST", "path": "/hr/payroll/:year/:month/approve", "permission": "hr.payroll.approve" },
+    { "method": "GET", "path": "/hr/payroll/payslip", "permission": "hr.payroll.read" },
+    { "method": "GET", "path": "/hr/report/headcount", "permission": "hr.report.read" },
+    { "method": "GET", "path": "/hr/recruitment/pipeline", "permission": "hr.recruitment.read" },
+    { "method": "POST", "path": "/hr/recruitment/candidates", "permission": "hr.recruitment.write" },
+    { "method": "POST", "path": "/hr/training", "permission": "hr.training.write" }
+  ],
+  "menu": [
+    { "id": "soul-manager.menu.root", "label": "Nhân sự", "icon": "users", "path": "/hr", "permission": "hr.employee.read" }
+  ],
+  "docs": {
+    "readme": "README.md",
+    "guides": ["docs/GUIDE.md", "docs/TUTORIAL.md"],
+    "examples": ["docs/TOOLS.md", "docs/EVENTS.md"]
+  },
+  "hooks": {
+    "install": "src/index.ts#onInstall",
+    "activate": "src/index.ts#onActivate",
+    "disable": "src/index.ts#onDisable",
+    "remove": "src/index.ts#onRemove"
+  }
+}

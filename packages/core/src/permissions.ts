@@ -54,6 +54,22 @@ export const PERMISSION_REGISTRY = [
   p('ke-toan-10a.budget.set','Kế Toán 10A — Đặt ngân sách'),
   p('ke-toan-10a.budget.read','Kế Toán 10A — Xem ngân sách vs thực tế'),
   p('ke-toan-10a.report.read','Kế Toán 10A — Xem báo cáo nhanh'),
+  // ── Soul-Manager (Nhân Sự) ──
+  p('hr.employee.read','Soul-Manager — Xem hồ sơ, tìm kiếm nhân viên'),
+  p('hr.employee.write','Soul-Manager — Tạo/sửa hồ sơ, điều chuyển, người phụ thuộc'),
+  p('hr.org.read','Soul-Manager — Xem sơ đồ tổ chức, phòng ban, chức danh'),
+  p('hr.attendance.read','Soul-Manager — Xem bảng công, giờ vào ra, OT'),
+  p('hr.attendance.write','Soul-Manager — Chấm công, sửa công'),
+  p('hr.leave.read','Soul-Manager — Xem số dư phép, đơn nghỉ'),
+  p('hr.leave.write','Soul-Manager — Tạo đơn xin nghỉ phép'),
+  p('hr.leave.approve','Soul-Manager — Duyệt/từ chối đơn nghỉ phép'),
+  p('hr.payroll.read','Soul-Manager — Xem phiếu lương, bảng lương kỳ'),
+  p('hr.payroll.run','Soul-Manager — Chạy/tính lại bảng lương kỳ',2,true),
+  p('hr.payroll.approve','Soul-Manager — Chốt bảng lương (khóa kỳ)',2,true),
+  p('hr.report.read','Soul-Manager — Xem báo cáo nhân sự tổng hợp'),
+  p('hr.recruitment.read','Soul-Manager — Xem pipeline tuyển dụng'),
+  p('hr.recruitment.write','Soul-Manager — Thêm/chuyển stage ứng viên'),
+  p('hr.training.write','Soul-Manager — Tạo khóa học, ghi danh, hoàn thành đào tạo'),
 ] as const satisfies readonly PermissionMeta[];
 
 export const ROLE_PERMISSIONS: Record<RoleType, readonly Permission[]> = {
