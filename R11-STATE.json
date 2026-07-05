@@ -13,9 +13,15 @@
     "pA_copy_pricing_permissions": "done commit 54def9c",
     "pB_wire_loader_actions_tools": "done commit 2b30543",
     "pC_fe_tour": "done commit 340d0a0",
-    "pD_live_audit_release": "verified_pending_release"
+    "pD_live_audit_release": "done commit 7f2c36e + docs f5e816c"
   },
-  "commits": [],
+  "commits": [
+    "54def9c Phase A",
+    "2b30543 Phase B",
+    "340d0a0 Phase C",
+    "7f2c36e Phase D live audit",
+    "f5e816c docs/state"
+  ],
   "next": "done = module live, Tiểu Tâm coverage 17 action + 15 tool verified, mua 1000/thuê 150 verified, release v11.0.0 + CI SUCCESS",
   "evidence": {
     "gates": "pnpm -r test/build/typecheck PASS previously; post-fix pnpm -r typecheck && pnpm -r build PASS; verify-r11.py live SUMMARY 26/26 PASS",
@@ -30,8 +36,8 @@
   "release": {
     "tag": "v11.0.0",
     "title": "R11 — Module ngoài đầu tiên: Kế Toán 10A (1000 Om / thuê 150 Om 30 ngày)",
-    "url": "pending_after_push",
-    "ci": "pending_after_push"
+    "url": "https://github.com/NachaFromMars/supercitadel/releases/tag/v11.0.0",
+    "ci": "success https://github.com/NachaFromMars/supercitadel/actions/runs/28734447879"
   },
   "coverageActions": {
     "k10a.thu_tien": "live dry-run+confirm",
