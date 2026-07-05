@@ -12,8 +12,12 @@
     "pA_permission_registry": "implemented; evidence: pnpm --filter @citadel/core test PASS; pnpm --filter @citadel/api typecheck PASS; commit c41c1a8",
     "pB_tieutam_dryrun": "implemented; evidence: pnpm --filter @citadel/api test PASS including v8_5: staff denied VN/no audit, dry-run no acc_payments row, sensitive preview→confirm exactly one row, no confirm no row, cross-org scoped; commit 65a2d72",
     "pC_fe": "implemented; evidence: pnpm --filter @citadel/web typecheck PASS; pnpm --filter @citadel/web build PASS; node_modules/.pnpm/node_modules/.bin/tsx scripts/audit-buttons.mts PASS (0 dead buttons). Chat sheet uses amber confirmation card + confirm/cancel via /tieu-tam/chat; Settings loads GET /permissions and groups my permissions by module.",
-    "pD_verify_deploy_release": "pending"
+    "pD_verify_deploy_release": "verified_live; deploy docker compose -p supercitadel up -d --build api web completed; scripts/verify-r85.py PASS 7/7 after services healthy (owner permissions shape, staff forbidden 403 PERMISSION_DENIED, dry-run+confirm receipt, audit dry-run/action). Docs updated; pending commit/push/release/CI."
   },
-  "commits": ["c41c1a8", "65a2d72"],
-  "next": "Commit Phase C, then full Phase D verify/deploy/release. R9 = Module Loader FULL strict. R10 = outbox."
+  "commits": [
+    "c41c1a8",
+    "65a2d72",
+    "8d09304"
+  ],
+  "next": "Commit/push/release/CI, then mark done. R9 = Module Loader FULL strict. R10 = outbox."
 }

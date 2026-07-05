@@ -9,6 +9,7 @@ Base: `http://<host>:3001`  ·  Auth: `Authorization: Bearer <jwt>` (lấy từ 
 | GET | /ready | — | Readiness (check DB), 503 nếu DB down |
 | POST | /api/v1/auth/login | `{token}` | Token 13 ký tự → `{jwt,user,firstLogin}` (rate-limit 5/phút/IP) |
 | GET | /api/v1/me | — | Thông tin user + `securityLevel` + `needsUpgrade` |
+| GET | /api/v1/permissions | — | R8.5 permission registry + quyền của user hiện tại + `securityLevel` |
 
 ## Bảo mật lũy tiến lớp 2 (V7A P1)
 | Method | Path | Body | Mô tả |
@@ -17,7 +18,7 @@ Base: `http://<host>:3001`  ·  Auth: `Authorization: Bearer <jwt>` (lấy từ 
 | POST | /api/v1/me/bind-phone | `{phone}` | Gắn SĐT VN → lên lớp 2 |
 | PATCH | /api/v1/users/:id/role | `{role}` | Đổi role (owner+, đòi lớp 2) |
 
-Hành động nhạy cảm (chi Om > 1000 · đổi role · hủy phiếu đã thu) ở lớp 1 → `403` kèm hướng dẫn tiếng Việt.
+Hành động nhạy cảm (chi Om > 1000 · đổi role · hủy phiếu đã thu) ở lớp 1 → `403` kèm hướng dẫn tiếng Việt. R8.5 thêm permission registry: thiếu quyền → `403` kèm `PERMISSION_DENIED`.
 
 ## Audit log (V7A P1)
 | Method | Path | Body | Mô tả |
@@ -25,12 +26,19 @@ Hành động nhạy cảm (chi Om > 1000 · đổi role · hủy phiếu đã t
 | GET | /api/v1/audit-logs?action=&limit= | — | Chỉ owner/super_admin; LUÔN filter org từ JWT; limit ≤ 200 |
 
 ## Tiểu Tâm
-| POST | /api/v1/tieu-tam/chat | `{message,userName?,orgName?,facts?}` | Reply JSON (stub/live) |
+| POST | /api/v1/tieu-tam/chat | `{message,userName?,orgName?,facts?,confirm?,pendingAction?}` | Reply JSON (stub/live); action sensitive trả dry-run preview trước khi chạy thật |
 | POST | /api/v1/tieu-tam/chat/stream | `{message}` | SSE: event `token`/`tool`/`suggestions`/`energy`/`done` |
 | GET | /api/v1/tieu-tam/state | — | `{mood,energy,status,statusLabel,statusMessage,engine,theme,betaMode}` |
 | PATCH | /api/v1/tieu-tam/engine | `{engine}` | Đổi bộ não stub-a/stub-b/openai/anthropic — trí nhớ nguyên vẹn (audit) |
 | GET | /api/v1/tieu-tam/memories | — | Trí nhớ của mình (org+user scope, limit ≤ 100) |
 | DELETE | /api/v1/tieu-tam/memories/:id | — | Quên một mảnh trí nhớ (cross-org/user → 404, audit) |
+
+### Tiểu Tâm dry-run / confirm flow (R8.5)
+1. Client gửi lệnh nhạy cảm, ví dụ `POST /api/v1/tieu-tam/chat` body `{ "message": "tạo phiếu thu 50000 cho Anh Ba" }`.
+2. Server không ghi DB ngay; response có `toolCalls[0].result.dryRun=true`, `preview` và `pendingAction:{name,params}`; audit `tieu_tam.action_dryrun`.
+3. Client hiển thị card xem trước và gửi xác nhận: `{ "message":"xác nhận", "confirm": true, "pendingAction": <pendingAction> }`.
+4. Server kiểm tra module + permission + securityLevel lần nữa rồi thực thi đúng 1 lần; audit `tieu_tam.action`.
+5. Nếu role không đủ quyền, action trả `ok:false` tiếng Việt hoặc HTTP gate trả `403`; không tạo dữ liệu.
 
 ## Cửa hàng vật phẩm + Kho chứa (V7A P3)
 | Method | Path | Body | Mô tả |

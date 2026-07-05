@@ -1,4 +1,12 @@
 # SUPERCITADEL Build — State (nền Citadel V7A, repo NachaFromMars/supercitadel)
+## Mạch SUPERCITADEL-R8.5 (RBAC permission registry + dry-run Tiểu Tâm — 2026-07-05)
+- Phase A: `packages/core/src/permissions.ts` thêm registry quyền `module.resource.action`, metadata securityLevel/sensitive, wildcard role permissions và helper `hasPermission/requiredSecurityLevel/permissionsForRole`; API thêm `requirePermission()` + `GET /api/v1/permissions`; hard gate đổi role đi qua registry. Commit `c41c1a8`.
+- Phase B: Tiểu Tâm action registry gắn `permission/securityLevel/sensitive`; `executeAction()` check module + RBAC + securityLevel, action sensitive tự dry-run trả `preview/pendingAction`; confirm chạy thật, audit đủ `tieu_tam.action_dryrun` + `tieu_tam.action`. Test v8_5 cover staff denied, no-write dry-run, confirm exactly one row, cross-org. Commit `65a2d72`.
+- Phase C: Web Settings hiển thị quyền theo module từ `/permissions`; chat sheet render amber preview card với Xác nhận/Hủy; audit-buttons 0 nút chết. Commit `8d09304`.
+- Phase D verify live: `scripts/verify-r85.py` chạy trên `https://supercitadel.62.146.238.213.sslip.io` PASS 7/7 — owner login, `/permissions` shape, staff forbidden 403 PERMISSION_DENIED, Tiểu Tâm tạo phiếu thu dry-run preview + confirm tạo thật, audit logs có cả dry-run/action. Docs cập nhật SECURITY/API; release `r8.5.0`.
+- Verify quality trước release: Phase A/B/C đã PASS typecheck/test/build/acceptance 9/9; Phase D secret scan diff sạch; CI GitHub Actions cần success theo head commit.
+- Tiếp theo: R9 = Module Loader FULL strict (manifest sai chuẩn = từ chối nạp); R10 = outbox nền cho module kho anh Nấng cắm vào.
+
 ## Mạch SUPERCITADEL-R1 (REBRAND + DESIGN SYSTEM V2 — mới nhất, 2026-07-03)
 - **Rebrand**: tên hiển thị "SUPERCITADEL" toàn UI/docs (layout metadata, login, API `/` name, README, root package `supercitadel`); scope `@citadel/*` GIỮ NGUYÊN để không phá imports; localStorage keys `citadel.*` giữ để không logout người dùng cũ.
 - **Design System V2** (`apps/web/app/globals.css`, học pattern Kiranism/shadcn-admin/Studio Admin/tremor — không thêm dependency): token hóa surface elevation (--void→--elev 6 lớp), typography scale (--fs-display→--fs-micro), radius/spacing scale, shadow 3 mức + glow tremor-style, motion tokens (--ease/--dur) + keyframes fade-up/scale-in/shimmer; nền off-black sâu hơn có radial gradient jade subtle; scrollbar styled; 3 theme jade/gold/sage vẫn đổi qua lib/theme.ts (ghi đè --jade/--jade-d/--jade-soft).
