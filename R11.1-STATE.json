@@ -1,7 +1,7 @@
 {
   "round": "R11.1",
-  "status": "verify_passed_pending_release",
-  "updatedAt": "2026-07-05T11:28:00+02:00",
+  "status": "done",
+  "updatedAt": "2026-07-05T11:34:00+02:00",
   "phases": {
     "pA_fix_endpoints": "done: zod validation registered and @citadel/api test includes r111",
     "pB_file_upload_tieutam": "done: tt_files migration/routes/import live verified",
@@ -20,8 +20,13 @@
   ],
   "commits": [
     "cf9205f Phase A",
-    "5b380a9 Phase B",
-    "de869d7 Phase C"
+    "5b380a9 Phase B host/backend",
+    "de869d7 Phase C",
+    "94c2953 Phase B web file list",
+    "f1fd74b Phase D live verify + shots"
   ],
-  "next": "Secret scan, commit Phase D, push, release v11.1.0, CI confirmation, final state done"
+  "next": "none",
+  "release": "https://github.com/NachaFromMars/supercitadel/releases/tag/v11.1.0",
+  "ci": "https://github.com/NachaFromMars/supercitadel/actions/runs/28736245357",
+  "head": "f1fd74b8260c781d0ed838b9dcdc0c3b8af610d4"
 }

@@ -197,3 +197,10 @@
 - build*Routes({db,emit?,requireAuth}) deps injection | sub-app onError riêng | route '/' = '/prefix'
 - LLM stub↔live cùng interface | org từ JWT không từ body
 - deploy: bash deploy.sh
+
+## Mạch R11.1 — K10A endpoint hardening + Tiểu Tâm file upload + tutorial back/full (05/07/2026)
+- Phase A: Kế Toán 10A thêm zod validation cửa vào cho ~22 POST/PATCH routes; 4 lỗi live trước đó (/budgets, /fx/revalue, /advances, /recurring) hết 500 khi thiếu payload, trả 400 tiếng Việt rõ field; r111.test đăng ký vào @citadel/api test.
+- Phase B: Tiểu Tâm có upload .xlsx/.csv/.txt giới hạn 5MB qua `tt_files` (không lưu binary), list/get/delete, import dry-run→confirm; inventory + HR chạy thật, K10A import giữ preview-safe stub (giới hạn đã ghi trong R11.1 task/state).
+- Phase C: Tutorial có nút `← Quay lại`; tour /ke-toan-10a full coverage theo nhóm chức năng; anchors K10A verified không thiếu.
+- Phase D live: deploy compose api/web PASS, migration 0012 applied (`tt_files` tồn tại); `scripts/verify-r111.py` live PASS 14/14; regression `verify-r11.py` PASS 26/26; `verify-r85.py` PASS 7/7; screenshots committed: `shots/r111-k10a-tour-back.png`, `shots/r111-tieu-tam-paperclip.png`.
+- Release: v11.1.0 https://github.com/NachaFromMars/supercitadel/releases/tag/v11.1.0 · CI SUCCESS https://github.com/NachaFromMars/supercitadel/actions/runs/28736245357 · HEAD f1fd74b8260c781d0ed838b9dcdc0c3b8af610d4.
