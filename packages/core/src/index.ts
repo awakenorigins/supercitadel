@@ -108,3 +108,4 @@ export interface TieuTamReply {
 export * from './errors.js';
 export * from './env.js';
 export * from './permissions.js';
+export * from './manifest.js';

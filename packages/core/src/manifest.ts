@@ -1,0 +1,44 @@
+import { PERMISSION_REGISTRY } from './permissions.js';
+
+export type ModuleTier = 'core' | 'paid' | 'demo' | 'custom';
+export interface ModuleManifestEvents { emits?: string[]; subscribes?: string[] }
+export interface ModuleManifest {
+  id: string; name: string; version: string; tier: ModuleTier; priceOm: number; icon: string; description: string;
+  permissions: string[]; routes: string; docs: string; dependsOn?: string[]; engine?: string; events?: ModuleManifestEvents;
+}
+export type ManifestValidation = { ok: true; manifest: ModuleManifest; warnings: string[] } | { ok: false; errors: string[]; warnings: string[] };
+const allowed = new Set(['id','name','version','tier','priceOm','icon','description','permissions','routes','docs','dependsOn','engine','events']);
+const tiers = new Set(['core','paid','demo','custom']);
+export const TOPIC_RE = /^[a-z][a-z0-9-]*\.[a-z][a-z0-9-]*\.(?:[a-z][a-z0-9_-]*|\*)$/;
+const permSet = new Set(PERMISSION_REGISTRY.map((p) => p.key));
+const isObj = (x: unknown): x is Record<string, unknown> => !!x && typeof x === 'object' && !Array.isArray(x);
+function str(o: Record<string, unknown>, k: string, errors: string[]) { if (typeof o[k] !== 'string' || !(o[k] as string).trim()) errors.push(`Trường ${k} bắt buộc là chuỗi không rỗng`); }
+function arrStr(v: unknown, field: string, errors: string[]) { if (!Array.isArray(v) || v.some((x) => typeof x !== 'string' || !x.trim())) errors.push(`Trường ${field} bắt buộc là mảng chuỗi không rỗng`); }
+export function validateTopic(topic: string): boolean { return TOPIC_RE.test(topic); }
+export function validateManifest(raw: unknown): ManifestValidation {
+  const errors: string[] = [], warnings: string[] = [];
+  if (!isObj(raw)) return { ok: false, errors: ['Manifest phải là object JSON'], warnings };
+  for (const k of Object.keys(raw)) if (!allowed.has(k)) warnings.push(`Trường lạ ${k} sẽ bị bỏ qua`);
+  for (const k of ['id','name','version','tier','icon','description','routes','docs']) str(raw, k, errors);
+  if (typeof raw.id === 'string' && !/^[a-z][a-z0-9-]*$/.test(raw.id)) errors.push('id phải khớp ^[a-z][a-z0-9-]*$');
+  if (typeof raw.version === 'string' && !/^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/.test(raw.version)) errors.push('version phải là semver, ví dụ 1.0.0');
+  if (typeof raw.tier === 'string' && !tiers.has(raw.tier)) errors.push('tier chỉ được là core|paid|demo|custom');
+  if (typeof raw.priceOm !== 'number' || raw.priceOm < 0) errors.push('priceOm bắt buộc là số >= 0');
+  if (typeof raw.routes === 'string' && !/^\/api\/v1\/[a-z0-9-]+/.test(raw.routes)) errors.push('routes phải bắt đầu bằng /api/v1/');
+  arrStr(raw.permissions, 'permissions', errors);
+  if (Array.isArray(raw.permissions)) for (const p of raw.permissions) {
+    if (typeof p !== 'string' || !/^[a-z][a-z0-9-]*\.[a-z][a-z0-9-]*\.[a-z][a-z0-9-]*$/.test(p)) errors.push(`permission ${String(p)} sai format module.resource.action`);
+    else if (!permSet.has(p)) errors.push(`permission ${p} chưa có trong PERMISSION_REGISTRY`);
+  }
+  if (raw.dependsOn !== undefined) arrStr(raw.dependsOn, 'dependsOn', errors);
+  if (raw.engine !== undefined && typeof raw.engine !== 'string') errors.push('engine phải là chuỗi semver range');
+  if (raw.events !== undefined) {
+    if (!isObj(raw.events)) errors.push('events phải là object { emits, subscribes }');
+    else for (const key of ['emits','subscribes'] as const) if (raw.events[key] !== undefined) {
+      arrStr(raw.events[key], `events.${key}`, errors);
+      if (Array.isArray(raw.events[key])) for (const t of raw.events[key] as unknown[]) if (typeof t === 'string' && !validateTopic(t)) errors.push(`event topic ${t} sai format module.entity.verb`);
+    }
+  }
+  if (errors.length) return { ok: false, errors, warnings };
+  return { ok: true, manifest: raw as unknown as ModuleManifest, warnings };
+}

@@ -1,21 +1,13 @@
 {
   "id": "crm",
   "name": "CRM",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "tier": "paid",
   "priceOm": 400,
   "icon": "i-users",
   "description": "Quản lý khách hàng, pipeline bán hàng, chăm sóc.",
-  "permissions": [
-    "crm:contacts:read",
-    "crm:contacts:write",
-    "crm:deals:read",
-    "crm:deals:write"
-  ],
-  "tools": [
-    "crm.query_deals",
-    "crm.query_contacts"
-  ],
+  "permissions": ["crm.contact.read", "crm.contact.create", "crm.deal.create", "crm.deal.move"],
   "routes": "/api/v1/crm",
-  "docs": "docs/GUIDE.md"
+  "docs": "docs/GUIDE.md",
+  "engine": "^1.0.0"
 }

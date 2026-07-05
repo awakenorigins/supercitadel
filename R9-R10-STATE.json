@@ -1,0 +1,31 @@
+{
+  "round": "R9+R10",
+  "status": "running",
+  "startedAt": "2026-07-05T06:05:00+02:00",
+  "sessionKey": "agent:main:telegram:group:-1003720502853:topic:9871",
+  "brief": "R9-R10-TASK.md",
+  "directives": {
+    "order": "Anh Nấng lệnh (msg 10259): chạy tới FINAL R10, update GitHub + release đầy đủ, audit kỹ hoàn hảo chỉnh chu.",
+    "inventory": "KHÔNG ĐỤNG logic inventory — chuẩn hóa manifest data thôi. Module kho anh Nấng cắm vào outbox theo contract R10-B.",
+    "audit": "Mọi claim = bằng chứng chạy thật (test/curl live/CI/GitHub API)."
+  },
+  "phases": {
+    "r9A_manifest_schema": "done",
+    "r9B_loader_strict": "pending",
+    "r9C_verify_release_v9": "pending",
+    "r10A_outbox_core": "pending",
+    "r10B_module_contract": "pending",
+    "r10C_final_verify_release_v10": "pending"
+  },
+  "commits": [],
+  "releases": [],
+  "next": "done = toàn bộ R9+R10 verified live + CI SUCCESS + releases v9.0.0 & v10.0.0",
+  "evidence": {
+    "r9A_manifest_schema": [
+      "packages/core/src/manifest.ts validateManifest strict",
+      "7 module manifests migrated to v2",
+      "audit-manifests PASS 7/7",
+      "pnpm -r typecheck/test/build PASS before commit"
+    ]
+  }
+}

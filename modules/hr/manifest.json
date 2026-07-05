@@ -1,15 +1,14 @@
 {
   "id": "hr",
   "name": "Nhân Sự & Ca",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "tier": "paid",
   "priceOm": 250,
   "icon": "i-user",
   "description": "Phân ca làm việc, nhân viên trực.",
-  "permissions": [
-    "hr:read",
-    "hr:write"
-  ],
+  "permissions": ["hr.employee.create", "hr.attendance.checkin", "hr.attendance.checkout", "hr.shift.create"],
   "routes": "/api/v1/hr",
-  "docs": "docs/GUIDE.md"
+  "docs": "docs/GUIDE.md",
+  "engine": "^1.0.0",
+  "events": { "emits": ["hr.attendance.checked_in"] }
 }

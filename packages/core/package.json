@@ -6,7 +6,7 @@
   "types": "./src/index.ts",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "tsx src/env.test.ts && tsx src/permissions.test.ts"
+    "test": "tsx src/env.test.ts && tsx src/permissions.test.ts && tsx src/manifest.test.ts"
   },
   "dependencies": {
     "zod": "^3.24.0"

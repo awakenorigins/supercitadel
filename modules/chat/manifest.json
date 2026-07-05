@@ -1,22 +1,13 @@
 {
   "id": "chat",
   "name": "Nhắn Tin",
-  "version": "1.0.0",
-  "tier": "free",
+  "version": "2.0.0",
+  "tier": "core",
+  "priceOm": 0,
   "icon": "i-chat",
   "description": "Chat nội bộ real-time, nhóm, file.",
-  "permissions": [
-    "chat:read",
-    "chat:write",
-    "chat:admin",
-    "chat:react"
-  ],
-  "tools": [
-    "chat.search_messages"
-  ],
+  "permissions": ["chat.message.read", "chat.message.create", "chat.room.admin", "chat.reaction.create"],
   "routes": "/api/v1/chat",
-  "events": [
-    "chat:message"
-  ],
-  "docs": "docs/GUIDE.md"
+  "docs": "docs/GUIDE.md",
+  "engine": "^1.0.0"
 }

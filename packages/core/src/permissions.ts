@@ -30,6 +30,13 @@ export const PERMISSION_REGISTRY = [
   p('core.user.role_change','Đổi quyền thành viên',2,true),
   p('core.audit.read','Xem audit log',1,false),
   p('core.permissions.read','Xem danh sách quyền'),
+  p('chat.message.read','Đọc tin nhắn'),
+  p('chat.message.create','Gửi tin nhắn'),
+  p('chat.room.admin','Quản trị phòng chat'),
+  p('chat.reaction.create','Thả cảm xúc chat'),
+  p('notification.notification.read','Xem thông báo'),
+  p('notification.notification.create','Tạo thông báo'),
+  p('om.wallet.topup','Nạp Om',2,true),
 ] as const satisfies readonly PermissionMeta[];
 
 export const ROLE_PERMISSIONS: Record<RoleType, readonly Permission[]> = {
