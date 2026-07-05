@@ -1,17 +1,27 @@
 {
   "round": "R11.1",
-  "status": "partial",
-  "updatedAt": "2026-07-05T10:40:00+02:00",
+  "status": "verify_passed_pending_release",
+  "updatedAt": "2026-07-05T11:28:00+02:00",
   "phases": {
-    "pA_fix_endpoints": "partial: added route-level zod validation for confirmed failing K10A endpoints budgets/fx/revalue/advances/recurring plus receipts/payments guard; API typecheck pass",
-    "pB_file_upload_tieutam": "partial: added tt_files schema+migration, upload/list/get/delete/import endpoints, xlsx/csv/txt parse 5MB, inventory/hr real import path, web paperclip + /tieu-tam file list; API+web typecheck pass",
-    "pC_tutorial_full_back": "partial: Tutorial back button added; K10A tour expanded to full coverage; web typecheck pass",
-    "pD_verify_release": "not_done: no deploy/live verify/push/release performed by this subagent"
+    "pA_fix_endpoints": "done: zod validation registered and @citadel/api test includes r111",
+    "pB_file_upload_tieutam": "done: tt_files migration/routes/import live verified",
+    "pC_tutorial_full_back": "done: back button + K10A tour anchors verified, screenshots captured",
+    "pD_verify_release": "partial: deploy/live verify/regressions/shots done; push/release/CI pending"
   },
   "evidence": [
-    "pnpm --filter @citadel/api typecheck PASS",
-    "pnpm --filter web typecheck PASS"
+    "pnpm --filter @citadel/api test PASS incl [api/r111] PASSED",
+    "pnpm --filter web typecheck PASS; pnpm --filter web build PASS; audit-buttons PASS",
+    "docker compose -p supercitadel up -d --build api web PASS",
+    "migration 0012 applied; select to_regclass(public.tt_files)=tt_files",
+    "scripts/verify-r111.py live PASS 14/14",
+    "scripts/verify-r11.py live PASS 26/26",
+    "scripts/verify-r85.py live PASS 7/7",
+    "screenshots: shots/r111-k10a-tour-back.png, shots/r111-tieu-tam-paperclip.png"
   ],
-  "commits": [],
-  "next": "Need tests, commit(s), deploy, live verification, push, release v11.1.0, CI confirmation"
+  "commits": [
+    "cf9205f Phase A",
+    "5b380a9 Phase B",
+    "de869d7 Phase C"
+  ],
+  "next": "Secret scan, commit Phase D, push, release v11.1.0, CI confirmation, final state done"
 }
