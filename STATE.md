@@ -1,3 +1,20 @@
+# R11 — Module ngoài đầu tiên: Kế Toán 10A
+
+## Mạch R11 (chốt 2026-07-05)
+- Nạp module ngoài `ke-toan-10a` theo manifest v2 strict: schema riêng `ketoan10a` 18 bảng, không đụng logic inventory/accounting cũ.
+- Giá theo lệnh: bán 1000 Om; thuê 150 Om/30 ngày qua `rentPlans` override tuyệt đối.
+- Phase A/B/C đã commit: copy module + pricing/permissions (`54def9c`), wire loader/Tiểu Tâm/tools (`2b30543`), FE page + tour (`340d0a0`).
+- Phase D commit `7f2c36e`: fix module route onError nhận AppError từ host, fix Tiểu Tâm actions lazy DB, verify-r11.py live audit, screenshots.
+- Live audit `scripts/verify-r11.py`: PASS 26/26 — loader/catalog, inactive 403, purchase/catalog pricing, TT133 setup, receipt/payment/invoice VAT, collect invoice 1000800, over-collect blocked, XLSX export binary, Tiểu Tâm dry-run→confirm receipt, natural-language payment/invoice/report, deactivate/reactivate data retained.
+- Regression: `verify-r10.py` PASS 7/7; `verify-r85.py` PASS 7/7.
+- Screenshots: `shots/r11-modules-ketoan10a-card.png`, `shots/r11-ke-toan-10a-page.png`, `shots/r11-tieu-tam-dryrun-confirm-card.png`.
+- Release: `v11.0.0` — https://github.com/NachaFromMars/supercitadel/releases/tag/v11.0.0; CI main head `7f2c36e` SUCCESS.
+
+## Coverage Kế Toán 10A
+- 17 actions registered. Live-confirmed: `k10a.thu_tien`; live dry-run/read path: `k10a.chi_tien`, `k10a.hoa_don_ban`, `k10a.bao_cao_nhanh`; invoice collect verified via API equivalent. Remaining sensitive actions covered by module tests/registry but not all individually confirmed on live to avoid mutating demo data.
+- 15 read-tools registered. Live 200: cash position, outstanding, aging, profit-loss, trial-balance, balance-sheet/report equivalents. Remaining report tools covered by module tests/docs registry.
+
+---
 # SUPERCITADEL Build — State (nền Citadel V7A, repo NachaFromMars/supercitadel)
 ## Mạch SUPERCITADEL-R10 (Outbox foundation — 2026-07-05)
 - Phase A: thêm migration `0011_outbox_events`, Drizzle schema, `@citadel/core/outbox` với `emitEvent(tx, ...)` bắt buộc transaction; API dispatcher interval an toàn, exact+wildcard subscriber, notification + WS broadcast, admin endpoints `/api/v1/outbox/stats` và `/api/v1/outbox/events`; emit thật từ accounting/om/hr; v10 test cover rollback/commit atomicity, handler throw retry, wildcard, notification row, org isolation/staff 403.

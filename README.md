@@ -1,6 +1,6 @@
 # SUPERCITADEL — Pháo đài quản trị doanh nghiệp Việt
 
-![release](https://img.shields.io/badge/release-v10.0.0-jade) ![stack](https://img.shields.io/badge/stack-Next.js%20%2B%20Hono%20%2B%20Postgres-blue) ![pnpm](https://img.shields.io/badge/pnpm-monorepo-orange) ![beta](https://img.shields.io/badge/beta-open%20access-violet)
+![release](https://img.shields.io/badge/release-v11.0.0-jade) ![stack](https://img.shields.io/badge/stack-Next.js%20%2B%20Hono%20%2B%20Postgres-blue) ![pnpm](https://img.shields.io/badge/pnpm-monorepo-orange) ![beta](https://img.shields.io/badge/beta-open%20access-violet)
 
 SUPERCITADEL là nền tảng quản trị doanh nghiệp Việt theo mô hình **pháo đài số**: mỗi tổ chức có tenant riêng, ví Om riêng, module nghiệp vụ riêng và trợ lý AI **Tiểu Tâm** sống trong hệ thống để hỗ trợ vận hành bằng ngôn ngữ tự nhiên.
 
@@ -26,6 +26,7 @@ SUPERCITADEL là nền tảng quản trị doanh nghiệp Việt theo mô hình 
 | Vận hành | Kho Hàng | paid | Nhập xuất tồn, cảnh báo |
 | Nhân sự | Nhân Sự & Ca | paid | Ca làm, nhân viên, phép |
 | Tài chính | Kế Toán | paid | Sổ cái kép, phiếu thu/chi |
+| Tài chính | Kế Toán 10A | paid | Module ngoài đầu tiên: 17 action Tiểu Tâm + 15 read-tool, giá 1000 Om / thuê 150 Om 30 ngày |
 | AI Automation | Automato Thư Ký | demo | Thư ký AI tự động, thuê demo |
 | May Đo Doanh Nghiệp | Module Company | custom/open | Hồ sơ công ty riêng → Citadel forge module riêng |
 | Kinh doanh | POS | coming | Order, hóa đơn, ca thu ngân |
@@ -41,6 +42,7 @@ SUPERCITADEL là nền tảng quản trị doanh nghiệp Việt theo mô hình 
 - **r7.2 (R7.5+R7.6):** Tiểu Tâm **2 engine** (Sonnet 4.6 ⭐ + GPT 5.5 🚀, gạt công tắc ở `/tieu-tam`); **chat persistence** — hội thoại lưu DB, mở lại còn nguyên, multi-turn nhớ ngữ cảnh 20 lượt; action `hr.add_employee` thêm nhân viên thật; fix widget chat SSE (stream:false + parser) + nút gửi 46px mobile; tutorial versioned + tour Module Company + nút "?" nổi gọi lại hướng dẫn trên mobile; `docs/MODULE-FORGE-GUIDE.md` cho AI/dev ngoài forge module.
 - **v9.0.0:** Module Loader FULL strict — 7 manifest v2 được validate tự động, catalog sinh từ manifest, module lỗi bị reject có lý do tiếng Việt, `loader-status` owner-only, CI thêm gate `audit-manifests`.
 - **v10.0.0:** Outbox foundation — bảng `outbox_events`, `emitEvent(tx, ...)` atomic, dispatcher retry an toàn, notification dogfood contract subscribe, admin API `/outbox/stats` + `/outbox/events`, guide cho module kho/ngoài cắm event.
+- **v11.0.0:** Module ngoài đầu tiên **Kế Toán 10A** — loader strict nạp module độc lập, schema `ketoan10a` 18 bảng, giá bán 1000 Om / thuê 150 Om 30 ngày, web `/ke-toan-10a`, 17 action Tiểu Tâm + 15 read-tool, live audit Phase D PASS 26/26.
 
 ### Ví dụ lệnh Tiểu Tâm action layer r6
 
