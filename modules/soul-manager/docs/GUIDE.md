@@ -1,100 +1,49 @@
-# Soul-Manager — GUIDE (kiến trúc & vận hành)
+# Soul-Manager — Giáo Trình Module Nhân Sự
 
-## 1. Vị trí trong SuperCitadel
+## Giới thiệu
 
-Soul-Manager là module rời cắm vào lõi Citadel theo hợp đồng 8 mặt cắt (§05). Host tiêm `db + bus + registry`; module **không import module khác** — mọi giao tiếp ra ngoài qua event `hr.*` (payload luôn `org_id`). Thay thế module `hr` cũ (khai `conflicts: ["hr"]`), dữ liệu cũ hút sang bằng migration `0002` idempotent.
+Soul-Manager là module Nhân Sự (HRM) chuẩn luật Việt Nam 2026 cho SuperCitadel: hồ sơ nhân viên, cơ cấu tổ chức, chấm công + OT, nghỉ phép theo BLLĐ, bảng lương tự động (BHXH/BHYT/BHTN + thuế TNCN lũy tiến 5 bậc, giảm trừ gia cảnh), tuyển dụng và đào tạo. Mọi con số pháp lý cấu hình được qua policy; mọi bảng cô lập theo tổ chức (org_id) và bảo vệ thêm bằng RLS. Tiểu Tâm thao tác toàn bộ nghiệp vụ bằng tiếng Việt.
 
-## 2. Dữ liệu — 18 bảng một khuôn (mặt cắt ④)
+Route gốc: `/api/v1/soul-manager`. Bảng dữ liệu dùng tiền tố `sm_` (không đụng module `hr` cũ).
 
-Mọi bảng: `id uuid · org_id uuid NOT NULL (+index) · created_at · updated_at`, FORCE RLS policy `tenant_isolation` trên `current_setting('app.current_org_id')::uuid` — **fail-closed, không coalesce**: quên set org ⇒ query LỖI, không bao giờ trả nhầm dữ liệu.
+## Chức năng
 
-| Khối | Bảng |
-|---|---|
-| Cấu hình | `hr_settings` (policy pháp lý per-org) |
-| Tổ chức | `hr_departments` (cha-con) · `hr_positions` |
-| Nhân viên | `hr_employees` · `hr_contracts` · `hr_dependents` · `hr_allowances` |
-| Chấm công | `hr_shifts` · `hr_attendance` (unique org+NV+ngày) |
-| Nghỉ phép | `hr_leave_types` · `hr_leave_balances` · `hr_leave_requests` |
-| Lương | `hr_payroll_periods` · `hr_payslips` (breakdown jsonb kèm explain) |
-| Tuyển dụng | `hr_job_openings` · `hr_candidates` |
-| Đào tạo | `hr_courses` · `hr_enrollments` |
-
-Tiền/lương/ngày công: `numeric`, Drizzle trả **string**, tính toán qua `src/money.ts` (BigInt scaled, half-up) — **không bao giờ `Number()`** cho nghiệp vụ (Hiến pháp #5). Guard số dư phép chạy **phía SQL** (`UPDATE ... WHERE entitled - used >= days`).
-
-## 3. Golden path 6 bước
-
-1. `hr.employee.create` — "Thêm nhân viên Trần Văn An, phòng Kinh doanh, lương 20 triệu, vào 1/7" → mã NV0001 tự sinh, phòng ban/chức danh tự tạo, phép năm 12 ngày tự mở.
-2. `hr.attendance.record` × ngày — vào 08:00 ra 17:00, muộn/sớm tự tính theo ca HC; OT khai theo 3 loại giờ.
-3. `hr.leave.request` → `hr.leave.decide` — đơn 1 ngày phép năm, duyệt xong số dư còn 11.
-4. `hr.payroll.run {year, month}` — tính cả kỳ: công + phép hưởng lương + OT + BH + thuế → net.
-5. `hr.payroll.payslip` — phiếu lương kèm `breakdown.explain[]` tiếng Việt để Tiểu Tâm đọc cho người dùng.
-6. `hr.payroll.approve` — chốt kỳ; từ đây `run` lại sẽ bị `PERIOD_LOCKED`.
-
-Smoke test (`tests/smoke.test.ts`) chạy đúng path này với 3 NV và đối chiếu **từng đồng**.
-
-## 4. Chính sách pháp lý 2026 — MẶC ĐỊNH, CẤU HÌNH ĐƯỢC
-
-> ⚠️ Các con số dưới đây đúng tại 07/2026 nhưng **thay đổi theo quy định hiện hành**. Tất cả nằm trong `DEFAULT_POLICY` (`src/config.ts`) và override được per-org qua `hr_settings.policy` — luật đổi chỉ sửa cấu hình, **không đụng code**.
-
-| Tham số | Mặc định | Căn cứ |
+| Nghiệp vụ | Endpoint | Quyền |
 |---|---|---|
-| Giảm trừ bản thân | 15.500.000 đ/tháng | NQ 110/2025/UBTVQH15 (kỳ thuế 2026) |
-| Giảm trừ mỗi NPT | 6.200.000 đ/tháng | NQ 110/2025/UBTVQH15 |
-| Biểu thuế TNCN | 5 bậc: ≤10tr 5% · ≤30tr 10% · ≤60tr 20% · ≤100tr 30% · >100tr 35% | Luật 109/2025/QH15 |
-| BH NLĐ đóng | BHXH 8% + BHYT 1,5% + BHTN 1% | Luật BHXH 41/2024/QH15 |
-| BH NSDLĐ đóng (tham khảo) | 17,5% + 3% + 1% | — |
-| Mức tham chiếu | 2.340.000 (từ 01/7/2024) → **2.530.000 (từ 01/7/2026)** | NĐ 73/2024 → NĐ 161/2026 |
-| Trần BHXH/BHYT | 20 × mức tham chiếu (46,8tr → **50,6tr**) | Luật BHXH |
-| LTT vùng I–IV (01/01/2026) | 5,31 / 4,73 / 4,14 / 3,70 triệu | NĐ 293/2025/NĐ-CP |
-| Trần BHTN | 20 × LTT vùng (Vùng I = 106,2tr) | Luật Việc làm |
-| Sàn lương đóng BH | LTT vùng của NV | — |
-| Hệ số OT | 150% / 200% / 300% (thường/tuần/lễ), phần vượt 100% **miễn thuế TNCN** | Đ98 BLLĐ; TT 111/2013 |
-| Phép năm | 12 ngày + 1 ngày/5 năm thâm niên | Đ113, Đ114 BLLĐ 2019 |
-| Không đóng BH | Nghỉ không lương ≥ 14 ngày làm việc/tháng | Luật BHXH |
+| Tìm/liệt kê nhân viên | `GET /api/v1/soul-manager/employees` | hr.employee.read |
+| Thêm nhân viên | `POST /api/v1/soul-manager/employees` | hr.employee.write |
+| Xem hồ sơ theo mã | `GET /api/v1/soul-manager/employees/:code` | hr.employee.read |
+| Sửa hồ sơ / điều chuyển / nghỉ việc | `PATCH /api/v1/soul-manager/employees/:code` | hr.employee.write |
+| Đăng ký người phụ thuộc | `POST /api/v1/soul-manager/employees/:code/dependents` | hr.employee.write |
+| Sơ đồ tổ chức | `GET /api/v1/soul-manager/org/chart` | hr.org.read |
+| Chấm công | `POST /api/v1/soul-manager/attendance` | hr.attendance.write |
+| Bảng công tháng | `GET /api/v1/soul-manager/attendance/summary` | hr.attendance.read |
+| Số dư phép | `GET /api/v1/soul-manager/leave/balance` | hr.leave.read |
+| Tạo đơn nghỉ | `POST /api/v1/soul-manager/leave/requests` | hr.leave.write |
+| Duyệt/từ chối đơn nghỉ | `POST /api/v1/soul-manager/leave/requests/:id/decide` | hr.leave.approve |
+| Chạy bảng lương kỳ | `POST /api/v1/soul-manager/payroll/run` | hr.payroll.run |
+| Chốt bảng lương | `POST /api/v1/soul-manager/payroll/:year/:month/approve` | hr.payroll.approve |
+| Xem phiếu lương | `GET /api/v1/soul-manager/payroll/payslip` | hr.payroll.read |
+| Báo cáo nhân sự | `GET /api/v1/soul-manager/report/headcount` | hr.report.read |
+| Pipeline tuyển dụng | `GET /api/v1/soul-manager/recruitment/pipeline` | hr.recruitment.read |
+| Thêm/chuyển stage ứng viên | `POST /api/v1/soul-manager/recruitment/candidates` | hr.recruitment.write |
+| Quản lý đào tạo | `POST /api/v1/soul-manager/training` | hr.training.write |
 
-**Mốc hiệu lực (effective-dated):** `reference_levels` và `regional_min_wage` là mảng `{from, amount}` — engine tự chọn mốc đúng theo kỳ lương. Kỳ 06/2026 dùng trần 46,8tr, kỳ 07/2026 dùng 50,6tr (đã có test).
+## Hướng dẫn sử dụng
 
-**Cập nhật khi luật đổi** — ví dụ nâng giảm trừ lên 18tr:
-```sql
-UPDATE hr_settings
-SET policy = policy || '{"personal_deduction": "18000000"}'::jsonb
-WHERE org_id = :org;
-```
-Thêm mốc tham chiếu mới: nối phần tử `{"from":"2027-07-01","amount":"2700000"}` vào `policy.insurance.reference_levels`.
+1. **Kích hoạt module:** vào Cửa hàng Module → mua/thuê Soul-Manager (mua 1.800 Ôm / thuê 30 ngày 250 Ôm). Gate `requireModule('soul-manager')` mở khi org ở trạng thái active.
+2. **Lập nền tảng:** thêm nhân viên đầu tiên (`POST /employees`) — phòng ban/chức danh tự tạo nếu chưa có, số dư phép năm tự mở (12 ngày + thâm niên theo BLLĐ 2019).
+3. **Chấm công & nghỉ phép:** ghi công theo ngày; đơn nghỉ có guard số dư phía SQL, không vắt tháng.
+4. **Chạy lương:** `POST /payroll/run` cho kỳ (năm/tháng) — tự tính ngày công, OT 3 hệ số, BHXH/BHYT/BHTN theo trần đóng, thuế TNCN lũy tiến, giảm trừ gia cảnh; phiếu lương kèm giải thích tiếng Việt. Chốt kỳ để khóa.
+5. **Bảo mật:** hành động lương (`payroll.run/approve`) yêu cầu bảo mật lớp 2. Dữ liệu mỗi tổ chức cô lập theo org_id (app-level) + RLS fail-closed (defense-in-depth).
 
-## 5. Công thức lương (engine `computePayslipNumbers`)
+## Ví dụ
 
-```
-paid_days      = công thực tế + ngày phép HƯỞNG LƯƠNG đã duyệt trong tháng
-salary_by_days = base × paid_days / standard_work_days            (round0 đồng)
-hourly         = base / (standard_work_days × work_hours_per_day)
-ot_pay         = hourly × (h_thường×1.5 + h_tuần×2.0 + h_lễ×3.0)
-ot_miễn_thuế   = hourly × (h_thường×0.5 + h_tuần×1.0 + h_lễ×2.0)
-gross          = salary_by_days + phụ cấp (cả 2 loại) + ot_pay
+- **"Thêm nhân viên Trần Văn An, phòng Kinh doanh, vào làm 1/7/2026, lương 20 triệu"** → Tiểu Tâm gọi `hr.employee.create` → tạo hồ sơ NVxxxx, mở số dư phép năm.
+- **"Chạy bảng lương tháng 7/2026"** → Tiểu Tâm gọi `hr.payroll.run` (xác nhận bảo mật lớp 2) → tính lương toàn bộ nhân viên, trả tổng gross/net.
+- **"Số dư phép của NV0001 còn bao nhiêu?"** → Tiểu Tâm gọi `hr.leave.balance` → trả số ngày phép năm còn lại.
+- **"Cho tao sơ đồ tổ chức"** → Tiểu Tâm gọi `hr.org.chart` → trả cây phòng ban + headcount.
 
-căn cứ BH      = min( max(lương đóng BH, LTT vùng), 20 × tham_chiếu(kỳ) )
-căn cứ BHTN    = min( ..., 20 × LTT_vùng(kỳ) )
-BH = 0 nếu (standard − paid_days) ≥ 14                            (luật 14 ngày)
+## Changelog
 
-TN chịu thuế   = salary_by_days + phụ cấp CHỊU THUẾ + (ot_pay − ot_miễn_thuế)
-TN tính thuế   = max(0, chịu thuế − BH − 15,5tr − NPT × 6,2tr)
-thuế TNCN      = lũy tiến 5 bậc (làm tròn đồng MỘT lần cuối)
-NET            = gross − BH − thuế − khấu trừ khác
-```
-
-Hai ví dụ đối chiếu tay (đều có trong test):
-- **Lương 20tr, đủ 26 công, 0 NPT, kỳ 07/2026:** BH = 20tr × 10,5% = 2.100.000; TN tính thuế = 20 − 2,1 − 15,5 = 2.400.000 → thuế 5% = **120.000**; **net = 17.780.000 đ**.
-- **Lương 30tr, 1 NPT:** BH = 3.150.000; TN tính thuế = 30 − 3,15 − 15,5 − 6,2 = 5.150.000 → thuế = **257.500**; **net = 26.592.500 đ**.
-
-## 6. Vận hành
-
-- **Role DB:** app kết nối bằng role **không superuser** (vd `citadel_app`) — superuser bypass RLS bất kể FORCE. Test đã mô phỏng đúng: `SET ROLE citadel_app` + `set_config('app.current_org_id', ..., true)` trong transaction.
-- **Migrations:** chạy tuần tự 0000 → 0001 → 0002 bằng role migration (bypass RLS có chủ đích, một lần). Tất cả idempotent.
-- **Seed lười per-org:** loại phép chuẩn + ca HC + settings tự tạo ở lần dùng đầu (onConflictDoNothing) — không cần bước setup riêng.
-
-## 7. Giới hạn v1 (khai tường minh)
-
-- Đơn nghỉ **không vắt tháng** (guard `LEAVE_SPANS_MONTHS`) — tách 2 đơn theo tháng.
-- Thuế NV thử việc tính lũy tiến như chính thức (chưa hỗ trợ khấu trừ 10% hợp đồng <3 tháng).
-- Ốm/thai sản: DN không trả lương (BHXH chi trả) — module ghi nhận ngày nghỉ, chưa tính trợ cấp BHXH thay.
-- `standard_work_days` cố định theo settings/kỳ (mặc định 26), chưa tự đếm ngày làm việc theo lịch.
+- **1.0.0** (2026-07-05): Ra mắt Soul-Manager. 18 bảng `sm_*`, 8 read tools + 10 write actions, RLS fail-closed, bảng lương đúng luật VN 2026. Tích hợp SuperCitadel qua host-adapter (loader + catalog + PERMISSION_REGISTRY + Tiểu Tâm actions), namespace `sm_` để cùng tồn tại với module `hr` cũ.
