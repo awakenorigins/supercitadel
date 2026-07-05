@@ -1,0 +1,21 @@
+{
+  "round": "R11.2",
+  "status": "running",
+  "startedAt": "2026-07-05T16:10:00+02:00",
+  "sessionKey": "agent:main:telegram:group:-1003720502853:topic:9871",
+  "brief": "R11.2-TASK.md",
+  "directives": {
+    "order": "Anh Nấng (msg 10328): 4 setting Tiểu Tâm (Chế độ tính cách/Gợi ý chủ động/Thông tin tổ chức/Thành viên và quyền) click không active — chưa có endpoint. Audit TOÀN DIỆN mọi control FE, bổ sung endpoint thật toàn diện, không để nút trưng bày.",
+    "finding": "settings/page.tsx ~dòng 167-172: 4 row render tĩnh không onClick không fetch. Cần rà tay vì là <div>/row không phải <button> nên audit-buttons có thể bỏ sót."
+  },
+  "phases": {
+    "pA_audit_map": "done",
+    "pB_backend_endpoints": "pending",
+    "pC_wire_fe": "pending",
+    "pD_verify_release": "pending"
+  },
+  "commits": [],
+  "next": "Phase B backend endpoints",
+  "audit": "R11.2-AUDIT.md",
+  "lastUpdate": "2026-07-05T16:20:00+02:00"
+}
