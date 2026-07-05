@@ -196,21 +196,27 @@ export default function SoulManagerPage() {
         <div style={{ height: 20 }} />
       </div>
 
-      {/* ── Sheet thêm nhân viên ── */}
+      {/* ── Sheet thêm nhân viên (dùng .sh-panel: max-height 84dvh + scroll, không bị bottom-nav che) ── */}
       {sheet === 'emp' && (
-        <div className="sheet-bg" onClick={() => setSheet('')} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.4)', display: 'grid', placeItems: 'end center', zIndex: 50 }}>
-          <div onClick={(e) => e.stopPropagation()} className="card" style={{ width: '100%', maxWidth: 480, borderRadius: '20px 20px 0 0', padding: 18, display: 'grid', gap: 10 }}>
-            <div style={{ display: 'flex', alignItems: 'center' }}><b style={{ flex: 1, fontSize: 16 }}>Thêm nhân viên</b><button className="chip" onClick={() => setSheet('')}>Đóng</button></div>
-            <input style={inputSt} placeholder="Họ tên *" value={fn} onChange={(e) => setFn(e.target.value)} />
-            <div style={{ display: 'flex', gap: 8 }}>
-              <input style={inputSt} placeholder="Phòng ban" value={dep} onChange={(e) => setDep(e.target.value)} />
-              <input style={inputSt} placeholder="Chức danh" value={pos} onChange={(e) => setPos(e.target.value)} />
+        <div className="sh-scrim" onClick={() => setSheet('')}>
+          <div className="sh-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="sh-head">
+              <div className="sh-ico" style={{ background: 'var(--jade-soft)', color: 'var(--jade)' }}><Icon name="users" size={18} /></div>
+              <b style={{ fontSize: 15 }}>Thêm nhân viên</b>
+              <button className="sh-x" onClick={() => setSheet('')}><Icon name="x" size={15} /></button>
             </div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <input style={inputSt} type="date" value={hd} onChange={(e) => setHd(e.target.value)} />
-              <input style={inputSt} type="number" placeholder="Lương cơ bản" value={sal} onChange={(e) => setSal(e.target.value)} />
+            <div style={{ display: 'grid', gap: 9 }}>
+              <input className="inp" placeholder="Họ tên *" value={fn} onChange={(e) => setFn(e.target.value)} autoFocus />
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input className="inp" placeholder="Phòng ban" value={dep} onChange={(e) => setDep(e.target.value)} />
+                <input className="inp" placeholder="Chức danh" value={pos} onChange={(e) => setPos(e.target.value)} />
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input className="inp" type="date" value={hd} onChange={(e) => setHd(e.target.value)} />
+                <input className="inp" type="number" placeholder="Lương cơ bản" value={sal} onChange={(e) => setSal(e.target.value)} />
+              </div>
+              <button className="btn-p" disabled={busy === 'emp'} onClick={addEmp} style={{ opacity: fn.trim() ? 1 : .5 }}><Icon name="plus" size={15} /> {busy === 'emp' ? 'Đang lưu…' : 'Lưu nhân viên'}</button>
             </div>
-            <button className="btn-p" disabled={busy === 'emp'} onClick={addEmp}>{busy === 'emp' ? 'Đang lưu…' : 'Lưu nhân viên'}</button>
           </div>
         </div>
       )}
