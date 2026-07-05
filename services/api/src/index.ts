@@ -8,17 +8,10 @@ import { login } from './auth/service.js';
 import { requireAuth, orgOf, requirePermission } from './auth/middleware.js';
 import { rateLimit } from './middleware/rateLimit.js';
 import { buildTieuTamRoutes } from './tieu-tam/routes.js';
-import { buildChatRoutes } from '@citadel/module-chat/server/routes.js';
-import { publishEvent } from '@citadel/module-chat/server/emit.js';
 import { dashboard } from './dashboard/routes.js';
-import { buildNotificationRoutes } from '@citadel/module-notification/server/routes.js';
-import { buildCrmRoutes } from '@citadel/module-crm/server/routes.js';
 import { crmTools } from '@citadel/module-crm/server/tools.js';
-import { buildOmRoutes } from '@citadel/module-om/server/routes.js';
-import { buildInventoryRoutes } from '@citadel/module-inventory/server/routes.js';
-import { buildHrRoutes } from '@citadel/module-hr/server/routes.js';
-import { buildAccountingRoutes } from '@citadel/module-accounting/server/routes.js';
 import { buildModuleRoutes, requireModule } from './modules/routes.js';
+import { mountLoadedModules } from './modules/loader.js';
 import { buildCompanyModuleRoutes } from './company-module-routes.js';
 import { buildStoreItemRoutes, buildInventoryItemRoutes } from './items/routes.js';
 import { toolRegistry } from '@citadel/tieu-tam';
@@ -123,27 +116,19 @@ app.get('/api/v1/permissions', requireAuth, async (c) => {
 });
 
 app.route('/api/v1/tieu-tam', buildTieuTamRoutes({ db: getDb(), requireAuth, audit }));
-app.route('/api/v1/chat', buildChatRoutes({ db: getDb(), emit: publishEvent, requireAuth }));
 app.route('/api/v1/dashboard', dashboard);
-app.route('/api/v1/notifications', buildNotificationRoutes({ db: getDb(), requireAuth }));
-app.route('/api/v1/crm', buildCrmRoutes({ db: getDb(), requireAuth, gate: requireModule(getDb(), 'crm') } as any));
-app.route('/api/v1/om', buildOmRoutes({
-  db: getDb(), requireAuth, audit,
+mountLoadedModules(app, {
+  db: getDb(), requireAuth, requireModule, audit,
   // chi/chuyển Om > ngưỡng nhạy cảm → đòi bảo mật lớp 2
-  sensitiveGate: async (c, amount) => { if (amount > SENSITIVE_OM_THRESHOLD) await assertSecurityLevel(getDb(), c.get('auth'), 2); },
-}));
+  sensitiveGate: async (c: any, amount: number) => { if (amount > SENSITIVE_OM_THRESHOLD) await assertSecurityLevel(getDb(), c.get('auth'), 2); },
+  // hủy phiếu thu/chi (tiền đã vào sổ) = nhạy cảm → đòi lớp 2
+  cancelGate: async (c: any, kind: string) => { if (kind === 'payment') await assertSecurityLevel(getDb(), c.get('auth'), 2); },
+});
 app.route('/api/v1/modules', buildModuleRoutes({ db: getDb(), requireAuth, audit }));
 app.route('/api/v1/company-module', buildCompanyModuleRoutes({ db: getDb(), requireAuth, audit }));
 // V7A P3 — vòng kinh tế khép kín: store vật phẩm + kho chứa + sử dụng (hiệu ứng thật)
 app.route('/api/v1/store', buildStoreItemRoutes({ db: getDb(), requireAuth, audit }));
 app.route('/api/v1/inventory-items', buildInventoryItemRoutes({ db: getDb(), requireAuth, audit }));
-app.route('/api/v1/inventory', buildInventoryRoutes({ db: getDb(), requireAuth, gate: requireModule(getDb(), 'inventory') }));
-app.route('/api/v1/hr', buildHrRoutes({ db: getDb(), requireAuth, gate: requireModule(getDb(), 'hr'), audit }));
-app.route('/api/v1/accounting', buildAccountingRoutes({
-  db: getDb(), requireAuth, gate: requireModule(getDb(), 'accounting'), audit,
-  // hủy phiếu thu/chi (tiền đã vào sổ) = nhạy cảm → đòi lớp 2
-  cancelGate: async (c, kind) => { if (kind === 'payment') await assertSecurityLevel(getDb(), c.get('auth'), 2); },
-}));
 app.route('/api/v1/audit-logs', buildAuditRoutes({ db: getDb(), requireAuth }));
 
 // list users trong org (cho modal tạo phòng chat)

@@ -11,13 +11,19 @@
   },
   "phases": {
     "r9A_manifest_schema": "done",
-    "r9B_loader_strict": "pending",
+    "r9B_loader_strict": "done",
     "r9C_verify_release_v9": "pending",
     "r10A_outbox_core": "pending",
     "r10B_module_contract": "pending",
     "r10C_final_verify_release_v10": "pending"
   },
-  "commits": [],
+  "commits": [
+    {
+      "phase": "r9B_loader_strict",
+      "hash": "pending",
+      "message": "SUPERCITADEL-R9: Phase B loader strict auto"
+    }
+  ],
   "releases": [],
   "next": "done = toàn bộ R9+R10 verified live + CI SUCCESS + releases v9.0.0 & v10.0.0",
   "evidence": {
@@ -26,6 +32,15 @@
       "7 module manifests migrated to v2",
       "audit-manifests PASS 7/7",
       "pnpm -r typecheck/test/build PASS before commit"
+    ],
+    "r9B_loader_strict": [
+      "services/api/src/modules/loader.ts strict loader reads modules/*/manifest.json, validates, rejects invalid/dependsOn/missing builder without crashing",
+      "mountLoadedModules auto-mounts 7 manifest-backed modules; loader-status route mounted before /api/v1/modules catalog route",
+      "catalog.ts derives real modules from manifests and appends external/non-mounted demo/custom/coming entries (automato-secretary, company-module, pos)",
+      "pnpm -r typecheck PASS",
+      "pnpm -r test PASS incl rl, v7a-p1..p6, v8-rent, v8_5, v9",
+      "pnpm build PASS",
+      "./node_modules/.pnpm/node_modules/.bin/tsx scripts/audit-manifests.mts PASS 7/7"
     ]
   }
 }

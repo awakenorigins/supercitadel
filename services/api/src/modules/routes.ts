@@ -33,7 +33,7 @@ async function orgState(db: any, orgId: string) {
     return {
       ...m,
       active: isCore ? true : (r?.status === 'active'),
-      purchased: isCore || m.tier === 'free' ? true : (r?.purchased ?? false),
+      purchased: isCore ? true : (r?.purchased ?? false),
       rentedUntil,
       rentDaysLeft: rentDaysLeft(r?.rentedUntil),
     };
@@ -47,7 +47,7 @@ export async function isModuleActive(db: any, orgId: string, moduleId: string): 
     .where(and(eq(orgModules.orgId, orgId), eq(orgModules.moduleId, moduleId)));
   if (r?.status !== 'active') return false;
   const def = MODULE_CATALOG.find((m) => m.id === moduleId);
-  if (def?.tier !== 'paid') return true; // free: chỉ cần active
+  if (def?.tier !== 'paid') return true;
   const rentOk = r.rentedUntil && new Date(r.rentedUntil).getTime() > Date.now();
   return Boolean(r.purchased || rentOk);
 }
@@ -142,7 +142,7 @@ export function buildModuleRoutes(deps: { db: any; requireAuth: MiddlewareHandle
     return c.json({ ok: true, module: id, days, paidOm, rentedUntil: rentedUntil.toISOString(), balance: pay.balance });
   });
 
-  // POST /:id/activate — bật (free: luôn được; paid: phải purchased hoặc rent còn hạn)
+  // POST /:id/activate — bật (paid: phải purchased hoặc rent còn hạn)
   r.post('/:id/activate', async (c) => {
     const id = c.req.param('id');
     const def = MODULE_CATALOG.find((m) => m.id === id);
