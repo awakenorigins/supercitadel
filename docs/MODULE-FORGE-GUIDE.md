@@ -1,145 +1,160 @@
-# SUPERCITADEL — MODULE FORGE GUIDE (v1.0 · R7.6)
+# SUPERCITADEL — MODULE FORGE GUIDE (v2.0 · R9 STRICT LOADER)
 
-> **Tài liệu này dành cho AI assistant / developer bên ngoài.**
-> Đọc xong file này, bạn phải đủ hiểu SUPERCITADEL để: (1) thiết kế một module nghiệp vụ mới plug-and-play, (2) đánh giá một repo open-source có fork được thành module không, (3) viết code đúng contract mà không cần hỏi thêm.
-> English summary at the bottom.
+> Dành cho AI assistant / developer bên ngoài. Sau khi đọc, bạn phải đủ hiểu để forge module nghiệp vụ plug-and-play cho SUPERCITADEL mà không phá multi-tenant, không lệch manifest, và không cần sửa core loader.
 
 ---
 
 ## 1. SUPERCITADEL LÀ GÌ
 
-Hệ điều hành quản trị doanh nghiệp Việt (business operating system for Vietnamese SMEs): mỗi tổ chức (org/tenant) bật các **module nghiệp vụ** (CRM, Kho, Kế toán, Nhân sự…) từ Cửa hàng Module, trả bằng tiền tệ nội bộ **Om**. Trợ lý AI **Tiểu Tâm** (LLM engine: Claude Sonnet 4.6 mặc định + GPT 5.5, hoán đổi được) đọc/ghi dữ liệu thật của module qua **action tools** — người dùng ra lệnh tiếng Việt, AI thao tác DB thật.
+SUPERCITADEL là hệ điều hành quản trị doanh nghiệp Việt cho SME: mỗi tổ chức bật module nghiệp vụ (CRM, Kế toán, Nhân sự, Kho, OM wallet, Chat...) từ catalog, trả bằng Om. Trợ lý AI Tiểu Tâm đọc/ghi dữ liệu thật qua action tools có kiểm quyền.
 
-- **Live demo:** https://supercitadel.62.146.238.213.sslip.io (token demo: xem README)
-- **Repo:** https://github.com/NachaFromMars/supercitadel
+- Live demo: `https://supercitadel.62.146.238.213.sslip.io`
+- Repo: `https://github.com/NachaFromMars/supercitadel`
+- Ngôn ngữ sản phẩm: tiếng Việt.
 
-## 2. TECH STACK (chính xác, để match repo khi fork)
+## 2. TECH STACK
 
-| Layer | Công nghệ | Version | Ghi chú |
-|---|---|---|---|
-| Ngôn ngữ | **TypeScript** (100%, ESM `type: module`) | TS 5.x | KHÔNG Python/Go/Java |
-| Monorepo | **pnpm workspaces + turbo** | pnpm 9 | `packages/* services/* modules/* apps/*` |
-| API | **Hono** (Node adapter) | ^4.6 | REST `/api/v1/*`, KHÔNG Express/Nest |
-| ORM | **Drizzle ORM** | ^0.36 | schema-first TS, KHÔNG Prisma/TypeORM |
-| DB | **PostgreSQL 16 + pgvector** | 16 | multi-tenant bằng cột `org_id` (KHÔNG schema-per-tenant) |
-| Cache/queue | **Redis 7** | 7 | pub/sub cho realtime |
-| Realtime | **ws** (WebSocket service riêng) | — | API bắn event qua `/internal/publish` |
-| Frontend | **Next.js 15 App Router + React 19** | 15 / 19 | CSS thuần design-token trong `globals.css` — **KHÔNG Tailwind, KHÔNG UI lib** |
-| Auth | JWT (jose), login bằng token seed | — | role: owner / manager / staff |
-| AI engine | OpenAI-compatible chat completions + function calling | — | adapter pattern, đổi model = đổi env |
-| Deploy | Docker Compose (`node:22-slim`) + Caddy reverse proxy | Node 22 | ports 3000 web / 3001 api / 3002 ws |
-| Test | `tsx` test files + script audit endpoint | — | `pnpm -r test`, KHÔNG jest/vitest |
+| Layer | Công nghệ | Ghi chú |
+|---|---|---|
+| Monorepo | pnpm workspaces + turbo | `packages/* services/* modules/* apps/*` |
+| API | Hono, TypeScript ESM | REST `/api/v1/*` |
+| DB | PostgreSQL 16 + Drizzle | multi-tenant qua `org_id` |
+| Realtime | Redis pub/sub + ws service | API publish nội bộ |
+| Frontend | Next.js App Router | CSS tokens thuần, không Tailwind/UI lib |
+| Auth | JWT | role owner/manager/staff |
+| Deploy | Docker Compose + Caddy | không sửa Caddy khi forge module |
+| Test | `tsx` scripts | không Jest/Vitest |
 
-## 3. KIẾN TRÚC THƯ MỤC
+## 3. MODULE LÀ GÌ
 
-```
-supercitadel/
-├── apps/web/                  # Next.js 15 — mỗi module có app/<route>/page.tsx
-├── services/
-│   ├── api/                   # Hono gateway: mount routes, auth, audit, tool registry
-│   │   └── src/tieu-tam/      # AI: action tools + chat routes (persistence, multi-turn)
-│   └── ws/                    # WebSocket + Redis pub/sub
-├── packages/
-│   ├── core/                  # types + env + AppError
-│   ├── db/                    # Drizzle schema chung + migrations/*.sql (đánh số 0001…)
-│   └── tieu-tam/              # AI engine: adapters (sonnet-4.6/gpt-5.5/stub), persona, memory
-└── modules/<id>/              # ★ MODULE NGHIỆP VỤ — đơn vị plug-and-play
-    ├── manifest.json          # id, name, tier, priceOm, permissions, tools, routes
-    ├── package.json           # "@citadel/module-<id>", exports ./server/*.js → *.ts
-    ├── migrations/*.sql       # bảng riêng của module (LUÔN có cột org_id)
-    └── server/
-        ├── schema.ts          # Drizzle pgTable — mọi bảng có org_id + index (org_id, …)
-        ├── service.ts         # business logic thuần (db, orgId, params) → row
-        ├── routes.ts          # buildXxxRoutes({ db, requireAuth, gate }) → Hono app
-        ├── tools.ts           # (optional) AI tools đọc dữ liệu cho Tiểu Tâm
-        └── *.test.ts          # test chạy bằng tsx
+Một module là thư mục `modules/<id>/`:
+
+```text
+modules/<id>/
+├── manifest.json          # nguồn sự thật để loader quyết định nạp/từ chối
+├── package.json           # package module, ESM
+├── migrations/*.sql       # bảng riêng, luôn có org_id
+└── server/
+    ├── schema.ts          # Drizzle pgTable
+    ├── service.ts         # business logic thuần
+    ├── routes.ts          # Hono route factory
+    ├── tools.ts           # optional AI read tools
+    └── events.ts          # optional từ R10: outbox handlers
 ```
 
-## 4. CONTRACT MODULE PLUG-AND-PLAY (6 bước bắt buộc)
+Từ R9, catalog và mount route lấy từ manifest hợp lệ. Không thêm catalog hardcode cho module thật.
 
-Một module mới tên `<id>` phải có đúng các mảnh sau:
+## 4. MANIFEST SCHEMA v2 — BẮT BUỘC
 
-1. **`modules/<id>/manifest.json`** — khai báo:
+`modules/<id>/manifest.json` phải đúng schema v2:
+
 ```json
 {
-  "id": "<id>", "name": "Tên hiển thị", "version": "1.0.0",
-  "tier": "paid|core|custom", "priceOm": 400,
-  "icon": "i-<icon>", "description": "…",
-  "permissions": ["<id>:read", "<id>:write"],
-  "tools": ["<id>.query_x"],
-  "routes": "/api/v1/<id>",
-  "docs": "docs/GUIDE.md"
+  "id": "inventory",
+  "name": "Kho",
+  "version": "1.0.0",
+  "tier": "paid",
+  "priceOm": 400,
+  "icon": "i-box",
+  "description": "Quản lý tồn kho theo tổ chức.",
+  "permissions": [
+    "inventory.item.read",
+    "inventory.item.write"
+  ],
+  "routes": "/api/v1/inventory",
+  "docs": "docs/MODULE-FORGE-GUIDE.md",
+  "dependsOn": [],
+  "engine": "^1.0.0"
 }
 ```
-2. **Schema + migration** — mọi bảng: `id uuid pk default gen_random_uuid()`, **`org_id uuid NOT NULL`** (tenant isolation — bắt buộc), index `(org_id, ...)`. Migration đặt ở `modules/<id>/migrations/0001_<id>.sql` (hoặc `packages/db/migrations/` nếu đụng bảng chung). Runner: `pnpm --filter @citadel/db exec tsx src/migrate.ts` + deploy.sh tự áp module migrations.
-3. **Service** — hàm thuần `(db, orgId, params) → row`. KHÔNG đọc request, KHÔNG biết Hono. Validate bằng `Errors.validation(...)` từ `@citadel/core`.
-4. **Routes** — factory `buildXxxRoutes({ db, requireAuth, gate })` trả Hono app. Mount trong `services/api/src/index.ts`:
-```ts
-app.route('/api/v1/<id>', buildXxxRoutes({ db: getDb(), requireAuth, gate: requireModule(getDb(), '<id>') }));
-```
-`gate` chặn org chưa mua/bật module (HTTP 403). `orgOf(c)` lấy org từ JWT — **mọi query PHẢI filter org_id**.
-5. **Catalog entry** — thêm vào `services/api/src/modules/catalog.ts` (`MODULE_CATALOG`): id, name, icon, desc, tier, priceOm, group, route FE, status (`ready|demo|coming_soon|open`).
-6. **Frontend** — `apps/web/app/<route>/page.tsx`, dùng CSS tokens có sẵn trong `globals.css` (`.card .btn-p .chip .dt .biz-main .biz-aside`…), fetch qua `lib/api.ts` (tự gắn Bearer). Layout nghiệp vụ chuẩn: 2 cột `biz-main + biz-aside`, mobile-first 480px.
 
-**Tùy chọn nâng cao:**
-- **AI tools** (`server/tools.ts`): đăng ký vào `toolRegistry` để Tiểu Tâm ĐỌC dữ liệu; muốn Tiểu Tâm LÀM hành động (ghi DB) → thêm action vào `services/api/src/tieu-tam/actions.ts` (khuôn: `gate → service → audit → result`, xem `hr.add_employee`).
-- **Realtime**: POST `/internal/publish` của ws service để đẩy event.
-- **Audit**: gọi `audit(c, { action, resource, resourceId, detail })` cho mọi mutation.
-- **Tutorial tour**: thêm tour vào `apps/web/components/Tutorial.tsx` (`TOURS`), anchor bằng `data-tut="..."`.
+### Field rules
 
-## 5. QUY TẮC BẤT DI BẤT DỊCH
+| Field | Bắt buộc | Quy tắc |
+|---|---:|---|
+| `id` | yes | `^[a-z][a-z0-9-]*$`, trùng tên thư mục module |
+| `name` | yes | string không rỗng, tiếng Việt tốt nhất |
+| `version` | yes | semver `x.y.z` |
+| `tier` | yes | `core`, `paid`, `demo`, hoặc `custom` |
+| `priceOm` | yes | number `>= 0` |
+| `icon` | yes | string không rỗng |
+| `description` | yes | string không rỗng |
+| `permissions` | yes | array permission key dạng `module.resource.action` |
+| `routes` | yes | prefix `/api/v1/...` |
+| `docs` | yes | path tài liệu trong repo |
+| `dependsOn` | optional | array module id; dependency thiếu/bị reject thì module cũng bị reject |
+| `engine` | optional | semver range contract, ví dụ `^1.0.0` |
 
-1. `org_id` trên mọi bảng + mọi query — RÒ TENANT = FAIL.
-2. Không thêm dependency mới khi chưa thật cần (UI = CSS thuần, không lib).
-3. Typecheck + test + build pass trước mọi commit: `pnpm -r typecheck && pnpm -r test && pnpm -r build`.
-4. Tiếng Việt là ngôn ngữ sản phẩm (UI text, message lỗi, docs người dùng).
-5. Không commit secret — `.env` untracked; mẫu biến trong README.
-6. Commit prefix theo round: `SUPERCITADEL-R<n>: <mô tả>`.
-7. Mutation quan trọng → ghi audit log.
+### Strict loader
 
-## 6. TÌM REPO OPEN-SOURCE ĐỂ FORK — TỪ KHÓA & TIÊU CHÍ
+- Manifest sai field bắt buộc → module bị từ chối nạp, server vẫn chạy.
+- `dependsOn` không tồn tại hoặc dependency bị reject → từ chối dây chuyền.
+- Module có manifest hợp lệ nhưng chưa có route builder đăng ký trong loader → từ chối.
+- Field lạ không làm crash, nhưng được warning để dọn schema.
+- Admin xem trạng thái tại `GET /api/v1/modules/loader-status` (owner+; staff 403).
 
-### 6.1 Thuật ngữ tìm kiếm hiệu quả (GitHub search)
-| Nghiệp vụ cần | Từ khóa tìm repo | Ví dụ repo đáng xem |
+### Lỗi thường gặp
+
+| Lỗi | Kết quả | Cách sửa |
 |---|---|---|
-| ERP tổng | `erp typescript postgres`, `open source erp nodejs` | ERPNext (Python — chỉ tham khảo thiết kế DocType), Ever-Gauzy (TS/NestJS) |
-| CRM | `crm typescript self-hosted`, `headless crm api` | Twenty (TS+React+Postgres ★), frappe/crm (Vue) |
-| Kế toán | `double entry accounting library typescript`, `ledger nodejs` | medici (Mongo — port logic), akaunting (PHP — tham khảo schema) |
-| Kho/tồn kho | `inventory management nodejs postgres`, `warehouse api typescript` | Ever-Gauzy inventory, ERPNext stock (tham khảo valuation) |
-| Nhân sự/chấm công | `hrms open source`, `attendance payroll typescript` | frappe/hrms (Python — tham khảo 13 sub-module), horilla (Python) |
-| POS | `pos system typescript react`, `point of sale postgres` | — đang coming_soon, ưu tiên forge mới |
-| E-invoice VN | `vietnam e-invoice`, `hóa đơn điện tử api` | viettel/vnpt sdk wrappers |
-| Booking/lịch hẹn | `appointment scheduling typescript self-hosted` | cal.com (TS ★ dễ port nhất) |
-| Helpdesk/ticket | `helpdesk typescript open source` | frappe/helpdesk, peppermint (TS) |
+| `id: "Inventory"` | reject | đổi thành `inventory` |
+| `version: "1"` | reject | dùng `1.0.0` |
+| `tier: "enterprise"` | reject | dùng `paid/custom/demo/core` |
+| `priceOm: -1` | reject | số `>= 0` |
+| `permissions: ["inventory:read"]` | reject | đổi sang `inventory.item.read` |
+| `routes: "/inventory"` | reject | đổi sang `/api/v1/inventory` |
+| `dependsOn: ["missing"]` | reject | thêm module dependency hoặc bỏ dependsOn |
 
-### 6.2 Tiêu chí chấm repo TRƯỚC khi fork (chấm nhanh 5 điểm)
-1. **Ngôn ngữ TS/JS?** — TS = port thẳng service logic; Python/PHP/Go = CHỈ lấy thiết kế schema + business rules, viết lại TS (thường nhanh hơn port).
-2. **Postgres?** — cùng DB = migration dịch gần 1:1; Mongo/MySQL = phải map lại kiểu dữ liệu.
-3. **Business logic tách API không?** — có service layer sạch = port dễ; logic trộn controller = mất công gỡ.
-4. **License** — MIT/Apache-2.0 = fork thoải mái; AGPL (ERPNext, cal.com…) = chỉ THAM KHẢO THIẾT KẾ, không copy code nguyên văn vào repo closed-source.
-5. **Multi-tenant sẵn chưa?** — hầu hết repo là single-tenant → khi port PHẢI thêm org_id vào mọi bảng/query (đây là việc chính của người forge).
+## 5. CONTRACT CODE MODULE
 
-### 6.3 Chiến lược đã chứng minh (từ docs/FORK-PLAN.md — deepdive ERPNext thật)
-> ERPNext accounts = 192 DocTypes, stock = 78 — KHÔNG port nguyên khối. Chiến lược đúng: **lấy 15-20% bề mặt nghiệp vụ mà SME Việt cần**, thiết kế lại bằng Drizzle schema gọn, giữ đúng business rules (sổ kép, valuation, leave allocation…), bỏ enterprise features (multi-currency phức tạp, manufacturing, asset).
+1. **Schema + migration**: mọi bảng business phải có `org_id uuid NOT NULL`, index `(org_id, ...)`. Migration đặt trong `modules/<id>/migrations/` nếu module riêng; chỉ dùng `packages/db/migrations/` khi tạo bảng chung.
+2. **Service thuần**: hàm dạng `(db, orgId, params) => row`. Không đọc Hono request trong service. Validate bằng `Errors.validation(...)` từ `@citadel/core`.
+3. **Routes**: export factory `buildXxxRoutes({ db, requireAuth, gate })`. Mọi query filter `org_id` từ JWT. Mọi mutation quan trọng ghi audit.
+4. **Permissions**: permission key trong manifest phải khớp registry và middleware format `module.resource.action`.
+5. **Frontend**: `apps/web/app/<route>/page.tsx`, dùng CSS token có sẵn (`card`, `btn-p`, `chip`, `biz-main`, `biz-aside`), không thêm UI dependency.
+6. **AI tools/actions**: tools đọc đặt trong module; action ghi qua service + gate + audit.
 
-**Pipeline forge chuẩn:** đọc schema repo nguồn → chọn bảng lõi → viết Drizzle schema (+org_id) → viết service.ts theo business rules → routes theo contract §4 → catalog + FE + AI tools → test + audit endpoint.
+## 6. VERIFY TRƯỚC KHI MERGE
 
-## 7. CHO AI BOX: PROMPT KHUNG KHI THIẾT KẾ MODULE
+Chạy tối thiểu:
 
-Khi được đưa link repo này + yêu cầu forge module `<X>`, hãy:
-1. Đọc file này + `docs/DEV_GUIDE.md` + 1 module mẫu (khuyên: `modules/crm/` — đủ schema/service/routes/tools, hoặc `modules/hr/` — có service-v2 + leave).
-2. Trả lời đủ: bảng nào (schema + org_id + index), endpoint nào (REST CRUD + nghiệp vụ đặc thù), quyền gì (owner/manager/staff), AI tools/actions nào cho Tiểu Tâm, FE page layout nào, giá Om + tier + group nào.
-3. Code theo đúng contract §4, quy tắc §5. Mọi text hướng người dùng bằng tiếng Việt.
-4. Test tối thiểu: tạo/đọc đúng org, org khác không thấy (tenant isolation), gate 403 khi module chưa bật.
+```bash
+pnpm -r typecheck
+pnpm -r test
+pnpm -r build
+pnpm --filter @citadel/api exec tsx ../../scripts/audit-manifests.mts
+pnpm --filter @citadel/api exec tsx ../../scripts/audit-module-docs.mts
+pnpm --filter @citadel/api exec tsx ../../scripts/audit-buttons.mts
+```
 
----
+Live R9 phải chứng minh:
 
-## English Summary (for non-Vietnamese AI assistants)
+- `/api/v1/modules` trả catalog từ manifest thật.
+- `/api/v1/modules/loader-status` owner 200, staff 403.
+- Routes của module hợp lệ còn sống.
+- Login/chat/action cũ không gãy.
 
-**SUPERCITADEL** is a TypeScript business-OS monorepo for Vietnamese SMEs: **pnpm + turbo**, **Hono** REST API (`services/api`), **Drizzle ORM + PostgreSQL 16** (multi-tenant via `org_id` column on every table), **Redis** pub/sub + dedicated **ws** WebSocket service, **Next.js 15 / React 19** frontend with plain CSS design tokens (no Tailwind), JWT auth, Docker Compose deploy (Node 22). An LLM assistant ("Tiểu Tâm", OpenAI-compatible function calling, Claude Sonnet 4.6 default + GPT 5.5 switchable) executes real business actions against module data.
+## 7. QUY TẮC BẤT DI BẤT DỊCH
 
-A **module** is a folder `modules/<id>/` with: `manifest.json` (id/tier/priceOm/permissions/tools/routes), SQL migrations (every table MUST have `org_id uuid NOT NULL` + composite index), `server/schema.ts` (Drizzle), `server/service.ts` (pure functions `(db, orgId, params)`), `server/routes.ts` (Hono factory `buildXxxRoutes({db, requireAuth, gate})` mounted at `/api/v1/<id>` in `services/api/src/index.ts`), a catalog entry in `services/api/src/modules/catalog.ts`, a Next.js page in `apps/web/app/<route>/`, and optionally AI tools (read) in `server/tools.ts` plus AI actions (write) in `services/api/src/tieu-tam/actions.ts`.
+1. `org_id` trên mọi bảng + mọi query. Rò tenant = fail.
+2. Không thêm dependency mới nếu chưa thật cần.
+3. Typecheck/test/build pass trước commit.
+4. UI/API/docs hướng người dùng bằng tiếng Việt.
+5. Không commit secret, token, `.env` thật.
+6. Commit prefix theo round: `SUPERCITADEL-R<n>:`.
+7. Không sửa logic module `inventory` khi không được yêu cầu; module kho riêng sẽ cắm vào contract outbox R10.
 
-Hard rules: tenant isolation via `org_id` everywhere; no new dependencies without strong need; `pnpm -r typecheck && test && build` must pass; Vietnamese product language; never commit secrets; commit prefix `SUPERCITADEL-R<n>:`.
+## 8. GỢI Ý FORGE MODULE KHO/NGHIỆP VỤ MỚI
 
-When evaluating open-source repos to fork: prefer TypeScript + Postgres + clean service layer + MIT/Apache license; AGPL sources may only be used as design reference. Most OSS is single-tenant — adding `org_id` scoping is the core porting work. Do not port giant ERPs wholesale; extract the 15-20% of tables/rules that Vietnamese SMEs actually need and re-implement them against the contract above.
+Khi forge module `<id>`:
+
+1. Đọc guide này + module mẫu (`crm`, `hr`, `accounting`).
+2. Thiết kế schema có `org_id`, endpoint REST, quyền, action audit, UI page.
+3. Viết manifest v2 trước, chạy audit manifest sớm.
+4. Viết service trước route để test tenant isolation dễ.
+5. Thêm route builder vào loader map nếu đây là module built-in trong repo.
+6. Verify org A không đọc/ghi dữ liệu org B.
+
+## English Summary
+
+SUPERCITADEL modules are TypeScript ESM folders under `modules/<id>`. Since R9, `manifest.json` schema v2 is the source of truth for catalog and loading. The strict loader validates manifests, rejects invalid modules without crashing the API, rejects missing dependencies, and exposes owner-only `/api/v1/modules/loader-status`. A valid manifest requires `id`, `name`, semver `version`, `tier`, non-negative `priceOm`, `icon`, `description`, `permissions` in `module.resource.action` format, `/api/v1/...` `routes`, and `docs`; `dependsOn` and `engine` are optional. Every table and query must be org-scoped with `org_id`. No new dependencies, no secrets, Vietnamese product text, and typecheck/test/build/audit gates must pass before commit.

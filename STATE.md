@@ -1,4 +1,10 @@
 # SUPERCITADEL Build — State (nền Citadel V7A, repo NachaFromMars/supercitadel)
+## Mạch SUPERCITADEL-R9 (Module Loader FULL strict — 2026-07-05)
+- Phase A: `packages/core/src/manifest.ts` định nghĩa manifest schema v2 + `validateManifest()` strict; 7 manifest module migrated sang permission format `module.resource.action`; audit-manifests PASS.
+- Phase B: `services/api/src/modules/loader.ts` đọc `modules/*/manifest.json`, validate strict, reject manifest lỗi/dependsOn lỗi/missing route builder mà không crash API; catalog sinh từ manifest; endpoint owner-only `GET /api/v1/modules/loader-status`; test v9 cover loaded/rejected/dependsOn/catalog.
+- Phase C: `docs/MODULE-FORGE-GUIDE.md` nâng lên v2 (schema v2, strict loader, lỗi thường gặp, verify); README highlight loader strict; CI thêm gate `audit-manifests` trước docs/buttons/secret; release mục tiêu `v9.0.0`.
+- Gate R9 yêu cầu trước release: `pnpm -r typecheck`, `pnpm -r test`, `pnpm -r build`, `acceptance-v7a 9/9`, `audit-buttons`, `audit-manifests`, `audit-module-docs`, deploy live và verify-r9.
+
 ## Mạch SUPERCITADEL-R8.5 (RBAC permission registry + dry-run Tiểu Tâm — 2026-07-05)
 - Phase A: `packages/core/src/permissions.ts` thêm registry quyền `module.resource.action`, metadata securityLevel/sensitive, wildcard role permissions và helper `hasPermission/requiredSecurityLevel/permissionsForRole`; API thêm `requirePermission()` + `GET /api/v1/permissions`; hard gate đổi role đi qua registry. Commit `c41c1a8`.
 - Phase B: Tiểu Tâm action registry gắn `permission/securityLevel/sensitive`; `executeAction()` check module + RBAC + securityLevel, action sensitive tự dry-run trả `preview/pendingAction`; confirm chạy thật, audit đủ `tieu_tam.action_dryrun` + `tieu_tam.action`. Test v8_5 cover staff denied, no-write dry-run, confirm exactly one row, cross-org. Commit `65a2d72`.

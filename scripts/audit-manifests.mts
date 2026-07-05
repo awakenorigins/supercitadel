@@ -1,7 +1,8 @@
-import { readFileSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { validateManifest } from '../packages/core/src/manifest.js';
-const root = process.cwd();
+let root = process.cwd();
+while (!existsSync(join(root, 'modules')) && root !== dirname(root)) root = dirname(root);
 const dirs = readdirSync(join(root, 'modules'), { withFileTypes: true }).filter(d => d.isDirectory()).map(d => d.name).sort();
 let fail = 0;
 for (const id of dirs) {

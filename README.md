@@ -1,6 +1,6 @@
 # SUPERCITADEL — Pháo đài quản trị doanh nghiệp Việt
 
-![release](https://img.shields.io/badge/release-r7.2.0-jade) ![stack](https://img.shields.io/badge/stack-Next.js%20%2B%20Hono%20%2B%20Postgres-blue) ![pnpm](https://img.shields.io/badge/pnpm-monorepo-orange) ![beta](https://img.shields.io/badge/beta-open%20access-violet)
+![release](https://img.shields.io/badge/release-v9.0.0-jade) ![stack](https://img.shields.io/badge/stack-Next.js%20%2B%20Hono%20%2B%20Postgres-blue) ![pnpm](https://img.shields.io/badge/pnpm-monorepo-orange) ![beta](https://img.shields.io/badge/beta-open%20access-violet)
 
 SUPERCITADEL là nền tảng quản trị doanh nghiệp Việt theo mô hình **pháo đài số**: mỗi tổ chức có tenant riêng, ví Om riêng, module nghiệp vụ riêng và trợ lý AI **Tiểu Tâm** sống trong hệ thống để hỗ trợ vận hành bằng ngôn ngữ tự nhiên.
 
@@ -12,6 +12,7 @@ SUPERCITADEL là nền tảng quản trị doanh nghiệp Việt theo mô hình 
 - **Realtime:** Redis/WebSocket cho chat/notification.
 - **AI:** package `@citadel/tieu-tam`, action layer gắn vào các module nghiệp vụ.
 - **Monorepo:** pnpm workspace + Turborepo.
+- **Module loader strict (R9):** manifest v2 là nguồn sự thật; manifest sai chuẩn bị từ chối nạp, không làm sập API; owner xem `/api/v1/modules/loader-status`.
 
 ## Module catalog
 
@@ -37,6 +38,7 @@ SUPERCITADEL là nền tảng quản trị doanh nghiệp Việt theo mô hình 
 - **r6:** Tiểu Tâm **Sonnet 4.6** action layer, 13 actions chạy thật trên CRM/Kho/Kế toán/Om.
 - **r7:** Module Company wizard — mô tả công ty riêng, chấp nhận điều khoản beta, tạo hồ sơ forge tenant-scoped.
 - **r7.2 (R7.5+R7.6):** Tiểu Tâm **2 engine** (Sonnet 4.6 ⭐ + GPT 5.5 🚀, gạt công tắc ở `/tieu-tam`); **chat persistence** — hội thoại lưu DB, mở lại còn nguyên, multi-turn nhớ ngữ cảnh 20 lượt; action `hr.add_employee` thêm nhân viên thật; fix widget chat SSE (stream:false + parser) + nút gửi 46px mobile; tutorial versioned + tour Module Company + nút "?" nổi gọi lại hướng dẫn trên mobile; `docs/MODULE-FORGE-GUIDE.md` cho AI/dev ngoài forge module.
+- **v9.0.0:** Module Loader FULL strict — 7 manifest v2 được validate tự động, catalog sinh từ manifest, module lỗi bị reject có lý do tiếng Việt, `loader-status` owner-only, CI thêm gate `audit-manifests`.
 
 ### Ví dụ lệnh Tiểu Tâm action layer r6
 
@@ -51,7 +53,7 @@ Action layer r6 gồm 13 actions: nhận diện ý định, tạo khách/deal, �
 
 ## 🔧 Forge module mới / Fork từ open-source (cho AI & developer)
 
-**Đọc `docs/MODULE-FORGE-GUIDE.md` trước.** Tài liệu đó viết cho AI assistant/dev bên ngoài: stack chính xác (TypeScript · Hono · Drizzle · Postgres multi-tenant `org_id` · Next.js 15 không Tailwind · pnpm monorepo), contract module plug-and-play 6 bước (manifest → migration → service → routes → catalog → FE), quy tắc bất di bất dịch, từ khóa tìm repo open-source theo từng nghiệp vụ + tiêu chí chấm repo trước khi fork (ngôn ngữ/DB/license/multi-tenant), và prompt khung cho AI box. Kèm English summary.
+**Đọc `docs/MODULE-FORGE-GUIDE.md` trước.** Tài liệu đó viết cho AI assistant/dev bên ngoài: stack chính xác (TypeScript · Hono · Drizzle · Postgres multi-tenant `org_id` · Next.js 15 không Tailwind · pnpm monorepo), manifest schema v2 strict, loader tự động, contract code module, quy tắc bất di bất dịch, từ khóa tìm repo open-source theo từng nghiệp vụ + tiêu chí chấm repo trước khi fork (ngôn ngữ/DB/license/multi-tenant), và prompt khung cho AI box. Kèm English summary.
 
 Tài liệu liên quan: `docs/DEV_GUIDE.md` (dev local + khuôn module), `docs/API.md` (endpoint), `docs/FORK-PLAN.md` (deepdive ERPNext/frappe — chiến lược lấy 15-20% bề mặt nghiệp vụ), `docs/Module-Forge-Prompt.txt` (prompt tổng forge module công ty).
 
