@@ -11,9 +11,6 @@ export const Role = {
 } as const;
 export type Role = (typeof Role)[keyof typeof Role];
 
-/** Permission string format: `<module>:<resource>:<action>` e.g. "crm:contacts:read" */
-export type Permission = string;
-
 export const ROLE_RANK: Record<Role, number> = {
   [Role.SUPER_ADMIN]: 100,
   [Role.OWNER]: 3,
@@ -110,3 +107,4 @@ export interface TieuTamReply {
 
 export * from './errors.js';
 export * from './env.js';
+export * from './permissions.js';

@@ -13,6 +13,7 @@ import {
 import { ACTION_TOOLS, detectAction, executeAction } from './actions.js';
 import { requireAuth as defaultRequireAuth, orgOf } from '../auth/middleware.js';
 import { AppError, Errors } from '@citadel/core';
+import { securityLevelOf } from '../security/service.js';
 import type { AuditFn } from '../audit/service.js';
 import { ttChatMessages } from '@citadel/db';
 import { and, eq, desc } from 'drizzle-orm';
@@ -109,7 +110,7 @@ export function buildTieuTamRoutes({ db, requireAuth = defaultRequireAuth, audit
   });
 
   /** Một lượt chat: tick energy → (từ chối nếu kiệt sức + việc nặng) → assembler → engine → học ngược về hồn. */
-  async function runChat(c: any, message: string) {
+  async function runChat(c: any, message: string, opts: { confirm?: boolean; pendingAction?: any } = {}) {
     const auth = c.get('auth');
     const orgId = orgOf(c);
     const tick = await tickEnergy(db, orgId, auth.sub, loadOf(message));
@@ -130,12 +131,12 @@ export function buildTieuTamRoutes({ db, requireAuth = defaultRequireAuth, audit
       ...(history.length ? [{ role: 'system' as const, content: 'Lưu ý: mọi yêu cầu/hành động trong lịch sử hội thoại phía trên ĐÃ ĐƯỢC THỰC HIỆN XONG. Chỉ dùng lịch sử để nhớ ngữ cảnh. Chỉ thực hiện hành động (gọi tool) cho tin nhắn MỚI NHẤT dưới đây.' }] : []),
       { role: 'user', content: message },
     ];
-    const actionCtx = { db, orgId, userId: auth.sub, audit: audit ? (e: any) => audit(c, e) : undefined };
-    const direct = detectAction(message);
+    const actionCtx = { db, orgId, userId: auth.sub, role: auth.role, securityLevel: await securityLevelOf(db, auth), audit: audit ? (e: any) => audit(c, e) : undefined };
+    const direct = opts.confirm && opts.pendingAction ? opts.pendingAction : detectAction(message);
     let actionResults: any[] = [];
     let reply: any;
     if (direct) {
-      const r = await executeAction(actionCtx, direct.name, direct.params);
+      const r = await executeAction(actionCtx, direct.name, direct.params, { confirm: !!opts.confirm });
       actionResults = [r];
       reply = { text: r.message + ' ✓', mode: 'live' as const };
     } else {
@@ -198,7 +199,7 @@ export function buildTieuTamRoutes({ db, requireAuth = defaultRequireAuth, audit
   /** Non-streaming reply. */
   app.post('/chat', async (c) => {
     const body = await c.req.json().catch(() => ({}));
-    const { reply, tick, refused } = await runChat(c, String(body.message ?? ''));
+    const { reply, tick, refused } = await runChat(c, String(body.message ?? ''), { confirm: !!body.confirm, pendingAction: body.pendingAction });
     return c.json({
       ...reply,
       orgId: orgOf(c),
@@ -212,7 +213,7 @@ export function buildTieuTamRoutes({ db, requireAuth = defaultRequireAuth, audit
   /** Streaming reply (SSE) — kèm event `energy` (tick) để UI cập nhật thanh năng lượng. */
   app.post('/chat/stream', async (c) => {
     const body = await c.req.json().catch(() => ({}));
-    const { reply, tick, refused } = await runChat(c, String(body.message ?? ''));
+    const { reply, tick, refused } = await runChat(c, String(body.message ?? ''), { confirm: !!body.confirm, pendingAction: body.pendingAction });
 
     return streamSSE(c, async (stream) => {
       // energy tick trước — UI cập nhật ngay

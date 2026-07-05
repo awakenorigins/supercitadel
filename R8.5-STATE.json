@@ -1,0 +1,19 @@
+{
+  "round": "R8.5",
+  "status": "running",
+  "startedAt": "2026-07-05T05:10:00+02:00",
+  "sessionKey": "agent:main:telegram:group:-1003720502853:topic:9871",
+  "brief": "R8.5-TASK.md",
+  "directives": {
+    "audit": "Anh Nấng lệnh audit kỹ — mỗi phase tự thẩm định bằng test/curl thật, không đoán.",
+    "inventory": "KHÔNG ĐỤNG logic inventory — chỉ được thêm permission declaration. Phase B only metadata/checks around inv action, no inventory service/data logic changed."
+  },
+  "phases": {
+    "pA_permission_registry": "implemented; evidence: pnpm --filter @citadel/core test PASS; pnpm --filter @citadel/api typecheck PASS",
+    "pB_tieutam_dryrun": "in_progress; action metadata + executeAction permission/security/dryrun implemented; tests pending",
+    "pC_fe": "pending",
+    "pD_verify_deploy_release": "pending"
+  },
+  "commits": [],
+  "next": "Finish B tests/routes, C FE, full D verify/deploy/release. R9 = Module Loader FULL strict. R10 = outbox."
+}

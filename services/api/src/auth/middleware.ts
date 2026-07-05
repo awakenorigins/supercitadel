@@ -1,7 +1,8 @@
 // Auth & RBAC middleware for Hono. Attaches tenant-scoped identity to context.
 import type { Context, Next } from 'hono';
 import { verifyJwt } from './jwt.js';
-import { Errors, ROLE_RANK, type Role, type JwtPayload } from '@citadel/core';
+import { Errors, ROLE_RANK, hasPermission, requiredSecurityLevel, type Permission, type Role, type JwtPayload } from '@citadel/core';
+import { securityLevelOf, SECURITY_UPGRADE_HINT } from '../security/service.js';
 
 // Hono context var typing
 declare module 'hono' {
@@ -30,6 +31,19 @@ export function requireRole(min: Role) {
     if (!auth) throw Errors.unauthorized();
     if (ROLE_RANK[auth.role] < ROLE_RANK[min])
       throw Errors.forbidden(`Cần quyền ${min} trở lên`);
+    await next();
+  };
+}
+
+/** Requires an explicit permission and the permission's minimum security level. Use AFTER requireAuth. */
+export function requirePermission(db: any, perm: Permission) {
+  return async (c: Context, next: Next) => {
+    const auth = c.get('auth');
+    if (!auth) throw Errors.unauthorized();
+    if (!hasPermission(auth.role, perm)) throw Errors.forbidden(`Bạn không có quyền ${perm} (PERMISSION_DENIED)`);
+    const need = requiredSecurityLevel(perm);
+    const level = await securityLevelOf(db, auth);
+    if (level < need) throw Errors.forbidden(`${SECURITY_UPGRADE_HINT} (SECURITY_LEVEL_REQUIRED: cần lớp ${need})`);
     await next();
   };
 }

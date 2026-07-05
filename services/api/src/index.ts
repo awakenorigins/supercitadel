@@ -5,7 +5,7 @@ import { AppError, loadApiEnv } from '@citadel/core';
 import { getDb, users } from '@citadel/db';
 import { sql, eq, and } from 'drizzle-orm';
 import { login } from './auth/service.js';
-import { requireAuth, orgOf } from './auth/middleware.js';
+import { requireAuth, orgOf, requirePermission } from './auth/middleware.js';
 import { rateLimit } from './middleware/rateLimit.js';
 import { buildTieuTamRoutes } from './tieu-tam/routes.js';
 import { buildChatRoutes } from '@citadel/module-chat/server/routes.js';
@@ -26,7 +26,7 @@ import { buildAuditRoutes } from './audit/routes.js';
 import { logAudit, makeAudit, ipOf } from './audit/service.js';
 import { bindEmail, bindPhone, securityInfo, assertSecurityLevel, SENSITIVE_OM_THRESHOLD } from './security/service.js';
 import { getBalance } from '@citadel/module-om/server/service.js';
-import { ROLE_RANK, Errors, type Role } from '@citadel/core';
+import { ROLE_RANK, Errors, PERMISSION_REGISTRY, permissionsForRole, type Role } from '@citadel/core';
 
 // R8: fail-fast — production KHÔNG được chạy với secret default (người clone deploy trần là tự mở két)
 if (process.env.NODE_ENV === 'production') {
@@ -101,7 +101,7 @@ app.post('/api/v1/me/bind-phone', requireAuth, async (c) => {
 });
 
 // Đổi role user — chỉ owner+, đòi bảo mật lớp 2 (hành động nhạy cảm)
-app.patch('/api/v1/users/:id/role', requireAuth, async (c) => {
+app.patch('/api/v1/users/:id/role', requireAuth, requirePermission(getDb(), 'core.user.role_change'), async (c) => {
   const auth = c.get('auth');
   if (ROLE_RANK[auth.role as Role] < ROLE_RANK.owner) throw Errors.forbidden('Chỉ chủ tổ chức mới đổi được quyền thành viên');
   await assertSecurityLevel(getDb(), auth, 2);
@@ -114,6 +114,12 @@ app.patch('/api/v1/users/:id/role', requireAuth, async (c) => {
   if (!row) throw Errors.notFound('Không tìm thấy thành viên trong tổ chức');
   await audit(c, { action: 'user.role_change', resource: 'user', resourceId: row.id, detail: { role } });
   return c.json({ ok: true, user: { id: row.id, role: row.role } });
+});
+
+app.get('/api/v1/permissions', requireAuth, async (c) => {
+  const auth = c.get('auth');
+  const sec = await securityInfo(getDb(), auth, 0);
+  return c.json({ registry: PERMISSION_REGISTRY, permissions: permissionsForRole(auth.role), role: auth.role, securityLevel: sec.securityLevel });
 });
 
 app.route('/api/v1/tieu-tam', buildTieuTamRoutes({ db: getDb(), requireAuth, audit }));
