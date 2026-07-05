@@ -13,6 +13,10 @@ interface Me {
 }
 interface PermissionMeta { key: string; module: string; resource: string; action: string; description: string; securityLevel: 1 | 2; sensitive: boolean }
 interface PermissionsResp { registry: PermissionMeta[]; permissions: string[]; role: string; securityLevel: number }
+type PersonaMode = 'friendly' | 'professional' | 'concise' | 'playful';
+interface TieuTamSettings { personaMode: PersonaMode; proactive: boolean; proactiveNote?: string }
+interface OrgResp { org: { id: string; name: string; slug: string; logoEmoji: string | null; createdAt: string; memberCount?: number } }
+interface Member { id: string; displayName: string | null; role: string; avatarColor?: string | null; email?: string | null; phone?: string | null; securityLevel?: number; createdAt?: string }
 
 const inputSt: React.CSSProperties = {
   background: 'var(--s2)', border: '1px solid var(--bd)', borderRadius: 12,
@@ -27,6 +31,11 @@ export default function SettingsPage() {
   const [busy, setBusy] = useState('');
   const [msg, setMsg] = useState<{ t: string; ok: boolean } | null>(null);
   const [perms, setPerms] = useState<PermissionsResp | null>(null);
+  const [tt, setTt] = useState<TieuTamSettings | null>(null);
+  const [org, setOrg] = useState<OrgResp['org'] | null>(null);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [panel, setPanel] = useState<'' | 'persona' | 'proactive' | 'org' | 'members'>('');
+  const [orgName, setOrgName] = useState(''); const [orgEmoji, setOrgEmoji] = useState('');
   // R5 Phase D: tutorial toggle
   const [tutOff, setTutOff] = useState(false);
   const [tutMsg, setTutMsg] = useState('');
@@ -37,8 +46,44 @@ export default function SettingsPage() {
     setName(s.user.displayName ?? 'Người dùng'); setRole(s.user.role);
     api<Me>('/api/v1/me').then(setMe).catch(() => {});
     api<PermissionsResp>('/api/v1/permissions').then(setPerms).catch(() => null);
+    loadLiveSettings();
     setTutOff(loadTut().off);
   }, [router]);
+
+  async function loadLiveSettings() {
+    api<TieuTamSettings>('/api/v1/tieu-tam/settings').then(setTt).catch((e) => setMsg({ t: e.message ?? 'Không tải được cài đặt Tiểu Tâm', ok: false }));
+    api<OrgResp>('/api/v1/org').then((d) => { setOrg(d.org); setOrgName(d.org.name); setOrgEmoji(d.org.logoEmoji ?? ''); }).catch(() => null);
+    api<{ members: Member[] }>('/api/v1/org/members').then((d) => setMembers(d.members)).catch(() => setMembers([]));
+  }
+
+  async function saveTt(patch: Partial<TieuTamSettings>) {
+    setBusy('tt'); setMsg(null);
+    try {
+      const d = await api<TieuTamSettings & { message?: string }>('/api/v1/tieu-tam/settings', { method: 'PATCH', body: JSON.stringify(patch) });
+      setTt({ personaMode: d.personaMode, proactive: d.proactive, proactiveNote: d.proactiveNote });
+      setMsg({ t: d.message ?? 'Đã lưu cài đặt Tiểu Tâm', ok: true });
+    } catch (e: any) { setMsg({ t: e.message ?? 'Không lưu được cài đặt', ok: false }); }
+    finally { setBusy(''); }
+  }
+
+  async function saveOrg() {
+    setBusy('org'); setMsg(null);
+    try {
+      const d = await api<OrgResp & { ok: boolean }>('/api/v1/org', { method: 'PATCH', body: JSON.stringify({ name: orgName, logoEmoji: orgEmoji }) });
+      setOrg(d.org); setMsg({ t: 'Đã lưu thông tin tổ chức', ok: true });
+    } catch (e: any) { setMsg({ t: e.message ?? 'Không lưu được tổ chức', ok: false }); }
+    finally { setBusy(''); }
+  }
+
+  async function changeRole(id: string, nextRole: string) {
+    setBusy(`role:${id}`); setMsg(null);
+    try {
+      await api(`/api/v1/users/${id}/role`, { method: 'PATCH', body: JSON.stringify({ role: nextRole }) });
+      setMembers((xs) => xs.map((m) => m.id === id ? { ...m, role: nextRole } : m));
+      setMsg({ t: 'Đã đổi quyền thành viên', ok: true });
+    } catch (e: any) { setMsg({ t: e.message ?? 'Không đổi được quyền', ok: false }); }
+    finally { setBusy(''); }
+  }
 
   // R5: bật/tắt toàn bộ tutorial
   function toggleTut() {
@@ -73,6 +118,7 @@ export default function SettingsPage() {
   }
 
   const roleLabel: Record<string, string> = { super_admin: 'Quản trị hệ thống', owner: 'Chủ quán', manager: 'Quản lý', staff: 'Nhân viên' };
+  const personaLabel: Record<PersonaMode, string> = { friendly: 'Thân thiện', professional: 'Chuyên nghiệp', concise: 'Ngắn gọn', playful: 'Vui vẻ' };
   const level = me?.securityLevel ?? 1;
   const myPerms = perms?.registry.filter((p) => perms.permissions.includes(p.key)) ?? [];
   const permsByModule = myPerms.reduce<Record<string, PermissionMeta[]>>((acc, p) => { (acc[p.module] ??= []).push(p); return acc; }, {});
@@ -164,28 +210,35 @@ export default function SettingsPage() {
 
         {[
           { gl: 'Tiểu Tâm', items: [
-            { icon: 'spark', tint: 'var(--jade-soft)', color: 'var(--jade)', n: 'Chế độ tính cách', v: 'Thân thiện' },
-            { icon: 'spark', tint: 'rgba(152,137,232,.14)', color: 'var(--violet)', n: 'Gợi ý chủ động', v: 'Bật' },
+            { icon: 'spark', tint: 'var(--jade-soft)', color: 'var(--jade)', n: 'Chế độ tính cách', v: tt ? personaLabel[tt.personaMode] : 'Đang tải', open: 'persona' as const },
+            { icon: 'spark', tint: 'rgba(152,137,232,.14)', color: 'var(--violet)', n: 'Gợi ý chủ động', v: tt?.proactive ? 'Bật' : 'Tắt', open: 'proactive' as const },
           ]},
           { gl: 'Tổ chức', items: [
-            { icon: 'coffee', tint: 'var(--amber-soft)', color: 'var(--amber)', n: 'Thông tin tổ chức', v: '' },
-            { icon: 'users', tint: 'var(--s3)', color: 'var(--dim)', n: 'Thành viên & quyền', v: '' },
+            { icon: 'coffee', tint: 'var(--amber-soft)', color: 'var(--amber)', n: 'Thông tin tổ chức', v: org?.name ?? 'Đang tải', open: 'org' as const },
+            { icon: 'users', tint: 'var(--s3)', color: 'var(--dim)', n: 'Thành viên & quyền', v: members.length ? `${members.length} thành viên` : 'Xem', open: 'members' as const },
           ]},
         ].map((g) => (
           <div key={g.gl} style={{ margin: '20px 20px 0' }}>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.1em', color: 'var(--faint)', textTransform: 'uppercase', padding: '0 4px 8px' }}>{g.gl}</div>
             <div className="card" style={{ borderRadius: 16, overflow: 'hidden' }}>
               {g.items.map((it, i) => (
-                <div key={it.n} style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '14px 16px', borderBottom: i < g.items.length - 1 ? '1px solid var(--line)' : 'none' }}>
+                <button key={it.n} onClick={() => setPanel(it.open)} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 13, padding: '14px 16px', border: 'none', borderBottom: i < g.items.length - 1 ? '1px solid var(--line)' : 'none', background: 'none', color: 'var(--txt)', textAlign: 'left' }}>
                   <div style={{ width: 32, height: 32, borderRadius: 9, background: it.tint, color: it.color, display: 'grid', placeItems: 'center', flexShrink: 0 }}><Icon name={it.icon} size={16} /></div>
                   <div style={{ flex: 1, fontSize: 14, fontWeight: 500 }}>{it.n}</div>
                   {it.v && <span className="mono" style={{ fontSize: 12.5, color: 'var(--mut)' }}>{it.v}</span>}
                   <Icon name="chevron" size={18} style={{ color: 'var(--faint)' }} />
-                </div>
+                </button>
               ))}
             </div>
           </div>
         ))}
+        {panel && <div className="card" style={{ margin: '20px', borderRadius: 18, padding: 16, display: 'grid', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><b style={{ flex: 1 }}>{panel === 'persona' ? 'Chế độ tính cách' : panel === 'proactive' ? 'Gợi ý chủ động' : panel === 'org' ? 'Thông tin tổ chức' : 'Thành viên & quyền'}</b><button className="chip" onClick={() => setPanel('')}>Đóng</button></div>
+          {panel === 'persona' && <div style={{ display: 'grid', gap: 8 }}>{(['friendly','professional','concise','playful'] as PersonaMode[]).map((m) => <button key={m} className={tt?.personaMode === m ? 'btn-p' : 'chip'} disabled={busy === 'tt'} onClick={() => saveTt({ personaMode: m })}>{personaLabel[m]}</button>)}</div>}
+          {panel === 'proactive' && <div style={{ display: 'flex', alignItems: 'center', gap: 13 }}><div style={{ flex: 1 }}><div style={{ fontWeight: 600 }}>{tt?.proactive ? 'Đang bật' : 'Đang tắt'}</div><div className="mut" style={{ fontSize: 12 }}>{tt?.proactiveNote ?? 'Preference lưu ở backend qua PATCH /tieu-tam/settings.'}</div></div><button role="switch" aria-checked={!!tt?.proactive} className={`sw ${tt?.proactive ? 'on' : ''}`} disabled={busy === 'tt'} onClick={() => saveTt({ proactive: !tt?.proactive })} /></div>}
+          {panel === 'org' && <div style={{ display: 'grid', gap: 10 }}><div className="mut" style={{ fontSize: 12 }}>Slug: <span className="mono">{org?.slug}</span> · {org?.memberCount ?? members.length} thành viên</div><input style={inputSt} value={orgName} onChange={(e) => setOrgName(e.target.value)} placeholder="Tên tổ chức" /><input style={inputSt} value={orgEmoji} onChange={(e) => setOrgEmoji(e.target.value)} placeholder="Emoji logo" /><button className="btn-p" disabled={busy === 'org'} onClick={saveOrg}>{busy === 'org' ? 'Đang lưu…' : 'Lưu tổ chức'}</button></div>}
+          {panel === 'members' && <div style={{ display: 'grid', gap: 10 }}>{members.length === 0 ? <div className="mut">Bạn cần quyền quản lý để xem danh sách thành viên.</div> : members.map((m) => <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 10, border: '1px solid var(--line)', borderRadius: 12 }}><div className="ava" style={{ width: 34, height: 34, borderRadius: 12, background: m.avatarColor ?? 'var(--jade-soft)' }}>{(m.displayName ?? '?').slice(0,1)}</div><div style={{ flex: 1 }}><div style={{ fontWeight: 600 }}>{m.displayName ?? 'Thành viên'}</div><div className="mut" style={{ fontSize: 11 }}>L{m.securityLevel ?? 1} · {m.email ?? m.phone ?? m.id.slice(0,8)}</div></div><select value={m.role} disabled={busy === `role:${m.id}` || role !== 'owner'} onChange={(e) => changeRole(m.id, e.target.value)} style={{ ...inputSt, width: 118 }}><option value="owner">owner</option><option value="manager">manager</option><option value="staff">staff</option></select></div>)}</div>}
+        </div>}
         <div style={{ margin: '20px 20px 0' }}>
           <div className="card" style={{ borderRadius: 16 }}>
             <button onClick={() => { clearSession(); router.replace('/'); }} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 13, padding: '14px 16px', background: 'none', border: 'none', color: 'var(--rose)', fontSize: 14, fontWeight: 500 }}>
