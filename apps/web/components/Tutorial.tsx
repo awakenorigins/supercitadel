@@ -56,17 +56,25 @@ export const TOURS: Record<string, Tour> = {
     ],
   },
   '/ke-toan-10a': {
-    id: 'ke-toan-10a-v1',
+    id: 'ke-toan-10a-v2',
+    ver: 2,
     steps: [
-      { title: 'Kế Toán 10A 🧾', text: 'Sổ kép hoàn chỉnh chạy độc lập — thao tác tại đây hoặc ra lệnh Tiểu Tâm.' },
-      { sel: '[data-tut="k10a-kpi"]', title: 'Nhịp tim tài chính', text: 'Tiền, phải thu/trả, lãi lỗ — badge SỔ CÂN xác nhận Σ Nợ = Σ Có.' },
-      { sel: '[data-tut="k10a-quy"]', title: 'Sổ quỹ', text: 'Phiếu thu/chi 5 giây; sai thì Đảo (bút toán ngược, không xóa).' },
-      { sel: '[data-tut="k10a-hd"]', title: 'Hóa đơn & công nợ', text: 'Kèm thuế GTGT; Thu tiền cấn trừ, chặn thu vượt nợ.' },
-      { sel: '[data-tut="k10a-bank"]', title: 'Đối chiếu ngân hàng', text: 'Dán sao kê CSV — tự khớp với sổ, báo dòng lệch.' },
-      { sel: '[data-tut="k10a-report"]', title: 'Báo cáo & Excel', text: 'KQKD, cân đối thử, Excel, toàn vẹn sổ; cuối năm kết chuyển 911→421.' },
-      { sel: '[data-tut="k10a-demo"]', title: 'Dữ liệu mẫu', text: 'Bấm để sinh nghiệp vụ mẫu, khám phá thoải mái.' },
+      { title: 'Kế Toán 10A FULL 🧾', text: 'Sổ kép TT133/TT200 độc lập: thu/chi, hóa đơn, công nợ, ngân hàng, TSCĐ, ngân sách, tỷ giá, báo cáo và Tiểu Tâm điều khiển bằng tiếng Việt.' },
+      { sel: '[data-tut="k10a-kpi"]', title: 'KPI & tự-audit', text: 'Dashboard cho tiền 111/112, phải thu 131, phải trả 331, lãi/lỗ và badge SỔ CÂN — kiểm Σ Nợ = Σ Có bất kỳ lúc nào.' },
+      { sel: '[data-tut="k10a-tabs"]', title: 'Thiết lập TT133/TT200', text: 'Lần đầu seed hệ thống tài khoản TT133; có thể dùng TT200 hoặc chart JSON tùy biến. Org nào thấy dữ liệu org đó, không lẫn module kế toán cũ.' },
+      { sel: '[data-tut="k10a-quy"]', title: 'Sổ quỹ + đảo phiếu', text: 'Tạo phiếu thu/chi, chọn tài khoản đối ứng, ghi sổ ngay. Sai thì dùng Đảo: hệ thống tạo bút toán ngược, không xóa lịch sử.' },
+      { sel: '[data-tut="k10a-hd"]', title: 'Hóa đơn, thuế, cấn trừ', text: 'Hóa đơn bán/mua nhiều dòng, thuế GTGT, thu/trả tiền theo hóa đơn, cấn trừ công nợ; credit note/debit note xử lý điều chỉnh giảm.' },
+      { sel: '[data-tut="k10a-hd"]', title: 'Công nợ & hạn mức', text: 'Xem tuổi nợ, công nợ theo đối tác, nhắc hạn, sao kê khách/NCC; đặt credit limit và điều khoản thanh toán để chặn bán vượt hạn mức.' },
+      { sel: '[data-tut="k10a-vh"]', title: 'Tạm ứng & định kỳ', text: 'Quản lý khách đặt cọc, ứng trước NCC, tạm ứng nhân viên; mẫu định kỳ cho thuê mặt bằng, lương, phí cố định — bấm chạy để bắt kịp kỳ tới hạn.' },
+      { sel: '[data-tut="k10a-bank"]', title: 'Bank import + auto-match + rules', text: 'Dán/import CSV sao kê tài khoản 112, tự khớp với sổ, thêm rule theo nội dung giao dịch để sinh chứng từ và báo dòng chưa khớp.' },
+      { sel: '[data-tut="k10a-asset"]', title: 'TSCĐ & khấu hao', text: 'Tạo tài sản cố định, nguyên giá, thời gian sử dụng; chạy khấu hao đường thẳng Nợ 642/Có 214, tự dừng khi đủ.' },
+      { sel: '[data-tut="k10a-budget"]', title: 'Cost center, ngân sách, tỷ giá', text: 'Gắn bộ phận/dự án vào bút toán, xem lãi/lỗ theo chiều; đặt ngân sách năm, so thực tế; đánh giá lại ngoại tệ vào 515/635.' },
+      { sel: '[data-tut="k10a-report"]', title: 'Kết chuyển & khóa kỳ', text: 'Cuối kỳ kết chuyển 511/515/711 và chi phí về 911 rồi 421; khóa năm tài chính để chặn ghi sửa sau quyết toán.' },
+      { sel: '[data-tut="k10a-report"]', title: '12 báo cáo + Excel', text: 'Sổ cái, cân đối phát sinh, KQKD, CĐKT, LCTT, VAT, nhật ký chung, sổ quỹ, tuổi nợ, công nợ, nhắc hạn, ngân sách-vs-thực tế; xuất Excel khi cần.' },
+      { sel: '.tb-energy', title: 'Ra lệnh Tiểu Tâm 10A', text: 'Ví dụ: “Tạo phiếu thu 10A 5 triệu từ Anh Ba”, “Ai nợ quá hạn?”, “Chạy khấu hao tháng này”, “Đối chiếu ngân hàng 112”. Lệnh nhạy cảm luôn dry-run rồi xác nhận.' },
+      { sel: '[data-tut="k10a-demo"]', title: 'Dữ liệu mẫu an toàn', text: 'Dùng nút demo để tạo nghiệp vụ mẫu và xem luồng đầy đủ trước khi vận hành thật.' },
     ],
-  },
+  }, 
   '/crm': {
     id: 'crm',
     steps: [
@@ -218,6 +226,7 @@ export function Tutorial() {
         <button className="tut-kill" onClick={killAll}>Tắt hẳn</button>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
           {!last && <button className="tut-skip" onClick={() => finish(true)}>Bỏ qua</button>}
+          <button className="tut-skip" disabled={i === 0} onClick={() => setI(Math.max(0, i - 1))}>← Quay lại</button>
           <button className="tut-next" onClick={() => last ? finish(true) : setI(i + 1)}>
             {last ? 'Hoàn tất ✓' : 'Tiếp →'}
           </button>
