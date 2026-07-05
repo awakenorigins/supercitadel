@@ -6,7 +6,7 @@ import { schema, orgs, users, auditLogs } from '@citadel/db';
 import { ACTION_REGISTRY, executeAction } from './tieu-tam/actions.js';
 function assert(c: unknown, m: string) { if (!c) throw new Error(m); console.log('  ✓', m); }
 const client = new PGlite();
-for (const f of ['0001_init.sql','0002_org_modules.sql','0003_super_admin.sql','0004_v7a_p1.sql','0005_v7a_p2.sql','0006_v7a_p3.sql','0007_module_rental.sql']) await client.exec(readFileSync(new URL(`../../../packages/db/migrations/${f}`, import.meta.url),'utf8').replace(/CREATE EXTENSION IF NOT EXISTS vector;\s*/i,''));
+for (const f of ['0001_init.sql','0002_org_modules.sql','0003_super_admin.sql','0004_v7a_p1.sql','0005_v7a_p2.sql','0006_v7a_p3.sql','0007_module_rental.sql','0013_r112_settings_org.sql']) await client.exec(readFileSync(new URL(`../../../packages/db/migrations/${f}`, import.meta.url),'utf8').replace(/CREATE EXTENSION IF NOT EXISTS vector;\s*/i,''));
 for (const f of ['../../../modules/accounting/migrations/0001_accounting.sql','../../../modules/inventory/migrations/0001_inventory.sql','../../../modules/hr/migrations/0001_hr.sql','../../../modules/hr/migrations/0002_hr_v2.sql']) await client.exec(readFileSync(new URL(f, import.meta.url),'utf8'));
 const db = drizzle(client,{schema}) as any;
 const [org] = await db.insert(orgs).values({name:'Org',slug:'org'}).returning();

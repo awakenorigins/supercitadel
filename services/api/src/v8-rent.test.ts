@@ -17,7 +17,7 @@ function assert(c: unknown, m: string) { if (!c) { console.error('  ✗', m); pr
 const client = new PGlite();
 const mig = (f: string) => readFileSync(new URL(`../../../packages/db/migrations/${f}`, import.meta.url), 'utf8')
   .replace(/CREATE EXTENSION IF NOT EXISTS vector;\s*/i, '');
-for (const f of ['0001_init.sql', '0002_org_modules.sql', '0003_super_admin.sql', '0004_v7a_p1.sql', '0005_v7a_p2.sql', '0006_v7a_p3.sql', '0007_module_rental.sql']) await client.exec(mig(f));
+for (const f of ['0001_init.sql', '0002_org_modules.sql', '0003_super_admin.sql', '0004_v7a_p1.sql', '0005_v7a_p2.sql', '0006_v7a_p3.sql', '0007_module_rental.sql', '0013_r112_settings_org.sql']) await client.exec(mig(f));
 await client.exec(readFileSync(new URL('../../../modules/om/migrations/0001_om.sql', import.meta.url), 'utf8'));
 const db = drizzle(client, { schema }) as any;
 

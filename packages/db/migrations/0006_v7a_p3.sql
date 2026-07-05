@@ -38,6 +38,3 @@ INSERT INTO item_catalog (code, name, description, category, price, effect, icon
   ('theme-ho-phach','Theme Hổ Phách','Khoác áo hổ phách ấm áp cho toàn giao diện — sắc vàng sang trọng.',             'decor', 200, '{"type":"decor","theme":"gold"}',    'palette'),
   ('theme-sage',   'Theme Sage',     'Tông xanh sage dịu mắt — giao diện thư thái như vườn trà sớm mai.',             'decor', 200, '{"type":"decor","theme":"sage"}',    'palette')
 ON CONFLICT (code) DO NOTHING;
-
-ALTER TABLE tt_soul_state ADD COLUMN IF NOT EXISTS persona_mode varchar(24) NOT NULL DEFAULT 'friendly';
-ALTER TABLE tt_soul_state ADD COLUMN IF NOT EXISTS proactive boolean NOT NULL DEFAULT true;
