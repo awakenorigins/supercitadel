@@ -11,6 +11,8 @@ interface Me {
   securityLevel: number; email: string | null; phone: string | null;
   needsUpgrade: boolean; upgradeHint?: string;
 }
+interface PermissionMeta { key: string; module: string; resource: string; action: string; description: string; securityLevel: 1 | 2; sensitive: boolean }
+interface PermissionsResp { registry: PermissionMeta[]; permissions: string[]; role: string; securityLevel: number }
 
 const inputSt: React.CSSProperties = {
   background: 'var(--s2)', border: '1px solid var(--bd)', borderRadius: 12,
@@ -24,6 +26,7 @@ export default function SettingsPage() {
   const [email, setEmail] = useState(''); const [phone, setPhone] = useState('');
   const [busy, setBusy] = useState('');
   const [msg, setMsg] = useState<{ t: string; ok: boolean } | null>(null);
+  const [perms, setPerms] = useState<PermissionsResp | null>(null);
   // R5 Phase D: tutorial toggle
   const [tutOff, setTutOff] = useState(false);
   const [tutMsg, setTutMsg] = useState('');
@@ -33,6 +36,7 @@ export default function SettingsPage() {
     if (!s) { router.replace('/'); return; }
     setName(s.user.displayName ?? 'Người dùng'); setRole(s.user.role);
     api<Me>('/api/v1/me').then(setMe).catch(() => {});
+    api<PermissionsResp>('/api/v1/permissions').then(setPerms).catch(() => null);
     setTutOff(loadTut().off);
   }, [router]);
 
@@ -70,6 +74,8 @@ export default function SettingsPage() {
 
   const roleLabel: Record<string, string> = { super_admin: 'Quản trị hệ thống', owner: 'Chủ quán', manager: 'Quản lý', staff: 'Nhân viên' };
   const level = me?.securityLevel ?? 1;
+  const myPerms = perms?.registry.filter((p) => perms.permissions.includes(p.key)) ?? [];
+  const permsByModule = myPerms.reduce<Record<string, PermissionMeta[]>>((acc, p) => { (acc[p.module] ??= []).push(p); return acc; }, {});
 
   return (
     <Shell>
@@ -114,6 +120,27 @@ export default function SettingsPage() {
                 <button onClick={() => bind('phone')} disabled={busy === 'phone'} className="btn-p" style={{ width: 'auto', padding: '0 16px', fontSize: 13, opacity: busy === 'phone' ? .6 : 1 }}>{busy === 'phone' ? '…' : 'Gắn'}</button>
               </div>
             </div>
+          </div>
+        </div>
+
+        <div style={{ margin: '20px 20px 0' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.1em', color: 'var(--faint)', textTransform: 'uppercase', padding: '0 4px 8px' }}>Quyền của tôi</div>
+          <div className="card" style={{ borderRadius: 16, padding: 16, display: 'grid', gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 13 }}>
+              <div style={{ width: 32, height: 32, borderRadius: 9, background: 'var(--violet-soft, rgba(152,137,232,.14))', color: 'var(--violet)', display: 'grid', placeItems: 'center', flexShrink: 0 }}><Icon name="shield" size={16} /></div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 14, fontWeight: 600 }}>{roleLabel[perms?.role ?? role] ?? (perms?.role ?? role)} · {myPerms.length} quyền</div>
+                <div className="mut" style={{ fontSize: 11.5, marginTop: 1 }}>Danh sách lấy trực tiếp từ GET /permissions</div>
+              </div>
+            </div>
+            {!perms ? <div className="mut" style={{ fontSize: 12 }}>Đang tải quyền…</div> : Object.entries(permsByModule).map(([mod, list]) => (
+              <div key={mod} style={{ display: 'grid', gap: 7 }}>
+                <div className="mono" style={{ fontSize: 11, color: 'var(--jade)', textTransform: 'uppercase' }}>{mod}</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+                  {list.map((p) => <span key={p.key} className="chip" title={p.description} style={{ borderColor: p.securityLevel >= 2 ? 'rgba(232,179,102,.35)' : undefined, color: p.securityLevel >= 2 ? 'var(--amber)' : undefined }}>{p.description}{p.securityLevel >= 2 ? ' · L2' : ''}</span>)}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 

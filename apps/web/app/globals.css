@@ -268,7 +268,9 @@ input, select, textarea { font-family: var(--fb); }
 .bub.ai { background: var(--s1); border: 1px solid var(--bd); border-bottom-left-radius: 4px; }
 .bub.me { background: var(--jade); color: #04231f; border-bottom-right-radius: 4px; font-weight: 500; }
 .tcard { margin-top: 9px; background: var(--void); border: 1px solid var(--bd2); border-radius: 13px; overflow: hidden; }
+.tcard.confirm { border-color: rgba(232, 179, 102, .52); background: linear-gradient(150deg, var(--amber-soft), transparent 78%), var(--void); box-shadow: 0 0 22px rgba(232, 179, 102, .08); }
 .tcard .th { display: flex; align-items: center; gap: 7px; padding: 9px 12px; background: var(--s2); border-bottom: 1px solid var(--line); font-family: var(--fm); font-size: 10.5px; color: var(--violet); }
+.tcard.confirm .th { color: var(--amber); background: rgba(232, 179, 102, .09); border-bottom-color: rgba(232, 179, 102, .22); }
 .blink { display: inline-block; width: 7px; height: 14px; background: var(--jade); vertical-align: middle; margin-left: 2px; animation: bk 1s step-end infinite; }
 @keyframes bk { 50% { opacity: 0; } }
 .typing { display: flex; gap: 4px; padding: 12px 15px; background: var(--s1); border: 1px solid var(--bd); border-radius: 15px; border-bottom-left-radius: 5px; width: fit-content; }

@@ -10,7 +10,7 @@ import { Tutorial, TutorialHelpButton, TutorialFab } from './Tutorial';
 import { API, api, getSession } from '../lib/api';
 import { applyTheme, applyStoredTheme } from '../lib/theme';
 
-interface Msg { who: 'ai' | 'me'; text: string; tool?: any; suggestions?: string[] }
+interface Msg { who: 'ai' | 'me'; text: string; tool?: any; suggestions?: string[]; pendingAction?: any }
 interface SoulState { energy: number; status: string; statusLabel: string; mood: string; engine?: string }
 
 const STATUS_COLOR: Record<string, string> = {
@@ -259,58 +259,28 @@ function TieuTamSheet({ open, onClose }: { open: boolean; onClose: () => void })
       .catch(() => {});
   }, [open]);
 
-  async function ask(q: string) {
+  async function ask(q: string, opts: { confirm?: boolean; pendingAction?: any } = {}) {
     if (!q.trim() || streaming) return;
     setDraft('');
     setMsgs((m) => [...m, { who: 'me', text: q }, { who: 'ai', text: '' }]);
     setStreaming(true);
     const s = getSession();
     try {
-      // retry 1 lần khi lỗi mạng thoáng qua — 401/403 thì báo hết phiên ngay, không retry
-      let res: Response | null = null;
-      for (let attempt = 0; attempt < 2; attempt++) {
-        try {
-          res = await fetch(`${API}/api/v1/tieu-tam/chat/stream`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${s?.jwt ?? ''}` },
-            body: JSON.stringify({ message: q, userName: s?.user.displayName ?? undefined }),
-          });
-        } catch { res = null; }
-        if (res && (res.ok || res.status === 401 || res.status === 403)) break;
-        if (attempt === 0) await new Promise((r) => setTimeout(r, 700));
-      }
-      if (res && (res.status === 401 || res.status === 403)) {
+      const res = await fetch(`${API}/api/v1/tieu-tam/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${s?.jwt ?? ''}` },
+        body: JSON.stringify({ message: q, userName: s?.user.displayName ?? undefined, confirm: !!opts.confirm, pendingAction: opts.pendingAction }),
+      });
+      if (res.status === 401 || res.status === 403) {
         setMsgs((m) => [...m.slice(0, -1), { who: 'ai', text: 'Phiên đăng nhập đã hết hạn — đăng nhập lại giúp em nha (mở trang đăng nhập, dán token của bạn). 🔑' }]);
         return;
       }
-      if (!res || !res.ok || !res.body) throw new Error('stream fail');
-      const reader = res.body.getReader();
-      const dec = new TextDecoder();
-      let buf = '';
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buf += dec.decode(value, { stream: true });
-        const events = buf.split('\n\n'); buf = events.pop() ?? '';
-        for (const ev of events) {
-          const type = /event: (\w+)/.exec(ev)?.[1];
-          // R7.6: gộp đúng các dòng data: của một event (multi-line SSE) — hết leak "data:" vào bubble
-          const data = ev.split('\n').filter((l) => l.startsWith('data:')).map((l) => l.slice(5).trimStart()).join('\n');
-          if (type === 'energy') { try { setSoul((prev) => ({ ...prev, ...JSON.parse(data) })); } catch {} continue; }
-          setMsgs((m) => {
-            const last = { ...m[m.length - 1] };
-            if (type === 'token') {
-              // token mới là JSON string (giữ nguyên newline); fallback raw cho bản cũ
-              let tok = data;
-              try { const p = JSON.parse(data); if (typeof p === 'string') tok = p; } catch {}
-              last.text += tok;
-            }
-            if (type === 'tool') { try { last.tool = JSON.parse(data); } catch {} }
-            if (type === 'suggestions') { try { last.suggestions = JSON.parse(data); } catch {} }
-            return [...m.slice(0, -1), last];
-          });
-        }
-      }
+      if (!res.ok) throw new Error('chat fail');
+      const d = await res.json();
+      if (typeof d.energy === 'number') setSoul((prev) => ({ ...(prev ?? { mood: d.mood ?? 'binh_thuong', status: d.status ?? 'on_dinh', statusLabel: '', energy: d.energy }), ...d }));
+      const firstTool = Array.isArray(d.toolCalls) ? d.toolCalls[0] : undefined;
+      const pending = firstTool?.result?.pendingAction;
+      setMsgs((m) => [...m.slice(0, -1), { who: 'ai', text: d.text ?? '', tool: d.toolCalls, suggestions: d.suggestions, pendingAction: pending }]);
     } catch {
       setMsgs((m) => [...m.slice(0, -1), { who: 'ai', text: 'Mạng đang chập chờn, em chưa nhận được câu này — bấm gửi lại giúp em nha. Các lệnh nghiệp vụ (tạo phiếu, thêm khách, nhập kho…) vẫn chạy bình thường. 📡', suggestions: [q] }]);
     } finally { setStreaming(false); }
@@ -348,7 +318,16 @@ function TieuTamSheet({ open, onClose }: { open: boolean; onClose: () => void })
               <div style={{ minWidth: 0 }}>
                 {m.text || m.who === 'me' ? <div className={`bub ${m.who === 'me' ? 'me' : 'ai'}`} style={{ whiteSpace: 'pre-wrap' }}>{m.who === 'ai' ? renderAiText(m.text) : m.text}{m.who === 'ai' && streaming && i === msgs.length - 1 ? <span className="blink" /> : null}</div>
                   : <div className="typing"><span /><span /><span /></div>}
-                {m.tool && (
+                {m.pendingAction && (
+                  <div className="tcard confirm"><div className="th">Xem trước hành động <span style={{ marginLeft: 'auto', color: 'var(--amber)' }}>Cần xác nhận</span></div>
+                    <div style={{ padding: '10px 12px', fontSize: 12.5, color: 'var(--mut)' }}>{m.tool?.[0]?.result?.preview?.description ?? m.pendingAction.name}</div>
+                    <pre className="mono" style={{ margin: '0 12px 10px', padding: 10, fontSize: 11, color: 'var(--dim)', overflow: 'auto', background: 'var(--s1)', borderRadius: 10 }}>{JSON.stringify(m.pendingAction.params, null, 1)}</pre>
+                    <div style={{ display: 'flex', gap: 8, padding: '0 12px 12px' }}>
+                      <button className="btn-p" style={{ width: 'auto', padding: '8px 12px', fontSize: 12 }} onClick={() => ask('Xác nhận', { confirm: true, pendingAction: m.pendingAction })}>Xác nhận</button>
+                      <button className="chip" style={{ padding: '8px 12px', fontSize: 12 }} onClick={() => setMsgs((all) => all.map((x) => x === m ? { ...x, pendingAction: undefined, text: `${x.text}\n\nĐã hủy hành động xem trước.` } : x))}>Hủy</button>
+                    </div></div>
+                )}
+                {m.tool && !m.pendingAction && (
                   <div className="tcard"><div className="th">{m.tool[0]?.tool} · {m.tool[0]?.module} <span style={{ marginLeft: 'auto', width: 6, height: 6, borderRadius: '50%', background: 'var(--jade)' }} /></div>
                     <pre className="mono" style={{ padding: 12, fontSize: 11, color: 'var(--dim)', overflow: 'auto' }}>{JSON.stringify(m.tool[0]?.result, null, 1)}</pre></div>
                 )}
