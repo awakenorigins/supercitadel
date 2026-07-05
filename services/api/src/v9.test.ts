@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { loadModuleManifests, getLoaderState, buildCatalogFromManifests } from './modules/loader.js';
 
 const state = loadModuleManifests(join(process.cwd(), '..', '..', 'modules'));
-assert.equal(state.loaded.length, 7);
+assert.equal(state.loaded.length, 8);
 assert.equal(state.rejected.length, 0);
 const cat = buildCatalogFromManifests();
 assert.equal(cat.find(m=>m.id==='accounting')?.priceOm, 500);

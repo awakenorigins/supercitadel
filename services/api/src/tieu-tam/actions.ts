@@ -10,6 +10,7 @@ import { getBalance } from '@citadel/module-om/server/service.js';
 import { crmContacts, crmDeals } from '@citadel/module-crm/server/schema.js';
 import { inventoryItems } from '@citadel/module-inventory/server/schema.js';
 import { hrEmployees } from '@citadel/module-hr/server/schema.js';
+import { keToan10aTieuTamActions, detectK10aAction } from '@citadel/module-ke-toan-10a/server/tieu-tam-actions.js';
 
 type DB = any;
 export type TieuTamActionCtx = { db: DB; orgId: string; userId: string; role: Role; securityLevel: number; audit?: (e: { action: string; resource?: string; resourceId?: string; detail?: unknown }) => Promise<void> };
@@ -49,6 +50,7 @@ const defs: TieuTamAction[] = [
   { name:'om.balance', permission:'om.wallet.read', securityLevel:1, sensitive:false, description:'Xem số dư ví Om', requiredModule:'om', parameters:{type:'object',properties:{}}, async execute(ctx,p){ const balance=await getBalance(ctx.db,ctx.orgId); await audit(ctx,this.name,p); return result(this.name,'om',`Số dư ví Om hiện tại là ${balance.toLocaleString('vi-VN')} Om`,{balance}); } },
   { name:'report.summary', permission:'report.summary.read', securityLevel:1, sensitive:false, description:'Tóm tắt nhanh dữ liệu dashboard', requiredModule:'core', parameters:{type:'object',properties:{}}, async execute(ctx,p){ const [contacts,items,emps,balance]=await Promise.all([listContacts(ctx.db,ctx.orgId).catch(()=>[]),listItems(ctx.db,ctx.orgId).catch(()=>[]),listEmployees(ctx.db,ctx.orgId).catch(()=>[]),getBalance(ctx.db,ctx.orgId).catch(()=>0)]); await audit(ctx,this.name,p); return result(this.name,'report',`Tóm tắt: ${contacts.length} khách, ${items.length} mặt hàng, ${emps.length} nhân viên, ${balance} Om`,{contacts:contacts.length,items:items.length,employees:emps.length,balance}); } },
 ];
+defs.push(...(keToan10aTieuTamActions as unknown as (db: DB) => TieuTamAction[])(null));
 export const ACTION_REGISTRY = new Map(defs.map(d=>[d.name,d]));
 export function toolSafeName(name:string){ return name.replace(/[^a-zA-Z0-9_-]/g, '_'); }
 const SAFE_TO_ACTION = new Map(defs.map(d=>[toolSafeName(d.name), d.name]));
@@ -63,6 +65,7 @@ export async function executeAction(ctx:TieuTamActionCtx, name:string, params:an
   return a.execute(ctx, params ?? {});
 }
 export function detectAction(message:string): {name:string; params:any} | null {
+  const k10a = detectK10aAction(message); if (k10a) return k10a;
   const m=message.trim(); let x;
   if((x=/tạo\s+phiếu\s+thu\s+([\d.,]+)\s+(?:cho|từ)\s+(.+)/i.exec(m))) return {name:'acc.create_receipt',params:{amount:x[1].replace(/\D/g,''),partyName:x[2].trim()}};
   if((x=/tạo\s+phiếu\s+chi\s+([\d.,]+)\s+(?:cho|tới|đến)\s+(.+)/i.exec(m))) return {name:'acc.create_payment',params:{amount:x[1].replace(/\D/g,''),partyName:x[2].trim()}};
