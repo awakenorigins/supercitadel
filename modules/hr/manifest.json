@@ -19,5 +19,6 @@
     "emits": [
       "hr.attendance.checked_in"
     ]
-  }
+  },
+  "group": "Nhân sự"
 }

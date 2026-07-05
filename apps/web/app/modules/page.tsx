@@ -19,6 +19,7 @@ const fmtDate = (d: Date) => d.toLocaleDateString('vi-VN', { day: 'numeric', mon
 interface StoreItem { code: string; name: string; description: string; category: string; price: number; icon: string | null }
 
 const ITEM_CAT_LABEL: Record<string, string> = { food: 'Đồ ăn', decor: 'Trang trí', boost: 'Tăng lực' };
+const GROUP_ORDER = ['May Đo Doanh Nghiệp', 'AI Automation', 'Kinh doanh', 'Tài chính', 'Vận hành', 'Nhân sự', 'Cốt lõi'];
 
 export default function ModulesPage() {
   const router = useRouter();
@@ -109,7 +110,9 @@ export default function ModulesPage() {
 
   const enabled = mods?.filter((m) => m.active) ?? [];
   const renting = mods?.filter((m) => !m.purchased && m.rentedUntil && m.rentDaysLeft !== null) ?? []; // R5: đang thuê còn hạn
-  const groups = ['May Đo Doanh Nghiệp', 'AI Automation', 'Kinh doanh', 'Tài chính', 'Vận hành', 'Nhân sự', 'Cốt lõi'];
+  const groups = mods === null
+    ? GROUP_ORDER
+    : Array.from(new Set([...GROUP_ORDER.filter((g) => mods.some((m) => m.group === g)), ...mods.map((m) => m.group).filter(Boolean)]));
 
   return (
     <Shell wide>

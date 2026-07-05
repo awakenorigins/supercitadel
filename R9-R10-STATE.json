@@ -2,7 +2,7 @@
   "round": "R9+R10",
   "status": "done",
   "startedAt": "2026-07-05T06:05:00+02:00",
-  "updatedAt": "2026-07-05T07:52:00+02:00",
+  "updatedAt": "2026-07-05T08:35:00+02:00",
   "sessionKey": "agent:main:telegram:group:-1003720502853:topic:9871",
   "brief": "R9-R10-TASK.md",
   "directives": {
@@ -16,9 +16,22 @@
     "r9C_verify_release_v9": "done — commit a77cb40; FORGE-GUIDE v2 + CI gate audit-manifests; deploy live; verify-r9.py 11/11 PASS; release v9.0.0; CI run 28730136780 SUCCESS",
     "r10A_outbox_core": "done — commit a89e711; outbox_events migration 0011 + emitEvent trong tx + dispatcher SKIP LOCKED retry/dead-letter + subscriber notification/WS + emit từ accounting/om/hr; validator wildcard fix (emits exact, subscribes cho phép module.*); v10.test.ts + full suite xanh",
     "r10B_module_contract": "done — commit 2eef46a; manifest events auto-wire qua server/events.js eventHandlers, dogfood notification; FORGE-GUIDE mục Outbox (contract module kho)",
-    "r10C_final_verify_release_v10": "done — commits 88fb459 + ae5a27a; deploy live + migration 0011 áp DB thật; verify-r10.py 7/7 PASS (invoice 500 ban đầu = script thiếu postingDate, không phải bug API; dispatcher 42P01 lúc boot trước migration → hết sau restart); TỔNG NGHIỆM THU LIVE: verify-r8 PASS + verify-r85 7/7 + verify-r9 11/11 + verify-r10 7/7 (login rate-limit 429 khi chạy liên tiếp → spacing 65s PASS); push ae5a27a → main; release v10.0.0 https://github.com/NachaFromMars/supercitadel/releases/tag/v10.0.0; CI ae5a27a completed SUCCESS."
+    "r10C_final_verify_release_v10": "done — commits 88fb459 + ae5a27a; deploy live + migration 0011 áp DB thật; verify-r10.py 7/7 PASS (invoice 500 ban đầu = script thiếu postingDate, không phải bug API; dispatcher 42P01 lúc boot trước migration → hết sau restart); TỔNG NGHIỆM THU LIVE: verify-r8 PASS + verify-r85 7/7 + verify-r9 11/11 + verify-r10 7/7 (login rate-limit 429 khi chạy liên tiếp → spacing 65s PASS); push ae5a27a → main; release v10.0.0 https://github.com/NachaFromMars/supercitadel/releases/tag/v10.0.0; CI ae5a27a completed SUCCESS.",
+    "hotfix_r101": "done — R9 loader regression fixed: ModuleManifest optional group + 7 manifest group values + loader group=m.group fallback + /modules dynamic group rendering; tests core/api/web/audits/build PASS; deploy rebuilt api/web; live curl shows accounting/crm/hr/inventory purchased=true active=true with groups Tài chính/Kinh doanh/Nhân sự/Vận hành; Playwright screenshot shots/r101-modules.png confirms SỞ HỮU cards, Vật phẩm/Kho của tôi, /items, /tieu-tam."
   },
-  "commits": ["b31616b", "6b84467", "1993d34", "a77cb40", "a89e711", "2eef46a", "88fb459", "ae5a27a"],
-  "releases": ["v9.0.0", "v10.0.0"],
-  "next": "HOÀN TẤT toàn lộ trình R8→R10. Chừa cho module kho anh Nấng: manifest v2 + events contract (FORGE-GUIDE mục Outbox) + permission registry — cắm vào không đụng core."
+  "commits": [
+    "b31616b",
+    "6b84467",
+    "1993d34",
+    "a77cb40",
+    "a89e711",
+    "2eef46a",
+    "88fb459",
+    "ae5a27a"
+  ],
+  "releases": [
+    "v9.0.0",
+    "v10.0.0"
+  ],
+  "next": "R10.1 hotfix deployed and awaiting GitHub CI/release tagging."
 }

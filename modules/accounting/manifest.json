@@ -20,5 +20,6 @@
       "accounting.invoice.created",
       "accounting.payment.created"
     ]
-  }
+  },
+  "group": "Tài chính"
 }

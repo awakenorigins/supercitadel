@@ -17,5 +17,6 @@
     "subscribes": [
       "accounting.invoice.created"
     ]
-  }
+  },
+  "group": "Cốt lõi"
 }

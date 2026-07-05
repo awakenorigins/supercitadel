@@ -11,4 +11,6 @@ assert.equal(validateManifest({ ...valid, events:{ subscribes:['accounting.invoi
 assert.equal(validateManifest({ ...valid, events:{ emits:['accounting.*'] } }).ok, false);
 assert.equal(validateManifest({ ...valid, events:{ emits:['bad'] } }).ok, false);
 const warn = validateManifest({ ...valid, extra: true }); assert.equal(warn.ok, true); assert.equal((warn as any).warnings.length, 1);
+const grouped = validateManifest({ ...valid, group: 'Tài chính' }); assert.equal(grouped.ok, true); assert.equal((grouped as any).manifest.group, 'Tài chính');
+const tooLongGroup = validateManifest({ ...valid, group: 'x'.repeat(41) }); assert.equal(tooLongGroup.ok, false); assert.match((tooLongGroup as any).errors.join('\n'), /group/);
 console.log('[core/manifest] PASSED');

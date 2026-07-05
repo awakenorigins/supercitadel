@@ -57,7 +57,7 @@ export function loadModuleManifests(root = modulesRoot()) {
   return loaderState;
 }
 export function buildCatalogFromManifests(){
-  return loaderState.loaded.map(({manifest:m}) => ({ id:m.id, name:m.name, icon:m.icon, desc:m.description, tier:m.tier, priceOm:m.priceOm, group:m.tier==='core'?'Cốt lõi':'Module', route:m.routes.replace('/api/v1',''), status:'ready' as const, manifest:m }));
+  return loaderState.loaded.map(({manifest:m}) => ({ id:m.id, name:m.name, icon:m.icon, desc:m.description, tier:m.tier, priceOm:m.priceOm, group:m.group ?? (m.tier==='core'?'Cốt lõi':'Module'), route:m.routes.replace('/api/v1',''), status:'ready' as const, manifest:m }));
 }
 export function coreIds(){ return loaderState.loaded.filter(m=>m.manifest.tier==='core').map(m=>m.id); }
 export function wireManifestEventSubscribers(state = loaderState) {

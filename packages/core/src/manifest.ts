@@ -4,10 +4,10 @@ export type ModuleTier = 'core' | 'paid' | 'demo' | 'custom';
 export interface ModuleManifestEvents { emits?: string[]; subscribes?: string[] }
 export interface ModuleManifest {
   id: string; name: string; version: string; tier: ModuleTier; priceOm: number; icon: string; description: string;
-  permissions: string[]; routes: string; docs: string; dependsOn?: string[]; engine?: string; events?: ModuleManifestEvents;
+  permissions: string[]; routes: string; docs: string; group?: string; dependsOn?: string[]; engine?: string; events?: ModuleManifestEvents;
 }
 export type ManifestValidation = { ok: true; manifest: ModuleManifest; warnings: string[] } | { ok: false; errors: string[]; warnings: string[] };
-const allowed = new Set(['id','name','version','tier','priceOm','icon','description','permissions','routes','docs','dependsOn','engine','events']);
+const allowed = new Set(['id','name','version','tier','priceOm','icon','description','permissions','routes','docs','group','dependsOn','engine','events']);
 const tiers = new Set(['core','paid','demo','custom']);
 export const TOPIC_RE = /^[a-z][a-z0-9-]*\.[a-z][a-z0-9-]*\.[a-z][a-z0-9_-]*$/;
 export const TOPIC_SUBSCRIBE_RE = /^(?:[a-z][a-z0-9-]*\.[a-z][a-z0-9-]*\.[a-z][a-z0-9_-]*|[a-z][a-z0-9-]*\.\*)$/;
@@ -27,6 +27,7 @@ export function validateManifest(raw: unknown): ManifestValidation {
   if (typeof raw.tier === 'string' && !tiers.has(raw.tier)) errors.push('tier chỉ được là core|paid|demo|custom');
   if (typeof raw.priceOm !== 'number' || raw.priceOm < 0) errors.push('priceOm bắt buộc là số >= 0');
   if (typeof raw.routes === 'string' && !/^\/api\/v1\/[a-z0-9-]+/.test(raw.routes)) errors.push('routes phải bắt đầu bằng /api/v1/');
+  if (raw.group !== undefined && (typeof raw.group !== 'string' || !raw.group.trim() || raw.group.length > 40)) errors.push('group phải là chuỗi không rỗng, tối đa 40 ký tự');
   arrStr(raw.permissions, 'permissions', errors);
   if (Array.isArray(raw.permissions)) for (const p of raw.permissions) {
     if (typeof p !== 'string' || !/^[a-z][a-z0-9-]*\.[a-z][a-z0-9-]*\.[a-z][a-z0-9-]*$/.test(p)) errors.push(`permission ${String(p)} sai format module.resource.action`);

@@ -19,5 +19,6 @@
       "om.wallet.spent",
       "om.wallet.topped_up"
     ]
-  }
+  },
+  "group": "Cốt lõi"
 }
