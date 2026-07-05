@@ -1,7 +1,7 @@
 {
   "round": "R11.3",
   "title": "Add Soul-Manager HR module",
-  "status": "running",
+  "status": "done",
   "startedAt": "2026-07-05T17:44:00+02:00",
   "order": "Anh Nấng: thêm Module Soul-Manager (HRM) vào SuperCitadel, audit kỹ, đúng quy trình add module, Tiểu Tâm hấp thụ full, backup nếu không OK thì revert, ghi lại quy trình + token, push + release.",
   "backup": {
@@ -22,7 +22,13 @@
     "pC_host_wiring": "done",
     "pD_gates": "done",
     "pE_deploy_verify": "done",
-    "pF_ship": "pending"
+    "pF_ship": "done"
+  },
+  "ship": {
+    "commits": ["cfd89b4", "8d376e2", "c0faf09"],
+    "ci": "c0faf09 completed success (docs/manifest/buttons/secret gates all green)",
+    "release": "v11.3.0 published — https://github.com/NachaFromMars/supercitadel/releases/tag/v11.3.0",
+    "ciFix": "CI gate 'giáo trình module (quy chuẩn ⑧)' fail lần đầu → viết lại modules/soul-manager/docs/GUIDE.md đúng 5 mục + bảng Endpoint + ≥2 ví dụ Tiểu Tâm"
   },
   "evidence": {
     "moduleNativeAudit": "321/321 PASS",
@@ -43,6 +49,6 @@
   },
   "docs": ["docs/ADD-MODULE-PLAYBOOK.md", "soul-manager-DEEP-AUDIT.md"],
   "commits": ["cfd89b4"],
-  "next": "push + release v11.3.0 + CI SUCCESS",
-  "lastUpdate": "2026-07-05T18:10:00+02:00"
+  "next": "— (done)",
+  "lastUpdate": "2026-07-05T18:35:00+02:00"
 }
