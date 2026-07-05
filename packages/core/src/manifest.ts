@@ -5,9 +5,11 @@ export interface ModuleManifestEvents { emits?: string[]; subscribes?: string[] 
 export interface ModuleManifest {
   id: string; name: string; version: string; tier: ModuleTier; priceOm: number; icon: string; description: string;
   permissions: string[]; routes: string; docs: string; group?: string; dependsOn?: string[]; engine?: string; events?: ModuleManifestEvents;
+  rentPlans?: Record<string, number>;
 }
+
 export type ManifestValidation = { ok: true; manifest: ModuleManifest; warnings: string[] } | { ok: false; errors: string[]; warnings: string[] };
-const allowed = new Set(['id','name','version','tier','priceOm','icon','description','permissions','routes','docs','group','dependsOn','engine','events']);
+const allowed = new Set(['id','name','version','tier','priceOm','icon','description','permissions','routes','docs','group','dependsOn','engine','events','rentPlans']);
 const tiers = new Set(['core','paid','demo','custom']);
 export const TOPIC_RE = /^[a-z][a-z0-9-]*\.[a-z][a-z0-9-]*\.[a-z][a-z0-9_-]*$/;
 export const TOPIC_SUBSCRIBE_RE = /^(?:[a-z][a-z0-9-]*\.[a-z][a-z0-9-]*\.[a-z][a-z0-9_-]*|[a-z][a-z0-9-]*\.\*)$/;
@@ -35,6 +37,17 @@ export function validateManifest(raw: unknown): ManifestValidation {
   }
   if (raw.dependsOn !== undefined) arrStr(raw.dependsOn, 'dependsOn', errors);
   if (raw.engine !== undefined && typeof raw.engine !== 'string') errors.push('engine phải là chuỗi semver range');
+
+  if (raw.rentPlans !== undefined) {
+    if (!isObj(raw.rentPlans)) errors.push('rentPlans phải là object { "7"|"30"|"90": số Om }');
+    else {
+      const allowedRentDays = new Set(['7','30','90']);
+      for (const [k, v] of Object.entries(raw.rentPlans)) {
+        if (!allowedRentDays.has(k)) errors.push(`rentPlans.${k} không hợp lệ — chỉ hỗ trợ 7, 30, 90 ngày`);
+        if (!Number.isInteger(v) || (v as number) <= 0) errors.push(`rentPlans.${k} phải là số nguyên Om > 0`);
+      }
+    }
+  }
   if (raw.events !== undefined) {
     if (!isObj(raw.events)) errors.push('events phải là object { emits, subscribes }');
     else {

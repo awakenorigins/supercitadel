@@ -1,0 +1,71 @@
+# WIRING.patch — Kế Toán 10A vào SuperCitadel
+#
+# Diff tham chiếu 4 file host trong services/api. Áp bằng:
+#   git apply modules/ke-toan-10a/WIRING.patch
+# Nếu lệch (repo bạn đã đổi khác), mở file này áp tay theo docs/INTEGRATION.md.
+# ============================================================================
+
+--- a/services/api/package.json
++++ b/services/api/package.json
+@@ dependencies @@
+   "dependencies": {
++    "@citadel/module-ke-toan-10a": "workspace:*",
+     "@citadel/core": "workspace:*"
+   }
+
+--- a/services/api/src/index.ts
++++ b/services/api/src/index.ts
+@@ imports @@
+ import { buildAccountingRoutes } from '@citadel/module-accounting/server/routes.js';
++import { buildKeToan6aRoutes } from '@citadel/module-ke-toan-10a/routes';
++import { keToan6aTools } from '@citadel/module-ke-toan-10a/tools';
+@@ mount routes @@
+ app.route('/api/v1/accounting', buildAccountingRoutes({ db: getDb(), requireAuth, gate: requireModule(getDb(), 'accounting'), audit }));
++app.route('/api/v1/ke-toan-10a', buildKeToan6aRoutes({
++  db: getDb(),
++  requireAuth,
++  gate: requireModule(getDb(), 'ke-toan-10a'),
++  audit,
++  reverseGate: async (c, kind) => {
++    if (['payment', 'receipt', 'fiscal_close', 'fiscal_reopen'].includes(kind))
++      await assertSecurityLevel(getDb(), c.get('auth'), 2);
++  },
++}));
+@@ register AI tools @@
+ crmTools(getDb()).forEach((t) => toolRegistry.register(t));
++try { keToan6aTools(getDb()).forEach((t) => toolRegistry.register(t)); } catch (e) { /* idempotent */ }
+
+--- a/services/api/src/modules/catalog.ts
++++ b/services/api/src/modules/catalog.ts
+@@ MODULE_CATALOG (nhóm Tài chính) @@
+   { id: 'accounting', name: 'Kế Toán', /* … */ },
++  { id: 'ke-toan-10a', name: 'Kế Toán 10A', icon: 'coin', desc: 'Kế toán kép toàn diện: hoá đơn bán/mua nhiều dòng, công nợ + tuổi nợ, năm tài chính, Excel, tự-audit sổ. Chuẩn TT133.', tier: 'paid', priceOm: 700, group: 'Tài chính', route: '/ke-toan-10a', status: 'ready' },
+
+--- a/services/api/src/tieu-tam/actions.ts
++++ b/services/api/src/tieu-tam/actions.ts
+@@ imports @@
++import { mountKeToan6a } from '@citadel/module-ke-toan-10a';
++const keToan6a = mountKeToan6a({ db: getDb(), requireAuth });
+@@ trong hàm build defs, sau khi khởi tạo mảng defs @@
++for (const a of keToan6a.actions) {
++  defs.push({
++    name: a.id,
++    description: a.description,
++    requiredModule: 'ke-toan-10a',
++    parameters: a.parameters,
++    async execute(ctx, p) {
++      const res = await keToan6a.invokeAction(
++        { orgId: ctx.orgId, actor: ctx.userId ?? 'tieu-tam', source: 'tieu-tam' }, a.id, p);
++      await audit(ctx, a.id, p, res.data?.id);
++      return result(a.id, 'ke-toan-10a', res.message, res.data);
++    },
++  });
++}
+
+--- a/deploy.sh
++++ b/deploy.sh
+@@ migrate modules @@
+-for m in chat notification crm om inventory hr accounting; do
++for m in chat notification crm om inventory hr accounting ke-toan-10a; do
+   psql "$DATABASE_URL" -f "modules/$m/migrations/"*.sql
+ done

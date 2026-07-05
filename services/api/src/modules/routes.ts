@@ -19,7 +19,9 @@ function rentDaysLeft(rentedUntil: Date | null | undefined): number | null {
 
 /** Giá thuê theo gói ngày — % của priceOm, làm tròn lên. */
 export const RENT_PLANS: Record<number, number> = { 7: 0.10, 30: 0.25, 90: 0.60 };
-export function rentPriceOm(priceOm: number, days: number): number {
+export function rentPriceOm(priceOm: number, days: number, overrides?: Record<string, number>): number {
+  const override = overrides?.[String(days)];
+  if (Number.isInteger(override) && override! > 0) return override!;
   return Math.ceil(priceOm * RENT_PLANS[days]);
 }
 
@@ -32,6 +34,7 @@ async function orgState(db: any, orgId: string) {
     const rentedUntil = r?.rentedUntil ? new Date(r.rentedUntil).toISOString() : null;
     return {
       ...m,
+      rentPlans: (m as any).rentPlans ?? undefined,
       active: isCore ? true : (r?.status === 'active'),
       purchased: isCore ? true : (r?.purchased ?? false),
       rentedUntil,
@@ -119,7 +122,7 @@ export function buildModuleRoutes(deps: { db: any; requireAuth: MiddlewareHandle
     const orgId = orgOf(c);
     const [existing] = await deps.db.select().from(orgModules).where(and(eq(orgModules.orgId, orgId), eq(orgModules.moduleId, id)));
     if (existing?.purchased) throw Errors.conflict('Đã mua đứt module này rồi — không cần thuê');
-    const paidOm = rentPriceOm(def.priceOm, days);
+    const paidOm = rentPriceOm(def.priceOm, days, (def as any).rentPlans);
     // trừ Om thật — không đủ → 400 kèm message tiếng Việt
     let pay;
     try {

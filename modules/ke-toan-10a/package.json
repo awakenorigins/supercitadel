@@ -1,0 +1,104 @@
+{
+  "name": "@citadel/module-ke-toan-10a",
+  "version": "1.0.0",
+  "description": "Kế Toán 10A — Module kế toán hoàn chỉnh cho SuperCitadel: sổ kép BigInt, tuân thủ VN (TT133/TT200), vận hành, phân tích nâng cao, Tiểu Tâm điều khiển 100% (tools + actions + dry-run v8.5). Plug-and-play, sẵn sàng lên kệ Cửa hàng Module.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./routes": {
+      "types": "./dist/routes.d.ts",
+      "import": "./dist/routes.js"
+    },
+    "./tools": {
+      "types": "./dist/tools.d.ts",
+      "import": "./dist/tools.js"
+    },
+    "./seed": {
+      "types": "./dist/seed.d.ts",
+      "import": "./dist/seed.js"
+    },
+    "./schema": {
+      "types": "./dist/schema/index.d.ts",
+      "import": "./dist/schema/index.js"
+    },
+    "./contract": {
+      "types": "./dist/contract.d.ts",
+      "import": "./dist/contract.js"
+    },
+    "./server/routes.js": "./server/routes.ts",
+    "./server/tools.js": "./server/tools.ts",
+    "./server/seed.js": "./server/seed.ts",
+    "./server/schema.js": "./server/schema.ts",
+    "./server/service.js": "./server/service.ts",
+    "./server/tieu-tam-actions.js": "./server/tieu-tam-actions.ts"
+  },
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit -p tsconfig.check.json",
+    "test": "tsx server/k10a.pglite.test.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx src/lib/migrate.ts",
+    "db:seed": "tsx seed/index.ts",
+    "lint": "echo 'lint: dùng eslint config của SuperCitadel monorepo'",
+    "test:integration": "tsx tests/integration.ts",
+    "test:http": "tsx tests/http.ts",
+    "test:all": "tsx tests/run.ts && tsx tests/integration.ts && tsx tests/http.ts",
+    "test:full": "tsx tests/run.ts && tsx tests/integration.ts && tsx tests/http.ts && tsx tests/tieu-tam.ts && tsx tests/store-flow.ts"
+  },
+  "keywords": [
+    "supercitadel",
+    "tieu-tam",
+    "ke-toan-10a",
+    "accounting",
+    "double-entry",
+    "vietnam",
+    "tt133",
+    "module",
+    "plug-and-play",
+    "aging",
+    "excel"
+  ],
+  "author": "Nacha (NachaFromMars)",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "drizzle-orm": "^0.36.0",
+    "hono": "^4.6.0",
+    "postgres": "^3.4.5",
+    "xlsx": "0.18.5",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.2.17",
+    "@types/node": "^22.0.0",
+    "drizzle-kit": "^0.28.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "citadelModule": {
+    "id": "ke-toan-10a",
+    "displayName": "Kế Toán 6A",
+    "icon": "coin",
+    "category": "finance",
+    "apiPrefix": "/api/v1/ke-toan-10a",
+    "permissions": [
+      "ke-toan-10a:read",
+      "ke-toan-10a:write",
+      "ke-toan-10a:void"
+    ],
+    "routesFactory": "buildKeToan10aRoutes",
+    "toolsFactory": "keToan10aTools",
+    "requiresTenant": true,
+    "healthEndpoint": "/api/v1/ke-toan-10a/health"
+  },
+  "private": true
+}

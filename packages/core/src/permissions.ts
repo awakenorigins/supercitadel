@@ -37,13 +37,30 @@ export const PERMISSION_REGISTRY = [
   p('notification.notification.read','Xem thông báo'),
   p('notification.notification.create','Tạo thông báo'),
   p('om.wallet.topup','Nạp Om',2,true),
+  // ── Kế Toán 10A ──
+  p('ke-toan-10a.receipt.create','Kế Toán 10A — Tạo phiếu thu',2,true),
+  p('ke-toan-10a.payment.create','Kế Toán 10A — Tạo phiếu chi',2,true),
+  p('ke-toan-10a.invoice.create','Kế Toán 10A — Tạo hóa đơn bán/mua',2,true),
+  p('ke-toan-10a.invoice.collect','Kế Toán 10A — Thu tiền theo hóa đơn',2,true),
+  p('ke-toan-10a.advance.create','Kế Toán 10A — Tạm ứng/đặt cọc',2,true),
+  p('ke-toan-10a.recurring.create','Kế Toán 10A — Đặt giao dịch định kỳ',2,true),
+  p('ke-toan-10a.recurring.run','Kế Toán 10A — Chạy giao dịch định kỳ',2,true),
+  p('ke-toan-10a.credit.limit-set','Kế Toán 10A — Đặt hạn mức tín dụng',2,true),
+  p('ke-toan-10a.bank.reconcile','Kế Toán 10A — Đối chiếu ngân hàng',2,true),
+  p('ke-toan-10a.asset.create','Kế Toán 10A — Ghi nhận TSCĐ',2,true),
+  p('ke-toan-10a.asset.depreciate','Kế Toán 10A — Chạy khấu hao',2,true),
+  p('ke-toan-10a.fx.revalue','Kế Toán 10A — Đánh giá lại tỷ giá',2,true),
+  p('ke-toan-10a.period.close','Kế Toán 10A — Kết chuyển & khóa niên độ',2,true),
+  p('ke-toan-10a.budget.set','Kế Toán 10A — Đặt ngân sách'),
+  p('ke-toan-10a.budget.read','Kế Toán 10A — Xem ngân sách vs thực tế'),
+  p('ke-toan-10a.report.read','Kế Toán 10A — Xem báo cáo nhanh'),
 ] as const satisfies readonly PermissionMeta[];
 
 export const ROLE_PERMISSIONS: Record<RoleType, readonly Permission[]> = {
   super_admin: ['*'],
   owner: ['*'],
-  manager: ['accounting.*','crm.*','inventory.*','hr.*','om.wallet.read','report.*','core.permissions.read'],
-  staff: ['crm.contact.create','crm.contact.read','hr.attendance.checkin','hr.attendance.checkout','om.wallet.read','report.summary.read','core.permissions.read'],
+  manager: ['accounting.*','crm.*','inventory.*','hr.*','om.wallet.read','report.*','core.permissions.read','ke-toan-10a.*'],
+  staff: ['crm.contact.create','crm.contact.read','hr.attendance.checkin','hr.attendance.checkout','om.wallet.read','report.summary.read','core.permissions.read','ke-toan-10a.report.read'],
 };
 
 export function permissionMatches(grant: Permission, perm: Permission): boolean {

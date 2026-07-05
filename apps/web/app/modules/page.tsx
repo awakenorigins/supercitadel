@@ -6,7 +6,7 @@ import { Icon } from '../../components/Icon';
 import { CompanyModuleWizard } from '../../components/CompanyModuleWizard';
 import { api, getSession } from '../../lib/api';
 
-interface Mod { id: string; name: string; icon: string; desc: string; tier: string; priceOm: number; group: string; route: string; status: string; rentOnly?: boolean; active: boolean; purchased: boolean; rentedUntil: string | null; rentDaysLeft: number | null }
+interface Mod { id: string; name: string; icon: string; desc: string; tier: string; priceOm: number; group: string; route: string; status: string; rentOnly?: boolean; rentPlans?: Record<string, number>; active: boolean; purchased: boolean; rentedUntil: string | null; rentDaysLeft: number | null }
 interface CompanyReq { id: string; companyName: string; status: string; payload: any; createdAt: string }
 
 const RENT_PLANS = [
@@ -14,7 +14,7 @@ const RENT_PLANS = [
   { days: 30, pct: 0.25, label: '30 ngày' },
   { days: 90, pct: 0.60, label: '90 ngày' },
 ];
-const rentPrice = (priceOm: number, pct: number) => Math.ceil(priceOm * pct);
+const rentPrice = (m: Mod, p: { days: number; pct: number }) => m.rentPlans?.[String(p.days)] ?? Math.ceil(m.priceOm * p.pct);
 const fmtDate = (d: Date) => d.toLocaleDateString('vi-VN', { day: 'numeric', month: 'numeric', year: 'numeric' });
 interface StoreItem { code: string; name: string; description: string; category: string; price: number; icon: string | null }
 
@@ -355,7 +355,7 @@ export default function ModulesPage() {
               <button className="sh-x" onClick={() => setRentSheet(null)}><Icon name="x" size={14} /></button>
             </div>
             {RENT_PLANS.map((p) => {
-              const price = rentPrice(rentSheet.priceOm, p.pct);
+              const price = rentPrice(rentSheet, p);
               const base = rentSheet.rentDaysLeft !== null && rentSheet.rentedUntil
                 ? new Date(rentSheet.rentedUntil) : new Date();
               const until = new Date(base.getTime() + p.days * 86_400_000);
@@ -372,7 +372,7 @@ export default function ModulesPage() {
             })}
             <button className="btn-p" disabled={busy === rentSheet.id} style={{ marginTop: 10, opacity: busy === rentSheet.id ? .6 : 1 }}
               onClick={() => doRent(rentSheet, rentDays)}>
-              {busy === rentSheet.id ? 'Đang xử lý…' : `Xác nhận ${rentSheet.rentedUntil ? 'gia hạn' : 'thuê'} ${rentDays} ngày · ${rentPrice(rentSheet.priceOm, RENT_PLANS.find((p) => p.days === rentDays)!.pct)} Om`}
+              {busy === rentSheet.id ? 'Đang xử lý…' : `Xác nhận ${rentSheet.rentedUntil ? 'gia hạn' : 'thuê'} ${rentDays} ngày · ${rentPrice(rentSheet, RENT_PLANS.find((p) => p.days === rentDays)!)} Om`}
             </button>
             {bal !== null && <div style={{ fontSize: 11, color: 'var(--mut)', textAlign: 'center', marginTop: 9 }}>Số dư ví: {bal.toLocaleString('vi')} Om</div>}
           </div>

@@ -24,7 +24,8 @@
     "@citadel/module-om": "workspace:*",
     "@citadel/module-inventory": "workspace:*",
     "@citadel/module-hr": "workspace:*",
-    "@citadel/module-accounting": "workspace:*"
+    "@citadel/module-accounting": "workspace:*",
+    "@citadel/module-ke-toan-10a": "workspace:*"
   },
   "devDependencies": {
     "tsx": "^4.19.0",
