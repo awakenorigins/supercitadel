@@ -55,6 +55,18 @@ export const TOURS: Record<string, Tour> = {
       { sel: '.cmw-actions', title: 'Tiếp tục → Điều khoản → Add', text: 'Điền đủ bước nào nút Tiếp tục sáng bước đó. Sau bước 5 là điều khoản beta — đồng ý xong bấm 「＋ Add Module Company」, Tiểu Tâm nhận hồ sơ ngay. 🦊' },
     ],
   },
+  '/ke-toan-10a': {
+    id: 'ke-toan-10a-v1',
+    steps: [
+      { title: 'Kế Toán 10A 🧾', text: 'Sổ kép hoàn chỉnh chạy độc lập — thao tác tại đây hoặc ra lệnh Tiểu Tâm.' },
+      { sel: '[data-tut="k10a-kpi"]', title: 'Nhịp tim tài chính', text: 'Tiền, phải thu/trả, lãi lỗ — badge SỔ CÂN xác nhận Σ Nợ = Σ Có.' },
+      { sel: '[data-tut="k10a-quy"]', title: 'Sổ quỹ', text: 'Phiếu thu/chi 5 giây; sai thì Đảo (bút toán ngược, không xóa).' },
+      { sel: '[data-tut="k10a-hd"]', title: 'Hóa đơn & công nợ', text: 'Kèm thuế GTGT; Thu tiền cấn trừ, chặn thu vượt nợ.' },
+      { sel: '[data-tut="k10a-bank"]', title: 'Đối chiếu ngân hàng', text: 'Dán sao kê CSV — tự khớp với sổ, báo dòng lệch.' },
+      { sel: '[data-tut="k10a-report"]', title: 'Báo cáo & Excel', text: 'KQKD, cân đối thử, Excel, toàn vẹn sổ; cuối năm kết chuyển 911→421.' },
+      { sel: '[data-tut="k10a-demo"]', title: 'Dữ liệu mẫu', text: 'Bấm để sinh nghiệp vụ mẫu, khám phá thoải mái.' },
+    ],
+  },
   '/crm': {
     id: 'crm',
     steps: [
