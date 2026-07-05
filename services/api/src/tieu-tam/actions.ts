@@ -50,7 +50,7 @@ const defs: TieuTamAction[] = [
   { name:'om.balance', permission:'om.wallet.read', securityLevel:1, sensitive:false, description:'Xem số dư ví Om', requiredModule:'om', parameters:{type:'object',properties:{}}, async execute(ctx,p){ const balance=await getBalance(ctx.db,ctx.orgId); await audit(ctx,this.name,p); return result(this.name,'om',`Số dư ví Om hiện tại là ${balance.toLocaleString('vi-VN')} Om`,{balance}); } },
   { name:'report.summary', permission:'report.summary.read', securityLevel:1, sensitive:false, description:'Tóm tắt nhanh dữ liệu dashboard', requiredModule:'core', parameters:{type:'object',properties:{}}, async execute(ctx,p){ const [contacts,items,emps,balance]=await Promise.all([listContacts(ctx.db,ctx.orgId).catch(()=>[]),listItems(ctx.db,ctx.orgId).catch(()=>[]),listEmployees(ctx.db,ctx.orgId).catch(()=>[]),getBalance(ctx.db,ctx.orgId).catch(()=>0)]); await audit(ctx,this.name,p); return result(this.name,'report',`Tóm tắt: ${contacts.length} khách, ${items.length} mặt hàng, ${emps.length} nhân viên, ${balance} Om`,{contacts:contacts.length,items:items.length,employees:emps.length,balance}); } },
 ];
-defs.push(...(keToan10aTieuTamActions as unknown as (db: DB) => TieuTamAction[])(null));
+defs.push(...(keToan10aTieuTamActions as unknown as (db: DB) => TieuTamAction[])(undefined as unknown as DB));
 export const ACTION_REGISTRY = new Map(defs.map(d=>[d.name,d]));
 export function toolSafeName(name:string){ return name.replace(/[^a-zA-Z0-9_-]/g, '_'); }
 const SAFE_TO_ACTION = new Map(defs.map(d=>[toolSafeName(d.name), d.name]));

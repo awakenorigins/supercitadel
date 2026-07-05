@@ -11,7 +11,7 @@
  *   2. `defs.push(...keToan10aTieuTamActions(getDb()))` trong tieu-tam/actions.ts.
  *   3. (Tùy chọn) nối detectK10aAction vào detectAction để bắt câu lệnh nhanh.
  */
-import type { Database } from "./lib/db.js";
+import { getDb, type Database } from "./lib/db.js";
 import { userCtx } from "./lib/context.js";
 import { KetoanServices } from "./services/index.js";
 import * as Money from "./lib/money.js";
@@ -107,13 +107,15 @@ async function logAudit(ctx: K10aActionCtx, action: string, params: unknown, res
  * Bộ action Tiểu Tâm của Kế Toán 10A — khuôn v8.5.
  * Mọi hành động GHI SỔ đặt securityLevel 2 + sensitive (host tự dry-run→confirm).
  */
-export function keToan10aTieuTamActions(db: Database): K10aTieuTamAction[] {
-  const svc = new KetoanServices(db);
+export function keToan10aTieuTamActions(db?: Database): K10aTieuTamAction[] {
+  const resolveDb = () => db ?? getDb();
+  const svc = new Proxy({} as KetoanServices, { get(_target, prop) { return (services() as any)[prop]; } });
+  const services = () => new KetoanServices(resolveDb());
   const ctxOf = (c: K10aActionCtx) => userCtx(c.orgId, c.userId || "tieu-tam");
   /** Đảm bảo org đã có chart (khách vừa mua module vẫn ra lệnh được ngay). */
   const ensureChart = async (c: K10aActionCtx) => {
     const { seedChartOfAccounts } = await import("./seed.js");
-    await seedChartOfAccounts(c.orgId, db).catch(() => 0);
+    await seedChartOfAccounts(c.orgId, resolveDb()).catch(() => 0);
   };
 
   return [
@@ -137,6 +139,7 @@ export function keToan10aTieuTamActions(db: Database): K10aTieuTamAction[] {
       },
       async execute(ctx, p) {
         await ensureChart(ctx);
+        const svc = services();
         const row = await svc.receipts.create(ctxOf(ctx), {
           docDate: today(),
           counterAccountCode: String(p.taiKhoanDoiUng || "511"),
@@ -170,6 +173,7 @@ export function keToan10aTieuTamActions(db: Database): K10aTieuTamAction[] {
       },
       async execute(ctx, p) {
         await ensureChart(ctx);
+        const svc = services();
         const row = await svc.payments.create(ctxOf(ctx), {
           docDate: today(),
           counterAccountCode: String(p.taiKhoanDoiUng || "642"),
@@ -202,6 +206,7 @@ export function keToan10aTieuTamActions(db: Database): K10aTieuTamAction[] {
       },
       async execute(ctx, p) {
         await ensureChart(ctx);
+        const svc = services();
         const c = ctxOf(ctx);
         const contact =
           (await svc.contacts.findByName(c, String(p.tenKhach))) ??

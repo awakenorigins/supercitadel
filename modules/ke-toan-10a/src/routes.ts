@@ -51,12 +51,14 @@ export function buildKeToan10aRoutes(deps: ModuleDeps) {
   const r = new Hono();
 
   // Xử lý lỗi tập trung: AppError → status + body; còn lại → 500.
-  r.onError((err, c) =>
-    err instanceof AppError
-      ? c.json(err.toJSON(), err.status as 400)
-      : (console.error("[ke-toan-10a]", err),
-        c.json({ error: { code: "INTERNAL", message: "Lỗi hệ thống Kế Toán 10A" } }, 500)),
-  );
+  r.onError((err, c) => {
+    const maybe = err as { code?: string; status?: number; toJSON?: () => unknown };
+    if (err instanceof AppError || (typeof maybe.toJSON === "function" && typeof maybe.status === "number")) {
+      return c.json(maybe.toJSON!(), maybe.status as 400);
+    }
+    return (console.error("[ke-toan-10a]", err),
+      c.json({ error: { code: "INTERNAL", message: "Lỗi hệ thống Kế Toán 10A" } }, 500));
+  });
 
   // Health — KHÔNG cần auth (monitor/gateway ping được).
   r.get("/health", (c) =>
