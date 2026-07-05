@@ -15,7 +15,12 @@
     "pD_verify_release": "done"
   },
   "commits": ["5926c71", "3fab90f", "01ae8cc", "d08a65d", "558e6e9"],
-  "next": "push + release v11.2.0 + CI SUCCESS check",
+  "next": "—",
+  "postFix": {
+    "commit": "c626d5d SUPERCITADEL-R11.2: restore prod migrations 0006-0008, tests apply 0013 instead",
+    "why": "Phase B đã chèn ALTER persona_mode/proactive vào migration cũ 0006-0008 (đã chạy prod) — vi phạm quy tắc immutable migration. Revert 0006-0008 về nguyên bản, 9 test PGlite chuyển sang apply 0013_r112_settings_org.sql.",
+    "evidence": ["pnpm -r test PASS (26 PASSED, 0 fail thật)", "pnpm -r typecheck EXIT:0", "web build EXIT:0", "CI c626d5d completed success", "verify-r112 live PASS (members=6)", "verify-r11 26/26", "verify-r85 7/7", "DB live có persona_mode+proactive", "personaMode restore về friendly sau verify"]
+  },
   "audit": "R11.2-AUDIT.md",
   "evidence": {
     "localGates": ["pnpm --filter @citadel/web typecheck PASS", "pnpm test PASS 14/14", "pnpm --filter @citadel/web build PASS"],
