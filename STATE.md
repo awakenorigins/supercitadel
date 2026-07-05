@@ -1,4 +1,9 @@
 # SUPERCITADEL Build — State (nền Citadel V7A, repo NachaFromMars/supercitadel)
+## Mạch SUPERCITADEL-R10 (Outbox foundation — 2026-07-05)
+- Phase A: thêm migration `0011_outbox_events`, Drizzle schema, `@citadel/core/outbox` với `emitEvent(tx, ...)` bắt buộc transaction; API dispatcher interval an toàn, exact+wildcard subscriber, notification + WS broadcast, admin endpoints `/api/v1/outbox/stats` và `/api/v1/outbox/events`; emit thật từ accounting/om/hr; v10 test cover rollback/commit atomicity, handler throw retry, wildcard, notification row, org isolation/staff 403.
+- Phase B: manifest v2 hỗ trợ `events.emits` exact và `events.subscribes` exact hoặc `module.*`; loader auto-wire built-in module event handlers; notification dogfood contract `server/events.ts`; `docs/MODULE-FORGE-GUIDE.md` nâng v2.1 có mục Sự kiện Outbox cho module kho/ngoài.
+- Phase C: release mục tiêu `v10.0.0`; gates: typecheck/test/build, acceptance-v7a, audit-buttons, audit-manifests, audit-module-docs, deploy live, verify-r10, tổng nghiệm thu verify-r8/r85/r9/r10.
+
 ## Mạch SUPERCITADEL-R9 (Module Loader FULL strict — 2026-07-05)
 - Phase A: `packages/core/src/manifest.ts` định nghĩa manifest schema v2 + `validateManifest()` strict; 7 manifest module migrated sang permission format `module.resource.action`; audit-manifests PASS.
 - Phase B: `services/api/src/modules/loader.ts` đọc `modules/*/manifest.json`, validate strict, reject manifest lỗi/dependsOn lỗi/missing route builder mà không crash API; catalog sinh từ manifest; endpoint owner-only `GET /api/v1/modules/loader-status`; test v9 cover loaded/rejected/dependsOn/catalog.

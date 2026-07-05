@@ -72,6 +72,15 @@ Hành động nhạy cảm (chi Om > 1000 · đổi role · hủy phiếu đã t
 | GET | /api/v1/dashboard/summary | — | KPI Home |
 | GET | /api/v1/dashboard/search?q= | — | Tìm kiếm |
 
+
+## Outbox (R10)
+| Method | Path | Body | Mô tả |
+|---|---|---|---|
+| GET | /api/v1/outbox/stats | — | Owner/super_admin; đếm `{pending,failed,dispatched}` theo org |
+| GET | /api/v1/outbox/events?status=pending\|failed\|dispatched&limit=50 | — | Owner/super_admin; xem event org-scoped, limit ≤100; staff 403 |
+
+Event nghiệp vụ hiện có: `accounting.invoice.created`, `accounting.payment.created`, `om.wallet.spent`, `om.wallet.topped_up`, `hr.attendance.checked_in`. Module ngoài emit qua `emitEvent(tx,{orgId,topic,payload})`; subscribe qua manifest `events.subscribes` + `server/events.ts` export `eventHandlers`.
+
 ## Modules (Cửa hàng)
 | GET | /api/v1/modules | — | Catalog 7 module + trạng thái org |
 | POST | /api/v1/modules/:id/purchase | — | Mua bằng Om (trừ thật) → auto bật |
