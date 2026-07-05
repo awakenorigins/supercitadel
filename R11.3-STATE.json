@@ -25,7 +25,11 @@
     "pF_ship": "done"
   },
   "ship": {
-    "commits": ["cfd89b4", "8d376e2", "c0faf09"],
+    "commits": [
+      "cfd89b4",
+      "8d376e2",
+      "c0faf09"
+    ],
     "ci": "c0faf09 completed success (docs/manifest/buttons/secret gates all green)",
     "release": "v11.3.0 published — https://github.com/NachaFromMars/supercitadel/releases/tag/v11.3.0",
     "ciFix": "CI gate 'giáo trình module (quy chuẩn ⑧)' fail lần đầu → viết lại modules/soul-manager/docs/GUIDE.md đúng 5 mục + bảng Endpoint + ≥2 ví dụ Tiểu Tâm"
@@ -47,8 +51,19 @@
     "out": "~30k",
     "subagentAudit": "119.5k (in 112.4k / out 7.1k), runtime 4m10s"
   },
-  "docs": ["docs/ADD-MODULE-PLAYBOOK.md", "soul-manager-DEEP-AUDIT.md"],
-  "commits": ["cfd89b4", "8d376e2", "c0faf09", "fbc4be7", "9017b3a"],
+  "docs": [
+    "docs/ADD-MODULE-PLAYBOOK.md",
+    "soul-manager-DEEP-AUDIT.md"
+  ],
+  "commits": [
+    "cfd89b4",
+    "8d376e2",
+    "c0faf09",
+    "fbc4be7",
+    "9017b3a",
+    "480a561",
+    "4485bf7"
+  ],
   "feFix": {
     "issue": "User báo 404 khi bấm module — thiếu trang FE apps/web/app/soul-manager/page.tsx (chỉ wire backend+Tiểu Tâm, quên UI). Catalog route /soul-manager → Next 404.",
     "fix": "Dựng page.tsx 4 tab (nhân viên/tổ chức/nghỉ phép/lương) nối /api/v1/soul-manager/*; đổi manifest.icon → users. Commit 9017b3a.",
@@ -56,5 +71,14 @@
     "lesson": "Thêm mục 6b (trang FE bắt buộc) vào docs/ADD-MODULE-PLAYBOOK.md."
   },
   "next": "— (done)",
-  "lastUpdate": "2026-07-05T18:35:00+02:00"
+  "lastUpdate": "2026-07-05T18:35:00+02:00",
+  "uiFixes": [
+    {
+      "issue": "Sheet Thêm nhân viên bị bottom-nav che nút Lưu (sheet tự chế không max-height+scroll)",
+      "fix": "Dùng .sh-panel chuẩn app (max-height 84dvh + overflow-y auto)",
+      "commit": "4485bf7",
+      "ci": "success",
+      "verify": "/soul-manager 200, chunk page-1b42d2f9 redeploy"
+    }
+  ]
 }
