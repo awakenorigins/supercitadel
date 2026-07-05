@@ -1,6 +1,6 @@
 {
   "round": "R11.2",
-  "status": "running",
+  "status": "done",
   "startedAt": "2026-07-05T16:10:00+02:00",
   "sessionKey": "agent:main:telegram:group:-1003720502853:topic:9871",
   "brief": "R11.2-TASK.md",
@@ -12,10 +12,17 @@
     "pA_audit_map": "done",
     "pB_backend_endpoints": "done",
     "pC_wire_fe": "done",
-    "pD_verify_release": "pending"
+    "pD_verify_release": "done"
   },
-  "commits": [],
-  "next": "Phase D verify live + release",
+  "commits": ["5926c71", "3fab90f", "01ae8cc", "d08a65d", "558e6e9"],
+  "next": "push + release v11.2.0 + CI SUCCESS check",
   "audit": "R11.2-AUDIT.md",
-  "lastUpdate": "2026-07-05T16:58:00+02:00"
+  "evidence": {
+    "localGates": ["pnpm --filter @citadel/web typecheck PASS", "pnpm test PASS 14/14", "pnpm --filter @citadel/web build PASS"],
+    "deploy": "docker compose -p supercitadel ... up -d --build; api/ws/postgres/redis healthy; web up",
+    "migrations": "0013_r112_settings_org applied live",
+    "live": ["scripts/verify-r112.py PASS", "scripts/verify-r11.py PASS 26/26", "scripts/verify-r85.py PASS 7/7"],
+    "screenshots": ["shots/r112-persona.png", "shots/r112-proactive.png", "shots/r112-org.png", "shots/r112-members.png"]
+  },
+  "lastUpdate": "2026-07-05T17:02:00+02:00"
 }

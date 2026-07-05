@@ -1,3 +1,16 @@
+# R11.2 — Tiểu Tâm settings + org/members endpoints (2026-07-05)
+
+- Audit FE↔backend toàn diện ghi tại `R11.2-AUDIT.md`: 4 row Settings bị DEAD/HARDCODE (`Chế độ tính cách`, `Gợi ý chủ động`, `Thông tin tổ chức`, `Thành viên & quyền`); các control khác trong audit scope OK/local-only hợp lệ.
+- Backend thật: `GET/PATCH /api/v1/tieu-tam/settings` persist `persona_mode` + `proactive` vào `tt_soul_state`, audit `tieu_tam.settings_change`; `GET/PATCH /api/v1/org` owner-only patch + audit `org.update`; `GET /api/v1/org/members` manager+ scoped org; FE role-change trỏ endpoint existing `PATCH /api/v1/users/:id/role`.
+- FE Settings: 4 row tĩnh đổi thành button sống, load giá trị từ API, mở panel persona/proactive/org/members; PATCH thật + toast; members list + owner role select.
+- Commits: Phase A `5926c71`, Phase B `3fab90f`, Phase C `01ae8cc`, verify script `d08a65d`, live shots `558e6e9`.
+- Gates: `pnpm --filter @citadel/web typecheck` PASS; `pnpm test` PASS 14/14; `pnpm --filter @citadel/web build` PASS.
+- Live deploy: `docker compose -p supercitadel -f docker-compose.yml -f docker-compose.prod.yml up -d --build`; health: postgres/redis/api/ws healthy, web up; migration `0013_r112_settings_org` applied.
+- Live verify: `scripts/verify-r112.py` PASS (settings GET/PATCH persist, org GET/PATCH, members 200); regression `scripts/verify-r11.py` PASS 26/26; `scripts/verify-r85.py` PASS 7/7.
+- Screenshots: `shots/r112-persona.png`, `shots/r112-proactive.png`, `shots/r112-org.png`, `shots/r112-members.png`.
+- Release target: `v11.2.0`; CI success to be checked after push/release.
+
+---
 # R11 — Module ngoài đầu tiên: Kế Toán 10A
 
 ## Mạch R11 (chốt 2026-07-05)
