@@ -5,6 +5,7 @@
   "exports": {
     "./server/routes.js": "./server/routes.ts",
     "./server/service.js": "./server/service.ts",
+    "./server/events.js": "./server/events.ts",
     "./server/schema.js": "./server/schema.ts"
   },
   "scripts": {

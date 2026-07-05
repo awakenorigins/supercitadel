@@ -1,9 +1,13 @@
 // @citadel/db — client factory. Postgres for prod; PGlite for tests (see schema.test.ts).
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
-import { schema } from './schema.js';
+import { schema, outboxEvents } from './schema.js';
 
 export * from './schema.js';
+(globalThis as any).__citadelOutboxEventsTable = outboxEvents;
+// Outbox is enabled explicitly by API runtime/tests after migration is present.
+// Keep default disabled so legacy PGlite tests without 0011 do not abort transactions.
+if ((globalThis as any).__citadelOutboxEnabled === undefined) (globalThis as any).__citadelOutboxEnabled = false;
 
 let _db: ReturnType<typeof drizzle> | null = null;
 

@@ -6,8 +6,20 @@
   "priceOm": 0,
   "icon": "i-chat",
   "description": "Chat nội bộ real-time, nhóm, file.",
-  "permissions": ["chat.message.read", "chat.message.create", "chat.room.admin", "chat.reaction.create"],
+  "permissions": [
+    "chat.message.read",
+    "chat.message.create",
+    "chat.room.admin",
+    "chat.reaction.create"
+  ],
   "routes": "/api/v1/chat",
   "docs": "docs/GUIDE.md",
-  "engine": "^1.0.0"
+  "engine": "^1.0.0",
+  "events": {
+    "subscribes": [
+      "accounting.*",
+      "om.*",
+      "hr.*"
+    ]
+  }
 }

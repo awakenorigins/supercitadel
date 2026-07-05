@@ -2,7 +2,7 @@
 // viết lại bằng TS cho Citadel (chiến lược A — sạch license).
 import { eq, and, desc, sql } from 'drizzle-orm';
 import { hrEmployees, hrAttendance, hrShifts } from './schema.js';
-import { Errors } from '@citadel/core';
+import { Errors, emitEvent } from '@citadel/core';
 type DB = any;
 
 // ── Employees ──
@@ -57,16 +57,20 @@ export async function checkIn(db: DB, orgId: string, d: { employeeId: string; sh
     if (!shift) throw Errors.notFound('Không tìm thấy ca');
     late = hhmm(now) > shift.startTime; // so sánh "HH:MM" lexicographic — đúng cho 24h
   }
-  if (existing) { // record on_leave có sẵn nhưng vẫn đi làm → chuyển present, giữ ghi chú
-    const [row] = await db.update(hrAttendance)
-      .set({ checkIn: now, status: 'present', lateEntry: late, shiftId: d.shiftId ?? existing.shiftId })
-      .where(eq(hrAttendance.id, existing.id)).returning();
+  return db.transaction(async (tx: DB) => {
+    let row: any;
+    if (existing) { // record on_leave có sẵn nhưng vẫn đi làm → chuyển present, giữ ghi chú
+      [row] = await tx.update(hrAttendance)
+        .set({ checkIn: now, status: 'present', lateEntry: late, shiftId: d.shiftId ?? existing.shiftId })
+        .where(eq(hrAttendance.id, existing.id)).returning();
+    } else {
+      [row] = await tx.insert(hrAttendance).values({
+        orgId, employeeId: d.employeeId, attDate: today, checkIn: now, status: 'present', lateEntry: late, shiftId: d.shiftId,
+      }).returning();
+    }
+    await emitEvent(tx, { orgId, topic: 'hr.attendance.checked_in', payload: { id: row.id, employeeId: row.employeeId, at: row.checkIn, lateEntry: row.lateEntry } });
     return row;
-  }
-  const [row] = await db.insert(hrAttendance).values({
-    orgId, employeeId: d.employeeId, attDate: today, checkIn: now, status: 'present', lateEntry: late, shiftId: d.shiftId,
-  }).returning();
-  return row;
+  });
 }
 
 /** Check-out: set giờ ra + working_hours (2 chữ số thập phân). */

@@ -16,6 +16,7 @@ import { buildCompanyModuleRoutes } from './company-module-routes.js';
 import { buildStoreItemRoutes, buildInventoryItemRoutes } from './items/routes.js';
 import { toolRegistry } from '@citadel/tieu-tam';
 import { buildAuditRoutes } from './audit/routes.js';
+import { buildOutboxRoutes, startOutboxDispatcher } from './outbox.js';
 import { logAudit, makeAudit, ipOf } from './audit/service.js';
 import { bindEmail, bindPhone, securityInfo, assertSecurityLevel, SENSITIVE_OM_THRESHOLD } from './security/service.js';
 import { getBalance } from '@citadel/module-om/server/service.js';
@@ -36,6 +37,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 const app = new Hono();
+(globalThis as any).__citadelOutboxEnabled = process.env.CITADEL_DISABLE_OUTBOX !== '1';
 
 // CORS (R8) — production: CHỈ allow origin trong CORS_ORIGIN (danh sách phᡉy). Dev: localhost.
 // Không còn wildcard '*' ở production — origin lạ bị reject (trả null → không có CORS header).
@@ -130,6 +132,7 @@ app.route('/api/v1/company-module', buildCompanyModuleRoutes({ db: getDb(), requ
 app.route('/api/v1/store', buildStoreItemRoutes({ db: getDb(), requireAuth, audit }));
 app.route('/api/v1/inventory-items', buildInventoryItemRoutes({ db: getDb(), requireAuth, audit }));
 app.route('/api/v1/audit-logs', buildAuditRoutes({ db: getDb(), requireAuth }));
+app.route('/api/v1/outbox', buildOutboxRoutes({ db: getDb(), requireAuth }));
 
 // list users trong org (cho modal tạo phòng chat)
 app.get('/api/v1/users', requireAuth, async (c) => {
@@ -149,6 +152,7 @@ app.get('/ready', async (c) => {
 });
 
 const port = env.PORT;
+startOutboxDispatcher(getDb());
 serve({ fetch: app.fetch, port }, () => console.log(`[api] listening on :${port}`));
 
 export default app;

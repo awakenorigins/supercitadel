@@ -9,12 +9,14 @@ export interface ModuleManifest {
 export type ManifestValidation = { ok: true; manifest: ModuleManifest; warnings: string[] } | { ok: false; errors: string[]; warnings: string[] };
 const allowed = new Set(['id','name','version','tier','priceOm','icon','description','permissions','routes','docs','dependsOn','engine','events']);
 const tiers = new Set(['core','paid','demo','custom']);
-export const TOPIC_RE = /^[a-z][a-z0-9-]*\.[a-z][a-z0-9-]*\.(?:[a-z][a-z0-9_-]*|\*)$/;
+export const TOPIC_RE = /^[a-z][a-z0-9-]*\.[a-z][a-z0-9-]*\.[a-z][a-z0-9_-]*$/;
+export const TOPIC_SUBSCRIBE_RE = /^(?:[a-z][a-z0-9-]*\.[a-z][a-z0-9-]*\.[a-z][a-z0-9_-]*|[a-z][a-z0-9-]*\.\*)$/;
 const permSet = new Set(PERMISSION_REGISTRY.map((p) => p.key));
 const isObj = (x: unknown): x is Record<string, unknown> => !!x && typeof x === 'object' && !Array.isArray(x);
 function str(o: Record<string, unknown>, k: string, errors: string[]) { if (typeof o[k] !== 'string' || !(o[k] as string).trim()) errors.push(`Trường ${k} bắt buộc là chuỗi không rỗng`); }
 function arrStr(v: unknown, field: string, errors: string[]) { if (!Array.isArray(v) || v.some((x) => typeof x !== 'string' || !x.trim())) errors.push(`Trường ${field} bắt buộc là mảng chuỗi không rỗng`); }
 export function validateTopic(topic: string): boolean { return TOPIC_RE.test(topic); }
+export function validateSubscribeTopic(topic: string): boolean { return TOPIC_SUBSCRIBE_RE.test(topic); }
 export function validateManifest(raw: unknown): ManifestValidation {
   const errors: string[] = [], warnings: string[] = [];
   if (!isObj(raw)) return { ok: false, errors: ['Manifest phải là object JSON'], warnings };
@@ -34,9 +36,15 @@ export function validateManifest(raw: unknown): ManifestValidation {
   if (raw.engine !== undefined && typeof raw.engine !== 'string') errors.push('engine phải là chuỗi semver range');
   if (raw.events !== undefined) {
     if (!isObj(raw.events)) errors.push('events phải là object { emits, subscribes }');
-    else for (const key of ['emits','subscribes'] as const) if (raw.events[key] !== undefined) {
-      arrStr(raw.events[key], `events.${key}`, errors);
-      if (Array.isArray(raw.events[key])) for (const t of raw.events[key] as unknown[]) if (typeof t === 'string' && !validateTopic(t)) errors.push(`event topic ${t} sai format module.entity.verb`);
+    else {
+      if (raw.events.emits !== undefined) {
+        arrStr(raw.events.emits, 'events.emits', errors);
+        if (Array.isArray(raw.events.emits)) for (const t of raw.events.emits as unknown[]) if (typeof t === 'string' && !validateTopic(t)) errors.push(`event emit topic ${t} sai format module.entity.verb`);
+      }
+      if (raw.events.subscribes !== undefined) {
+        arrStr(raw.events.subscribes, 'events.subscribes', errors);
+        if (Array.isArray(raw.events.subscribes)) for (const t of raw.events.subscribes as unknown[]) if (typeof t === 'string' && !validateSubscribeTopic(t)) errors.push(`event subscribe topic ${t} sai format module.entity.verb hoặc module.*`);
+      }
     }
   }
   if (errors.length) return { ok: false, errors, warnings };

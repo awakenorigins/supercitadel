@@ -6,9 +6,19 @@
   "priceOm": 500,
   "icon": "i-coin",
   "description": "Sổ cái kép, thu chi, công nợ, lãi lỗ — fork domain model ERPNext Accounts.",
-  "permissions": ["accounting.receipt.create", "accounting.payment.create", "accounting.invoice.create", "accounting.payment.cancel"],
+  "permissions": [
+    "accounting.receipt.create",
+    "accounting.payment.create",
+    "accounting.invoice.create",
+    "accounting.payment.cancel"
+  ],
   "routes": "/api/v1/accounting",
   "docs": "docs/GUIDE.md",
   "engine": "^1.0.0",
-  "events": { "emits": ["accounting.invoice.created", "accounting.payment.created"] }
+  "events": {
+    "emits": [
+      "accounting.invoice.created",
+      "accounting.payment.created"
+    ]
+  }
 }

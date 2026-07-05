@@ -4,7 +4,7 @@
 //   (3) GL đã post bất biến — hủy chứng từ = bút toán đảo (is_cancel), không xóa/sửa.
 import { eq, and, sql, desc } from 'drizzle-orm';
 import { accAccounts, accVouchers, accGlEntries, accInvoices, accPayments } from './schema.js';
-import { Errors } from '@citadel/core';
+import { Errors, emitEvent } from '@citadel/core';
 type DB = any;
 
 // ── Chart of Accounts chuẩn VN-SME (TT133 rút gọn) ──
@@ -127,12 +127,15 @@ export async function createInvoice(db: DB, orgId: string, d: { invoiceType: 'sa
   const glLines: GlLine[] = d.invoiceType === 'sales'
     ? [{ accountId: recv.id, debit: grand, partyType, partyName: d.partyName }, { accountId: pnl.id, credit: grand }]
     : [{ accountId: pnl.id, debit: grand }, { accountId: recv.id, credit: grand, partyType, partyName: d.partyName }];
-  const voucher = await postGL(db, orgId, { voucherType: 'invoice', postingDate: d.postingDate, remarks: `HĐ ${d.invoiceType === 'sales' ? 'bán' : 'mua'} — ${d.partyName}`, lines: glLines });
-  const [inv] = await db.insert(accInvoices).values({
-    orgId, invoiceType: d.invoiceType, partyName: d.partyName.trim(), postingDate: d.postingDate,
-    dueDate: d.dueDate, lines, grandTotal: String(grand), outstanding: String(grand), voucherId: voucher.id,
-  }).returning();
-  return inv;
+  return db.transaction(async (tx: DB) => {
+    const voucher = await postGL(tx, orgId, { voucherType: 'invoice', postingDate: d.postingDate, remarks: `HĐ ${d.invoiceType === 'sales' ? 'bán' : 'mua'} — ${d.partyName}`, lines: glLines });
+    const [inv] = await tx.insert(accInvoices).values({
+      orgId, invoiceType: d.invoiceType, partyName: d.partyName.trim(), postingDate: d.postingDate,
+      dueDate: d.dueDate, lines, grandTotal: String(grand), outstanding: String(grand), voucherId: voucher.id,
+    }).returning();
+    await emitEvent(tx, { orgId, topic: 'accounting.invoice.created', payload: { id: inv.id, invoiceType: inv.invoiceType, partyName: inv.partyName, grandTotal: inv.grandTotal } });
+    return inv;
+  });
 }
 export async function listInvoices(db: DB, orgId: string, invoiceType?: string) {
   const conds = [eq(accInvoices.orgId, orgId)];
@@ -159,17 +162,20 @@ export async function createPayment(db: DB, orgId: string, d: { paymentType: 're
   const glLines: GlLine[] = d.paymentType === 'receive'
     ? [{ accountId: cash.id, debit: amount }, { accountId: party.id, credit: amount, partyType, partyName: d.partyName }]
     : [{ accountId: party.id, debit: amount, partyType, partyName: d.partyName }, { accountId: cash.id, credit: amount }];
-  const voucher = await postGL(db, orgId, { voucherType: 'payment', postingDate: d.postingDate, remarks: d.remarks ?? `${d.paymentType === 'receive' ? 'Thu' : 'Chi'} — ${d.partyName}`, lines: glLines });
-  if (invoice) {
-    const newOut = Number(invoice.outstanding) - amount;
-    await db.update(accInvoices).set({ outstanding: String(newOut), status: newOut === 0 ? 'paid' : 'partly_paid' })
-      .where(eq(accInvoices.id, invoice.id));
-  }
-  const [pay] = await db.insert(accPayments).values({
-    orgId, paymentType: d.paymentType, partyName: d.partyName.trim(), amount: String(amount),
-    cashAccountId: cash.id, invoiceId: d.invoiceId, postingDate: d.postingDate, remarks: d.remarks, voucherId: voucher.id,
-  }).returning();
-  return pay;
+  return db.transaction(async (tx: DB) => {
+    const voucher = await postGL(tx, orgId, { voucherType: 'payment', postingDate: d.postingDate, remarks: d.remarks ?? `${d.paymentType === 'receive' ? 'Thu' : 'Chi'} — ${d.partyName}`, lines: glLines });
+    if (invoice) {
+      const newOut = Number(invoice.outstanding) - amount;
+      await tx.update(accInvoices).set({ outstanding: String(newOut), status: newOut === 0 ? 'paid' : 'partly_paid' })
+        .where(eq(accInvoices.id, invoice.id));
+    }
+    const [pay] = await tx.insert(accPayments).values({
+      orgId, paymentType: d.paymentType, partyName: d.partyName.trim(), amount: String(amount),
+      cashAccountId: cash.id, invoiceId: d.invoiceId, postingDate: d.postingDate, remarks: d.remarks, voucherId: voucher.id,
+    }).returning();
+    await emitEvent(tx, { orgId, topic: 'accounting.payment.created', payload: { id: pay.id, paymentType: pay.paymentType, partyName: pay.partyName, amount: pay.amount } });
+    return pay;
+  });
 }
 export async function listPayments(db: DB, orgId: string) {
   return db.select().from(accPayments).where(eq(accPayments.orgId, orgId)).orderBy(desc(accPayments.createdAt));

@@ -1,6 +1,7 @@
 // @citadel/db — Drizzle schema (Postgres + pgvector)
 // Multi-tenant: every tenant-scoped table carries org_id. Single source of truth for DB shape.
 import { pgTable, uuid, varchar, text, timestamp, pgEnum, index, jsonb, char, boolean, integer, real, primaryKey } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 
 // ─── enums ──────────────────────────────────────────────────────
 export const roleEnum = pgEnum('role', ['super_admin', 'owner', 'manager', 'staff']);
@@ -165,7 +166,26 @@ export const companyModuleRequests = pgTable(
   (t) => ({ orgIdx: index('company_module_requests_org_idx').on(t.orgId) }),
 );
 
-export const schema = { orgs, users, tokens, auditLogs, ttMemories, ttSoulState, itemCatalog, userItems, companyModuleRequests };
+// ─── R10 · Transactional outbox ─────────────────────────────────
+export const outboxEvents = pgTable(
+  'outbox_events',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    orgId: uuid('org_id').notNull().references(() => orgs.id, { onDelete: 'cascade' }),
+    topic: varchar('topic', { length: 64 }).notNull(),
+    payload: jsonb('payload').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    dispatchedAt: timestamp('dispatched_at', { withTimezone: true }),
+    attempts: integer('attempts').notNull().default(0),
+    lastError: text('last_error'),
+  },
+  (t) => ({
+    orgIdx: index('outbox_events_org_idx').on(t.orgId),
+    pendingIdx: index('outbox_events_pending_idx').on(t.dispatchedAt, t.createdAt).where(sql`${t.dispatchedAt} IS NULL`),
+  }),
+);
+
+export const schema = { orgs, users, tokens, auditLogs, ttMemories, ttSoulState, itemCatalog, userItems, companyModuleRequests, outboxEvents };
 export type DB = typeof schema;
 
 // ── Module registry (v6) ──

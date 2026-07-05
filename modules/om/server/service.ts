@@ -1,7 +1,7 @@
 // Om economy service — ledger-based balance. Spend guarded against insufficient funds.
 import { eq, desc, sql } from 'drizzle-orm';
 import { omLedger } from './schema.js';
-import { Errors } from '@citadel/core';
+import { Errors, emitEvent } from '@citadel/core';
 type DB = any;
 
 export async function getBalance(db: DB, orgId: string): Promise<number> {
@@ -13,13 +13,19 @@ export async function listTransactions(db: DB, orgId: string) {
 }
 export async function topup(db: DB, orgId: string, amount: number) {
   if (amount <= 0) throw Errors.validation('Số Om nạp phải > 0', 'amount');
-  const [row] = await db.insert(omLedger).values({ orgId, delta: amount, reason: 'Nạp Om', module: 'om' }).returning();
-  return { transaction: row, balance: await getBalance(db, orgId) };
+  return db.transaction(async (tx: DB) => {
+    const [row] = await tx.insert(omLedger).values({ orgId, delta: amount, reason: 'Nạp Om', module: 'om' }).returning();
+    await emitEvent(tx, { orgId, topic: 'om.wallet.topped_up', payload: { id: row.id, amount } });
+    return { transaction: row, balance: await getBalance(tx, orgId) };
+  });
 }
 export async function spend(db: DB, orgId: string, amount: number, reason: string, module?: string) {
   if (amount <= 0) throw Errors.validation('Số Om chi phải > 0', 'amount');
   const bal = await getBalance(db, orgId);
   if (bal < amount) throw Errors.conflict(`Không đủ Om (cần ${amount}, có ${bal})`);
-  const [row] = await db.insert(omLedger).values({ orgId, delta: -amount, reason, module }).returning();
-  return { transaction: row, balance: await getBalance(db, orgId) };
+  return db.transaction(async (tx: DB) => {
+    const [row] = await tx.insert(omLedger).values({ orgId, delta: -amount, reason, module }).returning();
+    await emitEvent(tx, { orgId, topic: 'om.wallet.spent', payload: { id: row.id, amount, reason, module } });
+    return { transaction: row, balance: await getBalance(tx, orgId) };
+  });
 }
