@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "tier": "paid",
   "priceOm": 1800,
-  "icon": "i-user",
+  "icon": "users",
   "description": "HRM chuẩn luật VN 2026: hồ sơ nhân viên, cơ cấu tổ chức, chấm công OT, nghỉ phép BLLĐ, bảng lương (BHXH/BHYT/BHTN + thuế TNCN lũy tiến), tuyển dụng, đào tạo. Tiểu Tâm thao tác bằng tiếng Việt.",
   "permissions": [
     "hr.employee.read",
@@ -27,7 +27,9 @@
   "docs": "docs/GUIDE.md",
   "engine": "^1.0.0",
   "group": "Nhân sự",
-  "rentPlans": { "30": 250 },
+  "rentPlans": {
+    "30": 250
+  },
   "events": {
     "emits": [
       "hr.employee.created",
