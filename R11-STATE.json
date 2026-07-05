@@ -74,5 +74,6 @@
     "ke_toan_10a.bank_reconciliation": "verified by module tests/docs registry; not individually queried on live",
     "ke_toan_10a.assets": "verified by module tests/docs registry; not individually queried on live",
     "ke_toan_10a.budget_status": "verified by module tests/docs registry; not individually queried on live"
-  }
+  },
+  "rent_live_evidence": "Org test sạch (Rent Test Org R11, 500 Om cấp): POST /modules/ke-toan-10a/rent {days:30} → 200 paidOm=150, balance 500→350 (trừ ĐÚNG 150), active=true, purchased=false, rentedUntil=2026-08-04 (+30d), daysLeft=30, GET /ke-toan-10a/accounts → 200. Script: scripts/rent-check-r11.py"
 }
