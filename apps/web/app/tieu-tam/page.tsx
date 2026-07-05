@@ -20,6 +20,7 @@ interface OwnedItem {
   effect: { type: string; amount?: number; theme?: string }; icon: string | null;
 }
 interface Memory { id: string; kind: string; content: string; salience: number; createdAt: string }
+interface TtFile { id: string; filename: string; kind: string; summary: string; createdAt: string }
 
 const STATUS_COLOR: Record<string, string> = {
   tran_day: 'var(--jade)', on_dinh: 'var(--sky)', met: 'var(--amber)', kiet_suc: 'var(--rose)',
@@ -46,6 +47,7 @@ export default function TieuTamPage() {
   const [soul, setSoul] = useState<Soul | null>(null);
   const [foods, setFoods] = useState<OwnedItem[] | null>(null);
   const [mems, setMems] = useState<Memory[] | null>(null);
+  const [files, setFiles] = useState<TtFile[] | null>(null);
   const [feedOpen, setFeedOpen] = useState(false);
   const [ownedThemes, setOwnedThemes] = useState<string[]>(['jade']);
   const [busy, setBusy] = useState('');
@@ -57,6 +59,7 @@ export default function TieuTamPage() {
       .then((d) => setFoods(d.items.filter((i) => i.category === 'food' || i.category === 'boost')))
       .catch(() => setFoods([]));
     api<{ memories: Memory[] }>('/api/v1/tieu-tam/memories').then((d) => setMems(d.memories)).catch(() => setMems([]));
+    api<{ files: TtFile[] }>('/api/v1/tieu-tam/files').then((d) => setFiles(d.files)).catch(() => setFiles([]));
     api<{ owned: string[] }>('/api/v1/inventory-items/themes').then((d) => setOwnedThemes(d.owned ?? ['jade'])).catch(() => setOwnedThemes(['jade']));
   }, []);
 
@@ -201,6 +204,22 @@ export default function TieuTamPage() {
           <p style={{ fontSize: 10.5, color: 'var(--faint)', padding: '8px 4px 0', lineHeight: 1.5 }}>
             Trí nhớ thuộc về mình — xóa mảnh nào là em quên hẳn mảnh đó. Đổi bộ não bên dưới không ảnh hưởng trí nhớ.
           </p>
+        </div>
+
+
+        {/* ── File đã tải lên cho Tiểu Tâm ── */}
+        <div style={{ margin: '22px 20px 0' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.1em', color: 'var(--faint)', textTransform: 'uppercase', padding: '0 4px 8px' }}>File đã tải lên</div>
+          <div className="card" style={{ borderRadius: 16, overflow: 'hidden' }}>
+            {files === null && <div style={{ padding: 12 }}><div className="skel" style={{ height: 44 }} /></div>}
+            {files?.length === 0 && <div style={{ padding: '18px 16px', color: 'var(--mut)', fontSize: 12.5 }}>Chưa có file. Bấm 📎 trong khung chat để tải .xlsx/.csv/.txt cho Tiểu Tâm xử lý.</div>}
+            {files?.map((f, i) => (
+              <div key={f.id} style={{ padding: '12px 14px', borderBottom: i < files.length - 1 ? '1px solid var(--line)' : 'none' }}>
+                <div style={{ display:'flex', gap:8, alignItems:'center' }}><span>📎</span><b style={{ fontSize:13 }}>{f.filename}</b><span className="mono" style={{ marginLeft:'auto', color:'var(--mut)', fontSize:10 }}>{f.kind}</span></div>
+                <div style={{ marginTop:5, color:'var(--mut)', fontSize:12 }}>{f.summary}</div>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* ── R7.7: Theme picker — khoác da giao diện + avatar biến hình ── */}
