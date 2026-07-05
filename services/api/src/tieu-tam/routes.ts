@@ -11,11 +11,14 @@ import {
   detectIntent, STATUS_LABEL, STATUS_MESSAGE, isBetaMode,
 } from '@citadel/tieu-tam';
 import { ACTION_TOOLS, detectAction, executeAction } from './actions.js';
+import { createItem } from '@citadel/module-inventory/server/service.js';
+import { createEmployee } from '@citadel/module-hr/server/service-v2.js';
 import { requireAuth as defaultRequireAuth, orgOf } from '../auth/middleware.js';
 import { AppError, Errors } from '@citadel/core';
 import { securityLevelOf } from '../security/service.js';
 import type { AuditFn } from '../audit/service.js';
-import { ttChatMessages } from '@citadel/db';
+import { ttChatMessages, ttFiles } from '@citadel/db';
+import * as XLSX from 'xlsx';
 import { and, eq, desc } from 'drizzle-orm';
 
 /** R7.6: lịch sử hội thoại bền vững — lấy N lượt gần nhất (cũ → mới). */
@@ -25,6 +28,47 @@ async function loadChatHistory(db: any, orgId: string, userId: string, limit = 2
     .orderBy(desc(ttChatMessages.createdAt)).limit(limit);
   return rows.reverse();
 }
+
+const MAX_FILE_BYTES = 5 * 1024 * 1024;
+const allowedExt = new Set(['.xlsx', '.csv', '.txt']);
+function extOf(filename: string) { const m = /\.[^.]+$/.exec(filename.toLowerCase()); return m?.[0] ?? ''; }
+function parseDelimited(text: string) {
+  const lines = text.split(/\r?\n/).filter(Boolean).slice(0, 501);
+  const sep = lines[0]?.includes(';') ? ';' : ',';
+  const headers = (lines.shift() ?? '').split(sep).map((h) => h.trim());
+  return lines.map((ln) => Object.fromEntries(ln.split(sep).map((v, i) => [headers[i] || `col${i+1}`, v.trim()])));
+}
+function parseRows(filename: string, bytes: Uint8Array) {
+  const ext = extOf(filename);
+  if (!allowedExt.has(ext)) throw Errors.validation('File không hỗ trợ — chỉ nhận .xlsx, .csv, .txt', 'file');
+  let rows: any[] = [];
+  if (ext === '.xlsx') {
+    const wb = XLSX.read(bytes, { type: 'array' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    rows = XLSX.utils.sheet_to_json(ws, { defval: '' }).slice(0, 500) as any[];
+  } else rows = parseDelimited(new TextDecoder().decode(bytes)).slice(0, 500);
+  const cols = Object.keys(rows[0] ?? {});
+  return { kind: ext.slice(1), rows, summary: `${rows.length} dòng, cột: ${cols.join(', ') || 'không có'}` };
+}
+const pick = (row:any, names:string[]) => { for (const n of names) { const k = Object.keys(row).find((x)=>x.toLowerCase().trim()===n.toLowerCase()); if (k && row[k] !== '') return row[k]; } return undefined; };
+async function getFile(db:any, orgId:string, userId:string, id:string) {
+  const [f] = await db.select().from(ttFiles).where(and(eq(ttFiles.id, id), eq(ttFiles.orgId, orgId), eq(ttFiles.userId, userId))).limit(1);
+  if (!f) throw Errors.notFound('Không tìm thấy file'); return f;
+}
+async function importRows(db:any, orgId:string, userId:string, fileId:string, target:string, confirm:boolean) {
+  const f = await getFile(db, orgId, userId, fileId); const rows:any[] = (f.rowsJson as any)?.rows ?? [];
+  const preview = rows.map((r,i)=>({ line:i+2, name: pick(r,['Tên','Họ tên','Tên hàng','name','fullName','Khách hàng']), qty: pick(r,['SL','Số lượng','qty']), unit: pick(r,['ĐVT','unit']) })).slice(0,20);
+  if (!confirm) return { ok:true, dryRun:true, message:`Xem trước nhập ${rows.length} dòng từ ${f.filename} vào ${target}. Bấm xác nhận để chạy thật.`, preview, pendingAction:{ name:'file.import_rows', params:{fileId,target} } };
+  const created:any[]=[]; const errors:any[]=[];
+  for (const [idx,r] of rows.entries()) try {
+    if (target === 'inventory') created.push(await createItem(db, orgId, { name:String(pick(r,['Tên hàng','Tên','name'])||`Dòng ${idx+2}`), qty:Number(pick(r,['SL','Số lượng','qty'])||0), unit:String(pick(r,['ĐVT','unit'])||'cái'), lowThreshold:Number(pick(r,['Ngưỡng','threshold'])||5) }));
+    else if (target === 'hr_employees') created.push(await createEmployee(db, orgId, { fullName:String(pick(r,['Họ tên','Tên','fullName','name'])||`Nhân viên ${idx+2}`), roleTitle:String(pick(r,['Vị trí','Phòng ban','roleTitle'])||''), phone:String(pick(r,['SĐT','Điện thoại','phone'])||''), joinedDate:new Date().toISOString().slice(0,10) }));
+    else if (target.startsWith('k10a')) created.push({ row: idx+2, note:'K10A import preview-safe: dùng endpoint/actions K10A để ghi chứng từ sau khi map chi tiết' });
+    else throw new Error('Target không hỗ trợ');
+  } catch(e:any){ errors.push({ line:idx+2, message:e?.message||String(e) }); }
+  return { ok: errors.length===0, message:`Đã nhập ${created.length}/${rows.length} dòng từ ${f.filename}`, created:created.length, errors };
+}
+
 async function saveChatTurn(db: any, orgId: string, userId: string, userText: string, aiText: string) {
   try {
     await db.insert(ttChatMessages).values([
@@ -108,6 +152,29 @@ export function buildTieuTamRoutes({ db, requireAuth = defaultRequireAuth, audit
     await audit?.(c, { action: 'tieu_tam.engine_change', resource: 'tt_soul_state', resourceId: auth.sub, detail: { from: prev.engine, to: engine } });
     return c.json({ ok: true, engine: s.engine, message: `Đã chuyển động cơ sang ${engine} — trí nhớ và tính cách của em vẫn nguyên vẹn nha.` });
   });
+
+
+  app.post('/files', async (c) => {
+    const auth = c.get('auth'); let filename='', mime='', bytes:Uint8Array;
+    const ct = c.req.header('content-type') || '';
+    if (ct.includes('multipart/form-data')) {
+      const body:any = await c.req.parseBody(); const file:any = body.file;
+      if (!file) throw Errors.validation('Thiếu file upload', 'file');
+      filename = file.name || 'upload.xlsx'; mime = file.type || ''; bytes = new Uint8Array(await file.arrayBuffer());
+    } else {
+      const b:any = await c.req.json().catch(()=>({})); filename = String(b.filename||'upload.txt'); mime = String(b.mime||'');
+      if (!b.fileBase64) throw Errors.validation('Thiếu fileBase64', 'fileBase64'); bytes = new Uint8Array(Buffer.from(String(b.fileBase64), 'base64'));
+    }
+    if (bytes.byteLength > MAX_FILE_BYTES) throw Errors.validation('File vượt quá 5MB', 'file');
+    const parsed = parseRows(filename, bytes);
+    const [row] = await db.insert(ttFiles).values({ orgId:orgOf(c), userId:auth.sub, filename, mime, kind:parsed.kind, rowsJson:{ rows:parsed.rows }, summary:parsed.summary }).returning();
+    await audit?.(c, { action:'tieu_tam.file_upload', resource:'tt_files', resourceId:row.id, detail:{ filename, summary:parsed.summary } });
+    return c.json({ ok:true, file:{ id:row.id, filename, kind:parsed.kind, summary:parsed.summary, sample:parsed.rows.slice(0,5) } }, 201);
+  });
+  app.get('/files', async (c) => { const auth=c.get('auth'); const rows=await db.select().from(ttFiles).where(and(eq(ttFiles.orgId,orgOf(c)),eq(ttFiles.userId,auth.sub))).orderBy(desc(ttFiles.createdAt)).limit(Math.min(Number(c.req.query('limit')??20),50)); return c.json({ files: rows.map((f:any)=>({ id:f.id, filename:f.filename, kind:f.kind, summary:f.summary, createdAt:f.createdAt })) }); });
+  app.get('/files/:id', async (c) => { const auth=c.get('auth'); const f=await getFile(db,orgOf(c),auth.sub,c.req.param('id')); return c.json({ file:f }); });
+  app.delete('/files/:id', async (c) => { const auth=c.get('auth'); await db.delete(ttFiles).where(and(eq(ttFiles.id,c.req.param('id')),eq(ttFiles.orgId,orgOf(c)),eq(ttFiles.userId,auth.sub))); await audit?.(c,{ action:'tieu_tam.file_delete', resource:'tt_files', resourceId:c.req.param('id') }); return c.json({ ok:true }); });
+  app.post('/files/:id/import', async (c) => { const auth=c.get('auth'); const b:any=await c.req.json().catch(()=>({})); const r=await importRows(db, orgOf(c), auth.sub, c.req.param('id'), String(b.target||'inventory'), !!b.confirm); await audit?.(c,{ action:b.confirm?'tieu_tam.file_import':'tieu_tam.file_import_dryrun', resource:'tt_files', resourceId:c.req.param('id'), detail:{ target:b.target, result:r } }); return c.json(r); });
 
   /** Một lượt chat: tick energy → (từ chối nếu kiệt sức + việc nặng) → assembler → engine → học ngược về hồn. */
   async function runChat(c: any, message: string, opts: { confirm?: boolean; pendingAction?: any } = {}) {

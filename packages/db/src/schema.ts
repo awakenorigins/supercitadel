@@ -105,6 +105,23 @@ export const ttChatMessages = pgTable(
   (t) => ({ orgUserIdx: index('tt_chat_org_user_idx').on(t.orgId, t.userId, t.createdAt) }),
 );
 
+// tt_files: file người dùng tải lên cho Tiểu Tâm; chỉ lưu dữ liệu đã parse, không lưu binary.
+export const ttFiles = pgTable(
+  'tt_files',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    orgId: uuid('org_id').notNull().references(() => orgs.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id').notNull(),
+    filename: varchar('filename', { length: 180 }).notNull(),
+    mime: varchar('mime', { length: 120 }),
+    kind: varchar('kind', { length: 16 }).notNull(),
+    rowsJson: jsonb('rows_json').notNull(),
+    summary: text('summary').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({ orgUserIdx: index('tt_files_org_user_idx').on(t.orgId, t.userId, t.createdAt) }),
+);
+
 // tt_soul_state: mood + energy + engine per (org, user) — đổi model = gạt công tắc, hồn giữ nguyên.
 export const ttSoulState = pgTable(
   'tt_soul_state',
@@ -185,7 +202,7 @@ export const outboxEvents = pgTable(
   }),
 );
 
-export const schema = { orgs, users, tokens, auditLogs, ttMemories, ttSoulState, itemCatalog, userItems, companyModuleRequests, outboxEvents };
+export const schema = { orgs, users, tokens, auditLogs, ttMemories, ttChatMessages, ttFiles, ttSoulState, itemCatalog, userItems, companyModuleRequests, outboxEvents };
 export type DB = typeof schema;
 
 // ── Module registry (v6) ──

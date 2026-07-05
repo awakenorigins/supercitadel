@@ -244,6 +244,7 @@ function TieuTamSheet({ open, onClose }: { open: boolean; onClose: () => void })
       .catch(() => setHistLoaded(true));
   }, [open, histLoaded]);
   const [draft, setDraft] = useState('');
+  const fileRef = useRef<HTMLInputElement>(null);
   const [streaming, setStreaming] = useState(false);
   const [soul, setSoul] = useState<SoulState | null>(null);
   const boxRef = useRef<HTMLDivElement>(null);
@@ -284,6 +285,17 @@ function TieuTamSheet({ open, onClose }: { open: boolean; onClose: () => void })
     } catch {
       setMsgs((m) => [...m.slice(0, -1), { who: 'ai', text: 'Mạng đang chập chờn, em chưa nhận được câu này — bấm gửi lại giúp em nha. Các lệnh nghiệp vụ (tạo phiếu, thêm khách, nhập kho…) vẫn chạy bình thường. 📡', suggestions: [q] }]);
     } finally { setStreaming(false); }
+  }
+
+  async function uploadFile(f: File) {
+    const s = getSession(); const fd = new FormData(); fd.append('file', f);
+    setMsgs((m) => [...m, { who: 'me', text: `📎 ${f.name}` }, { who: 'ai', text: '' }]);
+    try {
+      const res = await fetch(`${API}/api/v1/tieu-tam/files`, { method: 'POST', headers: { Authorization: `Bearer ${s?.jwt ?? ''}` }, body: fd });
+      if (!res.ok) throw new Error(await res.text());
+      const d = await res.json();
+      setMsgs((m) => [...m.slice(0, -1), { who: 'ai', text: `File đã sẵn sàng: ${d.file.filename}\n${d.file.summary}\nNói em biết cần làm gì: nhập kho, thêm nhân viên, hay nhập danh bạ/hóa đơn K10A.` }]);
+    } catch { setMsgs((m) => [...m.slice(0, -1), { who: 'ai', text: 'Em chưa nhận được file này. Chỉ hỗ trợ .xlsx/.csv/.txt tối đa 5MB nha.' }]); }
   }
 
   return (
@@ -342,6 +354,8 @@ function TieuTamSheet({ open, onClose }: { open: boolean; onClose: () => void })
         </div>
         <div style={{ padding: '12px 14px', borderTop: '1px solid var(--line)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--s1)', border: '1.5px solid var(--bd)', borderRadius: 14, padding: '7px 7px 7px 14px' }}>
+            <input ref={fileRef} type="file" accept=".xlsx,.csv,.txt" style={{ display: 'none' }} onChange={(e) => { const f=e.target.files?.[0]; if (f) uploadFile(f); e.currentTarget.value=''; }} />
+            <button onClick={() => fileRef.current?.click()} aria-label="Tải file cho Tiểu Tâm" title="Tải file" style={{ width: 38, height: 38, borderRadius: 11, border: '1px solid var(--bd)', background: 'var(--s2)', color: 'var(--txt)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>📎</button>
             <input value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && ask(draft)} placeholder="Hỏi Tiểu Tâm bất cứ điều gì…" style={{ flex: 1, background: 'none', border: 'none', color: 'var(--txt)', fontSize: 14, outline: 'none', minWidth: 0 }} />
             {/* R7.6: touch target 46px — dễ bấm trên điện thoại */}
             <button onClick={() => ask(draft)} disabled={streaming} aria-label="Gửi tin nhắn" style={{ width: 46, height: 46, borderRadius: 13, border: 'none', background: streaming ? 'var(--s3)' : 'var(--jade)', color: streaming ? 'var(--dim)' : '#04231f', display: 'grid', placeItems: 'center', flexShrink: 0, cursor: 'pointer', touchAction: 'manipulation' }}><Icon name="send" size={20} /></button>
