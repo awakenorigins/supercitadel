@@ -38,7 +38,40 @@ const q = (c: Context, k: string, dft: string) => c.req.query(k) ?? dft;
 const today = () => new Date().toISOString().slice(0, 10);
 
 const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
-const moneySchema = z.string().regex(/^\d+(\.\d{1,2})?$/);
+const moneySchema = z.preprocess((v) => (typeof v === "number" ? String(v) : v), z.string().regex(/^\d+(\.\d{1,2})?$/));
+
+const fields = (issues: z.ZodIssue[]) => Array.from(new Set(issues.map((i) => i.path.join(".") || "body"))).join(", ");
+function validation(message: string, issues: z.ZodIssue[]): never {
+  throw new AppError("VALIDATION_ERROR", `${message}. Thiếu/sai field: ${fields(issues)}`, 400, issues);
+}
+async function parseJson<T extends z.ZodTypeAny>(c: Context, schema: T, message: string): Promise<z.infer<T>> {
+  const body = await c.req.json().catch(() => ({}));
+  const parsed = schema.safeParse(body);
+  if (!parsed.success) validation(message, parsed.error.issues);
+  return parsed.data;
+}
+const boolDefaultTrue = z.boolean().optional().default(true);
+const accountTypeSchema = z.enum(["ASSET", "LIABILITY", "EQUITY", "INCOME", "EXPENSE"]);
+const contactTypeSchema = z.enum(["CUSTOMER", "VENDOR", "BOTH"]);
+const lineSchema = z.object({ description: z.string().min(1), qty: z.number().positive(), rate: moneySchema });
+const accountSchema = z.object({ code: z.string().min(1), name: z.string().min(1), type: accountTypeSchema, parentId: z.string().optional(), openingBalance: moneySchema.optional(), isPostable: z.boolean().optional(), description: z.string().optional() }).passthrough();
+const contactSchema = z.object({ code: z.string().optional(), name: z.string().min(1), type: contactTypeSchema.optional(), taxCode: z.string().optional(), phone: z.string().optional(), email: z.string().email().optional(), address: z.string().optional(), creditLimit: moneySchema.optional(), paymentTermDays: z.number().int().nonnegative().optional() }).passthrough();
+const receiptPaymentSchema = z.object({ docDate: dateSchema.optional().default(today), counterAccountCode: z.string().min(1), amount: moneySchema, cashAccountCode: z.string().optional(), description: z.string().optional(), reason: z.string().optional(), post: boolDefaultTrue }).passthrough();
+const invoiceBillSchema = z.object({ docDate: dateSchema, dueDate: dateSchema.optional(), contactId: z.string().min(1), subtotal: moneySchema.optional(), lines: z.array(lineSchema).min(1).optional(), taxRate: moneySchema.optional(), description: z.string().optional(), receivableAccountCode: z.string().optional(), revenueAccountCode: z.string().optional(), payableAccountCode: z.string().optional(), expenseAccountCode: z.string().optional(), taxAccountCode: z.string().optional(), post: boolDefaultTrue, allowExceedCredit: z.boolean().optional() }).passthrough().refine((v) => v.subtotal || (v.lines && v.lines.length > 0), { path: ["subtotal"], message: "Cần subtotal hoặc lines" });
+const paymentAmountSchema = z.object({ amount: moneySchema, cashAccountCode: z.string().optional(), docDate: dateSchema.optional() }).passthrough();
+const journalLineSchema = z.object({ accountId: z.string().min(1), debit: moneySchema.optional(), credit: moneySchema.optional(), memo: z.string().optional(), contactId: z.string().optional(), costCenterId: z.string().optional() }).refine((v) => Boolean(v.debit) !== Boolean(v.credit), { path: ["debit"], message: "Mỗi dòng cần debit hoặc credit" });
+const journalSchema = z.object({ entryDate: dateSchema, memo: z.string().optional(), lines: z.array(journalLineSchema).min(2), currency: z.string().optional(), exchangeRate: moneySchema.optional(), post: boolDefaultTrue }).passthrough();
+const fiscalYearSchema = z.object({ name: z.string().min(1), startDate: dateSchema, endDate: dateSchema }).refine((v) => v.startDate < v.endDate, { path: ["endDate"], message: "endDate phải sau startDate" });
+const advanceSchema = z.object({ type: z.enum(["CUSTOMER_DEPOSIT", "SUPPLIER_ADVANCE", "EMPLOYEE_ADVANCE"]), docDate: dateSchema.optional().default(today), amount: moneySchema, contactId: z.string().optional(), contactName: z.string().optional(), partyName: z.string().optional(), cashAccountCode: z.string().optional(), partyAccountCode: z.string().optional(), reason: z.string().optional(), description: z.string().optional() }).passthrough().transform((v) => ({ ...v, partyName: v.partyName ?? v.contactName, description: v.description ?? v.reason }));
+const recurringSchema = z.object({ name: z.string().min(1), kind: z.enum(["RECEIPT", "PAYMENT", "JOURNAL"]), frequency: z.enum(["DAILY", "WEEKLY", "MONTHLY", "YEARLY"]), interval: z.number().int().positive().optional(), payload: z.record(z.string(), z.unknown()), startDate: dateSchema, endDate: dateSchema.optional() }).passthrough();
+const activeSchema = z.object({ active: z.boolean().optional() }).passthrough();
+const contactPatchSchema = contactSchema.partial().refine((v) => Object.keys(v).length > 0, { path: ["body"], message: "Cần ít nhất một field cập nhật" });
+const costCenterSchema = z.object({ name: z.string().min(1), code: z.string().optional(), type: z.enum(["DEPARTMENT", "PROJECT", "BRANCH", "PRODUCT", "OTHER"]).optional(), parentId: z.string().optional() }).passthrough();
+const bankAutoMatchSchema = z.object({ account: z.string().optional(), toleranceDays: z.number().int().nonnegative().optional() }).passthrough();
+const bankRuleSchema = z.object({ matchText: z.string().min(1), counterAccountCode: z.string().min(1), priority: z.number().optional() }).passthrough();
+const assetSchema = z.object({ code: z.string().optional(), name: z.string().min(1), cost: moneySchema, salvageValue: moneySchema.optional(), usefulLifeMonths: z.number().int().positive(), startDate: dateSchema, assetAccountCode: z.string().optional(), depreciationAccountCode: z.string().optional(), expenseAccountCode: z.string().optional(), acquireFromAccountCode: z.string().optional() }).passthrough();
+const budgetSchema = z.object({ fiscalYear: z.string().optional(), year: z.union([z.string(), z.number()]).optional(), accountCode: z.string().min(1), amount: moneySchema, costCenterId: z.string().optional() }).transform((v) => ({ fiscalYear: v.fiscalYear ?? String(v.year ?? new Date().getFullYear()), accountCode: v.accountCode, amount: v.amount, costCenterId: v.costCenterId }));
+const fxSchema = z.object({ accountCode: z.string().optional(), account: z.string().optional(), foreignCurrency: z.string().optional().default("USD"), foreignAmount: moneySchema, newRate: moneySchema.optional(), rate: moneySchema.optional(), revalDate: dateSchema.optional(), gainAccountCode: z.string().optional(), lossAccountCode: z.string().optional() }).refine((v) => v.accountCode || v.account, { path: ["accountCode"], message: "accountCode là bắt buộc" }).refine((v) => v.newRate || v.rate, { path: ["newRate"], message: "newRate là bắt buộc" }).transform((v) => ({ ...v, accountCode: v.accountCode ?? v.account!, newRate: v.newRate ?? v.rate! }));
 
 
 /** Bắn event realtime nếu host có tiêm publish — lỗi nuốt im lặng. */
@@ -99,7 +132,7 @@ export function buildKeToan10aRoutes(deps: ModuleDeps) {
   );
   r.post("/accounts", (c) =>
     wrap(async () => {
-      const b = await c.req.json().catch(() => ({}));
+      const b = await parseJson(c, accountSchema, "Dữ liệu tài khoản không hợp lệ");
       const acc = await svc.accounts.create(ctxOf(c), b);
       await deps.audit?.(c, { action: "k10a.account.create", resource: "account", resourceId: acc.id });
       return c.json({ account: acc }, 201);
@@ -112,7 +145,7 @@ export function buildKeToan10aRoutes(deps: ModuleDeps) {
   );
   r.post("/contacts", (c) =>
     wrap(async () => {
-      const b = await c.req.json().catch(() => ({}));
+      const b = await parseJson(c, contactSchema, "Dữ liệu đối tác không hợp lệ");
       const contact = await svc.contacts.create(ctxOf(c), b);
       await deps.audit?.(c, { action: "k10a.contact.create", resource: "contact", resourceId: contact.id });
       return c.json({ contact }, 201);
@@ -123,7 +156,7 @@ export function buildKeToan10aRoutes(deps: ModuleDeps) {
   r.get("/receipts", (c) => wrap(async () => c.json({ receipts: await svc.receipts.list(ctxOf(c)) })));
   r.post("/receipts", (c) =>
     wrap(async () => {
-      const b = await c.req.json().catch(() => ({}));
+      const b = await parseJson(c, receiptPaymentSchema, "Dữ liệu phiếu thu không hợp lệ");
       const receipt = await svc.receipts.create(ctxOf(c), b);
       await deps.audit?.(c, { action: "k10a.receipt.create", resource: "receipt", resourceId: receipt.id, detail: { amount: receipt.amount } });
       return c.json({ receipt }, 201);
@@ -142,7 +175,7 @@ export function buildKeToan10aRoutes(deps: ModuleDeps) {
   r.get("/payments", (c) => wrap(async () => c.json({ payments: await svc.payments.list(ctxOf(c)) })));
   r.post("/payments", (c) =>
     wrap(async () => {
-      const b = await c.req.json().catch(() => ({}));
+      const b = await parseJson(c, receiptPaymentSchema, "Dữ liệu phiếu chi không hợp lệ");
       const payment = await svc.payments.create(ctxOf(c), b);
       await deps.audit?.(c, { action: "k10a.payment.create", resource: "payment", resourceId: payment.id, detail: { amount: payment.amount } });
       return c.json({ payment }, 201);
@@ -161,7 +194,7 @@ export function buildKeToan10aRoutes(deps: ModuleDeps) {
   r.get("/invoices", (c) => wrap(async () => c.json({ invoices: await svc.invoices.list(ctxOf(c)) })));
   r.post("/invoices", (c) =>
     wrap(async () => {
-      const b = await c.req.json().catch(() => ({}));
+      const b = await parseJson(c, invoiceBillSchema, "Dữ liệu hóa đơn bán không hợp lệ");
       try {
         const invoice = await svc.invoices.create(ctxOf(c), b);
         await deps.audit?.(c, { action: "k10a.invoice.create", resource: "invoice", resourceId: invoice.id, detail: { total: invoice.total } });
@@ -176,11 +209,9 @@ export function buildKeToan10aRoutes(deps: ModuleDeps) {
   );
   r.post("/invoices/:id/payment", (c) =>
     wrap(async () => {
-      const b = await c.req.json().catch(() => ({}));
-      const p = z.object({ amount: moneySchema, cashAccountCode: z.string().optional(), docDate: dateSchema.optional() }).safeParse(b);
-      if (!p.success) throw new AppError("VALIDATION_ERROR", "Dữ liệu thu tiền không hợp lệ", 400, p.error.issues);
-      const invoice = await svc.invoices.recordPayment(ctxOf(c), c.req.param("id"), p.data.amount, p.data.cashAccountCode, p.data.docDate);
-      await deps.audit?.(c, { action: "k10a.invoice.payment", resource: "invoice", resourceId: invoice.id, detail: { amount: p.data.amount } });
+      const p = await parseJson(c, paymentAmountSchema, "Dữ liệu thu tiền không hợp lệ");
+      const invoice = await svc.invoices.recordPayment(ctxOf(c), c.req.param("id"), p.amount, p.cashAccountCode, p.docDate);
+      await deps.audit?.(c, { action: "k10a.invoice.payment", resource: "invoice", resourceId: invoice.id, detail: { amount: p.amount } });
       return c.json({ invoice });
     }),
   );
@@ -189,7 +220,7 @@ export function buildKeToan10aRoutes(deps: ModuleDeps) {
   r.get("/bills", (c) => wrap(async () => c.json({ bills: await svc.bills.list(ctxOf(c)) })));
   r.post("/bills", (c) =>
     wrap(async () => {
-      const b = await c.req.json().catch(() => ({}));
+      const b = await parseJson(c, invoiceBillSchema, "Dữ liệu hóa đơn mua không hợp lệ");
       const bill = await svc.bills.create(ctxOf(c), b);
       await deps.audit?.(c, { action: "k10a.bill.create", resource: "bill", resourceId: bill.id, detail: { total: bill.total } });
       return c.json({ bill }, 201);
@@ -197,11 +228,9 @@ export function buildKeToan10aRoutes(deps: ModuleDeps) {
   );
   r.post("/bills/:id/payment", (c) =>
     wrap(async () => {
-      const b = await c.req.json().catch(() => ({}));
-      const p = z.object({ amount: moneySchema, cashAccountCode: z.string().optional(), docDate: dateSchema.optional() }).safeParse(b);
-      if (!p.success) throw new AppError("VALIDATION_ERROR", "Dữ liệu trả tiền không hợp lệ", 400, p.error.issues);
-      const bill = await svc.bills.recordPayment(ctxOf(c), c.req.param("id"), p.data.amount, p.data.cashAccountCode, p.data.docDate);
-      await deps.audit?.(c, { action: "k10a.bill.payment", resource: "bill", resourceId: bill.id, detail: { amount: p.data.amount } });
+      const p = await parseJson(c, paymentAmountSchema, "Dữ liệu trả tiền không hợp lệ");
+      const bill = await svc.bills.recordPayment(ctxOf(c), c.req.param("id"), p.amount, p.cashAccountCode, p.docDate);
+      await deps.audit?.(c, { action: "k10a.bill.payment", resource: "bill", resourceId: bill.id, detail: { amount: p.amount } });
       return c.json({ bill });
     }),
   );
@@ -216,7 +245,7 @@ export function buildKeToan10aRoutes(deps: ModuleDeps) {
   );
   r.post("/journals", (c) =>
     wrap(async () => {
-      const b = await c.req.json().catch(() => ({}));
+      const b = await parseJson(c, journalSchema, "Dữ liệu bút toán không hợp lệ");
       const entry = await svc.ledger.createEntry(ctxOf(c), { ...b, sourceType: "MANUAL", post: b.post ?? true });
       await deps.audit?.(c, { action: "k10a.journal.create", resource: "journal", resourceId: entry.id, detail: { total: entry.totalAmount } });
       return c.json({ entry }, 201);
@@ -236,7 +265,7 @@ export function buildKeToan10aRoutes(deps: ModuleDeps) {
   r.get("/fiscal-years", (c) => wrap(async () => c.json({ fiscalYears: await svc.fiscal.list(ctxOf(c)) })));
   r.post("/fiscal-years", (c) =>
     wrap(async () => {
-      const b = await c.req.json().catch(() => ({}));
+      const b = await parseJson(c, fiscalYearSchema, "Dữ liệu năm tài chính không hợp lệ");
       const fy = await svc.fiscal.create(ctxOf(c), b);
       await deps.audit?.(c, { action: "k10a.fiscal.create", resource: "fiscal_year", resourceId: fy.id });
       return c.json({ fiscalYear: fy }, 201);
@@ -324,11 +353,9 @@ export function buildKeToan10aRoutes(deps: ModuleDeps) {
   // Hoá đơn điều chỉnh giảm (credit note)
   r.post("/invoices/:id/credit-note", (c) =>
     wrap(async () => {
-      const b = await c.req.json().catch(() => ({}));
-      const p = z.object({ amount: moneySchema, reason: z.string().optional() }).safeParse(b);
-      if (!p.success) throw new AppError("VALIDATION_ERROR", "Dữ liệu điều chỉnh không hợp lệ", 400, p.error.issues);
-      const inv = await svc.invoices.createCreditNote(ctxOf(c), c.req.param("id"), p.data.amount, p.data.reason);
-      await deps.audit?.(c, { action: "k10a.invoice.credit_note", resource: "invoice", resourceId: inv.id, detail: { amount: p.data.amount } });
+      const p = await parseJson(c, z.object({ amount: moneySchema, reason: z.string().optional() }), "Dữ liệu điều chỉnh không hợp lệ");
+      const inv = await svc.invoices.createCreditNote(ctxOf(c), c.req.param("id"), p.amount, p.reason);
+      await deps.audit?.(c, { action: "k10a.invoice.credit_note", resource: "invoice", resourceId: inv.id, detail: { amount: p.amount } });
       return c.json({ invoice: inv });
     }),
   );
@@ -337,11 +364,9 @@ export function buildKeToan10aRoutes(deps: ModuleDeps) {
   // Debit note (điều chỉnh giảm mua)
   r.post("/bills/:id/debit-note", (c) =>
     wrap(async () => {
-      const b = await c.req.json().catch(() => ({}));
-      const p = z.object({ amount: moneySchema, reason: z.string().optional() }).safeParse(b);
-      if (!p.success) throw new AppError("VALIDATION_ERROR", "Dữ liệu điều chỉnh không hợp lệ", 400, p.error.issues);
-      const bill = await svc.bills.createDebitNote(ctxOf(c), c.req.param("id"), p.data.amount, p.data.reason);
-      await deps.audit?.(c, { action: "k10a.bill.debit_note", resource: "bill", resourceId: bill.id, detail: { amount: p.data.amount } });
+      const p = await parseJson(c, z.object({ amount: moneySchema, reason: z.string().optional() }), "Dữ liệu điều chỉnh không hợp lệ");
+      const bill = await svc.bills.createDebitNote(ctxOf(c), c.req.param("id"), p.amount, p.reason);
+      await deps.audit?.(c, { action: "k10a.bill.debit_note", resource: "bill", resourceId: bill.id, detail: { amount: p.amount } });
       return c.json({ bill });
     }),
   );
@@ -350,7 +375,7 @@ export function buildKeToan10aRoutes(deps: ModuleDeps) {
   r.get("/advances", (c) => wrap(async () => c.json({ advances: await svc.advances.list(ctxOf(c), c.req.query("type") as never) })));
   r.post("/advances", (c) =>
     wrap(async () => {
-      const b = await c.req.json().catch(() => ({}));
+      const b = await parseJson(c, advanceSchema, "Dữ liệu tạm ứng không hợp lệ");
       const adv = await svc.advances.create(ctxOf(c), b);
       await deps.audit?.(c, { action: "k10a.advance.create", resource: "advance", resourceId: adv.id, detail: { type: adv.type, amount: adv.amount } });
       return c.json({ advance: adv }, 201);
@@ -358,10 +383,8 @@ export function buildKeToan10aRoutes(deps: ModuleDeps) {
   );
   r.post("/advances/:id/apply", (c) =>
     wrap(async () => {
-      const b = await c.req.json().catch(() => ({}));
-      const p = z.object({ target: z.enum(["invoice", "bill"]), targetId: z.string(), amount: moneySchema.optional() }).safeParse(b);
-      if (!p.success) throw new AppError("VALIDATION_ERROR", "Dữ liệu áp khoản ứng không hợp lệ", 400, p.error.issues);
-      const result = await svc.advances.applyToInvoice(ctxOf(c), c.req.param("id"), p.data.target, p.data.targetId, p.data.amount);
+      const p = await parseJson(c, z.object({ target: z.enum(["invoice", "bill"]), targetId: z.string(), amount: moneySchema.optional() }), "Dữ liệu áp khoản ứng không hợp lệ");
+      const result = await svc.advances.applyToInvoice(ctxOf(c), c.req.param("id"), p.target, p.targetId, p.amount);
       await deps.audit?.(c, { action: "k10a.advance.apply", resource: "advance", resourceId: c.req.param("id"), detail: { applied: result.applied } });
       return c.json(result);
     }),
@@ -371,7 +394,7 @@ export function buildKeToan10aRoutes(deps: ModuleDeps) {
   r.get("/recurring", (c) => wrap(async () => c.json({ templates: await svc.recurring.list(ctxOf(c)) })));
   r.post("/recurring", (c) =>
     wrap(async () => {
-      const b = await c.req.json().catch(() => ({}));
+      const b = await parseJson(c, recurringSchema, "Dữ liệu mẫu định kỳ không hợp lệ. Cần name, kind, frequency, payload, startDate");
       const tpl = await svc.recurring.create(ctxOf(c), b);
       await deps.audit?.(c, { action: "k10a.recurring.create", resource: "recurring_template", resourceId: tpl.id });
       return c.json({ template: tpl }, 201);
@@ -388,7 +411,7 @@ export function buildKeToan10aRoutes(deps: ModuleDeps) {
   );
   r.post("/recurring/:id/toggle", (c) =>
     wrap(async () => {
-      const b = await c.req.json().catch(() => ({}));
+      const b = await parseJson(c, activeSchema, "Dữ liệu bật/tắt mẫu định kỳ không hợp lệ");
       const tpl = await svc.recurring.setActive(ctxOf(c), c.req.param("id"), b?.active !== false);
       return c.json({ template: tpl });
     }),
@@ -397,7 +420,7 @@ export function buildKeToan10aRoutes(deps: ModuleDeps) {
   // Hạn mức tín dụng + điều khoản thanh toán
   r.patch("/contacts/:id", (c) =>
     wrap(async () => {
-      const b = await c.req.json().catch(() => ({}));
+      const b = await parseJson(c, contactPatchSchema, "Dữ liệu cập nhật đối tác không hợp lệ");
       const contact = await svc.contacts.update(ctxOf(c), c.req.param("id"), b);
       await deps.audit?.(c, { action: "k10a.contact.update", resource: "contact", resourceId: contact.id });
       return c.json({ contact });
@@ -430,7 +453,7 @@ export function buildKeToan10aRoutes(deps: ModuleDeps) {
   r.get("/cost-centers", (c) => wrap(async () => c.json({ costCenters: await svc.dimensions.list(ctxOf(c)) })));
   r.post("/cost-centers", (c) =>
     wrap(async () => {
-      const cc = await svc.dimensions.create(ctxOf(c), await c.req.json().catch(() => ({})));
+      const cc = await svc.dimensions.create(ctxOf(c), await parseJson(c, costCenterSchema, "Dữ liệu bộ phận/dự án không hợp lệ"));
       await deps.audit?.(c, { action: "k10a.cost_center.create", resource: "cost_center", resourceId: cc.id });
       return c.json({ costCenter: cc }, 201);
     }),
@@ -451,14 +474,14 @@ export function buildKeToan10aRoutes(deps: ModuleDeps) {
   );
   r.post("/bank/auto-match", (c) =>
     wrap(async () => {
-      const b = await c.req.json().catch(() => ({}));
+      const b = await parseJson(c, bankAutoMatchSchema, "Dữ liệu auto-match ngân hàng không hợp lệ");
       const result = await svc.bank.autoMatch(ctxOf(c), b?.account ?? "112", b?.toleranceDays);
       return c.json(result);
     }),
   );
   r.post("/bank/apply-rules", (c) =>
     wrap(async () => {
-      const b = await c.req.json().catch(() => ({}));
+      const b = await parseJson(c, bankAutoMatchSchema, "Dữ liệu áp quy tắc ngân hàng không hợp lệ");
       const result = await svc.bank.applyRules(ctxOf(c), b?.account ?? "112");
       await deps.audit?.(c, { action: "k10a.bank.apply_rules", resource: "bank_transaction", detail: result });
       notify(deps, c, "k10a.bank.rules_applied", { created: result.created });
@@ -467,10 +490,8 @@ export function buildKeToan10aRoutes(deps: ModuleDeps) {
   );
   r.post("/bank/rules", (c) =>
     wrap(async () => {
-      const b = await c.req.json().catch(() => ({}));
-      const p = z.object({ matchText: z.string(), counterAccountCode: z.string(), priority: z.number().optional() }).safeParse(b);
-      if (!p.success) throw new AppError("VALIDATION_ERROR", "Dữ liệu quy tắc không hợp lệ", 400, p.error.issues);
-      const rule = await svc.bank.addRule(ctxOf(c), p.data.matchText, p.data.counterAccountCode, p.data.priority);
+      const p = await parseJson(c, bankRuleSchema, "Dữ liệu quy tắc không hợp lệ");
+      const rule = await svc.bank.addRule(ctxOf(c), p.matchText, p.counterAccountCode, p.priority);
       return c.json({ rule }, 201);
     }),
   );
@@ -485,7 +506,7 @@ export function buildKeToan10aRoutes(deps: ModuleDeps) {
   r.get("/assets", (c) => wrap(async () => c.json({ assets: await svc.assets.list(ctxOf(c)) })));
   r.post("/assets", (c) =>
     wrap(async () => {
-      const asset = await svc.assets.create(ctxOf(c), await c.req.json().catch(() => ({})));
+      const asset = await svc.assets.create(ctxOf(c), await parseJson(c, assetSchema, "Dữ liệu tài sản không hợp lệ"));
       await deps.audit?.(c, { action: "k10a.asset.create", resource: "fixed_asset", resourceId: asset.id });
       return c.json({ asset }, 201);
     }),
@@ -504,7 +525,7 @@ export function buildKeToan10aRoutes(deps: ModuleDeps) {
   r.get("/budgets", (c) => wrap(async () => c.json({ budgets: await svc.budget.list(ctxOf(c), c.req.query("year") ?? String(new Date().getFullYear())) })));
   r.post("/budgets", (c) =>
     wrap(async () => {
-      const budget = await svc.budget.setBudget(ctxOf(c), await c.req.json().catch(() => ({})));
+      const budget = await svc.budget.setBudget(ctxOf(c), await parseJson(c, budgetSchema, "Dữ liệu ngân sách không hợp lệ"));
       await deps.audit?.(c, { action: "k10a.budget.set", resource: "budget", resourceId: budget.id });
       return c.json({ budget }, 201);
     }),
@@ -516,7 +537,7 @@ export function buildKeToan10aRoutes(deps: ModuleDeps) {
   // Đánh giá lại tỷ giá
   r.post("/fx/revalue", (c) =>
     wrap(async () => {
-      const result = await svc.fx.revalue(ctxOf(c), await c.req.json().catch(() => ({})));
+      const result = await svc.fx.revalue(ctxOf(c), await parseJson(c, fxSchema, "Dữ liệu đánh giá lại tỷ giá không hợp lệ"));
       await deps.audit?.(c, { action: "k10a.fx.revalue", resource: "account", detail: { result: result.result, difference: result.difference } });
       return c.json(result);
     }),

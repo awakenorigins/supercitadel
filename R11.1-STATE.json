@@ -1,0 +1,17 @@
+{
+  "round": "R11.1",
+  "status": "partial",
+  "updatedAt": "2026-07-05T10:40:00+02:00",
+  "phases": {
+    "pA_fix_endpoints": "partial: added route-level zod validation for confirmed failing K10A endpoints budgets/fx/revalue/advances/recurring plus receipts/payments guard; API typecheck pass",
+    "pB_file_upload_tieutam": "partial: added tt_files schema+migration, upload/list/get/delete/import endpoints, xlsx/csv/txt parse 5MB, inventory/hr real import path, web paperclip + /tieu-tam file list; API+web typecheck pass",
+    "pC_tutorial_full_back": "partial: Tutorial back button added; K10A tour expanded to full coverage; web typecheck pass",
+    "pD_verify_release": "not_done: no deploy/live verify/push/release performed by this subagent"
+  },
+  "evidence": [
+    "pnpm --filter @citadel/api typecheck PASS",
+    "pnpm --filter web typecheck PASS"
+  ],
+  "commits": [],
+  "next": "Need tests, commit(s), deploy, live verification, push, release v11.1.0, CI confirmation"
+}
