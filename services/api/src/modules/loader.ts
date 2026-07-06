@@ -14,6 +14,7 @@ import { buildKeToan10aRoutes } from '@citadel/module-ke-toan-10a/server/routes.
 import { buildSoulManagerRoutes } from '@citadel/module-soul-manager/server/host-adapter.js';
 import { buildSoulInventoryRoutes } from '@citadel/module-soul-inventory/server/host-adapter.js';
 import { buildSoulSaleRoutes } from '@citadel/module-soul-sale/server/host-adapter.js';
+import { buildSoulWalletRoutes } from '@citadel/module-soul-wallet/server/host-adapter.js';
 import { eventHandlers as notificationEventHandlers } from '@citadel/module-notification/server/events.js';
 import { soulSaleEventHandlers, SOUL_SALE_SUBSCRIBES } from '@citadel/module-soul-sale/server/host-adapter.js';
 import { subscribeOutbox, type OutboxHandler } from '../outbox.js';
@@ -41,6 +42,7 @@ const builders: Record<string, Builder> = {
   'soul-inventory': (d) => buildSoulInventoryRoutes({ db: d.db, requireAuth: d.requireAuth, gate: d.requireModule(d.db, 'soul-inventory'), audit: d.audit }),
   // audit: soul-sale tự ghi ss_action_audit (khác shape host audit(c,entry)) → không truyền host audit để tránh lệch chữ ký.
   'soul-sale': (d) => buildSoulSaleRoutes({ db: d.db, requireAuth: d.requireAuth, gate: (perm: string) => requirePermission(d.db, perm as any), emit: (orgId: string, topic: string, payload: any) => emitToOutbox(d.db, orgId, topic, payload) } as any),
+  'soul-wallet': (d) => buildSoulWalletRoutes({ db: d.db, requireAuth: d.requireAuth, gate: d.requireModule(d.db, 'soul-wallet'), audit: d.audit } as any),
 };
 // Soul-Sale: adapt handlers ({db},evt) → host OutboxHandler (event,{db}); map payload sang InboundEvent shape.
 const soulSaleOutboxHandlers: Record<string, OutboxHandler> = Object.fromEntries(

@@ -15,6 +15,7 @@ import { soulManagerTieuTamActions } from '@citadel/module-soul-manager/server/t
 import { soulInventoryTieuTamActions } from '@citadel/module-soul-inventory/server/tieu-tam-actions.js';
 import { soulSaleTieuTamActions as ssTieuTamActions } from '@citadel/module-soul-sale/server/tieu-tam-actions.js';
 import { soulSaleTools as ssTools } from '@citadel/module-soul-sale/server/tools.js';
+import { soulWalletTieuTamActions } from '@citadel/module-soul-wallet/server/tieu-tam-actions.js';
 
 type DB = any;
 export type TieuTamActionCtx = { db: DB; orgId: string; userId: string; role: Role; securityLevel: number; audit?: (e: { action: string; resource?: string; resourceId?: string; detail?: unknown }) => Promise<void> };
@@ -87,6 +88,7 @@ for (const t of ssTools) {
     },
   });
 }
+defs.push(...(soulWalletTieuTamActions() as unknown as TieuTamAction[]));
 export const ACTION_REGISTRY = new Map(defs.map(d=>[d.name,d]));
 export function toolSafeName(name:string){ return name.replace(/[^a-zA-Z0-9_-]/g, '_'); }
 const SAFE_TO_ACTION = new Map(defs.map(d=>[toolSafeName(d.name), d.name]));

@@ -1,0 +1,34 @@
+{
+  "id": "soul-wallet",
+  "name": "Soul-Wallet 1A — Ví Cá Nhân",
+  "version": "1.0.0",
+  "tier": "paid",
+  "priceOm": 700,
+  "icon": "wallet",
+  "description": "Trung tâm chỉ huy tài chính cá nhân: đa ví (tiền mặt/bank/ví điện tử/thẻ tín dụng/sổ tiết kiệm), sổ kép mini không lệch số, ngân sách 6 Hũ, sổ nợ + aging, recurring & subscription, import sao kê Excel, rule tự phân loại, phát hiện chi bất thường, dự báo runway, báo cáo infographic (donut/nến/waterfall/heatmap). Tiểu Tâm thao tác bằng tiếng Việt, dry-run→confirm mọi tác vụ tiền.",
+  "permissions": [
+    "sw.account.read", "sw.account.write",
+    "sw.tx.read", "sw.tx.write",
+    "sw.budget.read", "sw.budget.write",
+    "sw.contact.read", "sw.contact.write",
+    "sw.debt.read", "sw.debt.write",
+    "sw.goal.read", "sw.goal.write",
+    "sw.recurring.read", "sw.recurring.write",
+    "sw.rule.write", "sw.import.run",
+    "sw.report.read", "sw.export.sensitive"
+  ],
+  "routes": "/api/v1/soul-wallet",
+  "docs": "docs/GUIDE.md",
+  "engine": "^1.0.0",
+  "group": "Tài chính",
+  "rentPlans": { "30": 100 },
+  "events": {
+    "emits": [
+      "sw.transaction.created", "sw.transaction.reversed",
+      "sw.budget.exceeded", "sw.debt.due",
+      "sw.goal.reached", "sw.import.completed",
+      "sw.anomaly.detected", "sw.recurring.posted"
+    ],
+    "subscribes": []
+  }
+}

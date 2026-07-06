@@ -14,6 +14,7 @@ import { keToan10aTools } from '@citadel/module-ke-toan-10a/server/tools.js';
 import { soulManagerTools } from '@citadel/module-soul-manager/server/host-adapter.js';
 import { soulInventoryTools, startSoulInventoryNightlyAutomation } from '@citadel/module-soul-inventory/server/host-adapter.js';
 import { startSoulSaleNightlyAutomation } from '@citadel/module-soul-sale/server/host-adapter.js';
+import { soulWalletTools, startSoulWalletNightlyAutomation } from '@citadel/module-soul-wallet/server/host-adapter.js';
 import { buildModuleRoutes, requireModule } from './modules/routes.js';
 import { mountLoadedModules } from './modules/loader.js';
 import { buildCompanyModuleRoutes } from './company-module-routes.js';
@@ -180,6 +181,7 @@ try { crmTools(getDb()).forEach((t) => toolRegistry.register(t)); } catch (e) { 
 try { keToan10aTools(getDb()).forEach((t) => toolRegistry.register(t)); } catch (e) { /* idempotent */ }
 try { soulManagerTools(getDb()).forEach((t) => toolRegistry.register(t as any)); } catch (e) { /* idempotent */ }
 try { soulInventoryTools(getDb()).forEach((t) => toolRegistry.register(t as any)); } catch (e) { /* idempotent */ }
+try { soulWalletTools(getDb()).forEach((t) => toolRegistry.register(t as any)); } catch (e) { /* idempotent */ }
 
 // fail-fast env validation at boot
 const env = loadApiEnv();
@@ -204,6 +206,8 @@ startSoulSaleNightlyAutomation(getDb(), async () => {
     .where(and(eq(orgModules.moduleId, 'soul-sale'), eq(orgModules.status, 'active')));
   return rows.map((r: any) => r.orgId);
 });
+// Soul-Wallet nightly: ví CÁ NHÂN — module tự quét distinct (org, owner) từ sw_accounts
+startSoulWalletNightlyAutomation(getDb());
 serve({ fetch: app.fetch, port }, () => console.log(`[api] listening on :${port}`));
 
 export default app;

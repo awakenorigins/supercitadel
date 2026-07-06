@@ -101,12 +101,31 @@ export const PERMISSION_REGISTRY = [
   p('soulsale.import.read',    'Soul-Sale — Xem batch đối soát', 1, false),
   p('soulsale.import.write',   'Soul-Sale — Nạp/đối soát/chốt bảng kê đại lý', 2, true),
   p('soulsale.report.read',    'Soul-Sale — Báo cáo/dự báo/next-best-actions', 1, false),
+  // ── Soul-Wallet (Ví Cá Nhân) ── write-action lớp 2 khai trong tool def của module (payroll-style)
+  p('sw.account.read','Soul-Wallet — Xem danh sách ví/tài khoản, số dư'),
+  p('sw.account.write','Soul-Wallet — Tạo/sửa/đóng ví, tài khoản',2,true),
+  p('sw.tx.read','Soul-Wallet — Tra cứu giao dịch, sổ ledger'),
+  p('sw.tx.write','Soul-Wallet — Ghi thu/chi/chuyển/hoàn/phí, đảo bút toán',2,true),
+  p('sw.budget.read','Soul-Wallet — Xem ngân sách, trạng thái hũ'),
+  p('sw.budget.write','Soul-Wallet — Tạo/sửa ngân sách, áp preset 6 Hũ',2,true),
+  p('sw.contact.read','Soul-Wallet — Xem danh bạ payee/khách/chủ nợ'),
+  p('sw.contact.write','Soul-Wallet — Tạo/sửa danh bạ đối tác cá nhân'),
+  p('sw.debt.read','Soul-Wallet — Xem sổ nợ, aging, lịch trả'),
+  p('sw.debt.write','Soul-Wallet — Ghi khoản nợ, ghi trả nợ',2,true),
+  p('sw.goal.read','Soul-Wallet — Xem hũ mục tiêu tiết kiệm'),
+  p('sw.goal.write','Soul-Wallet — Tạo hũ mục tiêu, nạp tiền vào hũ',2,true),
+  p('sw.recurring.read','Soul-Wallet — Xem khoản định kỳ, subscription sắp trừ tiền'),
+  p('sw.recurring.write','Soul-Wallet — Tạo/sửa khoản định kỳ, chạy kỳ đến hạn',2,true),
+  p('sw.rule.write','Soul-Wallet — Tạo/sửa rule tự phân loại giao dịch'),
+  p('sw.import.run','Soul-Wallet — Import sao kê: upload, preview, commit',2,true),
+  p('sw.report.read','Soul-Wallet — Xem báo cáo, dashboard, chart, insights'),
+  p('sw.export.sensitive','Soul-Wallet — Xuất dữ liệu tài chính nhạy cảm',2,true),
 ] as const satisfies readonly PermissionMeta[];
 
 export const ROLE_PERMISSIONS: Record<RoleType, readonly Permission[]> = {
   super_admin: ['*'],
   owner: ['*'],
-  manager: ['accounting.*','crm.*','inventory.*','hr.*','om.wallet.read','report.*','core.permissions.read','ke-toan-10a.*','kho.*','soulsale.*'],
+  manager: ['accounting.*','crm.*','inventory.*','hr.*','om.wallet.read','report.*','core.permissions.read','ke-toan-10a.*','kho.*','soulsale.*','sw.*'],
   staff: ['crm.contact.create','crm.contact.read','hr.attendance.checkin','hr.attendance.checkout','om.wallet.read','report.summary.read','core.permissions.read','ke-toan-10a.report.read'],
 };
 
