@@ -358,7 +358,8 @@ export default function SoulWalletPage() {
 
   return (
     <Shell wide>
-      <div style={{ display: 'grid', gap: 14 }}>
+      {/* paddingBottom: chừa chỗ cho bottom-nav mobile (fixed 78px) + safe-area, tránh che form 'Hũ mục tiêu' */}
+      <div style={{ display: 'grid', gap: 14, paddingBottom: 'calc(96px + env(safe-area-inset-bottom, 0px))' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <h1 style={{ margin: 0, fontSize: 20 }}>👛 Soul-Wallet — Ví Cá Nhân</h1>
           {msg && <span className={`chip chip-${msg.ok ? 'jade' : 'amber'}`}>{msg.t}</span>}

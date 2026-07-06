@@ -187,6 +187,8 @@ export default function SoulSalePage() {
             )}
         </section>
       )}
+      {/* Spacer: chừa chỗ cho bottom-nav mobile (fixed 78px) + safe-area, tránh che nội dung cuối */}
+      <div aria-hidden style={{ height: 'calc(96px + env(safe-area-inset-bottom, 0px))' }} />
     </Shell>
   );
 }
