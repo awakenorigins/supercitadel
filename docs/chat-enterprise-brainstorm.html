@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SuperCitadel Chat — Hiện trạng &amp; Brainstorm Doanh Nghiệp</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif; background: #F5F0EB; color: #2C2C2C; margin: 0; padding: 24px 16px; line-height: 1.65; }
+  .wrap { max-width: 860px; margin: 0 auto; }
+  h1 { color: #8B1A2F; font-size: 1.6em; border-bottom: 3px solid #C9A96E; padding-bottom: 10px; }
+  h2 { color: #8B1A2F; font-size: 1.25em; margin-top: 34px; border-left: 5px solid #C9A96E; padding-left: 10px; }
+  h3 { color: #2C2C2C; font-size: 1.05em; margin-top: 22px; }
+  table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 0.92em; background: #fff; }
+  th { background: #C9A96E; color: #fff; padding: 9px 10px; text-align: left; }
+  td { border: 1px solid #ddd; padding: 8px 10px; vertical-align: top; }
+  tr:nth-child(even) td { background: #FAF6F0; }
+  code { background: #EFE8DE; padding: 1px 6px; border-radius: 4px; font-size: 0.9em; }
+  .ok { color: #2e7d32; font-weight: 600; }
+  .no { color: #8B1A2F; font-weight: 600; }
+  .mid { color: #b26a00; font-weight: 600; }
+  .card { background: #fff; border: 1px solid #e2d9cc; border-radius: 12px; padding: 14px 18px; margin: 14px 0; }
+  .tag { display: inline-block; background: #B8C9C0; color: #2C2C2C; border-radius: 10px; padding: 1px 10px; font-size: 0.8em; margin-right: 6px; }
+  .tagP1 { background: #8B1A2F; color: #fff; }
+  .tagP2 { background: #C9A96E; color: #fff; }
+  .tagP3 { background: #B8C9C0; }
+  ul { padding-left: 22px; }
+  li { margin: 4px 0; }
+  .foot { margin-top: 40px; font-size: 0.85em; color: #888; border-top: 1px solid #ddd; padding-top: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>💬 SuperCitadel Chat — Hiện Trạng &amp; Brainstorm Nâng Cấp Doanh Nghiệp</h1>
+<p><b>Ngày:</b> 06/07/2026 · <b>Người soạn:</b> Tiểu Tâm 🦊 · <b>Căn cứ:</b> đọc trực tiếp code <code>modules/chat</code>, <code>services/ws</code>, <code>apps/web/app/chat</code> (không đoán).</p>
+
+<h2>1. Chat hiện tại hoạt động KIỂU GÌ?</h2>
+<div class="card">
+<p><b>Kiến trúc 3 tầng — ĐÃ CHẠY THẬT:</b></p>
+<ul>
+<li><b>DB (4 bảng):</b> <code>chat_rooms</code> (phòng, cờ is_group) · <code>chat_room_members</code> (thành viên + last_read_at) · <code>chat_messages</code> (nội dung, edited_at) · <code>chat_reactions</code> (emoji) — tất cả cô lập theo <code>org_id</code>.</li>
+<li><b>API:</b> <code>GET/POST /api/v1/chat/rooms</code> (list/tạo phòng) · <code>GET/POST /rooms/:id/messages</code> (đọc/gửi) · mark-read · search. Chỉ thành viên phòng mới đọc/gửi được.</li>
+<li><b>Realtime:</b> service <code>ws</code> riêng (cổng 3002, WebSocket + JWT). API gửi tin → bridge <code>/internal/publish</code> → đẩy event tới đúng client cùng org → tin hiện tức thì không cần F5.</li>
+</ul>
+<p><b>Trả lời thẳng câu anh hỏi:</b></p>
+<table>
+<tr><th>Câu hỏi</th><th>Trả lời</th></tr>
+<tr><td>Thật sự hoạt động được chưa?</td><td><span class="ok">RỒI</span> — nhắn 1-1 và nhóm đều chạy, realtime qua WS, có integration test.</td></tr>
+<tr><td>Làm sao để nhắn nhau?</td><td>Vào <code>/chat</code> → nút tạo phòng → tick chọn user trong org (đặt tên nếu là nhóm) → gõ → Enter. Người kia thấy ngay.</td></tr>
+<tr><td>Cấp acc cho user khác thì nhắn nhau được chưa?</td><td><span class="ok">ĐƯỢC</span> — miễn là <b>cùng org</b>. Modal tạo phòng đọc <code>GET /api/v1/users</code> (toàn bộ user trong org, mọi role kể cả staff). Khác org thì KHÔNG thấy nhau (đúng thiết kế cô lập tenant).</td></tr>
+</table>
+</div>
+
+<h2>2. Anh nói đúng: box chat còn SƠ SÀI. Đây là bảng soi thật:</h2>
+<table>
+<tr><th>Tính năng</th><th>Trạng thái</th><th>Ghi chú kỹ thuật</th></tr>
+<tr><td>Nhắn 1-1 / nhóm</td><td><span class="ok">CÓ</span></td><td>createRoom với memberIds</td></tr>
+<tr><td>Realtime WS</td><td><span class="ok">CÓ</span></td><td>Bus in-memory, single-node (đủ cho quy mô hiện tại)</td></tr>
+<tr><td>Reaction emoji</td><td><span class="mid">DB CÓ — FE CHƯA</span></td><td>Bảng <code>chat_reactions</code> tồn tại nhưng chưa có nút thả emoji trên UI</td></tr>
+<tr><td>Đã đọc / unread badge</td><td><span class="mid">API CÓ — FE THIẾU</span></td><td><code>markRead</code> + <code>last_read_at</code> có sẵn, FE chưa hiện số tin chưa đọc</td></tr>
+<tr><td>Sửa / xóa / thu hồi tin</td><td><span class="no">CHƯA</span></td><td>Cột <code>edited_at</code> đã chừa sẵn, thiếu endpoint + UI</td></tr>
+<tr><td>Gửi file / ảnh</td><td><span class="no">CHƯA</span></td><td>body chỉ là text. (Hạ tầng upload xlsx của ke-toan-10a có thể tái dùng pattern)</td></tr>
+<tr><td>Ghim tin</td><td><span class="no">CHƯA</span></td><td>—</td></tr>
+<tr><td>Reply/quote, thread</td><td><span class="no">CHƯA</span></td><td>—</td></tr>
+<tr><td>Typing indicator, online status</td><td><span class="no">CHƯA</span></td><td>WS đã có nền, thêm event là xong</td></tr>
+<tr><td>Rời phòng / thêm bớt thành viên / đổi tên phòng</td><td><span class="no">CHƯA</span></td><td>Tạo xong là cứng — thiếu API quản lý phòng</td></tr>
+<tr><td>Avatar / màu</td><td><span class="mid">CÓ NỀN</span></td><td>User đã có <code>avatarColor</code> 5 màu (mint/violet/amber/rose/sky) + chữ cái đầu tên. Chưa có upload ảnh avatar thật</td></tr>
+<tr><td>Tìm kiếm tin nhắn</td><td><span class="mid">API CÓ</span></td><td><code>searchMessages</code> tồn tại (Tiểu Tâm dùng được), FE chưa có ô search</td></tr>
+</table>
+
+<h2>3. 🧠 SUPER BRAINSTORM — Chat Doanh Nghiệp cần gì (theo đúng danh sách anh nêu + mở rộng)</h2>
+
+<h3><span class="tag tagP1">P1 — Nền tảng phải có trước</span></h3>
+<table>
+<tr><th>Hạng mục</th><th>Thiết kế đề xuất (khớp kiến trúc sẵn có)</th></tr>
+<tr><td><b>① Phòng ban / Channel theo tổ chức</b></td><td>Thêm cột <code>kind</code> (direct / group / department / announcement) + <code>department_id</code> vào chat_rooms. <b>Ăn thẳng dữ liệu Soul-Manager:</b> sơ đồ phòng ban đã có bảng thật → auto-tạo channel cho mỗi phòng ban, nhân viên vào phòng ban là tự vào channel (sync khi điều chuyển). Channel #Thông-báo-chung: chỉ manager+ được gửi.</td></tr>
+<tr><td><b>② Phân quyền xem nội dung</b></td><td>Trả lời câu "cấp nào xem được tất cả": đề xuất theo chuẩn permission sẵn có — thêm <code>chat.message.read_all</code> (mặc định owner/super_admin; manager CHỈ xem channel phòng ban mình quản). Kèm 2 ràng buộc doanh nghiệp: (a) chat 1-1 riêng tư mặc định KHÔNG ai xem được, muốn mở phải bật chế độ "compliance mode" cấp org có audit log; (b) mọi lượt xem-của-sếp đều ghi <code>audit_logs</code> — chống lạm quyền. Đây là chuẩn Slack/Teams enterprise.</td></tr>
+<tr><td><b>③ Gửi file / ảnh</b></td><td>Bảng <code>chat_attachments</code> (message_id, file_name, mime, size, path). Giới hạn theo tier: 5MB/file free, 25MB paid. Ảnh hiện preview inline, file khác hiện card tải về. Quét extension chặn .exe (pattern đã có ở upload ke-toan-10a).</td></tr>
+<tr><td><b>④ Quản lý phòng</b></td><td>API thêm/bớt thành viên, đổi tên, rời phòng, giải tán (owner phòng), chuyển quyền admin phòng.</td></tr>
+<tr><td><b>⑤ Unread + thông báo</b></td><td>Badge số tin chưa đọc per-room (last_read_at đã có sẵn!) + tích hợp module <code>notification</code> đang chạy: offline thì nhận notification, mention thì báo đỏ.</td></tr>
+</table>
+
+<h3><span class="tag tagP2">P2 — Năng suất làm việc</span></h3>
+<table>
+<tr><th>Hạng mục</th><th>Thiết kế đề xuất</th></tr>
+<tr><td><b>⑥ Ghim thông minh</b></td><td>Ghim tin quan trọng per-room (bảng <code>chat_pins</code>). "Thông minh" = Tiểu Tâm tự đề xuất ghim khi phát hiện tin chứa deadline/quyết định/số tiền; thanh pin trên đầu phòng gom mọi tin ghim + auto-tóm-tắt.</td></tr>
+<tr><td><b>⑦ Task – nhắc việc – deadline TỪ TIN NHẮN</b></td><td>Đây là món ĐẮT nhất: long-press tin nhắn → "Biến thành việc" → tạo task (assignee, deadline, phòng ban) — thành <b>module task riêng</b> (soul-task?) liên thông chat. Tiểu Tâm nhắc trước deadline qua notification + chat. Đến hạn chưa xong → tự escalate lên manager. Đây là vòng khép kín chat→việc→nhắc→báo cáo mà Zalo/Messenger không có.</td></tr>
+<tr><td><b>⑧ Reply / quote / thread</b></td><td>Cột <code>reply_to_id</code>; thread nhẹ kiểu Zalo (quote hiện trích đoạn) trước, thread sâu kiểu Slack để sau.</td></tr>
+<tr><td><b>⑨ Mention @tên + @Tiểu Tâm trong chat</b></td><td>@user → notification; <b>@tieu-tam trong phòng chat</b> → hỏi AI ngay trong ngữ cảnh phòng ("@tieu-tam tồn kho Coca còn bao nhiêu?") — tool registry 10 module đã sẵn, chỉ cần route message → tieu-tam.</td></tr>
+<tr><td><b>⑩ Search toàn văn FE</b></td><td>API có rồi — thêm ô search + filter theo phòng/người/ngày.</td></tr>
+</table>
+
+<h3><span class="tag tagP3">P3 — Trải nghiệm &amp; polish</span></h3>
+<table>
+<tr><th>Hạng mục</th><th>Đề xuất</th></tr>
+<tr><td><b>⑪ Avatar &amp; cá nhân hóa</b></td><td>Upload ảnh avatar thật (fallback 5 màu chữ cái hiện tại); avatar phòng; KHÔNG nên cho đổi màu chữ tin nhắn tự do (rối, thiếu chuyên nghiệp) — thay bằng theme org: doanh nghiệp chọn màu thương hiệu, toàn org đồng bộ.</td></tr>
+<tr><td><b>⑫ Reaction + typing + online</b></td><td>Bật reaction (DB có sẵn), typing indicator, chấm xanh online — đều chỉ là thêm event WS.</td></tr>
+<tr><td><b>⑬ Sửa/thu hồi tin</b></td><td>Sửa trong 15 phút (hiện "đã sửa"), thu hồi để lại vệt "tin đã thu hồi" — chuẩn kiểm toán doanh nghiệp, KHÔNG xóa trắng.</td></tr>
+<tr><td><b>⑭ Voice note + gọi</b></td><td>Voice note trước (dễ, chỉ là file .ogg). Gọi thoại/video để xa hơn (cần TURN server — nặng hạ tầng).</td></tr>
+<tr><td><b>⑮ Món khác đáng nghĩ</b></td><td>Poll bình chọn trong phòng · Lịch phòng ban (họp) · Tin tự hủy cho nội dung nhạy cảm · Forward tin giữa phòng · Export lịch sử chat (compliance) · Read receipt "5 người đã xem" · Trạng thái "Đang họp/Nghỉ phép" ăn theo dữ liệu Soul-Manager (nghỉ phép được duyệt → tự treo status).</td></tr>
+</table>
+
+<h2>4. Lộ trình đề xuất (nếu anh duyệt làm)</h2>
+<div class="card">
+<ul>
+<li><b>R-chat-1 (nền doanh nghiệp):</b> ① channel phòng ban sync Soul-Manager + ④ quản lý phòng + ⑤ unread badge + ⑫ reaction/typing. — Nhóm này thuần wiring trên nền sẵn có, nhanh.</li>
+<li><b>R-chat-2 (file + quyền):</b> ③ attachment + ② read_all/compliance + ⑬ sửa/thu hồi + ⑩ search FE.</li>
+<li><b>R-chat-3 (năng suất):</b> ⑦ task-từ-tin-nhắn + ⑥ ghim thông minh + ⑨ @tieu-tam trong chat — đây là combo tạo khác biệt bán hàng.</li>
+<li><b>R-chat-4 (polish):</b> ⑪ avatar + ⑭ voice note + ⑮ tùy chọn.</li>
+</ul>
+<p><b>Nguyên tắc giữ nguyên:</b> mọi thứ cô lập org_id + RLS, hành động nhạy cảm (xem chat người khác) qua audit log, không phá 4 bảng chat cũ — chỉ thêm cột/bảng mới, test cũ phải xanh.</p>
+</div>
+
+<p class="foot">Tiểu Tâm 🦊 — SuperCitadel R11.4 · Căn cứ code thật tại commit 6e00dc4 · File này chỉ là brainstorm, chưa thay đổi gì trong hệ thống.</p>
+
+</div>
+</body>
+</html>

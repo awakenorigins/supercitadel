@@ -1,0 +1,17 @@
+{
+  "id": "inventory",
+  "name": "Kho Hàng",
+  "version": "2.0.0",
+  "tier": "paid",
+  "priceOm": 300,
+  "icon": "i-box",
+  "description": "Tồn kho, cảnh báo sắp hết, nhập hàng.",
+  "permissions": [
+    "inventory.item.create",
+    "inventory.qty.adjust"
+  ],
+  "routes": "/api/v1/inventory",
+  "docs": "docs/GUIDE.md",
+  "engine": "^1.0.0",
+  "group": "Vận hành"
+}

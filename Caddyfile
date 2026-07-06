@@ -1,0 +1,13 @@
+# NewCitadelV21 isolated reverse proxy
+# Web : http://newcitadelv21.62.146.238.213.nip.io:8093
+# API : http://newcitadelv21.62.146.238.213.nip.io:8094/health
+# WS  : ws://newcitadelv21.62.146.238.213.nip.io:8095
+:80 {
+	reverse_proxy web:3000
+}
+:81 {
+	reverse_proxy api:3001
+}
+:82 {
+	reverse_proxy ws:3002
+}

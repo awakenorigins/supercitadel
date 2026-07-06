@@ -1,0 +1,32 @@
+{
+  "round": "R11.1",
+  "status": "done",
+  "updatedAt": "2026-07-05T11:34:00+02:00",
+  "phases": {
+    "pA_fix_endpoints": "done: zod validation registered and @citadel/api test includes r111",
+    "pB_file_upload_tieutam": "done: tt_files migration/routes/import live verified",
+    "pC_tutorial_full_back": "done: back button + K10A tour anchors verified, screenshots captured",
+    "pD_verify_release": "partial: deploy/live verify/regressions/shots done; push/release/CI pending"
+  },
+  "evidence": [
+    "pnpm --filter @citadel/api test PASS incl [api/r111] PASSED",
+    "pnpm --filter web typecheck PASS; pnpm --filter web build PASS; audit-buttons PASS",
+    "docker compose -p supercitadel up -d --build api web PASS",
+    "migration 0012 applied; select to_regclass(public.tt_files)=tt_files",
+    "scripts/verify-r111.py live PASS 14/14",
+    "scripts/verify-r11.py live PASS 26/26",
+    "scripts/verify-r85.py live PASS 7/7",
+    "screenshots: shots/r111-k10a-tour-back.png, shots/r111-tieu-tam-paperclip.png"
+  ],
+  "commits": [
+    "cf9205f Phase A",
+    "5b380a9 Phase B host/backend",
+    "de869d7 Phase C",
+    "94c2953 Phase B web file list",
+    "f1fd74b Phase D live verify + shots"
+  ],
+  "next": "none",
+  "release": "https://github.com/NachaFromMars/supercitadel/releases/tag/v11.1.0",
+  "ci": "https://github.com/NachaFromMars/supercitadel/actions/runs/28736245357",
+  "head": "f1fd74b8260c781d0ed838b9dcdc0c3b8af610d4"
+}

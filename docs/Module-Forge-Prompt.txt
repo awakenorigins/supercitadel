@@ -1,0 +1,96 @@
+════════════════════════════════════════════════════════
+  SUPERCITADEL — PROMPT TỔNG FORGE MODULE CÔNG TY (v1.0)
+════════════════════════════════════════════════════════
+CÁCH DÙNG: Copy nguyên khối dưới đây, điền vào các chỗ [...] rồi gửi cho Tiểu Tâm.
+Mục nào không có thì ghi "không có" — đừng bỏ trống.
+Điền càng kỹ → module forge ra càng khớp công ty thật.
+
+──────────────── COPY TỪ ĐÂY ────────────────
+
+FORGE MODULE SUPERCITADEL — HỒ SƠ CÔNG TY
+
+═══ A. ĐỊNH DANH CÔNG TY ═══
+1. Tên công ty: [tên đầy đủ + viết tắt]
+2. Ngành nghề chính: [vd: sản xuất nội thất / chuỗi F&B / logistics / agency marketing]
+3. Quy mô: [số nhân sự / số chi nhánh / doanh thu ước tính năm]
+4. Mô hình kinh doanh: [B2B / B2C / hỗn hợp — bán gì, cho ai, thu tiền cách nào]
+5. Đặc thù riêng của ngành: [vd: hàng có hạn sử dụng, dự án kéo dài nhiều tháng, theo mùa vụ... / không có]
+
+═══ B. SƠ ĐỒ TỔ CHỨC & KHỐI VĂN PHÒNG ═══
+6. Các phòng ban / khối cốt lõi (liệt kê hết):
+   [vd: Ban GĐ · Kinh doanh · Vận hành/Sản xuất · Kho · Kế toán · Nhân sự · CSKH · Kỹ thuật]
+7. Mỗi phòng ban — ai làm gì (1-2 dòng/phòng):
+   [vd: Kinh doanh: tìm khách, báo giá, chốt đơn. Vận hành: nhận đơn → sản xuất → bàn giao...]
+8. Vai trò/chức danh cần phân quyền khác nhau:
+   [vd: Giám đốc (thấy hết) · Trưởng phòng (thấy phòng mình) · Nhân viên (thấy việc mình) · Kế toán (sổ sách)]
+
+═══ C. QUY TRÌNH NGHIỆP VỤ CỐT LÕI (quan trọng nhất!) ═══
+9. Quy trình số 1 — dòng chảy chính ra tiền (mô tả TỪNG BƯỚC từ đầu đến cuối):
+   [vd: Khách hỏi → báo giá → ký HĐ → đặt cọc 30% → sản xuất → giao → thu nốt 70% → bảo hành]
+10. Quy trình số 2 (nếu có): [vd: nhập nguyên liệu → kiểm định → nhập kho → xuất theo lệnh sản xuất]
+11. Quy trình số 3 (nếu có): [...]
+12. Điểm ĐAU hiện tại — đang quản thủ công/Excel chỗ nào, hay sai sót chỗ nào:
+   [vd: theo dõi công nợ bằng Excel hay quên, không biết tồn kho thật, chấm công giấy...]
+
+═══ D. DỮ LIỆU CẦN QUẢN LÝ ═══
+13. Các "đối tượng" chính module phải lưu (kèm thông tin từng cái):
+   [vd: Đơn hàng (mã, khách, sản phẩm, tiền, cọc, trạng thái, ngày giao) · Hợp đồng (số, giá trị, tiến độ thanh toán) · Xe/Thiết bị (biển số, lịch bảo dưỡng)...]
+14. Trạng thái vòng đời của đối tượng chính:
+   [vd: Đơn hàng: Báo giá → Chốt → Đang làm → Chờ giao → Hoàn tất → Bảo hành / Hủy]
+15. Số liệu/báo cáo muốn nhìn mỗi ngày-tuần-tháng:
+   [vd: doanh thu tháng, đơn trễ hạn, top khách, công nợ quá hạn, tồn kho dưới mức]
+
+═══ E. KẾT NỐI VỚI MODULE SUPERCITADEL CÓ SẴN ═══
+16. Dùng chung KẾ TOÁN (sổ kép, phiếu thu/chi, công nợ)?
+   [Có/Không — nếu Có: nghiệp vụ nào tự sinh bút toán? vd: chốt đơn → hóa đơn bán + ghi công nợ]
+17. Dùng chung CRM (khách hàng, pipeline)? [Có/Không — khách module này có vào CRM chung không?]
+18. Dùng chung KHO? [Có/Không — xuất/nhập kho gắn quy trình nào?]
+19. Dùng chung NHÂN SỰ (ca, chấm công, phép)? [Có/Không — có tính lương theo sản phẩm/ca đặc thù?]
+20. Tiểu Tâm AI cần làm được lệnh gì cho module này?
+   [vd: "Tạo đơn hàng mới cho khách X" · "Đơn nào đang trễ hạn?" · "Báo cáo doanh thu tuần"]
+
+═══ F. GIAO DIỆN & VẬN HÀNH ═══
+21. Ai dùng chính, thiết bị gì: [vd: sếp xem mobile, nhân viên nhập liệu desktop]
+22. Màn hình quan trọng nhất mở lên phải thấy gì: [vd: kanban đơn hàng theo trạng thái + số liệu hôm nay]
+23. Thông báo/cảnh báo tự động cần có: [vd: đơn sắp tới hạn giao 2 ngày, công nợ quá 30 ngày, tồn dưới ngưỡng]
+
+═══ G. KINH TẾ MODULE (trong Cửa hàng SUPERCITADEL) ═══
+24. Tên module hiển thị: [vd: "Quản Lý Xưởng Nội Thất"]
+25. Giá đề xuất: [mua đứt ___ Om / thuê 7-30-90 ngày] (để trống = Tiểu Tâm tự đề xuất)
+
+═══ H. GIỚI HẠN & ƯU TIÊN ═══
+26. Phase 1 PHẢI có (không thể thiếu): [3-5 tính năng sống còn]
+27. Phase sau mới cần: [tính năng để dành]
+28. KHÔNG được làm / cấm kỵ: [vd: không cho nhân viên thấy giá vốn, không xóa cứng dữ liệu]
+
+── HẾT HỒ SƠ ──
+
+YÊU CẦU: Từ hồ sơ trên, hãy:
+(1) Tổng hợp BẢNG MÔ TẢ CÔNG TY chuẩn hóa,
+(2) Thiết kế kiến trúc module: schema DB, danh sách endpoint, màn hình UI, tích hợp
+    với module có sẵn (Kế toán/CRM/Kho/Nhân sự), action cho Tiểu Tâm AI,
+(3) Hỏi lại TỐI ĐA 5 câu làm rõ nếu thiếu thông tin quan trọng — RỒI MỚI forge.
+Module phải theo chuẩn SUPERCITADEL: tenant-isolation theo org, module gate
+(mua/thuê bằng Om), audit log, test đầy đủ, tiếng Việt 100%.
+
+──────────────── HẾT PROMPT ────────────────
+
+HƯỚNG DẪN NHANH MỨC ĐỘ QUAN TRỌNG:
+• Khối A, B, D — BẮT BUỘC (định hình module + phân quyền + schema)
+• Khối C — QUAN TRỌNG NHẤT (trái tim module; câu 12 điểm đau giúp ưu tiên đúng)
+• Khối E — NÊN ĐIỀN KỸ (điểm mạnh SuperCitadel: cắm vào kế toán/CRM/kho có sẵn,
+  không làm lại; câu 20 = những gì Tiểu Tâm làm THAY anh)
+• Khối F, H — NÊN CÓ (chặn scope phình to, ship nhanh)
+• Khối G — TÙY CHỌN (không điền thì Tiểu Tâm tự đề xuất giá)
+
+QUY TRÌNH SAU KHI GỬI:
+1. Anh gửi hồ sơ đã điền → Tiểu Tâm tổng hợp Bảng Mô Tả Công Ty + kiến trúc đề xuất
+2. Hỏi làm rõ tối đa 5 câu (không lan man)
+3. Anh duyệt "OK forge" → forge: migration + service + routes + UI + gate Om + tutorial mini + test
+4. Ship: deploy → verify → screenshot → push GitHub → release. Module lên Cửa hàng, mua/thuê bằng Om.
+
+MẸO: Phần C-D cứ kể tự nhiên như dặn nhân viên mới ("Khách gọi tới thì mình...,
+xong bên xưởng..., cuối tháng kế toán...") — Tiểu Tâm tự bóc thành quy trình chuẩn.
+Kể THẬT quan trọng hơn kể đẹp.
+
+— Tiểu Tâm 🦊 · SUPERCITADEL Module Forge · 03/07/2026

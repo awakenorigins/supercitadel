@@ -1,0 +1,33 @@
+{
+  "round": "R11.2",
+  "status": "done",
+  "startedAt": "2026-07-05T16:10:00+02:00",
+  "sessionKey": "agent:main:telegram:group:-1003720502853:topic:9871",
+  "brief": "R11.2-TASK.md",
+  "directives": {
+    "order": "Anh Nấng (msg 10328): 4 setting Tiểu Tâm (Chế độ tính cách/Gợi ý chủ động/Thông tin tổ chức/Thành viên và quyền) click không active — chưa có endpoint. Audit TOÀN DIỆN mọi control FE, bổ sung endpoint thật toàn diện, không để nút trưng bày.",
+    "finding": "settings/page.tsx ~dòng 167-172: 4 row render tĩnh không onClick không fetch. Cần rà tay vì là <div>/row không phải <button> nên audit-buttons có thể bỏ sót."
+  },
+  "phases": {
+    "pA_audit_map": "done",
+    "pB_backend_endpoints": "done",
+    "pC_wire_fe": "done",
+    "pD_verify_release": "done"
+  },
+  "commits": ["5926c71", "3fab90f", "01ae8cc", "d08a65d", "558e6e9"],
+  "next": "—",
+  "postFix": {
+    "commit": "c626d5d SUPERCITADEL-R11.2: restore prod migrations 0006-0008, tests apply 0013 instead",
+    "why": "Phase B đã chèn ALTER persona_mode/proactive vào migration cũ 0006-0008 (đã chạy prod) — vi phạm quy tắc immutable migration. Revert 0006-0008 về nguyên bản, 9 test PGlite chuyển sang apply 0013_r112_settings_org.sql.",
+    "evidence": ["pnpm -r test PASS (26 PASSED, 0 fail thật)", "pnpm -r typecheck EXIT:0", "web build EXIT:0", "CI c626d5d completed success", "verify-r112 live PASS (members=6)", "verify-r11 26/26", "verify-r85 7/7", "DB live có persona_mode+proactive", "personaMode restore về friendly sau verify"]
+  },
+  "audit": "R11.2-AUDIT.md",
+  "evidence": {
+    "localGates": ["pnpm --filter @citadel/web typecheck PASS", "pnpm test PASS 14/14", "pnpm --filter @citadel/web build PASS"],
+    "deploy": "docker compose -p supercitadel ... up -d --build; api/ws/postgres/redis healthy; web up",
+    "migrations": "0013_r112_settings_org applied live",
+    "live": ["scripts/verify-r112.py PASS", "scripts/verify-r11.py PASS 26/26", "scripts/verify-r85.py PASS 7/7"],
+    "screenshots": ["shots/r112-persona.png", "shots/r112-proactive.png", "shots/r112-org.png", "shots/r112-members.png"]
+  },
+  "lastUpdate": "2026-07-05T17:02:00+02:00"
+}

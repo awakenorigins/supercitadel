@@ -1,0 +1,66 @@
+BẢN QUYỀN PHẦN MỀM — KẾ TOÁN 7A
+PROPRIETARY SOFTWARE LICENSE
+
+Copyright (c) 2026 Nacha (NachaFromMars). All Rights Reserved.
+Bản quyền (c) 2026 Nacha (NachaFromMars). Bảo lưu mọi quyền.
+
+--------------------------------------------------------------------------------
+
+Tác giả / Author: Nacha (NachaFromMars)
+Sản phẩm / Product: Kế Toán 10A — Module kế toán cho nền tảng SuperCitadel
+Trạng thái / Status: Phần mềm độc quyền (Proprietary)
+
+--------------------------------------------------------------------------------
+TIẾNG VIỆT
+
+1. QUYỀN SỞ HỮU
+   Toàn bộ mã nguồn, tài liệu, thiết kế, cấu trúc dữ liệu và mọi thành phần của
+   Kế Toán 10A là tài sản trí tuệ độc quyền của Nacha (NachaFromMars). Đây là
+   công trình nguyên gốc (original work), được viết mới hoàn toàn cho nền tảng
+   SuperCitadel.
+
+2. TÍNH NGUYÊN GỐC
+   Phần mềm này được phát triển độc lập từ đầu. Không sao chép, không kế thừa và
+   không phái sinh từ mã nguồn của bất kỳ dự án bên thứ ba nào. Mọi ý tưởng
+   nghiệp vụ kế toán tuân theo chuẩn mực kế toán Việt Nam (Thông tư 133) là kiến
+   thức chuyên ngành công khai, không thuộc bản quyền của bất kỳ bên nào.
+
+3. GIỚI HẠN SỬ DỤNG
+   Không được sao chép, phân phối, sửa đổi, dịch ngược, hoặc tạo sản phẩm phái
+   sinh từ phần mềm này nếu không có sự cho phép bằng văn bản của tác giả Nacha.
+   Phần mềm chỉ được sử dụng trong khuôn khổ nền tảng SuperCitadel theo thỏa
+   thuận với chủ sở hữu.
+
+4. KHÔNG BẢO HÀNH
+   Phần mềm được cung cấp "nguyên trạng" (AS IS), không kèm bất kỳ bảo đảm nào.
+   Tác giả không chịu trách nhiệm cho bất kỳ thiệt hại nào phát sinh từ việc sử
+   dụng phần mềm.
+
+--------------------------------------------------------------------------------
+ENGLISH
+
+1. OWNERSHIP
+   All source code, documentation, design, data structures, and every component
+   of Kế Toán 10A are the exclusive intellectual property of Nacha
+   (NachaFromMars). This is an original work, written from scratch for the
+   SuperCitadel platform.
+
+2. ORIGINALITY
+   This software was developed independently and from the ground up. It does not
+   copy, inherit from, or derive from the source code of any third-party project.
+   All accounting business logic follows Vietnamese Accounting Standards
+   (Circular 133 / TT133), which is public domain professional knowledge owned
+   by no party.
+
+3. RESTRICTIONS
+   No part of this software may be copied, distributed, modified, reverse-
+   engineered, or used to create derivative works without the prior written
+   permission of the author, Nacha. The software may only be used within the
+   SuperCitadel platform per agreement with the owner.
+
+4. NO WARRANTY
+   The software is provided "AS IS", without warranty of any kind. The author
+   shall not be liable for any damages arising from the use of this software.
+
+--------------------------------------------------------------------------------
+© 2026 Nacha (NachaFromMars) — Kế Toán 10A for SuperCitadel.

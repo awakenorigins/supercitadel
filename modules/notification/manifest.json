@@ -1,0 +1,22 @@
+{
+  "id": "notification",
+  "name": "Thông Báo",
+  "version": "2.0.0",
+  "tier": "core",
+  "priceOm": 0,
+  "icon": "i-bell",
+  "description": "Thông báo real-time, đánh dấu đã đọc, tùy chỉnh.",
+  "permissions": [
+    "notification.notification.read",
+    "notification.notification.create"
+  ],
+  "routes": "/api/v1/notifications",
+  "docs": "docs/GUIDE.md",
+  "engine": "^1.0.0",
+  "events": {
+    "subscribes": [
+      "accounting.invoice.created"
+    ]
+  },
+  "group": "Cốt lõi"
+}

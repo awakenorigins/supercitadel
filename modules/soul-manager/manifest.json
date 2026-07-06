@@ -1,0 +1,42 @@
+{
+  "id": "soul-manager",
+  "name": "Soul-Manager — Nhân Sự",
+  "version": "1.0.0",
+  "tier": "paid",
+  "priceOm": 1800,
+  "icon": "users",
+  "description": "HRM chuẩn luật VN 2026: hồ sơ nhân viên, cơ cấu tổ chức, chấm công OT, nghỉ phép BLLĐ, bảng lương (BHXH/BHYT/BHTN + thuế TNCN lũy tiến), tuyển dụng, đào tạo. Tiểu Tâm thao tác bằng tiếng Việt.",
+  "permissions": [
+    "hr.employee.read",
+    "hr.employee.write",
+    "hr.org.read",
+    "hr.attendance.read",
+    "hr.attendance.write",
+    "hr.leave.read",
+    "hr.leave.write",
+    "hr.leave.approve",
+    "hr.payroll.read",
+    "hr.payroll.run",
+    "hr.payroll.approve",
+    "hr.report.read",
+    "hr.recruitment.read",
+    "hr.recruitment.write",
+    "hr.training.write"
+  ],
+  "routes": "/api/v1/soul-manager",
+  "docs": "docs/GUIDE.md",
+  "engine": "^1.0.0",
+  "group": "Nhân sự",
+  "rentPlans": {
+    "30": 250
+  },
+  "events": {
+    "emits": [
+      "hr.employee.created",
+      "hr.attendance.recorded",
+      "hr.leave.approved",
+      "hr.payroll.calculated",
+      "hr.payroll.approved"
+    ]
+  }
+}

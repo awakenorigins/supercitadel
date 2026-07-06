@@ -1,0 +1,14 @@
+# SUPERCITADEL — host riêng trên VPS (beta open access)
+# Public qua host Caddy: https://supercitadel.62.146.238.213.sslip.io
+#   /api/* → 127.0.0.1:3001 · /ws* → 127.0.0.1:3002 · / → 127.0.0.1:3000
+services:
+  postgres:
+    ports: !override ["127.0.0.1:5442:5432"]
+  redis:
+    ports: !override ["127.0.0.1:6392:6379"]
+  api:
+    ports: !override ["127.0.0.1:3001:3001"]
+  ws:
+    ports: !override ["127.0.0.1:3002:3002"]
+  web:
+    ports: !override ["127.0.0.1:3000:3000"]

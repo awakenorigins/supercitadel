@@ -1,0 +1,34 @@
+{
+  "release": "R11.4",
+  "status": "done",
+  "module": "soul-inventory",
+  "version": "2.1.0",
+  "completedAt": "2026-07-06T01:05:00Z",
+  "commit": "73eb92a",
+  "baseHead": "061f203",
+  "backup": "tag backup-before-soul-inventory + branch backup/pre-soul-inventory",
+  "releaseTag": "v11.4.0",
+  "releaseUrl": "https://github.com/NachaFromMars/supercitadel/releases/tag/v11.4.0",
+  "ciRun": {
+    "id": 28760472523,
+    "status": "completed",
+    "conclusion": "success"
+  },
+  "evidence": {
+    "typecheck": "module + core + api = 0 lỗi",
+    "tests": "pnpm -r test XANH; v9.test bump loaded 9→10 + assert soul-inventory routes",
+    "nativeTests": "audit 144/0 · smoke 34/0 · v1.1 27/0 · v2.0 53/0 · v2.1 34/0",
+    "ciGatesLocal": "manifest 10/10 · docs 10/10 (giáo trình ⑧) · buttons 0 chết · secret 0/331 file",
+    "webBuild": "0 lỗi — /soul-inventory có trong build",
+    "migrationLive": "0000+0001+0003+0004+0005+0006 applied — 21 bảng kho_*, RLS forced 21/21, inventory_ cũ nguyên (12 rows). 0002 backfill GUARD (không auto-deploy — đọc inventory_items.sku không tồn tại)",
+    "loader": "Nạp 10 module · Từ chối 0",
+    "orgActivated": "e3d35dcd-40a3-4fa9-b5f3-6cf817d9363b (active, purchased)",
+    "verifyLive": "scripts/verify-r114.py PASS: login → item → stock → dry-run tồn không đổi → confirm PNK-000001 tồn 10 → low-alerts đúng → summary đúng → regression /api/v1/inventory-items 200 → FE /soul-inventory 200 → cleanup tồn về 0"
+  },
+  "deepAuditResolved": {
+    "backfill0002": "guarded — deploy.sh bỏ qua *backfill*, chỉ chạy tay có chủ đích sau khi sửa mapping",
+    "dryRunConfirm": "16 write actions qua tieu-tam-actions.ts — sensitive/securityLevel từ tool def, host executeAction dry-run→confirm; 7 action lớp 2",
+    "scheduledTasks": "startSoulInventoryNightlyAutomation trong host-adapter — host gọi per-org ~02:00 (setInterval.unref, pattern outbox), module không tự spawn"
+  },
+  "notes": "GUIDE.md gốc của module đổi thành docs/INSTALL.md; docs/GUIDE.md mới theo quy chuẩn ⑧. manifest.module.json giữ bản rich gốc làm tài liệu."
+}

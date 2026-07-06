@@ -1,0 +1,21 @@
+{
+  "name": "supercitadel",
+  "private": true,
+  "packageManager": "pnpm@9.0.0",
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "typecheck": "turbo typecheck",
+    "test": "turbo test",
+    "db:migrate": "pnpm --filter @citadel/db migrate"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.0",
+    "typescript": "^5.7.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "esbuild": "0.24.0"
+    }
+  }
+}

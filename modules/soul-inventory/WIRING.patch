@@ -1,0 +1,63 @@
+# SOUL-INVENTORY v2.0 — WIRING.patch
+# Gắn module vào SuperCitadel v10.0.1 bằng: git apply modules/soul-inventory/WIRING.patch
+# (đường dẫn giả định host đặt module tại packages/modules/soul-inventory;
+#  nếu khác, sửa prefix a/ b/ tương ứng — nội dung wiring không đổi)
+#
+# 4 điểm chạm: loader (đăng ký builder), tieu-tam tools, tieu-tam actions, api routes.
+# Mọi thứ khác module tự lo qua onActivate/createRoutes.
+
+--- a/services/api/src/modules/loader.ts
++++ b/services/api/src/modules/loader.ts
+@@ -1,6 +1,7 @@
+ import { chatModule } from './chat.js';
+ import { notificationModule } from './notification.js';
+ import { crmModule } from './crm.js';
++import * as soulInventory from '@citadel/module-soul-inventory';
+ 
+ // BUILDERS: id -> module builder (strict allowlist)
+ const BUILDERS = {
+@@ -8,7 +9,11 @@ const BUILDERS = {
+   notification: notificationModule,
+   crm: crmModule,
+-  inventory: inventoryModule,           // module cũ — thay bằng soul-inventory
++  // inventory: inventoryModule,        // DISABLED: thay bằng soul-inventory
++  //   (manifest soul-inventory khai conflicts:["inventory"];
++  //    dữ liệu cũ được migration 0002 backfill tự động)
++  'soul-inventory': (deps) =>
++    soulInventory.buildModule(deps),
+ } as const;
+
+--- a/services/api/src/tieu-tam/tool-registry.ts
++++ b/services/api/src/tieu-tam/tool-registry.ts
+@@ -12,6 +12,12 @@ export function buildToolRegistry(deps: ModuleDeps) {
+   const tools = [
+     ...chatTools(deps),
+     ...crmTools(deps),
++    // Soul-Inventory: 10 read tools (kind:'tool') — Tiểu Tâm gọi tự do
++    ...soulInventoryReadTools(deps),
+   ];
+
+--- a/services/api/src/tieu-tam/actions.ts
++++ b/services/api/src/tieu-tam/actions.ts
+@@ -20,6 +20,14 @@ export function buildActions(deps: ModuleDeps) {
+   const actions = [
+     ...crmActions(deps),
++    // Soul-Inventory: 13 write actions — thực thi qua executeAction
++    // (dry-run→confirm protocol trong src/contract.ts của module):
++    //   sensitive && !confirm  → trả preview, audit 'dryrun'
++    //   confirm === true       → chạy thật, audit 'ok'/'error'
++    ...soulInventoryActions(deps),
+   ];
+
+--- a/services/api/src/routes/index.ts
++++ b/services/api/src/routes/index.ts
+@@ -30,6 +30,12 @@ export function mountRoutes(app: Hono) {
+   mountCrmRoutes(app);
++  // Soul-Inventory: 28 endpoints /inventory/* — mount SAU middleware chain
++  // requestId → auth → rbac → tenant-rls (SET LOCAL app.current_org_id)
++  import('@citadel/module-soul-inventory').then((si) => {
++    si.createKhoRoutes(app);
++    si.createSoulInventoryExtraRoutes(app);
++    si.createSoulInventoryV2Routes(app);
++  });
+ }

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Mô Tả Công Ty — SUPERCITADEL Module Forge</title>
+<style>
+  @page { size: A4; margin: 14mm 13mm; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif; color: #2C2C2C; margin: 0; font-size: 10.5pt; line-height: 1.5; }
+  .head { background: #2C2C2C; color: #F5F0EB; border-radius: 12px; padding: 16px 22px; display: flex; justify-content: space-between; align-items: center; }
+  .head h1 { margin: 0; font-size: 15pt; letter-spacing: .5px; }
+  .head .sub { color: #C9A96E; font-size: 9pt; margin-top: 3px; }
+  .head .logo { font-size: 20pt; }
+  .intro { background: #FBF4E6; border-left: 4px solid #C9A96E; padding: 8px 14px; border-radius: 0 8px 8px 0; font-size: 9.5pt; margin: 12px 0 16px; color: #6b5d49; }
+  .sec { margin-top: 14px; break-inside: avoid; }
+  .sec-h { display: flex; align-items: center; gap: 8px; background: #C9A96E; color: #2C2C2C; border-radius: 8px 8px 0 0; padding: 6px 14px; font-weight: 700; font-size: 10.5pt; }
+  .sec-h .n { background: #2C2C2C; color: #C9A96E; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: 9pt; }
+  .sec-b { border: 1.5px solid #C9A96E; border-top: none; border-radius: 0 0 8px 8px; padding: 10px 14px 12px; }
+  .f { margin: 7px 0; }
+  .f b { display: block; font-size: 9.8pt; }
+  .f .hint { color: #9a8b76; font-size: 8.6pt; font-style: italic; }
+  .line { border-bottom: 1px dotted #b9a888; height: 18px; margin-top: 3px; }
+  .line2 { border-bottom: 1px dotted #b9a888; height: 18px; margin-top: 14px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 20px; }
+  .checks { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 6px; }
+  .checks span { border: 1.5px solid #2C2C2C; border-radius: 6px; padding: 3px 10px; font-size: 9.5pt; }
+  .checks span::before { content: "☐ "; font-size: 10pt; }
+  .foot { margin-top: 16px; text-align: center; font-size: 8.6pt; color: #9a8b76; border-top: 1px solid #e3d9cc; padding-top: 8px; }
+</style>
+</head>
+<body>
+
+<div class="head">
+  <div>
+    <h1>PHIẾU MÔ TẢ CÔNG TY</h1>
+    <div class="sub">Dùng để thiết kế Module quản trị riêng trên nền tảng SUPERCITADEL</div>
+  </div>
+  <div class="logo">🏰</div>
+</div>
+
+<div class="intro">✍️ Điền tự nhiên như kể chuyện — không cần văn vẻ. Mục nào không có, ghi <b>"không có"</b>. Điền càng thật, module xây ra càng khớp với công ty.</div>
+
+<div class="sec">
+  <div class="sec-h"><span class="n">1</span> THÔNG TIN CHUNG</div>
+  <div class="sec-b">
+    <div class="grid2">
+      <div class="f"><b>Tên công ty</b><div class="line"></div></div>
+      <div class="f"><b>Tổng số nhân viên</b><div class="line"></div></div>
+      <div class="f"><b>Kinh doanh gì</b><div class="line"></div></div>
+      <div class="f"><b>Số chi nhánh / địa điểm</b><div class="line"></div></div>
+      <div class="f"><b>Bán cho ai, thu tiền kiểu gì</b><div class="line"></div></div>
+      <div class="f"><b>Văn hóa / đặc thù riêng</b><div class="line"></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="sec">
+  <div class="sec-h"><span class="n">2</span> CẤU TRÚC PHÒNG BAN</div>
+  <div class="sec-b">
+    <div class="f"><b>Liệt kê các phòng ban — mỗi phòng 1 dòng (tên phòng: làm gì)</b>
+      <div class="line2"></div><div class="line2"></div><div class="line2"></div><div class="line2"></div>
+    </div>
+    <div class="f"><b>Ai được thấy gì</b> <span class="hint">vd: sếp thấy hết · trưởng phòng thấy phòng mình · nhân viên thấy việc mình</span><div class="line"></div></div>
+  </div>
+</div>
+
+<div class="sec">
+  <div class="sec-h"><span class="n">3</span> CÔNG VIỆC VẬN HÀNH ⭐ (quan trọng nhất)</div>
+  <div class="sec-b">
+    <div class="f"><b>Một vòng công việc diễn ra thế nào — từ lúc có khách đến lúc thu tiền</b> <span class="hint">kể từng bước như dặn nhân viên mới</span>
+      <div class="line2"></div><div class="line2"></div><div class="line2"></div><div class="line2"></div>
+    </div>
+    <div class="f"><b>Đang đau đầu / quản thủ công chỗ nào</b> <span class="hint">Excel, giấy tờ, hay quên, hay sai sót…</span>
+      <div class="line2"></div><div class="line2"></div>
+    </div>
+  </div>
+</div>
+
+<div class="sec">
+  <div class="sec-h"><span class="n">4</span> DỮ LIỆU &amp; BÁO CÁO</div>
+  <div class="sec-b">
+    <div class="f"><b>Cần quản lý những thứ gì</b> <span class="hint">đơn hàng? hợp đồng? xe? máy móc? lịch hẹn?…</span>
+      <div class="line2"></div><div class="line2"></div>
+    </div>
+    <div class="f"><b>Báo cáo muốn xem mỗi ngày / tuần / tháng</b><div class="line2"></div></div>
+  </div>
+</div>
+
+<div class="sec">
+  <div class="sec-h"><span class="n">5</span> MODULE CỐT LÕI CẦN DÙNG</div>
+  <div class="sec-b">
+    <div class="f"><b>Tick vào module có sẵn muốn dùng chung:</b>
+      <div class="checks">
+        <span>Kế toán — thu chi, công nợ, sổ sách</span>
+        <span>CRM — khách hàng, chốt đơn</span>
+        <span>Kho — nhập xuất tồn</span>
+        <span>Nhân sự — ca, chấm công, phép</span>
+        <span>Chat nội bộ</span>
+        <span>Khác: ________________</span>
+      </div>
+    </div>
+    <div class="f" style="margin-top:10px"><b>Muốn trợ lý AI Tiểu Tâm làm thay việc gì (ra lệnh bằng lời)</b> <span class="hint">vd: "Tạo đơn cho khách A" · "Báo cáo doanh thu tuần" · "Đơn nào trễ hạn?"</span>
+      <div class="line2"></div><div class="line2"></div>
+    </div>
+  </div>
+</div>
+
+<div class="sec">
+  <div class="sec-h"><span class="n">6</span> ƯU TIÊN &amp; GIỚI HẠN</div>
+  <div class="sec-b">
+    <div class="f"><b>Tính năng PHẢI CÓ đợt đầu (tối đa 5)</b>
+      <div class="line2"></div><div class="line2"></div><div class="line2"></div>
+    </div>
+    <div class="f"><b>Điều CẤM KỴ — không được làm</b> <span class="hint">vd: nhân viên không thấy giá vốn, không xóa dữ liệu cũ</span><div class="line2"></div></div>
+  </div>
+</div>
+
+<div class="foot">Điền xong gửi lại Tiểu Tâm 🦊 → tổng hợp bảng mô tả + bản thiết kế module → duyệt → xây và đưa lên Cửa hàng SUPERCITADEL · v1.1 · 07/2026</div>
+
+</body>
+</html>

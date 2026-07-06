@@ -1,0 +1,24 @@
+import { WebSocket } from 'ws';
+import { SignJWT } from 'jose';
+import { startWsServer } from './index.js';
+import { WsEventType } from '@citadel/core';
+process.env.JWT_SECRET='ws_test_secret_long_enough_hs256_xx';
+const SEC=new TextEncoder().encode(process.env.JWT_SECRET);
+function assert(c:unknown,m:string){if(!c){console.error('  ✗',m);process.exitCode=1;throw new Error(m);}console.log('  ✓',m);}
+const jwt=(sub:string,orgId:string)=>new SignJWT({orgId,role:'owner'}).setProtectedHeader({alg:'HS256'}).setSubject(sub).setIssuedAt().setExpirationTime('1h').sign(SEC);
+const wait=(ms:number)=>new Promise(r=>setTimeout(r,ms));
+const once=(ws:WebSocket):Promise<any>=>new Promise(res=>ws.once('message',d=>res(JSON.parse(d.toString()))));
+const PORT=3631;
+const srv=startWsServer(PORT); await wait(200);
+const a=new WebSocket(`ws://localhost:${PORT}?token=${await jwt('uA','orgA')}`);
+const hello=await once(a); assert(hello.payload.connected,'valid JWT connects'); assert(hello.payload.orgId==='orgA','scoped orgA');
+const bad=new WebSocket(`ws://localhost:${PORT}?token=garbage`);
+assert(await new Promise<number>(r=>bad.on('close',c=>r(c)))===1008,'bad token closed 1008');
+const b=new WebSocket(`ws://localhost:${PORT}?token=${await jwt('uB','orgB')}`); await once(b); await wait(100);
+let leak=false; b.on('message',d=>{if(JSON.parse(d.toString()).type===WsEventType.CHAT_MESSAGE)leak=true;});
+const ap=once(a);
+await srv.emit({type:WsEventType.CHAT_MESSAGE,orgId:'orgA',payload:{text:'hi'},ts:Date.now()});
+const am=await ap; assert(am.payload.text==='hi','orgA receives event');
+await wait(150); assert(!leak,'orgB does NOT receive orgA event (isolation)');
+a.close();b.close();await wait(100);await srv.close();
+console.log('[ws] PASSED');
