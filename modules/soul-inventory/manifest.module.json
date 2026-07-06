@@ -1,0 +1,531 @@
+{
+  "id": "soul-inventory",
+  "name": "Soul-Inventory — Quản lý Kho",
+  "version": "2.1.0",
+  "description": "Module quản lý kho FINAL cho SuperCitadel — đầy đủ nghiệp vụ bán lẻ/phân phối + sản xuất: lot/serial/expiry, FEFO/FIFO picking, Multi-UoM (thùng↔lon), BOM lắp ráp/tháo dỡ backflush, reorder min-max, landed cost, scrap, ABC analysis + cycle count, stock aging, giá vốn bình quân, thẻ kho S10-DN, số chứng từ tự động PNK/PXK/KK/LSX/LTD/LC/SCR, nhập/xuất Excel, barcode workflow. AUTOMATION LAYER v2.1: dự báo nhu cầu (MA/SES), safety stock + reorder point động, EOQ, ABC-XYZ, chiếu tồn tương lai (stockout date), phát hiện hàng chết, runScheduledTasks cho host cron — chỉ ĐỀ XUẤT, không tự tạo đơn. Dry-run→confirm protocol cho mọi action nhạy cảm. RLS fail-closed 21 bảng.",
+  "dependencies": [],
+  "conflicts": [
+    "inventory"
+  ],
+  "store": {
+    "listed": true,
+    "category": "module",
+    "pricing": {
+      "currency": "om",
+      "buy": {
+        "price": 1000,
+        "label": "Mua vĩnh viễn — 1.000 Ôm"
+      },
+      "rent": {
+        "price": 150,
+        "period_days": 30,
+        "label": "Thuê 30 ngày — 150 Ôm"
+      }
+    },
+    "trial_days": 7,
+    "tagline": "Kho thông minh trọn gói: từ quét mã, FEFO, quy đổi thùng↔lẻ đến lắp ráp BOM và phân tích ABC — Tiểu Tâm thao tác mọi nghiệp vụ bằng tiếng Việt.",
+    "highlights": [
+      "29 năng lực cho Tiểu Tâm: 13 tra cứu + 16 thao tác có dry-run→confirm an toàn",
+      "⭐ v2.1 AUTOMATION: dự báo nhu cầu, điểm đặt lại động, EOQ, chiếu ngày hết hàng, phát hiện hàng chết",
+      "FEFO/FIFO picking — tự gợi ý xuất lô cận hạn trước, hết lo hàng hết date",
+      "Multi-UoM + barcode: nhập 2 thùng tự hiểu 48 lon, quét mã ra ngay quy cách",
+      "BOM sản xuất: lắp ráp/tháo dỡ tự trừ nguyên liệu, tự tính giá vốn thành phẩm",
+      "Landed cost + ABC-XYZ + stock aging — giá vốn chuẩn, biết hàng nào đáng tiền",
+      "Nhập danh mục & tồn đầu kỳ từ Excel, xuất báo cáo Excel một lệnh",
+      "RLS fail-closed 21 bảng — dữ liệu từng doanh nghiệp cô lập tận database"
+    ]
+  },
+  "permissions": [
+    {
+      "id": "kho.item.read",
+      "description": "Xem danh mục vật tư/hàng hóa",
+      "actions": [
+        "read"
+      ]
+    },
+    {
+      "id": "kho.item.write",
+      "description": "Tạo/sửa vật tư, địa điểm kho",
+      "actions": [
+        "create",
+        "update"
+      ]
+    },
+    {
+      "id": "kho.stock.read",
+      "description": "Tra cứu tồn, thẻ kho, tổng quan, cảnh báo tồn thấp + cận hạn",
+      "actions": [
+        "read"
+      ]
+    },
+    {
+      "id": "kho.stock.write",
+      "description": "Nhập kho, xuất kho, chuyển kho",
+      "actions": [
+        "create",
+        "update"
+      ]
+    },
+    {
+      "id": "kho.reservation.read",
+      "description": "Xem danh sách phiếu giữ hàng",
+      "actions": [
+        "read"
+      ]
+    },
+    {
+      "id": "kho.reservation.write",
+      "description": "Tạo/hủy/hoàn tất phiếu giữ hàng",
+      "actions": [
+        "create",
+        "update"
+      ]
+    },
+    {
+      "id": "kho.stocktake.read",
+      "description": "Xem lịch sử kiểm kê",
+      "actions": [
+        "read"
+      ]
+    },
+    {
+      "id": "kho.stocktake.write",
+      "description": "Thực hiện và chốt phiên kiểm kê",
+      "actions": [
+        "create",
+        "update"
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "name": "kho.stock.query",
+      "kind": "tool",
+      "permission": "kho.stock.read",
+      "inputSchema": "src/validation/schemas.ts#queryStockSchema",
+      "docs": "docs/TOOLS.md#khostockquery"
+    },
+    {
+      "name": "kho.stock.low_alerts",
+      "kind": "tool",
+      "permission": "kho.stock.read",
+      "inputSchema": "src/validation/schemas.ts#lowAlertsSchema",
+      "docs": "docs/TOOLS.md#khostocklow_alerts"
+    },
+    {
+      "name": "kho.lot.expiry_alerts",
+      "kind": "tool",
+      "permission": "kho.stock.read",
+      "inputSchema": "src/validation/schemas.ts#expiryAlertsSchema",
+      "docs": "docs/TOOLS.md#kholotexpiry_alerts"
+    },
+    {
+      "name": "kho.report.stock_card",
+      "kind": "tool",
+      "permission": "kho.stock.read",
+      "inputSchema": "src/validation/schemas.ts#stockCardSchema",
+      "docs": "docs/TOOLS.md#khoreportstock_card"
+    },
+    {
+      "name": "kho.report.summary",
+      "kind": "tool",
+      "permission": "kho.stock.read",
+      "inputSchema": "src/validation/schemas.ts#summarySchema",
+      "docs": "docs/TOOLS.md#khoreportsummary"
+    },
+    {
+      "name": "kho.picking.suggest",
+      "kind": "tool",
+      "permission": "kho.stock.read",
+      "inputSchema": "src/validation/schemas.ts#pickingSuggestSchema",
+      "docs": "docs/TOOLS.md#khopickingsuggest"
+    },
+    {
+      "name": "kho.bom.info",
+      "kind": "tool",
+      "permission": "kho.stock.read",
+      "inputSchema": "src/validation/schemas.ts#bomInfoSchema",
+      "docs": "docs/TOOLS.md#khobominfo"
+    },
+    {
+      "name": "kho.reorder.suggest",
+      "kind": "tool",
+      "permission": "kho.stock.read",
+      "inputSchema": "src/validation/schemas.ts#reorderSuggestSchema",
+      "docs": "docs/TOOLS.md#khoreordersuggest"
+    },
+    {
+      "name": "kho.analytics.report",
+      "kind": "tool",
+      "permission": "kho.stock.read",
+      "inputSchema": "src/validation/schemas.ts#stockAgingSchema",
+      "docs": "docs/TOOLS.md#khoanalyticsreport"
+    },
+    {
+      "name": "kho.barcode.lookup",
+      "kind": "tool",
+      "permission": "kho.stock.read",
+      "inputSchema": "src/validation/schemas.ts#barcodeSchema",
+      "docs": "docs/TOOLS.md#khobarcodelookup"
+    },
+    {
+      "name": "kho.item.upsert",
+      "kind": "action",
+      "permission": "kho.item.write",
+      "inputSchema": "src/validation/schemas.ts#itemUpsertSchema",
+      "docs": "docs/TOOLS.md#khoitemupsert",
+      "sensitive": false,
+      "securityLevel": 1
+    },
+    {
+      "name": "kho.uom.upsert",
+      "kind": "action",
+      "permission": "kho.item.write",
+      "inputSchema": "src/validation/schemas.ts#uomUpsertSchema",
+      "docs": "docs/TOOLS.md#khouomupsert",
+      "sensitive": false,
+      "securityLevel": 1
+    },
+    {
+      "name": "kho.stock.receive",
+      "kind": "action",
+      "permission": "kho.stock.write",
+      "inputSchema": "src/validation/schemas.ts#receiveStockSchema",
+      "docs": "docs/TOOLS.md#khostockreceive",
+      "sensitive": true,
+      "securityLevel": 2
+    },
+    {
+      "name": "kho.stock.issue",
+      "kind": "action",
+      "permission": "kho.stock.write",
+      "inputSchema": "src/validation/schemas.ts#issueStockSchema",
+      "docs": "docs/TOOLS.md#khostockissue",
+      "sensitive": true,
+      "securityLevel": 2
+    },
+    {
+      "name": "kho.stock.transfer",
+      "kind": "action",
+      "permission": "kho.stock.write",
+      "inputSchema": "src/validation/schemas.ts#transferStockSchema",
+      "docs": "docs/TOOLS.md#khostocktransfer",
+      "sensitive": true,
+      "securityLevel": 2
+    },
+    {
+      "name": "kho.reservation.manage",
+      "kind": "action",
+      "permission": "kho.reservation.write",
+      "inputSchema": "src/validation/schemas.ts#reservationManageSchema",
+      "docs": "docs/TOOLS.md#khoreservationmanage",
+      "sensitive": true,
+      "securityLevel": 1
+    },
+    {
+      "name": "kho.stocktake.execute",
+      "kind": "action",
+      "permission": "kho.stocktake.write",
+      "inputSchema": "src/validation/schemas.ts#stocktakeExecuteSchema",
+      "docs": "docs/TOOLS.md#khostocktakeexecute",
+      "sensitive": true,
+      "securityLevel": 2
+    },
+    {
+      "name": "kho.bom.upsert",
+      "kind": "action",
+      "permission": "kho.item.write",
+      "inputSchema": "src/validation/schemas.ts#bomUpsertSchema",
+      "docs": "docs/TOOLS.md#khobomupsert",
+      "sensitive": false,
+      "securityLevel": 1
+    },
+    {
+      "name": "kho.assembly.execute",
+      "kind": "action",
+      "permission": "kho.stock.write",
+      "inputSchema": "src/validation/schemas.ts#assemblySchema",
+      "docs": "docs/TOOLS.md#khoassemblyexecute",
+      "sensitive": true,
+      "securityLevel": 2
+    },
+    {
+      "name": "kho.reorder.rule_upsert",
+      "kind": "action",
+      "permission": "kho.item.write",
+      "inputSchema": "src/validation/schemas.ts#reorderRuleSchema",
+      "docs": "docs/TOOLS.md#khoreorderrule_upsert",
+      "sensitive": false,
+      "securityLevel": 1
+    },
+    {
+      "name": "kho.stock.scrap",
+      "kind": "action",
+      "permission": "kho.stock.write",
+      "inputSchema": "src/validation/schemas.ts#scrapSchema",
+      "docs": "docs/TOOLS.md#khostockscrap",
+      "sensitive": true,
+      "securityLevel": 2
+    },
+    {
+      "name": "kho.landed_cost.apply",
+      "kind": "action",
+      "permission": "kho.stock.write",
+      "inputSchema": "src/validation/schemas.ts#landedCostSchema",
+      "docs": "docs/TOOLS.md#kholanded_costapply",
+      "sensitive": true,
+      "securityLevel": 2
+    },
+    {
+      "name": "kho.abc.run",
+      "kind": "action",
+      "permission": "kho.stocktake.write",
+      "inputSchema": "src/validation/schemas.ts#abcAnalysisSchema",
+      "docs": "docs/TOOLS.md#khoabcrun",
+      "sensitive": false,
+      "securityLevel": 1
+    },
+    {
+      "name": "kho.replenish.suggest",
+      "kind": "tool",
+      "permission": "kho.stock.read",
+      "inputSchema": "src/validation/schemas.ts#smartReplenishSchema",
+      "docs": "docs/TOOLS.md#khoreplenishsuggest"
+    },
+    {
+      "name": "kho.forecast.projected",
+      "kind": "tool",
+      "permission": "kho.stock.read",
+      "inputSchema": "src/validation/schemas.ts#projectedInventorySchema",
+      "docs": "docs/TOOLS.md#khoforecastprojected"
+    },
+    {
+      "name": "kho.analytics.dead_stock",
+      "kind": "tool",
+      "permission": "kho.stock.read",
+      "inputSchema": "src/validation/schemas.ts#deadStockSchema",
+      "docs": "docs/TOOLS.md#khoanalyticsdead_stock"
+    },
+    {
+      "name": "kho.replenish.params_set",
+      "kind": "action",
+      "permission": "kho.item.write",
+      "inputSchema": "src/validation/schemas.ts#replenishParamsSchema",
+      "docs": "docs/TOOLS.md#khoreplenishparams_set",
+      "sensitive": false,
+      "securityLevel": 1
+    },
+    {
+      "name": "kho.xyz.run",
+      "kind": "action",
+      "permission": "kho.stocktake.write",
+      "inputSchema": "src/validation/schemas.ts#xyzRunSchema",
+      "docs": "docs/TOOLS.md#khoxyzrun",
+      "sensitive": false,
+      "securityLevel": 1
+    },
+    {
+      "name": "kho.automation.run",
+      "kind": "action",
+      "permission": "kho.stocktake.write",
+      "inputSchema": "src/validation/schemas.ts#scheduledTasksSchema",
+      "docs": "docs/TOOLS.md#khoautomationrun",
+      "sensitive": false,
+      "securityLevel": 1
+    }
+  ],
+  "intents": "src/intents.ts#khoIntents",
+  "routes": [
+    {
+      "method": "POST",
+      "path": "/inventory/items",
+      "permission": "kho.item.write"
+    },
+    {
+      "method": "GET",
+      "path": "/inventory/stock",
+      "permission": "kho.stock.read"
+    },
+    {
+      "method": "POST",
+      "path": "/inventory/stock/receive",
+      "permission": "kho.stock.write"
+    },
+    {
+      "method": "POST",
+      "path": "/inventory/stock/issue",
+      "permission": "kho.stock.write"
+    },
+    {
+      "method": "POST",
+      "path": "/inventory/stock/transfer",
+      "permission": "kho.stock.write"
+    },
+    {
+      "method": "GET",
+      "path": "/inventory/stock/low-alerts",
+      "permission": "kho.stock.read"
+    },
+    {
+      "method": "GET",
+      "path": "/inventory/stock/expiry-alerts",
+      "permission": "kho.stock.read"
+    },
+    {
+      "method": "GET",
+      "path": "/inventory/stock/card/:sku",
+      "permission": "kho.stock.read"
+    },
+    {
+      "method": "GET",
+      "path": "/inventory/summary",
+      "permission": "kho.stock.read"
+    },
+    {
+      "method": "POST",
+      "path": "/inventory/reservations",
+      "permission": "kho.reservation.write"
+    },
+    {
+      "method": "POST",
+      "path": "/inventory/stocktakes",
+      "permission": "kho.stocktake.write"
+    },
+    {
+      "method": "POST",
+      "path": "/inventory/uoms",
+      "permission": "kho.item.write"
+    },
+    {
+      "method": "GET",
+      "path": "/inventory/barcode/:code",
+      "permission": "kho.stock.read"
+    },
+    {
+      "method": "POST",
+      "path": "/inventory/boms",
+      "permission": "kho.item.write"
+    },
+    {
+      "method": "GET",
+      "path": "/inventory/boms/:sku",
+      "permission": "kho.stock.read"
+    },
+    {
+      "method": "POST",
+      "path": "/inventory/assembly",
+      "permission": "kho.stock.write"
+    },
+    {
+      "method": "POST",
+      "path": "/inventory/reorder-rules",
+      "permission": "kho.item.write"
+    },
+    {
+      "method": "GET",
+      "path": "/inventory/reorder-suggestions",
+      "permission": "kho.stock.read"
+    },
+    {
+      "method": "POST",
+      "path": "/inventory/picking-suggest",
+      "permission": "kho.stock.read"
+    },
+    {
+      "method": "POST",
+      "path": "/inventory/landed-costs",
+      "permission": "kho.stock.write"
+    },
+    {
+      "method": "POST",
+      "path": "/inventory/scrap",
+      "permission": "kho.stock.write"
+    },
+    {
+      "method": "POST",
+      "path": "/inventory/abc-analysis",
+      "permission": "kho.stocktake.write"
+    },
+    {
+      "method": "GET",
+      "path": "/inventory/analytics",
+      "permission": "kho.stock.read"
+    },
+    {
+      "method": "POST",
+      "path": "/inventory/excel/import-items",
+      "permission": "kho.item.write"
+    },
+    {
+      "method": "POST",
+      "path": "/inventory/excel/import-stock",
+      "permission": "kho.stock.write"
+    },
+    {
+      "method": "GET",
+      "path": "/inventory/excel/export-stock",
+      "permission": "kho.stock.read"
+    },
+    {
+      "method": "GET",
+      "path": "/inventory/excel/export-card/:sku",
+      "permission": "kho.stock.read"
+    },
+    {
+      "method": "POST",
+      "path": "/inventory/replenish-params",
+      "permission": "kho.item.write"
+    },
+    {
+      "method": "GET",
+      "path": "/inventory/replenish-suggestions",
+      "permission": "kho.stock.read"
+    },
+    {
+      "method": "GET",
+      "path": "/inventory/projected",
+      "permission": "kho.stock.read"
+    },
+    {
+      "method": "GET",
+      "path": "/inventory/dead-stock",
+      "permission": "kho.stock.read"
+    },
+    {
+      "method": "POST",
+      "path": "/inventory/xyz-analysis",
+      "permission": "kho.stocktake.write"
+    },
+    {
+      "method": "POST",
+      "path": "/inventory/automation/run",
+      "permission": "kho.stocktake.write"
+    }
+  ],
+  "menu": [
+    {
+      "id": "soul-inventory.menu.root",
+      "label": "Kho",
+      "icon": "warehouse",
+      "path": "/inventory",
+      "permission": "kho.stock.read"
+    }
+  ],
+  "docs": {
+    "readme": "README.md",
+    "guides": [
+      "docs/GUIDE.md",
+      "docs/TUTORIAL.md"
+    ],
+    "examples": [
+      "docs/TOOLS.md",
+      "docs/EVENTS.md"
+    ]
+  },
+  "hooks": {
+    "install": "src/index.ts#onInstall",
+    "activate": "src/index.ts#onActivate",
+    "disable": "src/index.ts#onDisable",
+    "remove": "src/index.ts#onRemove"
+  }
+}

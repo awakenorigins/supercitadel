@@ -1,0 +1,46 @@
+{
+  "id": "soul-inventory",
+  "name": "Soul-Inventory — Quản lý Kho",
+  "version": "2.1.0",
+  "tier": "paid",
+  "priceOm": 1000,
+  "icon": "box",
+  "description": "Kho thông minh trọn gói: lot/serial/expiry, FEFO/FIFO picking, Multi-UoM (thùng↔lon), BOM lắp ráp/tháo dỡ, reorder min-max, landed cost, ABC-XYZ, stock aging, giá vốn bình quân, thẻ kho S10-DN, Excel, barcode. Automation v2.1: dự báo nhu cầu, điểm đặt lại động, EOQ, chiếu ngày hết hàng, phát hiện hàng chết. Tiểu Tâm thao tác bằng tiếng Việt, dry-run→confirm cho mọi nghiệp vụ ghi sổ.",
+  "permissions": [
+    "kho.item.read",
+    "kho.item.write",
+    "kho.stock.read",
+    "kho.stock.write",
+    "kho.reservation.read",
+    "kho.reservation.write",
+    "kho.stocktake.read",
+    "kho.stocktake.write"
+  ],
+  "routes": "/api/v1/soul-inventory",
+  "docs": "docs/GUIDE.md",
+  "engine": "^1.0.0",
+  "group": "Kho vận",
+  "rentPlans": {
+    "30": 150
+  },
+  "events": {
+    "emits": [
+      "kho.item.upserted",
+      "kho.stock.received",
+      "kho.stock.issued",
+      "kho.stock.transferred",
+      "kho.stock.scrapped",
+      "kho.stock.low",
+      "kho.lot.created",
+      "kho.uom.upserted",
+      "kho.bom.upserted",
+      "kho.assembly.done",
+      "kho.reservation.created",
+      "kho.reservation.fulfilled",
+      "kho.reservation.released",
+      "kho.stocktake.finalized",
+      "kho.abc.analyzed",
+      "kho.automation.ran"
+    ]
+  }
+}

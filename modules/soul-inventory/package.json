@@ -1,0 +1,37 @@
+{
+  "name": "@citadel/module-soul-inventory",
+  "version": "2.1.0",
+  "description": "Soul-Inventory — Module Quản lý Kho cho SuperCitadel",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./routes.js": "./src/routes.ts",
+    "./tools.js": "./src/tools/index.ts",
+    "./contract.js": "./src/contract.ts",
+    "./schema.js": "./src/db/schema.ts",
+    "./server/host-adapter.js": "./server/host-adapter.ts",
+    "./server/tieu-tam-actions.js": "./server/tieu-tam-actions.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "tsx tests/smoke.test.ts && tsx tests/smoke-v11.test.ts && tsx tests/smoke-v2.test.ts && tsx tests/smoke-v21.test.ts",
+    "test:smoke": "tsx tests/smoke.test.ts",
+    "test:v11": "tsx tests/smoke-v11.test.ts",
+    "test:v2": "tsx tests/smoke-v2.test.ts",
+    "test:v21": "tsx tests/smoke-v21.test.ts",
+    "audit": "node scripts/audit.mjs"
+  },
+  "dependencies": {
+    "@citadel/core": "workspace:*",
+    "drizzle-orm": "^0.36.0",
+    "hono": "^4.6.0",
+    "xlsx": "0.18.5",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "@types/node": "^22.0.0",
+    "@electric-sql/pglite": "^0.2.0"
+  }
+}

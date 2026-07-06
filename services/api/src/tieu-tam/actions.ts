@@ -12,6 +12,7 @@ import { inventoryItems } from '@citadel/module-inventory/server/schema.js';
 import { hrEmployees } from '@citadel/module-hr/server/schema.js';
 import { keToan10aTieuTamActions, detectK10aAction } from '@citadel/module-ke-toan-10a/server/tieu-tam-actions.js';
 import { soulManagerTieuTamActions } from '@citadel/module-soul-manager/server/tieu-tam-actions.js';
+import { soulInventoryTieuTamActions } from '@citadel/module-soul-inventory/server/tieu-tam-actions.js';
 
 type DB = any;
 export type TieuTamActionCtx = { db: DB; orgId: string; userId: string; role: Role; securityLevel: number; audit?: (e: { action: string; resource?: string; resourceId?: string; detail?: unknown }) => Promise<void> };
@@ -53,6 +54,7 @@ const defs: TieuTamAction[] = [
 ];
 defs.push(...(keToan10aTieuTamActions as unknown as (db: DB) => TieuTamAction[])(undefined as unknown as DB));
 defs.push(...(soulManagerTieuTamActions() as unknown as TieuTamAction[]));
+defs.push(...(soulInventoryTieuTamActions() as unknown as TieuTamAction[]));
 export const ACTION_REGISTRY = new Map(defs.map(d=>[d.name,d]));
 export function toolSafeName(name:string){ return name.replace(/[^a-zA-Z0-9_-]/g, '_'); }
 const SAFE_TO_ACTION = new Map(defs.map(d=>[toolSafeName(d.name), d.name]));

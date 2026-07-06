@@ -2,7 +2,7 @@ import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { AppError, loadApiEnv } from '@citadel/core';
-import { getDb, users, orgs } from '@citadel/db';
+import { getDb, users, orgs, orgModules } from '@citadel/db';
 import { sql, eq, and, count } from 'drizzle-orm';
 import { login } from './auth/service.js';
 import { requireAuth, orgOf, requirePermission } from './auth/middleware.js';
@@ -12,6 +12,7 @@ import { dashboard } from './dashboard/routes.js';
 import { crmTools } from '@citadel/module-crm/server/tools.js';
 import { keToan10aTools } from '@citadel/module-ke-toan-10a/server/tools.js';
 import { soulManagerTools } from '@citadel/module-soul-manager/server/host-adapter.js';
+import { soulInventoryTools, startSoulInventoryNightlyAutomation } from '@citadel/module-soul-inventory/server/host-adapter.js';
 import { buildModuleRoutes, requireModule } from './modules/routes.js';
 import { mountLoadedModules } from './modules/loader.js';
 import { buildCompanyModuleRoutes } from './company-module-routes.js';
@@ -177,6 +178,7 @@ app.get('/api/v1/users', requireAuth, async (c) => {
 try { crmTools(getDb()).forEach((t) => toolRegistry.register(t)); } catch (e) { /* idempotent */ }
 try { keToan10aTools(getDb()).forEach((t) => toolRegistry.register(t)); } catch (e) { /* idempotent */ }
 try { soulManagerTools(getDb()).forEach((t) => toolRegistry.register(t as any)); } catch (e) { /* idempotent */ }
+try { soulInventoryTools(getDb()).forEach((t) => toolRegistry.register(t as any)); } catch (e) { /* idempotent */ }
 
 // fail-fast env validation at boot
 const env = loadApiEnv();
@@ -189,6 +191,12 @@ app.get('/ready', async (c) => {
 
 const port = env.PORT;
 startOutboxDispatcher(getDb());
+// Soul-Inventory nightly automation: host điều phối per-org (deep-audit ③), module không tự spawn cron
+startSoulInventoryNightlyAutomation(getDb(), async () => {
+  const rows = await getDb().select({ orgId: orgModules.orgId }).from(orgModules)
+    .where(and(eq(orgModules.moduleId, 'soul-inventory'), eq(orgModules.status, 'active')));
+  return rows.map((r: any) => r.orgId);
+});
 serve({ fetch: app.fetch, port }, () => console.log(`[api] listening on :${port}`));
 
 export default app;

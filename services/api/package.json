@@ -26,7 +26,8 @@
     "@citadel/module-hr": "workspace:*",
     "@citadel/module-accounting": "workspace:*",
     "@citadel/module-ke-toan-10a": "workspace:*",
-    "@citadel/module-soul-manager": "workspace:*"
+    "@citadel/module-soul-manager": "workspace:*",
+    "@citadel/module-soul-inventory": "workspace:*"
   },
   "devDependencies": {
     "tsx": "^4.19.0",

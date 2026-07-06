@@ -70,12 +70,21 @@ export const PERMISSION_REGISTRY = [
   p('hr.recruitment.read','Soul-Manager — Xem pipeline tuyển dụng'),
   p('hr.recruitment.write','Soul-Manager — Thêm/chuyển stage ứng viên'),
   p('hr.training.write','Soul-Manager — Tạo khóa học, ghi danh, hoàn thành đào tạo'),
+  // ── Soul-Inventory (Quản lý Kho) ── action lớp 2 khai trong tool def của module (payroll-style)
+  p('kho.item.read','Soul-Inventory — Xem danh mục vật tư/hàng hóa'),
+  p('kho.item.write','Soul-Inventory — Tạo/sửa vật tư, UoM, BOM, địa điểm kho'),
+  p('kho.stock.read','Soul-Inventory — Tra cứu tồn, thẻ kho, cảnh báo tồn thấp + cận hạn'),
+  p('kho.stock.write','Soul-Inventory — Nhập/xuất/chuyển kho, lắp ráp, hủy hàng, landed cost'),
+  p('kho.reservation.read','Soul-Inventory — Xem danh sách phiếu giữ hàng'),
+  p('kho.reservation.write','Soul-Inventory — Tạo/hủy/hoàn tất phiếu giữ hàng'),
+  p('kho.stocktake.read','Soul-Inventory — Xem lịch sử kiểm kê'),
+  p('kho.stocktake.write','Soul-Inventory — Thực hiện và chốt phiên kiểm kê'),
 ] as const satisfies readonly PermissionMeta[];
 
 export const ROLE_PERMISSIONS: Record<RoleType, readonly Permission[]> = {
   super_admin: ['*'],
   owner: ['*'],
-  manager: ['accounting.*','crm.*','inventory.*','hr.*','om.wallet.read','report.*','core.permissions.read','ke-toan-10a.*'],
+  manager: ['accounting.*','crm.*','inventory.*','hr.*','om.wallet.read','report.*','core.permissions.read','ke-toan-10a.*','kho.*'],
   staff: ['crm.contact.create','crm.contact.read','hr.attendance.checkin','hr.attendance.checkout','om.wallet.read','report.summary.read','core.permissions.read','ke-toan-10a.report.read'],
 };
 
