@@ -283,8 +283,8 @@ export function buildTieuTamRoutes({ db, requireAuth = defaultRequireAuth, audit
     // Không dùng ILIKE nguyên câu (sẽ miss) — lấy top memories, adapter tự khớp token.
     const profile = await buildWorkProfile(db, orgId, auth.sub, { memoryLimit: 60 });
     const engine = getEngine(profile.engine);
-    // R7.6: multi-turn context — nạp ~10 lượt gần nhất để Tiểu Tâm nhớ câu trước
-    const history = await loadChatHistory(db, orgId, auth.sub, 40).catch(() => []);
+    // Multi-turn context: nạp tối đa 120 lượt gần nhất (dùng full context window của model — Opus/Sonnet ~200K, GPT-5.5 lớn).
+    const history = await loadChatHistory(db, orgId, auth.sub, 120).catch(() => []);
     // Ghi nhớ file vừa gửi: nạp 3 file gần nhất vào ngữ cảnh để Tiểu Tâm biết "file nào, làm gì".
     const recentFiles = await db.select().from(ttFiles)
       .where(and(eq(ttFiles.orgId, orgId), eq(ttFiles.userId, auth.sub)))
