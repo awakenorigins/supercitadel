@@ -1,0 +1,34 @@
+{
+  "name": "@citadel/module-soul-sale",
+  "version": "1.0.0",
+  "description": "Soul-Sale 1A — Bán Hàng & Kênh Phân Phối cho SuperCitadel: CRM, đơn hàng, cây đại lý/retailer, giá tầng, công nợ, hoa hồng, Splitter đối soát, Intelligence. Tiểu Tâm điều khiển 100% (23 read tools + 34 write actions, dry-run→confirm).",
+  "type": "module",
+  "license": "SEE LICENSE IN LICENSE",
+  "exports": {
+    "./server/host-adapter.js": "./server/host-adapter.ts",
+    "./server/tools.js": "./server/tools.ts",
+    "./server/tieu-tam-actions.js": "./server/tieu-tam-actions.ts",
+    "./server/routes.js": "./server/routes.ts",
+    "./src/contract.js": "./src/contract.ts",
+    "./src/schema.js": "./src/schema.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "tsx tests/01-master.test.ts && tsx tests/02-crm.test.ts && tsx tests/03-pricing.test.ts && tsx tests/04-sales.test.ts && tsx tests/05-finance.test.ts && tsx tests/06-splitter.test.ts && tsx tests/07-intel-automation.test.ts && tsx tests/08-registry.test.ts && tsx tests/09-routes-isolation.test.ts",
+    "audit": "tsx scripts/audit.mts && tsx scripts/validate-manifest.mts"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.36.0",
+    "hono": "^4.6.0",
+    "xlsx": "0.18.5",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.2.0",
+    "postgres": "^3.4.5",
+    "@types/node": "^22.0.0",
+    "drizzle-kit": "^0.28.1",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}

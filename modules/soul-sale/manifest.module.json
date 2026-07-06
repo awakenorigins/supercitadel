@@ -1,0 +1,27 @@
+{
+  "$schema": "soul-sale rich manifest (nội bộ module — host chỉ đọc manifest.json)",
+  "id": "soul-sale",
+  "displayName": "Soul-Sale 1A — Bán Hàng & Kênh Phân Phối",
+  "version": "1.0.0",
+  "targetsEngine": ">=11.4.0",
+  "storage": { "pgSchema": "soulsale", "tablePrefix": "ss_", "tables": 38, "rls": "fail-closed (0001_rls.sql)", "money": "numeric(18,0) VND (BigInt)" },
+  "surface": {
+    "readTools": 23,
+    "writeActions": 34,
+    "sensitiveL2": 14,
+    "protocol": "dry-run→confirm v8.5 (executeAction, preview thật đọc-không-ghi)",
+    "routes": { "base": "/api/v1/soul-sale", "rpc": ["/tools/:name", "/actions/:name"], "rest": ["/customers", "/customers/:id", "/agency-tree", "/pipeline/summary", "/orders", "/orders/:id/advance", "/debt/summary", "/import/batches", "/intel/next-best", "/automation/run", "/setup"] }
+  },
+  "domains": ["master-data + cây kênh (closure table)", "CRM lead/deal/activity", "máy giá tầng + hạn mức công nợ", "báo giá/đơn hàng state machine", "chỉ tiêu/hoa hồng/chốt kỳ nợ", "Splitter đối soát bảng kê Excel", "intelligence rule-based + 6 job đêm"],
+  "automation": { "entry": "runScheduledTasks(db, ctx)", "jobs": ["quoteExpiry", "dealHealth", "churnScan", "duplicateScan", "targetRollup", "debtAgingRefresh"] },
+  "honestLimits": [
+    "Không POS/ca thu ngân (phase sau)",
+    "Không hoá đơn điện tử VN — bắn event cho module kế toán xử lý",
+    "Chỉ VND, không đa tiền tệ",
+    "Forecast/churn/lead-score là rule-based minh bạch, không phải ML",
+    "Đơn đã delivered/invoiced không hủy trực tiếp — đi đường chứng từ đảo bên kế toán",
+    "debtAgingRefresh quét top 100 khách nợ mỗi lần chạy"
+  ],
+  "docsSuite": ["docs/GUIDE.md", "docs/TOOLS.md", "docs/PERMISSIONS.md", "docs/EVENTS.md", "docs/IMPORT_FORMAT.md", "docs/AGENCY_RETAILER_RULES.md", "docs/RECONCILIATION_PLAYBOOK.md", "docs/TUTORIAL.md", "docs/CHANGELOG.md"],
+  "license": "Proprietary — Nacha"
+}

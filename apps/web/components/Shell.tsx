@@ -30,6 +30,7 @@ const NAV_GROUPS: { label: string; items: { to: string; icon: string; label: str
   { label: 'Nghiệp vụ', items: [
     { to: '/accounting', icon: 'book', label: 'Kế toán' },
     { to: '/crm', icon: 'target', label: 'CRM' },
+    { to: '/soul-sale', icon: 'target', label: 'Bán hàng' },
     { to: '/inventory', icon: 'box', label: 'Kho hàng' },
     { to: '/hr', icon: 'users', label: 'Nhân sự' },
   ]},
@@ -42,7 +43,7 @@ const NAV_GROUPS: { label: string; items: { to: string; icon: string; label: str
 const PAGE_LABEL: Record<string, string> = {
   '/home': 'Trang chủ', '/chat': 'Nhắn tin', '/accounting': 'Kế toán', '/crm': 'CRM',
   '/inventory': 'Kho hàng', '/hr': 'Nhân sự', '/om': 'Ví Om', '/modules': 'Cửa hàng Module',
-  '/items': 'Kho vật phẩm', '/tieu-tam': 'Tiểu Tâm', '/settings': 'Cài đặt',
+  '/items': 'Kho vật phẩm', '/soul-sale': 'Bán hàng', '/tieu-tam': 'Tiểu Tâm', '/settings': 'Cài đặt',
   '/notifications': 'Thông báo', '/search': 'Tìm kiếm',
 };
 // R2: breadcrumb 2 cấp — tên nhóm lấy từ NAV_GROUPS (+ các trang ngoài nav groups)

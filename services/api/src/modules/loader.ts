@@ -13,8 +13,18 @@ import { buildAccountingRoutes } from '@citadel/module-accounting/server/routes.
 import { buildKeToan10aRoutes } from '@citadel/module-ke-toan-10a/server/routes.js';
 import { buildSoulManagerRoutes } from '@citadel/module-soul-manager/server/host-adapter.js';
 import { buildSoulInventoryRoutes } from '@citadel/module-soul-inventory/server/host-adapter.js';
+import { buildSoulSaleRoutes } from '@citadel/module-soul-sale/server/host-adapter.js';
 import { eventHandlers as notificationEventHandlers } from '@citadel/module-notification/server/events.js';
+import { soulSaleEventHandlers, SOUL_SALE_SUBSCRIBES } from '@citadel/module-soul-sale/server/host-adapter.js';
 import { subscribeOutbox, type OutboxHandler } from '../outbox.js';
+import { requirePermission } from '../auth/middleware.js';
+import { outboxEvents } from '@citadel/db';
+
+/** emit của module → ghi vào outbox_events (org-scoped) để dispatcher host route tới subscribers. Non-fatal. */
+async function emitToOutbox(db: any, orgId: string, topic: string, payload: Record<string, unknown>) {
+  try { await db.insert(outboxEvents).values({ orgId, topic, payload: payload ?? {} }); }
+  catch (e) { console.error('[soul-sale.emit] ghi outbox lỗi (non-fatal)', (e as Error).message); }
+}
 
 type Deps = { db:any; requireAuth:MiddlewareHandler; requireModule:(db:any,id:string)=>MiddlewareHandler; audit?:any; sensitiveGate?:any; cancelGate?:any };
 type Builder = (deps: Deps) => Hono;
@@ -29,9 +39,18 @@ const builders: Record<string, Builder> = {
   'ke-toan-10a': (d) => buildKeToan10aRoutes({ db: d.db, requireAuth: d.requireAuth, gate: d.requireModule(d.db, 'ke-toan-10a'), audit: d.audit, reverseGate: d.cancelGate }),
   'soul-manager': (d) => buildSoulManagerRoutes({ db: d.db, requireAuth: d.requireAuth, gate: d.requireModule(d.db, 'soul-manager'), audit: d.audit }),
   'soul-inventory': (d) => buildSoulInventoryRoutes({ db: d.db, requireAuth: d.requireAuth, gate: d.requireModule(d.db, 'soul-inventory'), audit: d.audit }),
+  // audit: soul-sale tự ghi ss_action_audit (khác shape host audit(c,entry)) → không truyền host audit để tránh lệch chữ ký.
+  'soul-sale': (d) => buildSoulSaleRoutes({ db: d.db, requireAuth: d.requireAuth, gate: (perm: string) => requirePermission(d.db, perm as any), emit: (orgId: string, topic: string, payload: any) => emitToOutbox(d.db, orgId, topic, payload) } as any),
 };
+// Soul-Sale: adapt handlers ({db},evt) → host OutboxHandler (event,{db}); map payload sang InboundEvent shape.
+const soulSaleOutboxHandlers: Record<string, OutboxHandler> = Object.fromEntries(
+  SOUL_SALE_SUBSCRIBES.map((topic: string) => [topic, (async (event: any, deps: { db: any }) => {
+    await soulSaleEventHandlers[topic]({ db: deps.db }, { orgId: event.orgId, topic: event.topic, payload: event.payload ?? {} });
+  }) as OutboxHandler]),
+);
 const moduleEventHandlers: Record<string, Record<string, OutboxHandler>> = {
   notification: notificationEventHandlers as Record<string, OutboxHandler>,
+  'soul-sale': soulSaleOutboxHandlers,
 };
 export interface LoadedModule { id:string; version:string; routes:string; manifest:ModuleManifest }
 export interface RejectedModule { id:string; errors:string[] }

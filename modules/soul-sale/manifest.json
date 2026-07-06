@@ -1,0 +1,42 @@
+{
+  "id": "soul-sale",
+  "name": "Soul-Sale 1A — Bán Hàng & Kênh Phân Phối",
+  "version": "1.0.0",
+  "tier": "paid",
+  "priceOm": 1200,
+  "rentPlans": { "30": 180 },
+  "icon": "target",
+  "description": "CRM + DMS hợp nhất cho SME Việt: lead→deal→báo giá→đơn hàng qua cổng công nợ, cây đại lý/điểm bán, máy giá tầng, chỉ tiêu & hoa hồng, chốt kỳ công nợ, Splitter đối soát bảng kê Excel đại lý, intelligence rule-based. Tiểu Tâm điều khiển 100%: 23 read tools + 34 write actions (14 nhạy cảm dry-run→confirm).",
+  "permissions": [
+    "soulsale.customer.read", "soulsale.customer.write",
+    "soulsale.channel.read", "soulsale.channel.write",
+    "soulsale.lead.read", "soulsale.lead.write",
+    "soulsale.deal.read", "soulsale.deal.write",
+    "soulsale.quote.read", "soulsale.quote.write",
+    "soulsale.order.read", "soulsale.order.write",
+    "soulsale.finance.read", "soulsale.finance.write",
+    "soulsale.price.read", "soulsale.price.write",
+    "soulsale.target.read", "soulsale.target.write",
+    "soulsale.import.read", "soulsale.import.write",
+    "soulsale.report.read"
+  ],
+  "routes": "/api/v1/soul-sale",
+  "docs": "docs/GUIDE.md",
+  "engine": ">=11.4.0",
+  "group": "Kinh doanh",
+  "events": {
+    "emits": [
+      "soulsale.customer.created", "soulsale.customer.merged",
+      "soulsale.lead.created", "soulsale.lead.converted",
+      "soulsale.deal.created", "soulsale.deal.moved",
+      "soulsale.quote.created",
+      "soulsale.order.created", "soulsale.order.cancelled",
+      "soulsale.payment.recorded",
+      "soulsale.commission.posted", "soulsale.debt.closed",
+      "soulsale.reconciliation.completed", "soulsale.automation.ran"
+    ],
+    "subscribes": [
+      "accounting.invoice.created", "accounting.payment.created", "kho.stock.low"
+    ]
+  }
+}

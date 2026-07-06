@@ -13,6 +13,8 @@ import { hrEmployees } from '@citadel/module-hr/server/schema.js';
 import { keToan10aTieuTamActions, detectK10aAction } from '@citadel/module-ke-toan-10a/server/tieu-tam-actions.js';
 import { soulManagerTieuTamActions } from '@citadel/module-soul-manager/server/tieu-tam-actions.js';
 import { soulInventoryTieuTamActions } from '@citadel/module-soul-inventory/server/tieu-tam-actions.js';
+import { soulSaleTieuTamActions as ssTieuTamActions } from '@citadel/module-soul-sale/server/tieu-tam-actions.js';
+import { soulSaleTools as ssTools } from '@citadel/module-soul-sale/server/tools.js';
 
 type DB = any;
 export type TieuTamActionCtx = { db: DB; orgId: string; userId: string; role: Role; securityLevel: number; audit?: (e: { action: string; resource?: string; resourceId?: string; detail?: unknown }) => Promise<void> };
@@ -55,6 +57,36 @@ const defs: TieuTamAction[] = [
 defs.push(...(keToan10aTieuTamActions as unknown as (db: DB) => TieuTamAction[])(undefined as unknown as DB));
 defs.push(...(soulManagerTieuTamActions() as unknown as TieuTamAction[]));
 defs.push(...(soulInventoryTieuTamActions() as unknown as TieuTamAction[]));
+// ===== Soul-Sale 1A: 34 write actions + 23 read tools → shape TieuTamAction của host =====
+for (const a of ssTieuTamActions) {
+  defs.push({
+    name: a.name, description: a.description, requiredModule: 'soul-sale',
+    permission: a.permission as Permission, securityLevel: a.securityLevel, sensitive: a.sensitive,
+    parameters: (a.parameters as any) ?? { type: 'object', properties: {} },
+    async execute(ctx, params) {
+      await gate(ctx, 'soul-sale');
+      const data = await a.execute(
+        { db: ctx.db, orgId: ctx.orgId, userId: ctx.userId, audit: undefined },
+        params ?? {},
+      );
+      await audit(ctx, a.name, params, (data as any)?.id);
+      return result(a.name, 'soul-sale', `Đã thực hiện ${a.description}`, data);
+    },
+  });
+}
+// 23 read tools: expose cho Tiểu Tâm tra cứu (không nhạy cảm, L1)
+for (const t of ssTools) {
+  defs.push({
+    name: t.name, description: t.description, requiredModule: 'soul-sale',
+    permission: t.requiresPermission as Permission, securityLevel: 1, sensitive: false,
+    parameters: (t.parameters as any) ?? { type: 'object', properties: {} },
+    async execute(ctx, params) {
+      await gate(ctx, 'soul-sale');
+      const data = await t.handler(params ?? {}, { db: ctx.db, orgId: ctx.orgId, userId: ctx.userId });
+      return result(t.name, 'soul-sale', `Kết quả: ${t.description}`, data);
+    },
+  });
+}
 export const ACTION_REGISTRY = new Map(defs.map(d=>[d.name,d]));
 export function toolSafeName(name:string){ return name.replace(/[^a-zA-Z0-9_-]/g, '_'); }
 const SAFE_TO_ACTION = new Map(defs.map(d=>[toolSafeName(d.name), d.name]));
