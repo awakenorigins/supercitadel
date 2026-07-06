@@ -17,9 +17,9 @@ import { requireAuth as defaultRequireAuth, orgOf } from '../auth/middleware.js'
 import { AppError, Errors } from '@citadel/core';
 import { securityLevelOf } from '../security/service.js';
 import type { AuditFn } from '../audit/service.js';
-import { ttChatMessages, ttFiles } from '@citadel/db';
+import { ttChatMessages, ttFiles, ttMemories } from '@citadel/db';
 import * as XLSX from 'xlsx';
-import { and, eq, desc } from 'drizzle-orm';
+import { and, eq, desc, sql, inArray } from 'drizzle-orm';
 
 /** R7.6: lịch sử hội thoại bền vững — lấy N lượt gần nhất (cũ → mới). */
 async function loadChatHistory(db: any, orgId: string, userId: string, limit = 20) {
@@ -123,6 +123,29 @@ async function saveChatTurn(db: any, orgId: string, userId: string, userText: st
       { orgId, userId, role: 'assistant', content: aiText },
     ]);
   } catch (e) { console.warn('[tieu-tam] save chat history failed', e); }
+}
+
+// R11.6h: khi tổng tin nhắn > KEEP+CHUNK, lấy CHUNK tin CŨ NHẤT → nhờ model tóm tắt → ghi vào trí nhớ bền vững (kind=summary) → xóa các tin đó.
+// Nhờ vậy dù chat vô hạn, nội dung cũ không biến mất mà được nén lại thành ký ức.
+async function summarizeOldHistory(db: any, orgId: string, userId: string, engine: any, profile: any) {
+  const KEEP = 120; // giữ nguyên 120 tin gần nhất trong cửa sổ
+  const CHUNK = 40;  // mỗi lần nén 40 tin cũ nhất
+  const [{ count }] = await db.select({ count: sql<number>`count(*)::int` }).from(ttChatMessages)
+    .where(and(eq(ttChatMessages.orgId, orgId), eq(ttChatMessages.userId, userId)));
+  if (Number(count) < KEEP + CHUNK) return; // chưa cần nén
+  // lấy CHUNK tin CŨ NHẤT (asc)
+  const oldRows = await db.select().from(ttChatMessages)
+    .where(and(eq(ttChatMessages.orgId, orgId), eq(ttChatMessages.userId, userId)))
+    .orderBy(ttChatMessages.createdAt).limit(CHUNK);
+  if (!oldRows.length) return;
+  const transcript = oldRows.map((m: any) => `${m.role === 'user' ? 'Người dùng' : 'Tiểu Tâm'}: ${m.content}`).join('\n');
+  const sumMsgs: any[] = [{ role: 'user', content: `Tóm tắt đoạn hội thoại sau thành 3-6 gạch đầu dòng ngắn gọn, giữ LẠI mọi dữ kiện quan trọng (tên, số liệu, quyết định, chứng từ, yêu cầu đang dở). Chỉ trả gạch đầu dòng, không rào đón:\n\n${transcript}` }];
+  let summary = '';
+  try { const r = await engine.complete(profile, sumMsgs, { toolChoice: 'none' }); summary = (r?.text ?? '').trim(); } catch { return; }
+  if (!summary) return;
+  try { await db.insert(ttMemories).values({ orgId, userId, kind: 'summary', content: `[Tóm tắt hội thoại cũ] ${summary}`.slice(0, 2000), salience: 0.75 }); } catch (e) { console.warn('[tieu-tam] summary insert fail', (e as Error).message); return; }
+  const ids = oldRows.map((r: any) => r.id);
+  await db.delete(ttChatMessages).where(and(eq(ttChatMessages.orgId, orgId), eq(ttChatMessages.userId, userId), inArray(ttChatMessages.id, ids)));
 }
 
 /** Lượt "nặng" = câu hỏi nghiệp vụ (tool/dữ liệu); "nhẹ" = chào hỏi/tán gẫu. */
@@ -370,6 +393,8 @@ export function buildTieuTamRoutes({ db, requireAuth = defaultRequireAuth, audit
     await learnFromMessage(db, orgId, auth.sub, message);
     // R7.6: lưu lượt chat vào lịch sử bền vững (best-effort)
     await saveChatTurn(db, orgId, auth.sub, message, reply.text ?? '');
+    // R11.6h: auto-summary — khi lịch sử vượt ngưỡng, tóm tắt đoạn cũ nhất ép vào trí nhớ bền vững rồi xóa khỏi cửa sổ → nhớ vô hạn, không mất.
+    summarizeOldHistory(db, orgId, auth.sub, engine, profile).catch((e) => console.warn('[tieu-tam] auto-summary skip', (e as Error).message));
     // Mệt → nhắc nhẹ sắp cần nghỉ (không chặn)
     const text = tick.note && tick.state.status === 'met' && !isBetaMode()
       ? `${reply.text}\n\n(${tick.note})`

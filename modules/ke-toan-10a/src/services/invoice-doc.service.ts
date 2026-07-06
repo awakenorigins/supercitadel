@@ -5,8 +5,10 @@ import { and, eq } from "drizzle-orm";
 import type { Database } from "../lib/db.js";
 import type { Ctx } from "../lib/context.js";
 import * as Money from "../lib/money.js";
-import { invoices } from "../schema/documents.js";
+import { invoices, bills } from "../schema/documents.js";
 import { contacts } from "../schema/contacts.js";
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function esc(s: unknown): string {
   return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -16,17 +18,26 @@ export class InvoiceDocService {
   constructor(private readonly db: Database) {}
 
   private async load(ctx: Ctx, key: string) {
-    const [inv] = await this.db
-      .select()
-      .from(invoices)
-      .where(and(eq(invoices.orgId, ctx.orgId), eq(invoices.docNo, key)))
-      .limit(1);
-    let invoice = inv;
+    // HDM-* = hoá đơn mua (bills); HD-* = hoá đơn bán (invoices). Thử cả 2 bảng theo docNo; chỉ tra theo id khi key là uuid hợp lệ (tránh crash).
+    const isBill = /^HDM/i.test(key);
+    const table: any = isBill ? bills : invoices;
+    const kind: 'ban' | 'mua' = isBill ? 'mua' : 'ban';
+    let [invoice] = await this.db.select().from(table).where(and(eq(table.orgId, ctx.orgId), eq(table.docNo, key))).limit(1);
+    // fallback: nếu không thấy ở bảng đoán, thử bảng còn lại theo docNo
     if (!invoice) {
-      const [byId] = await this.db.select().from(invoices).where(and(eq(invoices.orgId, ctx.orgId), eq(invoices.id, key))).limit(1);
+      const other: any = isBill ? invoices : bills;
+      const [alt] = await this.db.select().from(other).where(and(eq(other.orgId, ctx.orgId), eq(other.docNo, key))).limit(1);
+      if (alt) return this.buildFrom(ctx, alt, /^HDM/i.test(alt.docNo) ? 'mua' : 'ban');
+    }
+    if (!invoice && UUID_RE.test(key)) {
+      const [byId] = await this.db.select().from(table).where(and(eq(table.orgId, ctx.orgId), eq(table.id, key))).limit(1);
       invoice = byId;
     }
-    if (!invoice) throw new Error("Không tìm thấy hoá đơn " + key);
+    if (!invoice) throw new Error("Không tìm thấy chứng từ " + key);
+    return this.buildFrom(ctx, invoice, kind);
+  }
+
+  private async buildFrom(ctx: Ctx, invoice: any, kind: 'ban' | 'mua') {
     let contact: any = null;
     if (invoice.contactId) {
       const [ct] = await this.db.select().from(contacts).where(and(eq(contacts.orgId, ctx.orgId), eq(contacts.id, invoice.contactId))).limit(1);
@@ -34,12 +45,14 @@ export class InvoiceDocService {
     }
     const lines: Array<{ description: string; qty: number; rate: string; amount: string }> =
       Array.isArray((invoice as any).lines) ? (invoice as any).lines : [];
-    return { invoice, contact, lines };
+    return { invoice, contact, lines, kind };
   }
 
   /** HTML hoá đơn A4, in đẹp — trình duyệt/Telegram xem trực tiếp, bấm in → Lưu PDF. */
   async html(ctx: Ctx, key: string): Promise<{ html: string; docNo: string }> {
-    const { invoice, contact, lines } = await this.load(ctx, key);
+    const { invoice, contact, lines, kind } = await this.load(ctx, key);
+    const title = kind === 'mua' ? 'HOÁ ĐƠN MUA HÀNG' : 'HOÁ ĐƠN BÁN HÀNG';
+    const partyLabel = kind === 'mua' ? 'Nhà cung cấp' : 'Khách hàng';
     const rows = lines.length
       ? lines.map((l, i) => `<tr><td class="c">${i + 1}</td><td>${esc(l.description)}</td><td class="r">${esc(l.qty)}</td><td class="r">${Money.formatVND(l.rate)}</td><td class="r">${Money.formatVND(l.amount)}</td></tr>`).join("")
       : `<tr><td class="c">1</td><td>${esc(invoice.description || "Hàng hoá / dịch vụ")}</td><td class="r">1</td><td class="r">${Money.formatVND(invoice.subtotal)}</td><td class="r">${Money.formatVND(invoice.subtotal)}</td></tr>`;
@@ -69,11 +82,11 @@ td{padding:9px 10px;border-bottom:1px solid #eee}.r{text-align:right}.c{text-ali
 </style></head><body>
 <div class="sheet">
   <div class="top">
-    <div><h1>HOÁ ĐƠN BÁN HÀNG</h1><div class="sub">Số: <b>${esc(invoice.docNo)}</b></div></div>
+    <div><h1>${title}</h1><div class="sub">Số: <b>${esc(invoice.docNo)}</b></div></div>
     <div class="meta"><div>Ngày: <b>${esc(invoice.docDate)}</b></div>${invoice.dueDate ? `<div>Hạn TT: ${esc(invoice.dueDate)}</div>` : ""}<div style="margin-top:6px"><span class="badge ${esc(invoice.status)}">${esc(invoice.status)}</span></div></div>
   </div>
   <div class="party">
-    <div><div class="lbl">Khách hàng</div><div class="pv">${esc(contact?.name || "—")}</div>${contact?.taxCode ? `<div class="sub">MST: ${esc(contact.taxCode)}</div>` : ""}${contact?.phone ? `<div class="sub">ĐT: ${esc(contact.phone)}</div>` : ""}</div>
+    <div><div class="lbl">${partyLabel}</div><div class="pv">${esc(contact?.name || "—")}</div>${contact?.taxCode ? `<div class="sub">MST: ${esc(contact.taxCode)}</div>` : ""}${contact?.phone ? `<div class="sub">ĐT: ${esc(contact.phone)}</div>` : ""}</div>
     <div><div class="lbl">Diễn giải</div><div class="pv" style="font-weight:400;font-size:13px">${esc(invoice.description || "—")}</div></div>
   </div>
   <table><thead><tr><th class="c">#</th><th>Nội dung</th><th class="r">SL</th><th class="r">Đơn giá</th><th class="r">Thành tiền</th></tr></thead><tbody>${rows}</tbody></table>
@@ -92,14 +105,14 @@ td{padding:9px 10px;border-bottom:1px solid #eee}.r{text-align:right}.c{text-ali
 
   /** Excel 1 hoá đơn — 2 sheet: Thông tin + Chi tiết dòng. */
   async xlsx(ctx: Ctx, key: string): Promise<{ bytes: Uint8Array; docNo: string }> {
-    const { invoice, contact, lines } = await this.load(ctx, key);
+    const { invoice, contact, lines, kind } = await this.load(ctx, key);
     const wb = XLSX.utils.book_new();
     const info = [
-      ["HOÁ ĐƠN BÁN HÀNG"],
+      [kind === 'mua' ? "HOÁ ĐƠN MUA HÀNG" : "HOÁ ĐƠN BÁN HÀNG"],
       ["Số hoá đơn", invoice.docNo],
       ["Ngày", invoice.docDate],
       ["Hạn thanh toán", invoice.dueDate ?? ""],
-      ["Khách hàng", contact?.name ?? ""],
+      [kind === 'mua' ? "Nhà cung cấp" : "Khách hàng", contact?.name ?? ""],
       ["Mã số thuế", contact?.taxCode ?? ""],
       ["Diễn giải", invoice.description ?? ""],
       ["Tiền hàng", Number(invoice.subtotal)],

@@ -147,7 +147,7 @@ export class OpenAiAdapter implements EngineAdapter {
         model: this.model,
         messages: [{ role: 'system', content: renderSystemPrompt(profile) }, ...messages],
         temperature: 0.7,
-        max_tokens: 4096,
+        max_tokens: 8192,
         stream: false, // BẮT BUỘC — proxy nội bộ mặc định stream SSE nếu thiếu → res.json() nổ
         ...(opts?.tools?.length ? { tools: opts.tools, tool_choice: opts.toolChoice ?? 'auto' } : {}),
       }),
