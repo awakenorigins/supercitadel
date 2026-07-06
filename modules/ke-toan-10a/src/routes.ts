@@ -561,6 +561,20 @@ export function buildKeToan10aRoutes(deps: ModuleDeps) {
   r.get("/export/invoices.xlsx", (c) =>
     wrap(async () => xlsxResponse(c, await svc.excel.exportInvoices(ctxOf(c)), "hoa-don.xlsx")),
   );
+  // Xuất 1 hoá đơn: HTML in được (Lưu PDF) + Excel. key = docNo (HD-2026-000003) hoặc id.
+  r.get("/invoices/:key/print.html", (c) =>
+    wrap(async () => {
+      const { html } = await svc.invoiceDoc.html(ctxOf(c), c.req.param("key"));
+      c.header("Content-Type", "text/html; charset=utf-8");
+      return c.body(html as never);
+    }),
+  );
+  r.get("/invoices/:key/export.xlsx", (c) =>
+    wrap(async () => {
+      const { bytes, docNo } = await svc.invoiceDoc.xlsx(ctxOf(c), c.req.param("key"));
+      return xlsxResponse(c, bytes, `hoa-don-${docNo}.xlsx`);
+    }),
+  );
   r.get("/import/template.xlsx", (c) => xlsxResponse(c, svc.excel.importTemplate(), "mau-nhap-hoa-don.xlsx"));
   r.post("/import/invoices.xlsx", (c) =>
     wrap(async () => {

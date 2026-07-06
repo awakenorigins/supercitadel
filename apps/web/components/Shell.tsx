@@ -10,7 +10,7 @@ import { Tutorial, TutorialHelpButton, TutorialFab } from './Tutorial';
 import { API, api, getSession } from '../lib/api';
 import { applyTheme, applyStoredTheme } from '../lib/theme';
 
-interface Msg { who: 'ai' | 'me'; text: string; tool?: any; suggestions?: string[]; pendingAction?: any }
+interface Msg { who: 'ai' | 'me'; text: string; tool?: any; suggestions?: string[]; pendingAction?: any; replyTo?: { text: string; who: 'ai' | 'me' } }
 interface SoulState { energy: number; status: string; statusLabel: string; mood: string; engine?: string }
 
 const STATUS_COLOR: Record<string, string> = {
@@ -225,6 +225,62 @@ function renderAiText(text: string) {
   });
 }
 
+// Định dạng tiền VND gọn
+function fmtVND(v: any): string {
+  const n = Number(v);
+  if (!isFinite(n)) return String(v ?? '');
+  return n.toLocaleString('vi-VN') + '\u00a0₫';
+}
+
+// Tải file qua fetch (kèm Bearer) rồi mở/blob — dùng cho export hoá đơn PDF/Excel.
+async function downloadAuthed(path: string, filename: string, openInline = false) {
+  const s = getSession();
+  const res = await fetch(`${API}${path}`, { headers: { Authorization: `Bearer ${s?.jwt ?? ''}` } });
+  if (!res.ok) { alert('Không tải được file — thử lại nhé'); return; }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  if (openInline) { window.open(url, '_blank'); }
+  else { const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove(); }
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+
+// Nhận diện kết quả action là hoá đơn → trả data hoá đơn để render thẻ đẹp + nút xuất file.
+function invoiceOf(tool: any): any | null {
+  if (!Array.isArray(tool)) return null;
+  for (const t of tool) {
+    const r = t?.result ?? t;
+    const d = r?.data ?? r;
+    const action = r?.action ?? t?.tool ?? '';
+    if (d && (d.docNo || d.doc_no) && (/hoa_don|invoice/i.test(String(action)) || d.total !== undefined)) {
+      return { docNo: d.docNo ?? d.doc_no, docDate: d.docDate ?? d.doc_date, total: d.total, subtotal: d.subtotal, taxRate: d.taxRate ?? d.tax_rate, taxAmount: d.taxAmount ?? d.tax_amount, status: d.status, amountPaid: d.amountPaid ?? d.amount_paid };
+    }
+  }
+  return null;
+}
+
+// Thẻ hoá đơn đẹp thay cho JSON thô + nút xem PDF / tải Excel.
+function InvoiceCard({ inv }: { inv: any }) {
+  const key = encodeURIComponent(inv.docNo);
+  return (
+    <div className="tcard" style={{ borderColor: 'rgba(20,163,127,.35)' }}>
+      <div className="th" style={{ background: 'rgba(20,163,127,.1)' }}>
+        🧾 Hoá đơn {inv.docNo}
+        <span style={{ marginLeft: 'auto', fontSize: 10.5, fontWeight: 700, padding: '2px 9px', borderRadius: 99, background: inv.status === 'POSTED' ? 'rgba(52,211,184,.18)' : 'rgba(245,197,84,.18)', color: inv.status === 'POSTED' ? 'var(--jade)' : 'var(--amber)' }}>{inv.status}</span>
+      </div>
+      <div style={{ padding: '11px 13px', fontSize: 12.5, display: 'grid', gap: 6 }}>
+        {inv.docDate && <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mut)' }}>Ngày</span><span>{inv.docDate}</span></div>}
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mut)' }}>Tiền hàng</span><span>{fmtVND(inv.subtotal)}</span></div>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mut)' }}>Thuế ({inv.taxRate ?? 0}%)</span><span>{fmtVND(inv.taxAmount)}</span></div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--line)', paddingTop: 6, fontWeight: 800, fontSize: 15, color: 'var(--jade)' }}><span>Tổng cộng</span><span>{fmtVND(inv.total)}</span></div>
+      </div>
+      <div style={{ display: 'flex', gap: 8, padding: '0 13px 12px' }}>
+        <button className="btn-p" style={{ width: 'auto', flex: 1, padding: '9px 10px', fontSize: 12.5 }} onClick={() => downloadAuthed(`/api/v1/ke-toan-10a/invoices/${key}/print.html`, `hoa-don-${inv.docNo}.html`, true)}>📄 Xem / In PDF</button>
+        <button className="chip" style={{ padding: '9px 12px', fontSize: 12.5 }} onClick={() => downloadAuthed(`/api/v1/ke-toan-10a/invoices/${key}/export.xlsx`, `hoa-don-${inv.docNo}.xlsx`)}>📊 Excel</button>
+      </div>
+    </div>
+  );
+}
+
 const TT_GREETING: Msg = { who: 'ai', text: 'Chào bạn! Tôi là Tiểu Tâm. Hỏi tôi về doanh thu, deal, tồn kho, ca làm…', suggestions: ['Doanh thu hôm nay', 'Deal đang mở', 'Tồn kho thế nào'] };
 
 function TieuTamSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -244,6 +300,8 @@ function TieuTamSheet({ open, onClose }: { open: boolean; onClose: () => void })
       .catch(() => setHistLoaded(true));
   }, [open, histLoaded]);
   const [draft, setDraft] = useState('');
+  const [replyTo, setReplyTo] = useState<{ text: string; who: 'ai' | 'me' } | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const [streaming, setStreaming] = useState(false);
   const [soul, setSoul] = useState<SoulState | null>(null);
@@ -261,16 +319,20 @@ function TieuTamSheet({ open, onClose }: { open: boolean; onClose: () => void })
   }, [open]);
 
   async function ask(q: string, opts: { confirm?: boolean; pendingAction?: any } = {}) {
+    // Có file chờ + caption → gửi file kèm caption 1 lượt (không bắt buộc có text)
+    if (pendingFile && !opts.confirm) { const f = pendingFile; setPendingFile(null); await uploadFile(f, q.trim()); setDraft(''); return; }
     if (!q.trim() || streaming) return;
     setDraft('');
-    setMsgs((m) => [...m, { who: 'me', text: q }, { who: 'ai', text: '' }]);
+    const rt = replyTo; setReplyTo(null);
+    const composed = rt ? `[Trả lời tin: "${rt.text.slice(0, 80)}"]\n${q}` : q;
+    setMsgs((m) => [...m, { who: 'me', text: q, replyTo: rt ?? undefined }, { who: 'ai', text: '' }]);
     setStreaming(true);
     const s = getSession();
     try {
       const res = await fetch(`${API}/api/v1/tieu-tam/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${s?.jwt ?? ''}` },
-        body: JSON.stringify({ message: q, userName: s?.user.displayName ?? undefined, confirm: !!opts.confirm, pendingAction: opts.pendingAction }),
+        body: JSON.stringify({ message: composed, userName: s?.user.displayName ?? undefined, confirm: !!opts.confirm, pendingAction: opts.pendingAction }),
       });
       if (res.status === 401 || res.status === 403) {
         setMsgs((m) => [...m.slice(0, -1), { who: 'ai', text: 'Phiên đăng nhập đã hết hạn — đăng nhập lại giúp em nha (mở trang đăng nhập, dán token của bạn). 🔑' }]);
@@ -287,14 +349,15 @@ function TieuTamSheet({ open, onClose }: { open: boolean; onClose: () => void })
     } finally { setStreaming(false); }
   }
 
-  async function uploadFile(f: File) {
-    const s = getSession(); const fd = new FormData(); fd.append('file', f);
-    setMsgs((m) => [...m, { who: 'me', text: `📎 ${f.name}` }, { who: 'ai', text: '' }]);
+  async function uploadFile(f: File, caption = '') {
+    const s = getSession(); const fd = new FormData(); fd.append('file', f); if (caption) fd.append('caption', caption);
+    const label = caption ? `📎 ${f.name}\n${caption}` : `📎 ${f.name}`;
+    setMsgs((m) => [...m, { who: 'me', text: label }, { who: 'ai', text: '' }]);
     try {
       const res = await fetch(`${API}/api/v1/tieu-tam/files`, { method: 'POST', headers: { Authorization: `Bearer ${s?.jwt ?? ''}` }, body: fd });
       if (!res.ok) throw new Error(await res.text());
       const d = await res.json();
-      setMsgs((m) => [...m.slice(0, -1), { who: 'ai', text: `File đã sẵn sàng: ${d.file.filename}\n${d.file.summary}\nNói em biết cần làm gì: nhập kho, thêm nhân viên, hay nhập danh bạ/hóa đơn K10A.` }]);
+      setMsgs((m) => [...m.slice(0, -1), { who: 'ai', text: `Đã nhận file: ${d.file.filename}\n${d.file.summary}\nEm nhớ file này rồi — nói em cần làm gì: nhập kho, thêm nhân viên, hay nhập danh bạ/hóa đơn K10A.`, suggestions: ['Nhập vào kho', 'Thêm nhân viên', 'File này có gì'] }]);
     } catch { setMsgs((m) => [...m.slice(0, -1), { who: 'ai', text: 'Em chưa nhận được file này. Chỉ hỗ trợ .xlsx/.csv/.txt tối đa 5MB nha.' }]); }
   }
 
@@ -327,8 +390,15 @@ function TieuTamSheet({ open, onClose }: { open: boolean; onClose: () => void })
               {m.who === 'ai'
                 ? <div style={{ width: 28, height: 28, borderRadius: 9, background: 'linear-gradient(135deg,var(--jade),var(--jade-d))', display: 'grid', placeItems: 'center', alignSelf: 'flex-end', color: '#04231f', flexShrink: 0 }}><Icon name="spark" size={15} /></div>
                 : <div className="ava sky" style={{ width: 28, height: 28, fontSize: 11, alignSelf: 'flex-end' }}>{'M'}</div>}
-              <div style={{ minWidth: 0 }}>
-                {m.text || m.who === 'me' ? <div className={`bub ${m.who === 'me' ? 'me' : 'ai'}`} style={{ whiteSpace: 'pre-wrap' }}>{m.who === 'ai' ? renderAiText(m.text) : m.text}{m.who === 'ai' && streaming && i === msgs.length - 1 ? <span className="blink" /> : null}</div>
+              <div style={{ minWidth: 0 }} className="tt-msg-wrap">
+                {m.replyTo && (
+                  <div style={{ fontSize: 11, color: 'var(--mut)', borderLeft: '3px solid var(--jade)', paddingLeft: 8, margin: '0 0 4px', opacity: .85, maxWidth: 260, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>↳ {m.replyTo.text}</div>
+                )}
+                {m.text || m.who === 'me' ? <div className={`bub ${m.who === 'me' ? 'me' : 'ai'}`} style={{ whiteSpace: 'pre-wrap', position: 'relative' }}>{m.who === 'ai' ? renderAiText(m.text) : m.text}{m.who === 'ai' && streaming && i === msgs.length - 1 ? <span className="blink" /> : null}
+                    {m.text && !(streaming && i === msgs.length - 1) && (
+                      <button onClick={() => setReplyTo({ text: m.text.replace(/\n/g, ' ').slice(0, 120), who: m.who })} title="Trả lời tin này" className="tt-reply-btn" style={{ position: 'absolute', top: -9, right: -9, width: 24, height: 24, borderRadius: 7, background: 'var(--s2)', border: '1px solid var(--bd)', color: 'var(--mut)', fontSize: 12, display: 'grid', placeItems: 'center', cursor: 'pointer', opacity: 0 }}>↩</button>
+                    )}
+                  </div>
                   : <div className="typing"><span /><span /><span /></div>}
                 {m.pendingAction && (
                   <div className="tcard confirm"><div className="th">Xem trước hành động <span style={{ marginLeft: 'auto', color: 'var(--amber)' }}>Cần xác nhận</span></div>
@@ -340,8 +410,10 @@ function TieuTamSheet({ open, onClose }: { open: boolean; onClose: () => void })
                     </div></div>
                 )}
                 {m.tool && !m.pendingAction && (
-                  <div className="tcard"><div className="th">{m.tool[0]?.tool} · {m.tool[0]?.module} <span style={{ marginLeft: 'auto', width: 6, height: 6, borderRadius: '50%', background: 'var(--jade)' }} /></div>
-                    <pre className="mono" style={{ padding: 12, fontSize: 11, color: 'var(--dim)', overflow: 'auto' }}>{JSON.stringify(m.tool[0]?.result, null, 1)}</pre></div>
+                  invoiceOf(m.tool)
+                    ? <InvoiceCard inv={invoiceOf(m.tool)} />
+                    : <details className="tcard"><summary className="th" style={{ cursor: 'pointer', listStyle: 'none' }}>{m.tool[0]?.tool} · {m.tool[0]?.module} <span style={{ marginLeft: 'auto', fontSize: 10.5, color: 'var(--mut)' }}>chi tiết ↓</span></summary>
+                        <pre className="mono" style={{ padding: 12, fontSize: 11, color: 'var(--dim)', overflow: 'auto' }}>{JSON.stringify(m.tool[0]?.result, null, 1)}</pre></details>
                 )}
                 {m.suggestions && !streaming && (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginTop: 8 }}>
@@ -353,10 +425,23 @@ function TieuTamSheet({ open, onClose }: { open: boolean; onClose: () => void })
           ))}
         </div>
         <div style={{ padding: '12px 14px', borderTop: '1px solid var(--line)' }}>
+          {replyTo && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, padding: '7px 10px', background: 'var(--s2)', border: '1px solid var(--bd)', borderRadius: 10, borderLeft: '3px solid var(--jade)' }}>
+              <span style={{ fontSize: 11.5, color: 'var(--mut)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>↳ Trả lời: {replyTo.text}</span>
+              <button onClick={() => setReplyTo(null)} style={{ width: 22, height: 22, borderRadius: 6, background: 'var(--s3)', border: 'none', color: 'var(--dim)', display: 'grid', placeItems: 'center', cursor: 'pointer' }}><Icon name="x" size={12} /></button>
+            </div>
+          )}
+          {pendingFile && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, padding: '7px 10px', background: 'var(--s2)', border: '1px solid var(--bd)', borderRadius: 10 }}>
+              <span style={{ fontSize: 12 }}>📎 {pendingFile.name}</span>
+              <span style={{ fontSize: 10.5, color: 'var(--mut)', marginLeft: 2 }}>— gõ chú thích rồi gửi (không bắt buộc)</span>
+              <button onClick={() => setPendingFile(null)} style={{ marginLeft: 'auto', width: 22, height: 22, borderRadius: 6, background: 'var(--s3)', border: 'none', color: 'var(--dim)', display: 'grid', placeItems: 'center', cursor: 'pointer' }}><Icon name="x" size={12} /></button>
+            </div>
+          )}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--s1)', border: '1.5px solid var(--bd)', borderRadius: 14, padding: '7px 7px 7px 14px' }}>
-            <input ref={fileRef} type="file" accept=".xlsx,.csv,.txt" style={{ display: 'none' }} onChange={(e) => { const f=e.target.files?.[0]; if (f) uploadFile(f); e.currentTarget.value=''; }} />
+            <input ref={fileRef} type="file" accept=".xlsx,.csv,.txt" style={{ display: 'none' }} onChange={(e) => { const f=e.target.files?.[0]; if (f) setPendingFile(f); e.currentTarget.value=''; }} />
             <button onClick={() => fileRef.current?.click()} aria-label="Tải file cho Tiểu Tâm" title="Tải file" style={{ width: 38, height: 38, borderRadius: 11, border: '1px solid var(--bd)', background: 'var(--s2)', color: 'var(--txt)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>📎</button>
-            <input value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && ask(draft)} placeholder="Hỏi Tiểu Tâm bất cứ điều gì…" style={{ flex: 1, background: 'none', border: 'none', color: 'var(--txt)', fontSize: 14, outline: 'none', minWidth: 0 }} />
+            <input value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && ask(draft)} placeholder={pendingFile ? 'Chú thích cho file (tùy chọn) rồi gửi…' : 'Hỏi Tiểu Tâm bất cứ điều gì…'} style={{ flex: 1, background: 'none', border: 'none', color: 'var(--txt)', fontSize: 14, outline: 'none', minWidth: 0 }} />
             {/* R7.6: touch target 46px — dễ bấm trên điện thoại */}
             <button onClick={() => ask(draft)} disabled={streaming} aria-label="Gửi tin nhắn" style={{ width: 46, height: 46, borderRadius: 13, border: 'none', background: streaming ? 'var(--s3)' : 'var(--jade)', color: streaming ? 'var(--dim)' : '#04231f', display: 'grid', placeItems: 'center', flexShrink: 0, cursor: 'pointer', touchAction: 'manipulation' }}><Icon name="send" size={20} /></button>
           </div>

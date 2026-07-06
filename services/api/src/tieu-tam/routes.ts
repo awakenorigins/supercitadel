@@ -194,10 +194,17 @@ export function buildTieuTamRoutes({ db, requireAuth = defaultRequireAuth, audit
       if (!b.fileBase64) throw Errors.validation('Thiếu fileBase64', 'fileBase64'); bytes = new Uint8Array(Buffer.from(String(b.fileBase64), 'base64'));
     }
     if (bytes.byteLength > MAX_FILE_BYTES) throw Errors.validation('File vượt quá 5MB', 'file');
+    // Caption kèm file (form field 'caption' hoặc json 'caption')
+    let caption = '';
+    if (ct.includes('multipart/form-data')) { try { const bb:any = await c.req.parseBody(); caption = String(bb.caption || ''); } catch {} }
     const parsed = parseRows(filename, bytes);
     const [row] = await db.insert(ttFiles).values({ orgId:orgOf(c), userId:auth.sub, filename, mime, kind:parsed.kind, rowsJson:{ rows:parsed.rows }, summary:parsed.summary }).returning();
-    await audit?.(c, { action:'tieu_tam.file_upload', resource:'tt_files', resourceId:row.id, detail:{ filename, summary:parsed.summary } });
-    return c.json({ ok:true, file:{ id:row.id, filename, kind:parsed.kind, summary:parsed.summary, sample:parsed.rows.slice(0,5) } }, 201);
+    // Ghi lượt chat: để Tiểu Tâm nhớ đã nhận file này trong lịch sử hội thoại.
+    const userNote = caption ? `📎 ${filename} — ${caption}` : `📎 Đã gửi file: ${filename}`;
+    const aiNote = `Đã nhận file "${filename}" (${parsed.kind}). ${parsed.summary}`;
+    await saveChatTurn(db, orgOf(c), auth.sub, userNote, aiNote);
+    await audit?.(c, { action:'tieu_tam.file_upload', resource:'tt_files', resourceId:row.id, detail:{ filename, summary:parsed.summary, caption } });
+    return c.json({ ok:true, caption, file:{ id:row.id, filename, kind:parsed.kind, summary:parsed.summary, sample:parsed.rows.slice(0,5) } }, 201);
   });
   app.get('/files', async (c) => { const auth=c.get('auth'); const rows=await db.select().from(ttFiles).where(and(eq(ttFiles.orgId,orgOf(c)),eq(ttFiles.userId,auth.sub))).orderBy(desc(ttFiles.createdAt)).limit(Math.min(Number(c.req.query('limit')??20),50)); return c.json({ files: rows.map((f:any)=>({ id:f.id, filename:f.filename, kind:f.kind, summary:f.summary, createdAt:f.createdAt })) }); });
   app.get('/files/:id', async (c) => { const auth=c.get('auth'); const f=await getFile(db,orgOf(c),auth.sub,c.req.param('id')); return c.json({ file:f }); });
@@ -220,7 +227,15 @@ export function buildTieuTamRoutes({ db, requireAuth = defaultRequireAuth, audit
     const engine = getEngine(profile.engine);
     // R7.6: multi-turn context — nạp ~10 lượt gần nhất để Tiểu Tâm nhớ câu trước
     const history = await loadChatHistory(db, orgId, auth.sub, 20).catch(() => []);
+    // Ghi nhớ file vừa gửi: nạp 3 file gần nhất vào ngữ cảnh để Tiểu Tâm biết "file nào, làm gì".
+    const recentFiles = await db.select().from(ttFiles)
+      .where(and(eq(ttFiles.orgId, orgId), eq(ttFiles.userId, auth.sub)))
+      .orderBy(desc(ttFiles.createdAt)).limit(3).catch(() => []);
+    const fileCtx = recentFiles.length
+      ? [{ role: 'system' as const, content: 'File người dùng đã tải lên gần đây (mới nhất trước): ' + recentFiles.map((f: any) => `"${f.filename}" (${f.kind}, id=${f.id}) — ${f.summary}`).join(' | ') + '. Khi người dùng nói "file vừa gửi/file này/file trên", hiểu là file mới nhất. Có thể nhập vào kho (inventory), nhân sự (hr_employees), hoặc hoá đơn K10A tùy nội dung.' }]
+      : [];
     const messages: EngineMessage[] = [
+      ...fileCtx,
       ...history.map((h: any) => ({ role: h.role as 'user' | 'assistant', content: h.content })),
       // chặn lặp hành động: model thấy yêu cầu cũ trong lịch sử dễ gọi tool lần nữa → duplicate DB
       ...(history.length ? [{ role: 'system' as const, content: 'Lưu ý: mọi yêu cầu/hành động trong lịch sử hội thoại phía trên ĐÃ ĐƯỢC THỰC HIỆN XONG. Chỉ dùng lịch sử để nhớ ngữ cảnh. Chỉ thực hiện hành động (gọi tool) cho tin nhắn MỚI NHẤT dưới đây.' }] : []),

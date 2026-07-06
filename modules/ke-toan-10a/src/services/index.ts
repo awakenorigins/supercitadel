@@ -9,6 +9,7 @@ import { BillsService } from "./bills.service.js";
 import { FiscalService } from "./fiscal.service.js";
 import { ReportsService } from "./reports.service.js";
 import { ExcelService } from "./excel.service.js";
+import { InvoiceDocService } from "./invoice-doc.service.js";
 import { ClosingService } from "./closing.service.js";
 import { VietnamService } from "./vietnam.service.js";
 import { AdvancesService } from "./advances.service.js";
@@ -35,6 +36,7 @@ export class KetoanServices {
   readonly fiscal: FiscalService;
   readonly reports: ReportsService;
   readonly excel: ExcelService;
+  readonly invoiceDoc: InvoiceDocService;
   readonly closing: ClosingService;
   readonly vietnam: VietnamService;
   readonly advances: AdvancesService;
@@ -57,6 +59,7 @@ export class KetoanServices {
     this.fiscal = new FiscalService(db);
     this.reports = new ReportsService(db);
     this.excel = new ExcelService(db);
+    this.invoiceDoc = new InvoiceDocService(db);
     this.closing = new ClosingService(db);
     this.vietnam = new VietnamService(db);
     this.advances = new AdvancesService(db);
