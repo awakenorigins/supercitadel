@@ -22,7 +22,7 @@ const nowIso = () => new Date().toISOString();
 // ── Types (mirror payload API) ──────────────────────────────────────────────
 interface Acc { id: string; name: string; type: string; balance: string; is_archived: boolean }
 interface Cat { id: string; name: string; kind: string; parentId: string | null }
-interface Tx { id: string; docNo: string; kind: string; status: string; occurredAt: string; amount: string; memo: string | null }
+interface Tx { id: string; docNo: string; kind: string; status: string; occurredAt: string; amount: string; memo: string | null; accountId: string | null; counterAccountId: string | null; categoryId: string | null }
 interface DonutItem { label: string; value: string }
 interface Candle { day: string; open: string; high: string; low: string; close: string }
 interface WfStep { label: string; value: string; kind: string }
@@ -68,7 +68,7 @@ function Donut({ items }: { items: DonutItem[] }) {
         })}
         <circle cx="75" cy="75" r="34" fill="var(--s1)" />
         <text x="75" y="72" textAnchor="middle" fontSize="11" fill="var(--mut)" fontFamily="var(--fm)">Tổng chi</text>
-        <text x="75" y="86" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--tx)" fontFamily="var(--fm)">{kbig(total)}</text>
+        <text x="75" y="86" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--txt)" fontFamily="var(--fm)">{kbig(total)}</text>
       </svg>
       <div style={{ display: 'grid', gap: 4, fontSize: 12 }}>
         {segs.map((s, i) => (
@@ -135,7 +135,7 @@ function Waterfall({ steps }: { steps: WfStep[] }) {
         return (
           <g key={b.s.label}>
             <rect x={x} y={y0} width={bw} height={Math.max(2, y1 - y0)} rx="4" fill={col} opacity=".85" />
-            <text x={x + bw / 2} y={y0 - 3} fontSize="8.5" textAnchor="middle" fill="var(--tx)" fontFamily="var(--fm)">{kbig(b.s.value)}</text>
+            <text x={x + bw / 2} y={y0 - 3} fontSize="8.5" textAnchor="middle" fill="var(--txt)" fontFamily="var(--fm)">{kbig(b.s.value)}</text>
             <text x={x + bw / 2} y={H + 10} fontSize="8" textAnchor="middle" fill="var(--mut)">{b.s.label.split(' ')[0]}</text>
           </g>
         );
@@ -375,7 +375,7 @@ export default function SoulWalletPage() {
   if (locked) return <Shell><ModuleLocked name="Soul-Wallet — Ví Cá Nhân" id="soul-wallet" /></Shell>;
 
   const expCats = cats.filter((c) => c.kind === 'expense');
-  const sel = { padding: '7px 9px', borderRadius: 8, background: 'var(--s2)', border: '1px solid var(--bd)', color: 'var(--tx)', fontSize: 13 } as const;
+  const sel = { padding: '7px 9px', borderRadius: 8, background: 'var(--s2)', border: '1px solid var(--bd)', color: 'var(--txt)', fontSize: 13 } as const;
   const inp = sel;
   const btn = { padding: '8px 14px', borderRadius: 8, background: 'var(--jade)', color: '#04231f', fontWeight: 700, border: 'none', cursor: 'pointer', fontSize: 13 } as const;
   const card = { background: 'var(--s1)', border: '1px solid var(--bd)', borderRadius: 14, padding: 14 } as const;
@@ -391,7 +391,7 @@ export default function SoulWalletPage() {
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           {([['tq', 'Tổng quan'], ['so', 'Sổ tiền'], ['hu', 'Hũ & Mục tiêu'], ['no', 'Sổ nợ'], ['dk', 'Định kỳ'], ['im', 'Import sao kê']] as const).map(([k, label]) => (
             <button key={k} onClick={() => setTab(k)}
-              style={{ ...btn, background: tab === k ? 'var(--jade)' : 'var(--s2)', color: tab === k ? '#04231f' : 'var(--tx)' }}>{label}</button>
+              style={{ ...btn, background: tab === k ? 'var(--jade)' : 'var(--s2)', color: tab === k ? '#04231f' : 'var(--txt)' }}>{label}</button>
           ))}
         </div>
 
@@ -436,6 +436,7 @@ export default function SoulWalletPage() {
         {tab === 'so' && (
           <div style={{ display: 'grid', gap: 14 }}>
             <div style={{ ...card, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              <b style={{ fontSize: 13 }}>✍️ Ghi thu chi:</b>
               <select style={sel} value={fTx.kind} onChange={(e) => setFTx({ ...fTx, kind: e.target.value })}>
                 <option value="expense">Chi</option><option value="income">Thu</option>
                 <option value="refund">Hoàn</option><option value="fee">Phí</option>
@@ -475,19 +476,36 @@ export default function SoulWalletPage() {
             <div style={card}>
               <h3 style={{ marginTop: 0, fontSize: 14 }}>Giao dịch gần nhất</h3>
               {txs.length === 0 ? <EmptyState icon="coin" title="Sổ trống" sub="Ghi khoản thu/chi đầu tiên ở trên." /> : (
-                <table style={{ width: '100%', fontSize: 12.5, borderCollapse: 'collapse' }}>
-                  <thead><tr style={{ color: 'var(--mut)', textAlign: 'left' }}><th>Ngày</th><th>Số CT</th><th>Loại</th><th style={{ textAlign: 'right' }}>Số tiền</th><th>Ghi chú</th><th></th></tr></thead>
-                  <tbody>{txs.map((t) => (
-                    <tr key={t.id} style={{ borderTop: '1px solid var(--bd)' }}>
-                      <td style={{ padding: '6px 0' }}>{t.occurredAt.slice(0, 10)}</td>
-                      <td style={{ fontFamily: 'var(--fm)' }}>{t.docNo}</td>
-                      <td><span className={`chip chip-${t.status === 'reversed' ? 'mut' : t.kind === 'income' ? 'jade' : t.kind === 'transfer' ? 'sky' : 'amber'}`}>{t.status === 'draft' ? 'nháp' : t.kind}</span></td>
-                      <td style={{ textAlign: 'right', fontFamily: 'var(--fm)', fontWeight: 700 }}>{vnd(t.amount)}</td>
-                      <td style={{ color: 'var(--mut)' }}>{t.memo}</td>
-                      <td>{t.status === 'posted' && <button style={{ ...btn, background: 'var(--s2)', color: 'var(--mut)', padding: '4px 8px' }} onClick={() => reverse(t.id)}>Đảo</button>}</td>
-                    </tr>
-                  ))}</tbody>
-                </table>
+                <div style={{ display: 'grid', gap: 4 }}>
+                  {txs.map((t) => {
+                    const rev = t.status === 'reversed';
+                    const inc = t.kind === 'income' || t.kind === 'refund';
+                    const tf = t.kind === 'transfer';
+                    const icon = tf ? '🔁' : inc ? '💰' : t.kind === 'fee' ? '🧧' : '🛒';
+                    const kindVi = tf ? 'Chuyển ví' : inc ? (t.kind === 'refund' ? 'Hoàn tiền' : 'Thu') : t.kind === 'fee' ? 'Phí' : 'Chi';
+                    const accName = accs.find((a) => a.id === t.accountId)?.name ?? '';
+                    const toName = tf ? (accs.find((a) => a.id === t.counterAccountId)?.name ?? '') : '';
+                    const catName = cats.find((c) => c.id === t.categoryId)?.name ?? '';
+                    const title = t.memo || catName || kindVi;
+                    const subParts = [t.occurredAt.slice(5, 10).split('-').reverse().join('/'), tf ? `${accName} → ${toName}` : accName, !tf && catName && t.memo ? catName : ''].filter(Boolean);
+                    const amtColor = rev ? 'var(--mut)' : tf ? 'var(--sky)' : inc ? 'var(--jade)' : '#e07a5f';
+                    const sign = tf ? '' : inc ? '+' : '−';
+                    return (
+                      <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 2px', borderTop: '1px solid var(--bd)', opacity: rev ? 0.5 : 1 }}>
+                        <div style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, flexShrink: 0 }}>{icon}</div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 13.5, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{title}{rev ? ' (đã đảo)' : t.status === 'draft' ? ' (nháp)' : ''}</div>
+                          <div style={{ fontSize: 11.5, color: 'var(--mut)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{subParts.join(' · ')}</div>
+                        </div>
+                        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                          <div style={{ fontFamily: 'var(--fm)', fontWeight: 700, fontSize: 13.5, color: amtColor }}>{sign}{vnd(t.amount)}đ</div>
+                          <div style={{ fontSize: 10.5, color: 'var(--mut)' }}>{kindVi}</div>
+                        </div>
+                        {t.status === 'posted' && <button title={`Hoàn tác bút toán ${t.docNo}`} style={{ ...btn, background: 'var(--s2)', color: 'var(--mut)', padding: '4px 9px', fontSize: 11.5, flexShrink: 0 }} onClick={() => reverse(t.id)}>Hoàn tác</button>}
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </div>
           </div>
@@ -563,7 +581,7 @@ export default function SoulWalletPage() {
                       {['not_due', '0-7', '8-30', '31-60', '61-90', '90+'].map((b) => (
                         <div key={b}>
                           <div style={{ color: 'var(--mut)' }}>{b === 'not_due' ? 'chưa hạn' : b}</div>
-                          <div style={{ fontFamily: 'var(--fm)', fontWeight: 700, color: b === '90+' && Number(aging[dir][b]) > 0 ? 'var(--rose, #e5484d)' : 'var(--tx)' }}>{kbig(aging[dir][b] ?? '0')}</div>
+                          <div style={{ fontFamily: 'var(--fm)', fontWeight: 700, color: b === '90+' && Number(aging[dir][b]) > 0 ? 'var(--rose, #e5484d)' : 'var(--txt)' }}>{kbig(aging[dir][b] ?? '0')}</div>
                         </div>
                       ))}
                     </div>
