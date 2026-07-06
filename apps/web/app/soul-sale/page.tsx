@@ -85,12 +85,12 @@ export default function SoulSalePage() {
       </div>
       {msg && <div className={msg.ok ? 'toast ok' : 'toast err'} onClick={() => setMsg(null)}>{msg.t}</div>}
 
-      <div className="tabs">
-        <button className={tab === 'tq' ? 'on' : ''} onClick={() => setTab('tq')}>Tổng quan</button>
-        <button className={tab === 'kenh' ? 'on' : ''} onClick={() => setTab('kenh')}>Khách & Kênh</button>
-        <button className={tab === 'don' ? 'on' : ''} onClick={() => setTab('don')}>Đơn hàng</button>
-        <button className={tab === 'no' ? 'on' : ''} onClick={() => setTab('no')}>Công nợ</button>
-        <button className={tab === 'doisoat' ? 'on' : ''} onClick={() => setTab('doisoat')}>Đối soát</button>
+      <div className="tabs" role="tablist">
+        <button role="tab" aria-selected={tab === 'tq'} className={tab === 'tq' ? 'tab on' : 'tab'} onClick={() => setTab('tq')}>Tổng quan</button>
+        <button role="tab" aria-selected={tab === 'kenh'} className={tab === 'kenh' ? 'tab on' : 'tab'} onClick={() => setTab('kenh')}>Khách & Kênh</button>
+        <button role="tab" aria-selected={tab === 'don'} className={tab === 'don' ? 'tab on' : 'tab'} onClick={() => setTab('don')}>Đơn hàng</button>
+        <button role="tab" aria-selected={tab === 'no'} className={tab === 'no' ? 'tab on' : 'tab'} onClick={() => setTab('no')}>Công nợ</button>
+        <button role="tab" aria-selected={tab === 'doisoat'} className={tab === 'doisoat' ? 'tab on' : 'tab'} onClick={() => setTab('doisoat')}>Đối soát</button>
       </div>
 
       {tab === 'tq' && (
