@@ -72,6 +72,32 @@ function parseRows(filename: string, bytes: Uint8Array, mime = '') {
   throw Errors.validation('Loại file chưa hỗ trợ — nhận: ảnh (jpg/png/webp/gif), bảng (xlsx/csv/txt/tsv/json), pdf', 'file');
 }
 const pick = (row:any, names:string[]) => { for (const n of names) { const k = Object.keys(row).find((x)=>x.toLowerCase().trim()===n.toLowerCase()); if (k && row[k] !== '') return row[k]; } return undefined; };
+
+// Render PDF → PNG từng trang (poppler pdftoppm), trả base64. Tối đa maxPages để khỏi nặng context.
+async function renderPdfToImages(bytes: Uint8Array, maxPages = 5): Promise<string[]> {
+  const { execFile } = await import('node:child_process');
+  const { promisify } = await import('node:util');
+  const fs = await import('node:fs/promises');
+  const os = await import('node:os');
+  const path = await import('node:path');
+  const run = promisify(execFile);
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'ttpdf-'));
+  try {
+    const src = path.join(dir, 'in.pdf');
+    await fs.writeFile(src, Buffer.from(bytes));
+    // -r 150 đủ nét để OCR hoá đơn, -png, giới hạn trang
+    await run('pdftoppm', ['-png', '-r', '150', '-f', '1', '-l', String(maxPages), src, path.join(dir, 'page')], { timeout: 30000 });
+    const files = (await fs.readdir(dir)).filter((f) => f.endsWith('.png')).sort();
+    const out: string[] = [];
+    for (const f of files.slice(0, maxPages)) {
+      const b = await fs.readFile(path.join(dir, f));
+      out.push(b.toString('base64'));
+    }
+    return out;
+  } finally {
+    await fs.rm(dir, { recursive: true, force: true }).catch(() => {});
+  }
+}
 async function getFile(db:any, orgId:string, userId:string, id:string) {
   const [f] = await db.select().from(ttFiles).where(and(eq(ttFiles.id, id), eq(ttFiles.orgId, orgId), eq(ttFiles.userId, userId))).limit(1);
   if (!f) throw Errors.notFound('Không tìm thấy file'); return f;
@@ -204,24 +230,32 @@ export function buildTieuTamRoutes({ db, requireAuth = defaultRequireAuth, audit
 
 
   app.post('/files', async (c) => {
-    const auth = c.get('auth'); let filename='', mime='', bytes:Uint8Array;
+    const auth = c.get('auth'); let filename='', mime='', bytes:Uint8Array; let caption = '';
     const ct = c.req.header('content-type') || '';
     if (ct.includes('multipart/form-data')) {
       const body:any = await c.req.parseBody(); const file:any = body.file;
       if (!file) throw Errors.validation('Thiếu file upload', 'file');
       filename = file.name || 'upload.xlsx'; mime = file.type || ''; bytes = new Uint8Array(await file.arrayBuffer());
+      caption = String(body.caption || '');
     } else {
-      const b:any = await c.req.json().catch(()=>({})); filename = String(b.filename||'upload.txt'); mime = String(b.mime||'');
+      const b:any = await c.req.json().catch(()=>({})); filename = String(b.filename||'upload.txt'); mime = String(b.mime||''); caption = String(b.caption || '');
       if (!b.fileBase64) throw Errors.validation('Thiếu fileBase64', 'fileBase64'); bytes = new Uint8Array(Buffer.from(String(b.fileBase64), 'base64'));
     }
-    if (bytes.byteLength > MAX_FILE_BYTES) throw Errors.validation('File vượt quá 5MB', 'file');
-    // Caption kèm file (form field 'caption' hoặc json 'caption')
-    let caption = '';
-    if (ct.includes('multipart/form-data')) { try { const bb:any = await c.req.parseBody(); caption = String(bb.caption || ''); } catch {} }
+    if (bytes.byteLength > MAX_FILE_BYTES) throw Errors.validation('File vượt quá 8MB', 'file');
     const parsed = parseRows(filename, bytes, mime);
-    const rowsJson: any = (parsed as any).dataB64
-      ? { rows: [], dataB64: (parsed as any).dataB64, dataMime: (parsed as any).dataMime }
-      : { rows: parsed.rows };
+    let rowsJson: any;
+    if (parsed.kind === 'pdf') {
+      // Render PDF → ảnh từng trang (tối đa 5 trang) cho vision đọc — hóa đơn scan/PDF text đều đọc được.
+      const pages = await renderPdfToImages(bytes).catch((e) => { console.warn('[tieu-tam] pdf render fail', e); return [] as string[]; });
+      rowsJson = { rows: [], pdfPages: pages, dataB64: (parsed as any).dataB64, dataMime: 'application/pdf' };
+      (parsed as any).summary = pages.length
+        ? `Tài liệu PDF ${pages.length} trang — Tiểu Tâm đọc được nội dung từng trang`
+        : `Tài liệu PDF (không render được ảnh)`;
+    } else if ((parsed as any).dataB64) {
+      rowsJson = { rows: [], dataB64: (parsed as any).dataB64, dataMime: (parsed as any).dataMime };
+    } else {
+      rowsJson = { rows: parsed.rows };
+    }
     const [row] = await db.insert(ttFiles).values({ orgId:orgOf(c), userId:auth.sub, filename, mime: mime || (parsed as any).dataMime || '', kind:parsed.kind, rowsJson, summary:parsed.summary }).returning();
     // Ghi lượt chat: để Tiểu Tâm nhớ đã nhận file này trong lịch sử hội thoại.
     const userNote = caption ? `📎 ${filename} — ${caption}` : `📎 Đã gửi file: ${filename}`;
@@ -247,10 +281,10 @@ export function buildTieuTamRoutes({ db, requireAuth = defaultRequireAuth, audit
       };
     }
     // Không dùng ILIKE nguyên câu (sẽ miss) — lấy top memories, adapter tự khớp token.
-    const profile = await buildWorkProfile(db, orgId, auth.sub, { memoryLimit: 30 });
+    const profile = await buildWorkProfile(db, orgId, auth.sub, { memoryLimit: 60 });
     const engine = getEngine(profile.engine);
     // R7.6: multi-turn context — nạp ~10 lượt gần nhất để Tiểu Tâm nhớ câu trước
-    const history = await loadChatHistory(db, orgId, auth.sub, 20).catch(() => []);
+    const history = await loadChatHistory(db, orgId, auth.sub, 40).catch(() => []);
     // Ghi nhớ file vừa gửi: nạp 3 file gần nhất vào ngữ cảnh để Tiểu Tâm biết "file nào, làm gì".
     const recentFiles = await db.select().from(ttFiles)
       .where(and(eq(ttFiles.orgId, orgId), eq(ttFiles.userId, auth.sub)))
@@ -273,14 +307,18 @@ export function buildTieuTamRoutes({ db, requireAuth = defaultRequireAuth, audit
         fileCtx.push({ role: 'assistant', content: `Em đã đọc xong toàn bộ ${rows.length} dòng trong "${tableFile.filename}" và nắm rõ từng dòng rồi ạ. Mình cần em liệt kê, tính tổng, lọc hay nhập vào đâu thì cứ nói nha.` });
         fileCtx.push({ role: 'system', content: `Nhắc: bạn ĐÃ CÓ đầy đủ dữ liệu bảng ở trên. TUYỆT ĐỐI KHÔNG nói "chưa đọc được"/"chỉ thấy cấu trúc/tóm tắt" hay bảo người dùng copy/chụp lại. Đọc và tính trực tiếp trên bảng đó.` });
       }
-      // Đính ảnh vào message vision CHẈ KHI file mới nhất là ảnh (tránh lấn át khi vừa gửi bảng).
-      const img = (newest && newest.kind === 'image' && (newest.rowsJson as any)?.dataB64) ? newest : null;
-      if (img) {
-        const rj = img.rowsJson as any;
-        fileCtx.push({ role: 'user', content: [
-          { type: 'text', text: `[Ảnh đính kèm: ${img.filename}]` },
-          { type: 'image_url', image_url: { url: `data:${rj.dataMime || img.mime || 'image/png'};base64,${rj.dataB64}` } },
-        ] });
+      // Đính vật thể (ảnh, hoặc PDF đã render thành ảnh trang) vào vision — khi file mới nhất là ảnh/pdf.
+      if (newest && (newest.kind === 'image' || newest.kind === 'pdf')) {
+        const rj = newest.rowsJson as any;
+        const parts: any[] = [];
+        if (newest.kind === 'image' && rj?.dataB64) {
+          parts.push({ type: 'text', text: `[Ảnh đính kèm: ${newest.filename}]` });
+          parts.push({ type: 'image_url', image_url: { url: `data:${rj.dataMime || newest.mime || 'image/png'};base64,${rj.dataB64}` } });
+        } else if (newest.kind === 'pdf' && Array.isArray(rj?.pdfPages) && rj.pdfPages.length) {
+          parts.push({ type: 'text', text: `[PDF đính kèm: ${newest.filename} — ${rj.pdfPages.length} trang. Mỗi ảnh dưới đây là 1 trang PDF. Đọc TOÀN BỘ nội dung/chữ/bảng/số liệu trong các trang này, trả lời trực tiếp, KHÔNG nói "không đọc được PDF".]` });
+          for (const pg of rj.pdfPages.slice(0, 5)) parts.push({ type: 'image_url', image_url: { url: `data:image/png;base64,${pg}` } });
+        }
+        if (parts.length) fileCtx.push({ role: 'user', content: parts });
       }
     }
     const messages: EngineMessage[] = [

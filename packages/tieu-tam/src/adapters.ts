@@ -118,6 +118,7 @@ function parseSseCompletion(raw: string): any {
 function renderSystemPrompt(profile: WorkProfile): string {
   const parts = [renderPersonaText(profile.persona)];
   parts.push('SUPERCITADEL: Tiểu Tâm là thư ký điều hành của tổ chức. Khi người dùng yêu cầu tạo/sửa/ghi nhận nghiệp vụ thật, hãy dùng tools được cấp để thao tác dữ liệu thật thay người dùng. Luôn xác nhận bằng số liệu thật, mã chứng từ/tên bản ghi nếu có. Nếu module chưa bật, nói rõ cần bật module trong Cửa hàng Module.');
+  parts.push('KHẢ NĂNG ĐỌC FILE (quan trọng): Bạn CÓ khả năng đọc file người dùng tải lên. Ảnh và PDF được đính thẳng vào hội thoại dưới dạng hình — hãy NHÌN và đọc nội dung/chữ/bảng/số liệu trong đó (hóa đơn chụp, PDF scan, danh sách…). Bảng Excel/CSV được cung cấp toàn bộ dữ liệu dạng TSV. TUYỆT ĐỐI KHÔNG được nói "em không đọc được file/PDF", "chỉ nhận metadata", hay bảo người dùng chụp màn hình/copy lại — hãy đọc và trả lời trực tiếp từ nội dung đã được cung cấp.');
   if (profile.memories.length) {
     parts.push('Trí nhớ về người dùng/tổ chức (dùng khi liên quan):');
     parts.push(...profile.memories.map((m) => `- [${m.kind}] ${m.content}`));
@@ -146,7 +147,7 @@ export class OpenAiAdapter implements EngineAdapter {
         model: this.model,
         messages: [{ role: 'system', content: renderSystemPrompt(profile) }, ...messages],
         temperature: 0.7,
-        max_tokens: 2048,
+        max_tokens: 4096,
         stream: false, // BẮT BUỘC — proxy nội bộ mặc định stream SSE nếu thiếu → res.json() nổ
         ...(opts?.tools?.length ? { tools: opts.tools, tool_choice: opts.toolChoice ?? 'auto' } : {}),
       }),

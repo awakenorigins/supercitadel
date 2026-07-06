@@ -319,8 +319,13 @@ function TieuTamSheet({ open, onClose }: { open: boolean; onClose: () => void })
   }, [open]);
 
   async function ask(q: string, opts: { confirm?: boolean; pendingAction?: any } = {}) {
-    // Có file chờ + caption → gửi file kèm caption 1 lượt (không bắt buộc có text)
-    if (pendingFile && !opts.confirm) { const f = pendingFile; setPendingFile(null); await uploadFile(f, q.trim()); setDraft(''); return; }
+    // Có file chờ → upload trước; nếu kèm yêu cầu thì CHẠY LUÔN yêu cầu đó (không dừng ở upload).
+    if (pendingFile && !opts.confirm) {
+      const f = pendingFile; const req = q.trim(); setPendingFile(null); setDraft('');
+      await uploadFile(f, req);
+      if (req) await ask(req); // thực thi yêu cầu ngay trên file vừa gửi
+      return;
+    }
     if (!q.trim() || streaming) return;
     setDraft('');
     const rt = replyTo; setReplyTo(null);
@@ -357,8 +362,12 @@ function TieuTamSheet({ open, onClose }: { open: boolean; onClose: () => void })
       const res = await fetch(`${API}/api/v1/tieu-tam/files`, { method: 'POST', headers: { Authorization: `Bearer ${s?.jwt ?? ''}` }, body: fd });
       if (!res.ok) throw new Error(await res.text());
       const d = await res.json();
-      setMsgs((m) => [...m.slice(0, -1), { who: 'ai', text: `Đã nhận file: ${d.file.filename}\n${d.file.summary}\nEm nhớ file này rồi — nói em cần làm gì: nhập kho, thêm nhân viên, hay nhập danh bạ/hóa đơn K10A.`, suggestions: ['Nhập vào kho', 'Thêm nhân viên', 'File này có gì'] }]);
-    } catch { setMsgs((m) => [...m.slice(0, -1), { who: 'ai', text: 'Em chưa nhận được file này. Chỉ hỗ trợ .xlsx/.csv/.txt tối đa 5MB nha.' }]); }
+      // Có caption/yêu cầu → không hiện câu "nói em cần làm gì" (vì sắp xử lý luôn), chỉ báo đã nhận.
+      const ackMsg = caption
+        ? `Đã nhận: ${d.file.filename} — ${d.file.summary}`
+        : `Đã nhận file: ${d.file.filename}\n${d.file.summary}\nEm nhớ file này rồi — nói em cần làm gì: đọc nội dung, nhập kho, thêm nhân viên, hay tạo hóa đơn K10A.`;
+      setMsgs((m) => [...m.slice(0, -1), { who: 'ai', text: ackMsg, suggestions: caption ? undefined : ['File này có gì', 'Nhập vào kho', 'Tạo hóa đơn từ file'] }]);
+    } catch { setMsgs((m) => [...m.slice(0, -1), { who: 'ai', text: 'Em chưa nhận được file này. Hỗ trợ ảnh, .xlsx/.csv/.txt/.json, .pdf — tối đa 8MB nha.' }]); }
   }
 
   return (

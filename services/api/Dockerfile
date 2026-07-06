@@ -8,6 +8,8 @@ COPY modules ./modules
 RUN pnpm install --frozen-lockfile --prod=false || pnpm install --prod=false
 
 FROM node:22-slim AS run
+# poppler-utils: pdftoppm render PDF → ảnh cho vision đọc (hóa đơn scan/PDF text)
+RUN apt-get update && apt-get install -y --no-install-recommends poppler-utils && rm -rf /var/lib/apt/lists/*
 RUN corepack enable && corepack prepare pnpm@9.0.0 --activate && npm i -g tsx@4.22.4 \
     && groupadd -r app && useradd -r -g app -m -d /home/app app
 WORKDIR /app
