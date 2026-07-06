@@ -33,13 +33,8 @@ const KIND_COLOR: Record<string, string> = {
 };
 const ENGINES = [
   { v: 'gpt-5.5', label: 'GPT 5.5 🚀 (mặc định)' },
-  { v: 'opus-4.8', label: 'Claude Opus 4.8 👑 (mạnh nhất)' },
-  { v: 'opus-4.6', label: 'Claude Opus 4.6 👑' },
+  { v: 'opus-4.6', label: 'Claude Opus 4.6 👑 (mạnh nhất)' },
   { v: 'sonnet-4.6', label: 'Claude Sonnet 4.6 ⭐ (nhanh)' },
-  { v: 'stub-a', label: 'Stub A — bộ não thử nghiệm' },
-  { v: 'stub-b', label: 'Stub B — bộ não thử nghiệm' },
-  { v: 'openai', label: 'OpenAI — GPT' },
-  { v: 'anthropic', label: 'Anthropic — Claude' },
 ];
 
 // R7.7: FoxAvatar cũ thay bằng ThemedAvatar (fox/tiger/crane biến hình theo theme).

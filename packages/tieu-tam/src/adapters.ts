@@ -189,9 +189,8 @@ const ADAPTERS: Record<string, () => EngineAdapter> = {
   'sonnet-4.6': () => new OpenAiAdapter(process.env.LLM_API_KEY ?? '', process.env.LLM_MODEL ?? 'cc/claude-sonnet-4-6', process.env.LLM_BASE_URL ?? 'http://100.65.135.62:20131/v1'),
   // R7.5: động cơ thứ 2 — GPT 5.5 qua 9route (OpenAI-compatible). Key/base riêng LLM2_*, fallback dùng chung LLM_API_KEY nếu cùng router.
   'gpt-5.5': () => new OpenAiAdapter(process.env.LLM2_API_KEY ?? process.env.LLM_API_KEY ?? '', process.env.LLM2_MODEL ?? 'cx/gpt-5.5', process.env.LLM2_BASE_URL ?? 'http://100.65.135.62:20128/v1'),
-  // R11.6d: mở full model não — Opus 4.6 + 4.8 (qua cùng router LLM_*), vision + tool sẵn có.
+  // R11.6e: 3 model não — gpt-5.5 (default) · opus-4.6 · sonnet-4.6. Vision + tool sẵn có.
   'opus-4.6': () => new OpenAiAdapter(process.env.LLM_API_KEY ?? '', 'cc/claude-opus-4-6', process.env.LLM_BASE_URL ?? 'http://100.65.135.62:20131/v1'),
-  'opus-4.8': () => new OpenAiAdapter(process.env.LLM_API_KEY ?? '', 'cc/claude-opus-4-8', process.env.LLM_BASE_URL ?? 'http://100.65.135.62:20131/v1'),
   anthropic: () => new AnthropicAdapter(),
 };
 
