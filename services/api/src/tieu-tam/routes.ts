@@ -256,10 +256,25 @@ export function buildTieuTamRoutes({ db, requireAuth = defaultRequireAuth, audit
       .where(and(eq(ttFiles.orgId, orgId), eq(ttFiles.userId, auth.sub)))
       .orderBy(desc(ttFiles.createdAt)).limit(3).catch(() => []);
     const fileCtx: EngineMessage[] = [];
+    const newest = recentFiles[0];
     if (recentFiles.length) {
       fileCtx.push({ role: 'system', content: 'File người dùng đã tải lên gần đây (mới nhất trước): ' + recentFiles.map((f: any) => `"${f.filename}" (${f.kind}, id=${f.id}) — ${f.summary}`).join(' | ') + '. Khi người dùng nói "file vừa gửi/ảnh này/file trên", hiểu là file mới nhất. Bảng có thể nhập vào kho (inventory), nhân sự (hr_employees), hoặc hoá đơn K10A. Với ảnh: đọc nội dung/chữ trong ảnh (hóa đơn chụp, danh sách viết tay, số liệu…) rồi trích xuất / tạo chứng từ theo yêu cầu.' });
-      // Đính ảnh mới nhất (nếu có) vào message vision để model "nhìn" được.
-      const img = recentFiles.find((f: any) => f.kind === 'image' && (f.rowsJson as any)?.dataB64);
+      // ĐỌa full NỘI DUNG bảng của file mới nhất vào context (không chỉ tóm tắt) — để Tiểu Tâm đọc được từng dòng.
+      const tableFile = recentFiles.find((f: any) => Array.isArray((f.rowsJson as any)?.rows) && (f.rowsJson as any).rows.length);
+      if (tableFile) {
+        const rows = (tableFile.rowsJson as any).rows as any[];
+        const cols = Object.keys(rows[0] ?? {});
+        const MAXR = 200;
+        const shown = rows.slice(0, MAXR);
+        const tsv = [cols.join('\t'), ...shown.map((r) => cols.map((k) => String(r[k] ?? '')).join('\t'))].join('\n');
+        const more = rows.length > MAXR ? `\n…(còn ${rows.length - MAXR} dòng nữa, tổng ${rows.length})` : '';
+        // ĐẶT DATA DƯỚI DẠNG USER MESSAGE (mạnh hơn system + phá pattern "chưa đọc được" cũ trong lịch sử).
+        fileCtx.push({ role: 'user', content: `[Dữ liệu file đính kèm — "${tableFile.filename}", ${rows.length} dòng, bảng TSV dòng đầu là tiêu đề cột]\n${tsv}${more}` });
+        fileCtx.push({ role: 'assistant', content: `Em đã đọc xong toàn bộ ${rows.length} dòng trong "${tableFile.filename}" và nắm rõ từng dòng rồi ạ. Mình cần em liệt kê, tính tổng, lọc hay nhập vào đâu thì cứ nói nha.` });
+        fileCtx.push({ role: 'system', content: `Nhắc: bạn ĐÃ CÓ đầy đủ dữ liệu bảng ở trên. TUYỆT ĐỐI KHÔNG nói "chưa đọc được"/"chỉ thấy cấu trúc/tóm tắt" hay bảo người dùng copy/chụp lại. Đọc và tính trực tiếp trên bảng đó.` });
+      }
+      // Đính ảnh vào message vision CHẈ KHI file mới nhất là ảnh (tránh lấn át khi vừa gửi bảng).
+      const img = (newest && newest.kind === 'image' && (newest.rowsJson as any)?.dataB64) ? newest : null;
       if (img) {
         const rj = img.rowsJson as any;
         fileCtx.push({ role: 'user', content: [

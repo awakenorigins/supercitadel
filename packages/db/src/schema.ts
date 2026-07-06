@@ -130,7 +130,7 @@ export const ttSoulState = pgTable(
     userId: uuid('user_id').notNull(),
     mood: varchar('mood', { length: 24 }).notNull().default('vui'),
     energy: real('energy').notNull().default(100),
-    engine: varchar('engine', { length: 24 }).notNull().default('sonnet-4.6'),
+    engine: varchar('engine', { length: 24 }).notNull().default('gpt-5.5'),
     // V7A P3: vật phẩm decor đổi giao diện — theme lưu vào hồn (hiệu ứng thật)
     theme: varchar('theme', { length: 24 }).notNull().default('jade'),
     personaMode: varchar('persona_mode', { length: 24 }).notNull().default('friendly'),

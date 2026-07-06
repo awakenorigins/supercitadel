@@ -198,11 +198,24 @@ export function keToan10aTieuTamActions(db?: Database): K10aTieuTamAction[] {
         type: "object",
         properties: {
           tenKhach: { type: "string" },
-          soTien: { type: "number", description: "Tiền hàng chưa thuế" },
+          soTien: { type: "number", description: "Tiền hàng chưa thuế (dùng khi KHÔNG liệt kê mặt hàng)" },
+          matHang: {
+            type: "array",
+            description: "Danh sách mặt hàng chi tiết (ưu tiên nếu có) — mỗi mặt hàng: tên, số lượng, đơn giá",
+            items: {
+              type: "object",
+              properties: {
+                ten: { type: "string", description: "Tên sản phẩm/dịch vụ" },
+                soLuong: { type: "number", description: "Số lượng" },
+                donGia: { type: "number", description: "Đơn giá (VNĐ)" },
+              },
+              required: ["ten", "donGia"],
+            },
+          },
           thueSuat: { type: "string", description: "0/5/8/10, mặc định 8" },
           hanThanhToan: { type: "string", description: "YYYY-MM-DD" },
         },
-        required: ["tenKhach", "soTien"],
+        required: ["tenKhach"],
       },
       async execute(ctx, p) {
         await ensureChart(ctx);
@@ -211,11 +224,17 @@ export function keToan10aTieuTamActions(db?: Database): K10aTieuTamAction[] {
         const contact =
           (await svc.contacts.findByName(c, String(p.tenKhach))) ??
           (await svc.contacts.create(c, { name: String(p.tenKhach), type: "CUSTOMER" }));
+        // Ưu tiên matHang (chi tiết dòng) — hóa đơn đúng thực tế, không còn "form chung".
+        const lines = Array.isArray(p.matHang) && p.matHang.length
+          ? p.matHang.map((it: any) => ({ description: String(it.ten ?? "Hàng hóa/dịch vụ"), qty: Number(it.soLuong ?? 1) || 1, rate: money(it.donGia ?? 0) }))
+          : undefined;
+        if (!lines && (p.soTien === undefined || p.soTien === null))
+          throw new Error("Cần hoặc danh sách mặt hàng (matHang) hoặc tổng tiền hàng (soTien)");
         const inv = await svc.invoices.create(c, {
           docDate: today(),
           dueDate: p.hanThanhToan ? String(p.hanThanhToan) : undefined,
           contactId: contact.id,
-          subtotal: money(p.soTien),
+          ...(lines ? { lines } : { subtotal: money(p.soTien) }),
           taxRate: String(p.thueSuat ?? "8"),
           post: true,
         });
