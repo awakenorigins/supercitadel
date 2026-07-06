@@ -441,7 +441,11 @@ function TieuTamSheet({ open, onClose }: { open: boolean; onClose: () => void })
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--s1)', border: '1.5px solid var(--bd)', borderRadius: 14, padding: '7px 7px 7px 14px' }}>
             <input ref={fileRef} type="file" accept=".xlsx,.csv,.txt" style={{ display: 'none' }} onChange={(e) => { const f=e.target.files?.[0]; if (f) setPendingFile(f); e.currentTarget.value=''; }} />
             <button onClick={() => fileRef.current?.click()} aria-label="Tải file cho Tiểu Tâm" title="Tải file" style={{ width: 38, height: 38, borderRadius: 11, border: '1px solid var(--bd)', background: 'var(--s2)', color: 'var(--txt)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>📎</button>
-            <input value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && ask(draft)} placeholder={pendingFile ? 'Chú thích cho file (tùy chọn) rồi gửi…' : 'Hỏi Tiểu Tâm bất cứ điều gì…'} style={{ flex: 1, background: 'none', border: 'none', color: 'var(--txt)', fontSize: 14, outline: 'none', minWidth: 0 }} />
+            <textarea value={draft} rows={1}
+              onChange={(e) => { setDraft(e.target.value); const t = e.currentTarget; t.style.height = 'auto'; t.style.height = Math.min(t.scrollHeight, 120) + 'px'; }}
+              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ask(draft); const t = e.currentTarget; t.style.height = 'auto'; } }}
+              placeholder={pendingFile ? 'Chú thích cho file (tùy chọn) rồi gửi…' : 'Hỏi Tiểu Tâm… (Enter gửi · Shift+Enter xuống dòng)'}
+              style={{ flex: 1, background: 'none', border: 'none', color: 'var(--txt)', fontSize: 14, outline: 'none', minWidth: 0, resize: 'none', fontFamily: 'inherit', lineHeight: 1.45, maxHeight: 120, padding: '4px 0' }} />
             {/* R7.6: touch target 46px — dễ bấm trên điện thoại */}
             <button onClick={() => ask(draft)} disabled={streaming} aria-label="Gửi tin nhắn" style={{ width: 46, height: 46, borderRadius: 13, border: 'none', background: streaming ? 'var(--s3)' : 'var(--jade)', color: streaming ? 'var(--dim)' : '#04231f', display: 'grid', placeItems: 'center', flexShrink: 0, cursor: 'pointer', touchAction: 'manipulation' }}><Icon name="send" size={20} /></button>
           </div>
