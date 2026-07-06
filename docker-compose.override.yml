@@ -1,14 +1,15 @@
-# SUPERCITADEL — host riêng trên VPS (beta open access)
-# Public qua host Caddy: https://supercitadel.62.146.238.213.sslip.io
-#   /api/* → 127.0.0.1:3001 · /ws* → 127.0.0.1:3002 · / → 127.0.0.1:3000
+# SUPERCITADELLAB — host riêng sandbox trên VPS
+# Public qua host Caddy: https://supercitadellab.62.146.238.213.sslip.io
+#   /api/* → 127.0.0.1:3011 · /ws* → 127.0.0.1:3012 · / → 127.0.0.1:3010
+# Ports tách biệt hoàn toàn bản gốc (3000/3001/3002/5442/6392).
 services:
   postgres:
-    ports: !override ["127.0.0.1:5442:5432"]
+    ports: !override ["127.0.0.1:5452:5432"]
   redis:
-    ports: !override ["127.0.0.1:6392:6379"]
+    ports: !override ["127.0.0.1:6402:6379"]
   api:
-    ports: !override ["127.0.0.1:3001:3001"]
+    ports: !override ["127.0.0.1:3011:3001"]
   ws:
-    ports: !override ["127.0.0.1:3002:3002"]
+    ports: !override ["127.0.0.1:3012:3002"]
   web:
-    ports: !override ["127.0.0.1:3000:3000"]
+    ports: !override ["127.0.0.1:3010:3000"]
