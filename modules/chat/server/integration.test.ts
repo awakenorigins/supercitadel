@@ -20,6 +20,7 @@ const PORT=3731;
 const ws=startWsServer(PORT); await wait(200);
 const client=new PGlite();
 await client.exec(readFileSync(new URL('../migrations/0001_chat.sql',import.meta.url),'utf8'));
+await client.exec(readFileSync(new URL('../migrations/0002_chat_enterprise.sql',import.meta.url),'utf8'));
 const db=drizzle(client,{schema:chat}) as any;
 const realEmit=async(ev:any)=>{await fetch(`http://localhost:${PORT}/internal/publish`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(ev)});};
 const app=new Hono(); app.route('/api/v1/chat',buildChatRoutes({db,emit:realEmit,requireAuth}));

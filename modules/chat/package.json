@@ -1,11 +1,11 @@
 {
   "name": "@citadel/module-chat",
-  "version": "1.0.0",
+  "version": "2.1.0",
   "type": "module",
   "main": "./server/index.ts",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "tsx server/integration.test.ts"
+    "test": "tsx server/integration.test.ts && tsx server/v2.test.ts"
   },
   "dependencies": {
     "@citadel/core": "workspace:*",

@@ -1,0 +1,15 @@
+{
+  "round": "R7.5",
+  "status": "done",
+  "updatedAt": "2026-07-03T23:58:00+02:00",
+  "sessionKey": "agent:main:telegram:group:-1003720502853:topic:9871",
+  "phases": {
+    "bug1_widget_chat": "done — commit 74e221b. Root cause: LLM proxy trả SSE khi thiếu stream:false → res.json() nổ. Fix stream:false + parseSseCompletion fallback + FE retry/401 message. VERIFIED LIVE: POST /tieu-tam/chat small-talk → 200 mode:live trả lời thật",
+    "bug2_tutorial": "done — commit 87e4f0a. Versioned done-key id@vN (bump /modules v2) + bước tour card Module Company + tour company-wizard 4 bước (event citadel:tutorial-tour). VERIFIED LIVE playwright: /modules tour step2 = Module Company, wizard tour 1/4 hiện đúng",
+    "verify_release_migration": "done — release r7.1.0 trên GitHub ✓, migration 0009 đủ schema trong DB live ✓, POST /company-module/requests live 201 + GET 200 ✓",
+    "deploy_verify_push": "done — docker rebuild web+api Created 23:38 > commit ✓, marker chunks (tutorial-tour trong modules/page-*.js) + api (parseSseCompletion) ✓, playwright shots (shot-r75-modules-tour/wizard-tour/chat.png) ✓, push fb24fa5..5148379 master→main ✓"
+  },
+  "commits": ["74e221b", "87e4f0a", "5148379", "461f397"],
+  "bonus_gpt55": "done — commit 461f397, push 5148379..461f397. Engine 2 'gpt-5.5' qua 9route (LLM2_* env, .env untracked). VERIFIED LIVE: switch engine 200, chat gpt-5.5 mode:live trả lời thật, switch back sonnet-4.6 OK, cả 2 model sống. Docker Created 23:57 > commit 23:52 ✓",
+  "notes": "R7.5 hoàn tất 2026-07-03 + bonus GPT 5.5. Cron watcher đã tự gỡ."
+}

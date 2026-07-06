@@ -1,0 +1,21 @@
+{
+  "round": "R8",
+  "status": "done",
+  "updatedAt": "2026-07-04T02:15:00+02:00",
+  "sessionKey": "agent:main:telegram:group:-1003720502853:topic:9871",
+  "directives": {
+    "inventory": "KHÔNG ĐỤNG — anh Nấng tự build module kho riêng (đã tuân thủ: 0 file inventory bị sửa).",
+    "module_loader": "R9: FULL tự động + STRICT validate — sai chuẩn manifest = từ chối nạp."
+  },
+  "phases": {
+    "p1_ci_fix": "done — bỏ with:{version:9}, CI run 21 (sha 45cbe2f) conclusion SUCCESS trên GitHub",
+    "p2_cors_lock": "done — allowlist CORS_ORIGIN, verified live: good origin được ACAO đúng, evil origin bị block",
+    "p3_compose_prod": "done — docker-compose.prod.yml (DB/Redis không expose, 127.0.0.1 bind) + fail-fast env + live đổi DB password thật + NODE_ENV=production + CORS_ORIGIN set. docker ps xác nhận 5432/6379 không còn publish",
+    "p4_docs_cleanup": "done — .env.example sạch 'Citadel V2', DEPLOY.md production-first, SECURITY.md + RELEASE_CHECKLIST.md mới",
+    "p5_verify_live": "done — site 200, login 200, chat mode:live, CORS test PASS cả allow lẫn block (verify-r8.py)"
+  },
+  "commits": ["45cbe2f"],
+  "release": "https://github.com/NachaFromMars/supercitadel/releases/tag/r8.0.0",
+  "next": "R8.5 = RBAC permission registry (module.resource.action) + securityLevel + dry-run action Tiểu Tâm. R9 = Module Loader FULL strict. R10 = outbox (nền cho module kho anh Nấng cắm vào).",
+  "notes": "R8 hoàn tất 2026-07-04 02:15. Watcher tự gỡ."
+}

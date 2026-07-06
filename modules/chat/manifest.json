@@ -1,11 +1,11 @@
 {
   "id": "chat",
   "name": "Nhắn Tin",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "tier": "core",
   "priceOm": 0,
   "icon": "i-chat",
-  "description": "Chat nội bộ real-time, nhóm, file.",
+  "description": "Chat nội bộ real-time chuẩn doanh nghiệp: nhóm, phòng ban, reply, reaction, ghim, file, tìm kiếm, compliance.",
   "permissions": [
     "chat.message.read",
     "chat.message.create",

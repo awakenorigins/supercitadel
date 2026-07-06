@@ -19,7 +19,7 @@ import { subscribeOutbox, type OutboxHandler } from '../outbox.js';
 type Deps = { db:any; requireAuth:MiddlewareHandler; requireModule:(db:any,id:string)=>MiddlewareHandler; audit?:any; sensitiveGate?:any; cancelGate?:any };
 type Builder = (deps: Deps) => Hono;
 const builders: Record<string, Builder> = {
-  chat: (d) => buildChatRoutes({ db:d.db, emit: publishEvent, requireAuth:d.requireAuth }),
+  chat: (d) => buildChatRoutes({ db:d.db, emit: publishEvent, requireAuth:d.requireAuth, audit:d.audit }),
   notification: (d) => buildNotificationRoutes({ db:d.db, requireAuth:d.requireAuth }),
   crm: (d) => buildCrmRoutes({ db:d.db, requireAuth:d.requireAuth, gate:d.requireModule(d.db,'crm') } as any),
   om: (d) => buildOmRoutes({ db:d.db, requireAuth:d.requireAuth, audit:d.audit, sensitiveGate:d.sensitiveGate }),

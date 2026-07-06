@@ -41,10 +41,10 @@ export async function listMessages(db: DB, orgId: string, userId: string, roomId
     .orderBy(desc(chatMessages.createdAt)).limit(limit);
 }
 
-export async function sendMessage(db: DB, orgId: string, userId: string, roomId: string, body: string) {
+export async function sendMessage(db: DB, orgId: string, userId: string, roomId: string, body: string, replyToId?: string) {
   if (!body.trim()) throw Errors.validation('Nội dung trống', 'body');
   await assertMember(db, roomId, userId, orgId);
-  const [msg] = await db.insert(chatMessages).values({ roomId, orgId, senderId: userId, body }).returning();
+  const [msg] = await db.insert(chatMessages).values({ roomId, orgId, senderId: userId, body, ...(replyToId ? { replyToId } : {}) }).returning();
   await db.update(chatRooms).set({ lastMessageAt: new Date() }).where(eq(chatRooms.id, roomId));
   return msg;
 }

@@ -2,6 +2,7 @@
 import { Hono, type MiddlewareHandler } from 'hono';
 import { AppError, WsEventType, type WsEvent, type JwtPayload } from '@citadel/core';
 import { createRoom, listRooms, listMessages, sendMessage, markRead } from './service.js';
+import { mountChatV2Routes } from './routes-v2.js';
 
 type Emit = (ev: WsEvent) => Promise<void> | void;
 
@@ -13,7 +14,7 @@ declare module 'hono' {
 type Mw = MiddlewareHandler;
 const orgOf = (c: any): string => (c.get('auth') as JwtPayload).orgId;
 
-export function buildChatRoutes(deps: { db: any; emit?: Emit; requireAuth: Mw }) {
+export function buildChatRoutes(deps: { db: any; emit?: Emit; requireAuth: Mw; audit?: (c: any, e: { action: string; resource?: string; resourceId?: string; detail?: unknown }) => Promise<void> }) {
   const chat = new Hono();
 
   chat.onError((err, c) => {
@@ -52,7 +53,7 @@ export function buildChatRoutes(deps: { db: any; emit?: Emit; requireAuth: Mw })
     const auth = c.get('auth') as JwtPayload;
     const roomId = c.req.param('id');
     const body = await c.req.json().catch(() => ({}));
-    const msg = await sendMessage(deps.db, orgOf(c), auth.sub, roomId, String(body.body ?? ''));
+    const msg = await sendMessage(deps.db, orgOf(c), auth.sub, roomId, String(body.body ?? ''), body.replyToId ? String(body.replyToId) : undefined);
     const ev: WsEvent = {
       type: WsEventType.CHAT_MESSAGE,
       orgId: orgOf(c),
@@ -68,6 +69,9 @@ export function buildChatRoutes(deps: { db: any; emit?: Emit; requireAuth: Mw })
     const auth = c.get('auth') as JwtPayload;
     return c.json(await markRead(deps.db, orgOf(c), auth.sub, c.req.param('id')));
   });
+
+  // R11.5 enterprise: unread/search/room-mgmt/reaction/pin/edit/recall/file/typing/dept-sync/read-all
+  mountChatV2Routes(chat, { db: deps.db, emit: deps.emit, audit: deps.audit });
 
   return chat;
 }

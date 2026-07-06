@@ -217,3 +217,13 @@
 - Phase C: Tutorial có nút `← Quay lại`; tour /ke-toan-10a full coverage theo nhóm chức năng; anchors K10A verified không thiếu.
 - Phase D live: deploy compose api/web PASS, migration 0012 applied (`tt_files` tồn tại); `scripts/verify-r111.py` live PASS 14/14; regression `verify-r11.py` PASS 26/26; `verify-r85.py` PASS 7/7; screenshots committed: `shots/r111-k10a-tour-back.png`, `shots/r111-tieu-tam-paperclip.png`.
 - Release: v11.1.0 https://github.com/NachaFromMars/supercitadel/releases/tag/v11.1.0 · CI SUCCESS https://github.com/NachaFromMars/supercitadel/actions/runs/28736245357 · HEAD f1fd74b8260c781d0ed838b9dcdc0c3b8af610d4.
+
+## Mạch R11.5 — Chat Enterprise full upgrade (06/07/2026)
+- Backup: tag backup-before-chat-enterprise.
+- Schema v2 (migration 0002_chat_enterprise.sql, idempotent): rooms kind (direct/group/department/announcement) + department_id; member role (member/admin phòng); messages reply_to_id/deleted_at/kind; bảng mới chat_pins + chat_attachments (base64 ≤5MB).
+- API v2 (routes-v2.ts + service-v2.ts mount vào buildChatRoutes): unread badge, search, rename phòng, quản lý thành viên + role admin phòng, reaction toggle, ghim, sửa/thu hồi tin, gửi/tải file (chặn .exe và loại nguy hiểm), typing WS, departments/sync đồng bộ channel từ Soul-Manager (manager+), read-all compliance /admin/rooms + /admin/rooms/:id/messages CHỈ owner/super_admin và MỌI lượt xem ghi audit log.
+- FE /chat viết lại (+328 dòng): reply, reaction, pin, sửa/thu hồi, file, unread badge, typing, search.
+- Gates: module v2.test PASS toàn bộ · pnpm -r test XANH · typecheck 0 · manifest 10/10 · docs 10/10 · buttons 0 chết · secret 0/335 · web build 0 lỗi (/chat trong build).
+- Live: migration 0002 applied (6 bảng chat_*), docker rebuild api+web healthy, loader "Nạp 10 module · Từ chối 0", scripts/verify-rchat.py PASS 15 bước end-to-end trên live (room→message→reply→unread→search→reaction→pin→edit→recall→file up/down→chặn .exe→typing→members→FE /chat 200→cleanup).
+- Version: module chat 1.0.0/2.0.0 → 2.1.0, GUIDE.md cập nhật đủ bảng endpoint mới.
+- Acc Super Admin cho anh Nấng: user role super_admin trong org dùng thử, login token 13 ký tự (argon2) — đã test login live OK.
