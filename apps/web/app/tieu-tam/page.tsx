@@ -212,7 +212,7 @@ export default function TieuTamPage() {
           <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.1em', color: 'var(--faint)', textTransform: 'uppercase', padding: '0 4px 8px' }}>File đã tải lên</div>
           <div className="card" style={{ borderRadius: 16, overflow: 'hidden' }}>
             {files === null && <div style={{ padding: 12 }}><div className="skel" style={{ height: 44 }} /></div>}
-            {files?.length === 0 && <div style={{ padding: '18px 16px', color: 'var(--mut)', fontSize: 12.5 }}>Chưa có file. Bấm 📎 trong khung chat để tải .xlsx/.csv/.txt cho Tiểu Tâm xử lý.</div>}
+            {files?.length === 0 && <div style={{ padding: '18px 16px', color: 'var(--mut)', fontSize: 12.5 }}>Chưa có file. Bấm 📎 trong khung chat để tải ảnh (hóa đơn chụp, danh sách), bảng .xlsx/.csv/.txt/.json hoặc .pdf — Tiểu Tâm đọc được cả chữ trong ảnh.</div>}
             {files?.map((f, i) => (
               <div key={f.id} style={{ padding: '12px 14px', borderBottom: i < files.length - 1 ? '1px solid var(--line)' : 'none' }}>
                 <div style={{ display:'flex', gap:8, alignItems:'center' }}><span>📎</span><b style={{ fontSize:13 }}>{f.filename}</b><span className="mono" style={{ marginLeft:'auto', color:'var(--mut)', fontSize:10 }}>{f.kind}</span></div>

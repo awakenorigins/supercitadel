@@ -439,7 +439,7 @@ function TieuTamSheet({ open, onClose }: { open: boolean; onClose: () => void })
             </div>
           )}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--s1)', border: '1.5px solid var(--bd)', borderRadius: 14, padding: '7px 7px 7px 14px' }}>
-            <input ref={fileRef} type="file" accept=".xlsx,.csv,.txt" style={{ display: 'none' }} onChange={(e) => { const f=e.target.files?.[0]; if (f) setPendingFile(f); e.currentTarget.value=''; }} />
+            <input ref={fileRef} type="file" accept=".xlsx,.csv,.txt,.tsv,.json,.pdf,.jpg,.jpeg,.png,.webp,.gif,image/*" style={{ display: 'none' }} onChange={(e) => { const f=e.target.files?.[0]; if (f) setPendingFile(f); e.currentTarget.value=''; }} />
             <button onClick={() => fileRef.current?.click()} aria-label="Tải file cho Tiểu Tâm" title="Tải file" style={{ width: 38, height: 38, borderRadius: 11, border: '1px solid var(--bd)', background: 'var(--s2)', color: 'var(--txt)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>📎</button>
             <textarea value={draft} rows={1}
               onChange={(e) => { setDraft(e.target.value); const t = e.currentTarget; t.style.height = 'auto'; t.style.height = Math.min(t.scrollHeight, 120) + 'px'; }}

@@ -29,8 +29,12 @@ async function loadChatHistory(db: any, orgId: string, userId: string, limit = 2
   return rows.reverse();
 }
 
-const MAX_FILE_BYTES = 5 * 1024 * 1024;
-const allowedExt = new Set(['.xlsx', '.csv', '.txt']);
+const MAX_FILE_BYTES = 8 * 1024 * 1024; // 8MB (ảnh hóa đơn chụp thường 2-5MB)
+const tabularExt = new Set(['.xlsx', '.csv', '.txt', '.tsv']);
+const imageExt = new Set(['.jpg', '.jpeg', '.png', '.webp', '.gif']);
+const docExt = new Set(['.pdf', '.md', '.json']);
+const blockedExt = new Set(['.exe', '.bat', '.cmd', '.sh', '.com', '.msi', '.scr', '.dll', '.js', '.vbs', '.ps1']);
+const imageMime: Record<string, string> = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp', '.gif': 'image/gif' };
 function extOf(filename: string) { const m = /\.[^.]+$/.exec(filename.toLowerCase()); return m?.[0] ?? ''; }
 function parseDelimited(text: string) {
   const lines = text.split(/\r?\n/).filter(Boolean).slice(0, 501);
@@ -38,17 +42,34 @@ function parseDelimited(text: string) {
   const headers = (lines.shift() ?? '').split(sep).map((h) => h.trim());
   return lines.map((ln) => Object.fromEntries(ln.split(sep).map((v, i) => [headers[i] || `col${i+1}`, v.trim()])));
 }
-function parseRows(filename: string, bytes: Uint8Array) {
+function parseRows(filename: string, bytes: Uint8Array, mime = '') {
   const ext = extOf(filename);
-  if (!allowedExt.has(ext)) throw Errors.validation('File không hỗ trợ — chỉ nhận .xlsx, .csv, .txt', 'file');
-  let rows: any[] = [];
-  if (ext === '.xlsx') {
-    const wb = XLSX.read(bytes, { type: 'array' });
-    const ws = wb.Sheets[wb.SheetNames[0]];
-    rows = XLSX.utils.sheet_to_json(ws, { defval: '' }).slice(0, 500) as any[];
-  } else rows = parseDelimited(new TextDecoder().decode(bytes)).slice(0, 500);
-  const cols = Object.keys(rows[0] ?? {});
-  return { kind: ext.slice(1), rows, summary: `${rows.length} dòng, cột: ${cols.join(', ') || 'không có'}` };
+  if (blockedExt.has(ext)) throw Errors.validation('Loại file này bị chặn vì an toàn', 'file');
+  // ẢNH — lưu base64, Tiểu Tâm "nhìn" bằng vision của model não.
+  if (imageExt.has(ext) || (mime || '').startsWith('image/')) {
+    const m = imageMime[ext] || mime || 'image/png';
+    const dataB64 = Buffer.from(bytes).toString('base64');
+    return { kind: 'image', rows: [], dataB64, dataMime: m, summary: `Ảnh ${ext.slice(1) || 'image'} (${Math.round(bytes.byteLength / 1024)}KB) — Tiểu Tâm đọc được nội dung/chữ trong ảnh` };
+  }
+  // PDF — lưu base64 (để về sau OCR/vision); trước mắt báo đã nhận.
+  if (ext === '.pdf' || (mime || '') === 'application/pdf') {
+    const dataB64 = Buffer.from(bytes).toString('base64');
+    return { kind: 'pdf', rows: [], dataB64, dataMime: 'application/pdf', summary: `Tài liệu PDF (${Math.round(bytes.byteLength / 1024)}KB)` };
+  }
+  // BẢNG — xlsx/csv/txt/tsv/json/md
+  if (tabularExt.has(ext) || docExt.has(ext)) {
+    let rows: any[] = [];
+    if (ext === '.xlsx') {
+      const wb = XLSX.read(bytes, { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      rows = XLSX.utils.sheet_to_json(ws, { defval: '' }).slice(0, 500) as any[];
+    } else if (ext === '.json') {
+      try { const j = JSON.parse(new TextDecoder().decode(bytes)); rows = Array.isArray(j) ? j.slice(0, 500) : [j]; } catch { rows = []; }
+    } else rows = parseDelimited(new TextDecoder().decode(bytes)).slice(0, 500);
+    const cols = Object.keys(rows[0] ?? {});
+    return { kind: ext.slice(1) || 'txt', rows, summary: `${rows.length} dòng, cột: ${cols.join(', ') || 'không có'}` };
+  }
+  throw Errors.validation('Loại file chưa hỗ trợ — nhận: ảnh (jpg/png/webp/gif), bảng (xlsx/csv/txt/tsv/json), pdf', 'file');
 }
 const pick = (row:any, names:string[]) => { for (const n of names) { const k = Object.keys(row).find((x)=>x.toLowerCase().trim()===n.toLowerCase()); if (k && row[k] !== '') return row[k]; } return undefined; };
 async function getFile(db:any, orgId:string, userId:string, id:string) {
@@ -197,8 +218,11 @@ export function buildTieuTamRoutes({ db, requireAuth = defaultRequireAuth, audit
     // Caption kèm file (form field 'caption' hoặc json 'caption')
     let caption = '';
     if (ct.includes('multipart/form-data')) { try { const bb:any = await c.req.parseBody(); caption = String(bb.caption || ''); } catch {} }
-    const parsed = parseRows(filename, bytes);
-    const [row] = await db.insert(ttFiles).values({ orgId:orgOf(c), userId:auth.sub, filename, mime, kind:parsed.kind, rowsJson:{ rows:parsed.rows }, summary:parsed.summary }).returning();
+    const parsed = parseRows(filename, bytes, mime);
+    const rowsJson: any = (parsed as any).dataB64
+      ? { rows: [], dataB64: (parsed as any).dataB64, dataMime: (parsed as any).dataMime }
+      : { rows: parsed.rows };
+    const [row] = await db.insert(ttFiles).values({ orgId:orgOf(c), userId:auth.sub, filename, mime: mime || (parsed as any).dataMime || '', kind:parsed.kind, rowsJson, summary:parsed.summary }).returning();
     // Ghi lượt chat: để Tiểu Tâm nhớ đã nhận file này trong lịch sử hội thoại.
     const userNote = caption ? `📎 ${filename} — ${caption}` : `📎 Đã gửi file: ${filename}`;
     const aiNote = `Đã nhận file "${filename}" (${parsed.kind}). ${parsed.summary}`;
@@ -231,9 +255,19 @@ export function buildTieuTamRoutes({ db, requireAuth = defaultRequireAuth, audit
     const recentFiles = await db.select().from(ttFiles)
       .where(and(eq(ttFiles.orgId, orgId), eq(ttFiles.userId, auth.sub)))
       .orderBy(desc(ttFiles.createdAt)).limit(3).catch(() => []);
-    const fileCtx = recentFiles.length
-      ? [{ role: 'system' as const, content: 'File người dùng đã tải lên gần đây (mới nhất trước): ' + recentFiles.map((f: any) => `"${f.filename}" (${f.kind}, id=${f.id}) — ${f.summary}`).join(' | ') + '. Khi người dùng nói "file vừa gửi/file này/file trên", hiểu là file mới nhất. Có thể nhập vào kho (inventory), nhân sự (hr_employees), hoặc hoá đơn K10A tùy nội dung.' }]
-      : [];
+    const fileCtx: EngineMessage[] = [];
+    if (recentFiles.length) {
+      fileCtx.push({ role: 'system', content: 'File người dùng đã tải lên gần đây (mới nhất trước): ' + recentFiles.map((f: any) => `"${f.filename}" (${f.kind}, id=${f.id}) — ${f.summary}`).join(' | ') + '. Khi người dùng nói "file vừa gửi/ảnh này/file trên", hiểu là file mới nhất. Bảng có thể nhập vào kho (inventory), nhân sự (hr_employees), hoặc hoá đơn K10A. Với ảnh: đọc nội dung/chữ trong ảnh (hóa đơn chụp, danh sách viết tay, số liệu…) rồi trích xuất / tạo chứng từ theo yêu cầu.' });
+      // Đính ảnh mới nhất (nếu có) vào message vision để model "nhìn" được.
+      const img = recentFiles.find((f: any) => f.kind === 'image' && (f.rowsJson as any)?.dataB64);
+      if (img) {
+        const rj = img.rowsJson as any;
+        fileCtx.push({ role: 'user', content: [
+          { type: 'text', text: `[Ảnh đính kèm: ${img.filename}]` },
+          { type: 'image_url', image_url: { url: `data:${rj.dataMime || img.mime || 'image/png'};base64,${rj.dataB64}` } },
+        ] });
+      }
+    }
     const messages: EngineMessage[] = [
       ...fileCtx,
       ...history.map((h: any) => ({ role: h.role as 'user' | 'assistant', content: h.content })),

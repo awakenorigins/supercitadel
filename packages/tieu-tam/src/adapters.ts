@@ -8,7 +8,9 @@ import { detectIntent } from './intent.js';
 import { CANNED, type ChatContext } from './canned.js';
 import { answerFromDocs } from './docs.js';
 
-export interface EngineMessage { role: 'system' | 'user' | 'assistant' | 'tool'; content: string; tool_call_id?: string; name?: string; tool_calls?: any[] }
+// content có thể là string hoặc mảng multimodal (OpenAI vision: {type:'text'|'image_url'}) — cho phép Tiểu Tâm "nhìn" ảnh.
+export type MessageContent = string | Array<{ type: 'text'; text: string } | { type: 'image_url'; image_url: { url: string } }>;
+export interface EngineMessage { role: 'system' | 'user' | 'assistant' | 'tool'; content: MessageContent; tool_call_id?: string; name?: string; tool_calls?: any[] }
 
 export interface EngineAdapter {
   /** Tên engine — vd 'stub-a', 'stub-b', 'openai', 'anthropic'. */
