@@ -271,7 +271,24 @@ export default function SoulWalletPage() {
   const [impPreset, setImpPreset] = useState('vcb');
   const [impAcc, setImpAcc] = useState('');
 
+  const [fAcc, setFAcc] = useState({ name: '', type: 'cash', opening_balance: '' });
+  const addAcc = async () => {
+    if (!fAcc.name) { flash('Nhập tên ví trước nhé', false); return; }
+    try {
+      await api(`${B}/accounts`, { method: 'POST', body: JSON.stringify({ name: fAcc.name, type: fAcc.type, opening_balance: fAcc.opening_balance || '0' }) });
+      flash(`Đã tạo ví ${fAcc.name}`); setFAcc({ name: '', type: 'cash', opening_balance: '' }); loadBase();
+    } catch (e) { guard(e); }
+  };
+  const [fNewGoal, setFNewGoal] = useState({ name: '', target: '' });
+  const addGoal = async () => {
+    if (!fNewGoal.name || !fNewGoal.target) { flash('Nhập tên hũ + số tiền mục tiêu', false); return; }
+    try {
+      await api(`${B}/goals`, { method: 'POST', body: JSON.stringify({ name: fNewGoal.name, target: fNewGoal.target }) });
+      flash(`Đã tạo hũ ${fNewGoal.name}`); setFNewGoal({ name: '', target: '' }); loadTab('hu');
+    } catch (e) { guard(e); }
+  };
   const submitTx = async () => {
+    if (!fTx.amount || !fTx.account_id) { flash(accs.length ? 'Nhập số tiền + chọn ví đã nhé' : 'Chưa có ví nào — tạo ví mới ở thẻ bên dưới trước', false); return; }
     try {
       const r = await api<{ data: { docNo: string } }>(`${B}/transactions`, {
         method: 'POST',
@@ -282,6 +299,8 @@ export default function SoulWalletPage() {
     } catch (e) { guard(e); }
   };
   const submitTf = async () => {
+    if (!fTf.from || !fTf.to || !fTf.amount) { flash(accs.length >= 2 ? 'Chọn ví nguồn + ví đích + số tiền' : 'Cần ít nhất 2 ví để chuyển — tạo thêm ví ở thẻ dưới', false); return; }
+    if (fTf.from === fTf.to) { flash('Ví nguồn và ví đích phải khác nhau', false); return; }
     try {
       await api(`${B}/transfer`, { method: 'POST', body: JSON.stringify({ occurred_at: nowIso(), from_account_id: fTf.from, to_account_id: fTf.to, amount: fTf.amount }) });
       flash(`Đã chuyển ${vnd(fTf.amount)}đ giữa 2 ví`); setFTf({ from: '', to: '', amount: '' }); loadTab('so'); loadBase();
@@ -291,30 +310,35 @@ export default function SoulWalletPage() {
     try { await api(`${B}/transactions/reverse`, { method: 'POST', body: JSON.stringify({ id }) }); flash('Đã đảo bút toán'); loadTab('so'); loadBase(); } catch (e) { guard(e); }
   };
   const applyJars = async () => {
+    if (!fJar) { flash('Nhập thu nhập tháng trước đã (VD: 20000000)', false); return; }
     try {
       await api(`${B}/budgets/six-jars`, { method: 'POST', body: JSON.stringify({ monthly_income: fJar }) });
       flash('Đã chia 6 Hũ'); setFJar(''); loadTab('hu');
     } catch (e) { guard(e); }
   };
   const contribute = async () => {
+    if (!fGoal.goal_id || !fGoal.amount) { flash(goals.length ? 'Chọn hũ + nhập số tiền nạp' : 'Chưa có hũ mục tiêu — tạo hũ ngay bên dưới trước', false); return; }
     try {
       await api(`${B}/goals/contribute`, { method: 'POST', body: JSON.stringify({ goal_id: fGoal.goal_id, amount: fGoal.amount, from_account_id: fGoal.from || undefined }) });
       flash('Đã nạp hũ mục tiêu'); setFGoal({ goal_id: '', amount: '', from: '' }); loadTab('hu'); loadBase();
     } catch (e) { guard(e); }
   };
   const addDebt = async () => {
+    if (!fDebt.contact_name || !fDebt.principal) { flash('Nhập tên người nợ/chủ nợ + số tiền gốc', false); return; }
     try {
       await api(`${B}/debts`, { method: 'POST', body: JSON.stringify({ ...fDebt, start_date: today(), due_date: fDebt.due_date || undefined, account_id: fDebt.account_id || undefined }) });
       flash('Đã ghi khoản nợ'); setFDebt({ contact_name: '', direction: 'receivable', principal: '', due_date: '', account_id: '' }); loadTab('no'); loadBase();
     } catch (e) { guard(e); }
   };
   const payDebt = async () => {
+    if (!fPay.debt_id || !fPay.amount) { flash('Chọn khoản nợ + nhập số tiền', false); return; }
     try {
       await api(`${B}/debts/pay`, { method: 'POST', body: JSON.stringify({ debt_id: fPay.debt_id, amount: fPay.amount, paid_at: today(), account_id: fPay.account_id || undefined }) });
       flash('Đã ghi trả/thu nợ'); setFPay({ debt_id: '', amount: '', account_id: '' }); loadTab('no'); loadBase();
     } catch (e) { guard(e); }
   };
   const addRecur = async () => {
+    if (!fRec.name || !fRec.amount || !fRec.account_id) { flash('Nhập tên + số tiền + chọn ví cho khoản định kỳ', false); return; }
     try {
       await api(`${B}/recurring`, { method: 'POST', body: JSON.stringify({ ...fRec, kind: 'subscription', interval_n: 1, active: true }) });
       flash('Đã lưu khoản định kỳ'); loadTab('dk');
@@ -424,7 +448,7 @@ export default function SoulWalletPage() {
               <select style={sel} value={fTx.category_id} onChange={(e) => setFTx({ ...fTx, category_id: e.target.value })}>
                 <option value="">— Danh mục —</option>{(fTx.kind === 'income' ? cats.filter((c) => c.kind === 'income') : expCats).map((c) => <option key={c.id} value={c.id}>{c.parentId ? '· ' : ''}{c.name}</option>)}
               </select>
-              <button style={btn} onClick={submitTx} disabled={!fTx.amount || !fTx.account_id}>Ghi sổ</button>
+              <button style={btn} onClick={submitTx}>Ghi sổ</button>
             </div>
             <div style={{ ...card, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
               <b style={{ fontSize: 13 }}>Chuyển ví:</b>
@@ -435,7 +459,18 @@ export default function SoulWalletPage() {
                 <option value="">— Đến —</option>{accs.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
               </select>
               <input style={inp} placeholder="Số tiền" value={fTf.amount} onChange={(e) => setFTf({ ...fTf, amount: e.target.value })} />
-              <button style={btn} onClick={submitTf} disabled={!fTf.from || !fTf.to || !fTf.amount}>Chuyển</button>
+              <button style={btn} onClick={submitTf}>Chuyển</button>
+            </div>
+            <div style={{ ...card, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              <b style={{ fontSize: 13 }}>➕ Tạo ví mới:</b>
+              <input style={inp} placeholder="Tên ví (VD: Tiền mặt)" value={fAcc.name} onChange={(e) => setFAcc({ ...fAcc, name: e.target.value })} />
+              <select style={sel} value={fAcc.type} onChange={(e) => setFAcc({ ...fAcc, type: e.target.value })}>
+                <option value="cash">Tiền mặt</option><option value="bank">Ngân hàng</option><option value="ewallet">Ví điện tử</option>
+                <option value="credit_card">Thẻ tín dụng</option><option value="savings">Tiết kiệm</option><option value="investment">Đầu tư</option>
+              </select>
+              <input style={inp} placeholder="Số dư đầu (VD: 500000)" value={fAcc.opening_balance} onChange={(e) => setFAcc({ ...fAcc, opening_balance: e.target.value })} />
+              <button style={btn} onClick={addAcc}>Tạo ví</button>
+              {accs.length === 0 && <span style={{ fontSize: 11.5, color: 'var(--amber, #d9a441)' }}>Chưa có ví nào — tạo ví trước rồi mới ghi sổ được nha</span>}
             </div>
             <div style={card}>
               <h3 style={{ marginTop: 0, fontSize: 14 }}>Giao dịch gần nhất</h3>
@@ -463,7 +498,7 @@ export default function SoulWalletPage() {
             <div style={{ ...card, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
               <b style={{ fontSize: 13 }}>Chia 6 Hũ từ thu nhập tháng:</b>
               <input style={inp} placeholder="VD: 20000000" value={fJar} onChange={(e) => setFJar(e.target.value)} />
-              <button style={btn} onClick={applyJars} disabled={!fJar}>Áp 6 Hũ</button>
+              <button style={btn} onClick={applyJars}>Áp 6 Hũ</button>
               <span style={{ fontSize: 11.5, color: 'var(--mut)' }}>NEC 55 · FFA 10 · EDU 10 · LTS 10 · PLAY 10 · GIVE 5</span>
             </div>
             <div style={{ ...card, display: 'grid', gap: 12 }}>
@@ -473,6 +508,7 @@ export default function SoulWalletPage() {
             </div>
             <div style={{ ...card, display: 'grid', gap: 10 }}>
               <h3 style={{ margin: 0, fontSize: 14 }}>Hũ mục tiêu</h3>
+              {goals.length === 0 && <EmptyState icon="coin" title="Chưa có hũ mục tiêu" sub="Tạo hũ mới ngay bên dưới (VD: Mua xe — 50 triệu)." />}
               {goals.map((g) => (
                 <div key={g.id} style={{ display: 'grid', gap: 3 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5 }}>
@@ -492,7 +528,13 @@ export default function SoulWalletPage() {
                 <select style={sel} value={fGoal.from} onChange={(e) => setFGoal({ ...fGoal, from: e.target.value })}>
                   <option value="">— Trừ từ ví (tùy chọn) —</option>{accs.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
                 </select>
-                <button style={btn} onClick={contribute} disabled={!fGoal.goal_id || !fGoal.amount}>Nạp hũ</button>
+                <button style={btn} onClick={contribute}>Nạp hũ</button>
+              </div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', borderTop: '1px solid var(--bd)', paddingTop: 10 }}>
+                <b style={{ fontSize: 13 }}>➕ Tạo hũ mới:</b>
+                <input style={inp} placeholder="Tên hũ (VD: Mua xe)" value={fNewGoal.name} onChange={(e) => setFNewGoal({ ...fNewGoal, name: e.target.value })} />
+                <input style={inp} placeholder="Mục tiêu (VD: 50000000)" value={fNewGoal.target} onChange={(e) => setFNewGoal({ ...fNewGoal, target: e.target.value })} />
+                <button style={btn} onClick={addGoal}>Tạo hũ</button>
               </div>
             </div>
           </div>
@@ -510,7 +552,7 @@ export default function SoulWalletPage() {
               <select style={sel} value={fDebt.account_id} onChange={(e) => setFDebt({ ...fDebt, account_id: e.target.value })}>
                 <option value="">— Ví dòng tiền (tùy chọn) —</option>{accs.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
               </select>
-              <button style={btn} onClick={addDebt} disabled={!fDebt.contact_name || !fDebt.principal}>Ghi nợ</button>
+              <button style={btn} onClick={addDebt}>Ghi nợ</button>
             </div>
             {aging && (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 14 }}>
@@ -554,7 +596,7 @@ export default function SoulWalletPage() {
                 <select style={sel} value={fPay.account_id} onChange={(e) => setFPay({ ...fPay, account_id: e.target.value })}>
                   <option value="">— Ví dòng tiền (tùy chọn) —</option>{accs.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
                 </select>
-                <button style={btn} onClick={payDebt} disabled={!fPay.debt_id || !fPay.amount}>Ghi trả/thu</button>
+                <button style={btn} onClick={payDebt}>Ghi trả/thu</button>
               </div>
             </div>
           </div>
@@ -576,7 +618,7 @@ export default function SoulWalletPage() {
               <label style={{ fontSize: 12.5, display: 'flex', gap: 4, alignItems: 'center' }}>
                 <input type="checkbox" checked={fRec.auto_post} onChange={(e) => setFRec({ ...fRec, auto_post: e.target.checked })} /> tự ghi
               </label>
-              <button style={btn} onClick={addRecur} disabled={!fRec.name || !fRec.amount || !fRec.account_id}>Lưu định kỳ</button>
+              <button style={btn} onClick={addRecur}>Lưu định kỳ</button>
               <button style={{ ...btn, background: 'var(--sky)' }} onClick={runRecur}>Chạy kỳ đến hạn</button>
             </div>
             <div style={card}>
