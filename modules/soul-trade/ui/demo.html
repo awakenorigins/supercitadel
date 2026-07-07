@@ -102,15 +102,223 @@
   .toast.show{opacity:1}
   .footnote{color:var(--dim);font-size:11px;font-family:"JetBrains Mono",monospace;margin-top:26px;text-align:center}
   @media (max-width:820px){.cols{grid-template-columns:1fr}.tape{flex-wrap:wrap;gap:12px}}
+
+  /* ===== V2: top-level menu ===== */
+  .menu{display:flex;gap:6px;margin:16px 0 6px;border:1px solid var(--line);background:var(--panel2);border-radius:var(--r);padding:6px;overflow-x:auto;scrollbar-width:none}
+  .menu::-webkit-scrollbar{display:none}
+  .menu-item{flex:1;min-width:170px;display:flex;flex-direction:column;gap:2px;align-items:flex-start;background:transparent;border:0;border-radius:8px;padding:10px 14px;cursor:pointer;color:var(--muted);text-align:left;transition:.15s}
+  .menu-item b{font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:13px;letter-spacing:.18em;text-transform:uppercase}
+  .menu-item small{font-family:"JetBrains Mono",monospace;font-size:9.5px;letter-spacing:.08em;color:var(--dim)}
+  .menu-item:hover{color:var(--ink)}
+  .menu-item.on{background:var(--panel);color:var(--brass);box-shadow:inset 0 -2px 0 var(--brass),0 0 0 1px var(--line)}
+  .newb{font-family:"Space Grotesk",sans-serif;font-size:8px;letter-spacing:.14em;color:#20170a;background:var(--brass);border-radius:4px;padding:1px 5px;vertical-align:2px;margin-left:6px}
+  .mview{display:none}.mview.on{display:block;animation:fadein .18s ease}
+  @keyframes fadein{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+  button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+
+  /* ===== V2: Automato tab ===== */
+  #mv-automato .card{cursor:default}
+  #mv-automato .card h3{font-family:"Space Grotesk",sans-serif;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 12px;font-weight:500}
+  #mv-automato .btn.danger{border-color:rgba(232,105,92,.5);color:var(--down)}
+  #mv-automato .ev{align-items:baseline}
+  .ev .sym{font-family:"JetBrains Mono",monospace;color:var(--brass);flex:none}
+  .tag.long{color:var(--up);border-color:rgba(87,200,138,.4)}
+  .tag.short{color:var(--down);border-color:rgba(232,105,92,.4)}
+  .tag.brass{color:var(--brass);border-color:var(--brass-dim)}
+  .chip{font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--muted);border:1px solid var(--line);padding:3px 8px;border-radius:5px;letter-spacing:.06em}
+  .chip.brass{color:var(--brass);border-color:var(--brass-dim)}
+
+  .at-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 2px 14px}
+  .at-meta .sp{flex:1}
+  .at-eq{font-family:"JetBrains Mono",monospace;font-weight:700;font-size:16px;color:var(--brass)}
+  .at-eqsub{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--dim)}
+
+  .at-tabs{display:flex;gap:4px;margin:0 0 18px;border:1px solid var(--line);background:var(--panel2);border-radius:var(--r);padding:5px;overflow-x:auto;scrollbar-width:none}
+  .at-tabs::-webkit-scrollbar{display:none}
+  .at-tab{flex:1;min-width:96px;font-family:"Space Grotesk",sans-serif;font-size:12px;letter-spacing:.16em;text-transform:uppercase;background:transparent;color:var(--muted);border:0;border-radius:7px;padding:9px 12px;cursor:pointer;transition:.15s;white-space:nowrap}
+  .at-tab:hover{color:var(--ink)}
+  .at-tab.on{background:var(--panel);color:var(--brass);box-shadow:inset 0 -2px 0 var(--brass),0 0 0 1px var(--line)}
+  .at-tab .n{font-family:"JetBrains Mono",monospace;font-size:9px;color:var(--dim);display:block;letter-spacing:.1em;margin-top:2px}
+  .at-view{display:none}.at-view.on{display:block;animation:fadein .18s ease}
+
+  /* AUTO page */
+  .auto-grid{display:grid;grid-template-columns:400px 1fr;gap:16px;align-items:start}
+  .dial-card{padding:22px 16px 18px;text-align:center}
+  .dial-wrap{position:relative;width:min(290px,74vw);margin:4px auto 8px;aspect-ratio:1}
+  .dial-wrap svg{position:absolute;inset:0;width:100%;height:100%}
+  .ring-track{fill:none;stroke:var(--line);stroke-width:6}
+  .ring-sweep{fill:none;stroke:var(--brass);stroke-width:3;stroke-dasharray:5 17;opacity:0;transition:opacity .3s}
+  .sweepg{transform-origin:110px 110px}
+  .dial-wrap.scanning .ring-sweep{opacity:.85}
+  .dial-wrap.scanning .sweepg{animation:spin 3.2s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .ring-gain{fill:none;stroke:var(--brass);stroke-width:6;stroke-linecap:round;stroke-dasharray:0 604;transform:rotate(-90deg);transform-origin:110px 110px;transition:stroke-dasharray .25s linear, stroke .25s}
+  .core{position:absolute;inset:13%;border-radius:50%;cursor:pointer;border:1px solid var(--line);
+    background:radial-gradient(120% 120% at 50% 20%,#1a2330 0%,var(--panel2) 60%);
+    box-shadow:inset 0 0 0 6px #0b0f15, inset 0 0 0 7px var(--line), 0 14px 40px -18px rgba(0,0,0,.8);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;transition:.2s;color:var(--ink)}
+  .core:hover{border-color:var(--brass-dim)}
+  .core .glyph{font-size:26px;color:var(--brass);line-height:1;text-shadow:0 0 18px rgba(232,176,75,.45)}
+  .core .word{font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:26px;letter-spacing:.3em;text-indent:.3em}
+  .core .subw{font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--muted);letter-spacing:.12em}
+  .dial-wrap.live .core .word{font-size:29px;letter-spacing:.02em;text-indent:0}
+  .dial-wrap.live .core{border-color:var(--brass-dim)}
+  .dial-wrap.halted .core .glyph{color:var(--muted);text-shadow:none}
+  .marks{display:flex;justify-content:space-between;font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--dim);max-width:min(290px,74vw);margin:0 auto 4px}
+  .marks b{color:var(--muted);font-weight:500}
+  .phase-line{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);min-height:18px}
+
+  .preset-row{display:flex;gap:6px;margin:2px 0 10px}
+  .pbtn{flex:1;font-family:"JetBrains Mono",monospace;font-size:11px;padding:7px 6px;border:1px solid var(--line);background:var(--panel2);color:var(--muted);border-radius:7px;cursor:pointer;letter-spacing:.03em;transition:.14s}
+  .pbtn:hover{color:var(--ink);border-color:var(--brass-dim)}
+  .pbtn.on{color:var(--brass);border-color:var(--brass-dim);background:rgba(232,176,75,.08)}
+  .pbtn.ai{color:var(--ink)}
+
+  .cfg .row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px dotted var(--line)}
+  .cfg label{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px}
+  .cfg input[type=range]{width:100%;accent-color:var(--brass);background:transparent}
+  .cfg .val{font-family:"JetBrains Mono",monospace;font-weight:700;font-size:15px;color:var(--brass);min-width:76px;text-align:right}
+  .cfg select{width:100%}
+  .mode-seg{display:flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+  .mode-seg button{flex:1;border:0;background:transparent;color:var(--muted);font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.1em;padding:8px;cursor:pointer}
+  .mode-seg button.on{background:var(--brass);color:#20170a;font-weight:700}
+  .mode-seg button:disabled{cursor:not-allowed;opacity:.55}
+
+  .trow{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 0;border-bottom:1px dotted var(--line);font-size:12.5px}
+  .trow .tx small{display:block;color:var(--dim);font-size:10.5px;margin-top:1px}
+  .tgl{position:relative;width:34px;height:19px;flex:none}
+  .tgl input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+  .tgl i{position:absolute;inset:0;border:1px solid var(--line);border-radius:11px;background:var(--panel2);transition:.15s;pointer-events:none}
+  .tgl i::after{content:"";position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:var(--dim);transition:.15s}
+  .tgl input:checked + i{border-color:var(--brass-dim);background:rgba(232,176,75,.10)}
+  .tgl input:checked + i::after{left:17px;background:var(--brass)}
+  .tgl input:focus-visible + i{outline:2px solid var(--brass);outline-offset:2px}
+
+  .riskest{margin-top:12px;border:1px dashed var(--line);border-radius:8px;padding:9px 12px;font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);line-height:1.7}
+  .riskest b{color:var(--down);font-weight:700}
+
+  .oos{margin-top:12px;border:1px solid var(--line);background:var(--panel2);border-radius:8px;padding:12px}
+  .oos .t{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+  .oos .nums{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;font-family:"JetBrains Mono",monospace}
+  .oos .n .v{font-weight:700;font-size:15px}
+  .oos .n .l{font-size:9px;color:var(--dim);letter-spacing:.08em;text-transform:uppercase}
+  .oos .note{font-size:11px;color:var(--dim);margin-top:9px;line-height:1.45}
+  .honest{margin-top:12px;border:1px dashed var(--brass-dim);border-radius:8px;padding:12px;text-align:left}
+  .honest .t{font-family:"Space Grotesk",sans-serif;font-size:10px;letter-spacing:.26em;text-transform:uppercase;color:var(--brass);margin-bottom:6px}
+  .honest p{margin:0;font-size:12px;color:var(--muted);line-height:1.55}
+
+  .panel-state{display:none}.panel-state.on{display:block;animation:fadein .18s ease}
+  .check{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px dotted var(--line);font-size:13px}
+  .check:last-child{border-bottom:0}
+  .check .ok{color:var(--up);font-family:"JetBrains Mono",monospace}
+  .check .sp{flex:1}
+  .sess-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+  .pos-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+  .pos-head .psym{font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:19px;letter-spacing:.04em}
+  .pnl-big{font-family:"JetBrains Mono",monospace;font-weight:700;font-size:34px;line-height:1.1;margin:2px 0 12px}
+  .pnl-big small{font-size:14px;color:var(--muted);font-weight:400}
+  .cutbar{position:relative;height:12px;border:1px solid var(--line);border-radius:6px;background:var(--panel2);margin:6px 0 4px;overflow:hidden}
+  .cutbar .zero{position:absolute;top:0;bottom:0;left:33.33%;width:1px;background:var(--dim)}
+  .cutbar .fill{position:absolute;top:2px;bottom:2px;border-radius:4px;background:var(--up);transition:.2s}
+  .cutlbl{display:flex;justify-content:space-between;font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--dim);margin-bottom:12px}
+  .report .why{font-size:13px;color:var(--ink);border-left:2px solid var(--brass);padding:2px 0 2px 12px;margin:0 0 14px}
+  .mini-trades{border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-top:10px}
+  .mt{display:flex;justify-content:space-between;gap:10px;padding:7px 12px;border-bottom:1px solid var(--line);font-family:"JetBrains Mono",monospace;font-size:12px}
+  .mt:last-child{border-bottom:0}
+
+  /* ANALYSIS page */
+  .an-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:16px;align-items:start}
+  .board .sym-row{display:grid;grid-template-columns:auto 92px 1fr auto;gap:12px;align-items:center;width:100%;padding:10px 12px;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer;text-align:left;transition:.12s}
+  .board .sym-row:hover{background:rgba(232,176,75,.04)}
+  .board .sym-row.sel{background:rgba(232,176,75,.07);box-shadow:inset 2px 0 0 var(--brass)}
+  .board .sym-row:last-child{border-bottom:0}
+  .sname{font-family:"JetBrains Mono",monospace;font-weight:700;font-size:13px}
+  .sname small{display:block;font-weight:400;font-size:9px;color:var(--dim);letter-spacing:.08em}
+  .board canvas{width:92px;height:30px;display:block}
+  .sprice{text-align:right;font-family:"JetBrains Mono",monospace}
+  .sprice .p{font-weight:700;font-size:13.5px}
+  .sprice .c{font-size:11px}
+  .board .btags{display:flex;flex-direction:column;gap:4px;align-items:flex-end}
+  .chart-card{margin-top:16px}
+  canvas.bigchart{width:100%;height:250px;display:block}
+  .chart-meta{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);margin-bottom:8px;flex-wrap:wrap}
+  .matrix{width:100%;border-collapse:collapse;font-family:"JetBrains Mono",monospace;font-size:12px}
+  .matrix th,.matrix td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:center}
+  .matrix th{position:static;background:transparent;color:var(--muted);font-weight:500;font-size:9px;letter-spacing:.12em;text-transform:uppercase}
+  .matrix td:first-child,.matrix th:first-child{text-align:left}
+  .sig{border:1px solid var(--line);background:var(--panel2);border-radius:6px;padding:4px 9px;cursor:pointer;color:var(--dim);font-family:"JetBrains Mono",monospace;font-size:12px;transition:.12s;min-width:44px}
+  .sig:hover{border-color:var(--brass-dim)}
+  .sig.long{color:var(--up)}.sig.short{color:var(--down)}
+  .sig.sel{box-shadow:0 0 0 1px var(--brass);border-color:var(--brass)}
+  .reason-box{margin-top:14px;border:1px solid var(--line);border-radius:8px;background:var(--panel2);padding:14px;min-height:120px}
+  .reason-box .head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+  .reason-box .head b{font-family:"Space Grotesk",sans-serif;letter-spacing:.04em}
+  .reason-box ul{margin:0;padding-left:18px;color:var(--muted);font-size:12.5px;line-height:1.7}
+  .strength{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin-top:12px}
+  .strength i{display:block;height:100%;background:var(--brass);width:0;transition:.3s}
+  .str-lbl{font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--dim);margin-top:5px}
+
+  /* SHIELD page */
+  .legs{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:stretch}
+  .leg .acct{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted)}
+  .leg .dirline{display:flex;align-items:center;justify-content:space-between;margin:8px 0 12px}
+  .leg .dirline b{font-family:"Space Grotesk",sans-serif;font-size:17px;letter-spacing:.06em}
+  .deltanode{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:12px 18px;border:1px dashed var(--brass-dim);border-radius:var(--r);background:rgba(232,176,75,.03);min-width:150px}
+  .deltanode .d{font-family:"JetBrains Mono",monospace;font-weight:700;font-size:19px;color:var(--brass)}
+  .deltanode .l{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);text-align:center}
+  .deltanode .flow{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--dim)}
+  .fund-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:16px}
+  .risk-card{margin-top:16px;border:1px dashed rgba(232,105,92,.55);border-radius:var(--r);padding:14px 16px;background:rgba(232,105,92,.04)}
+  .risk-card .t{font-family:"Space Grotesk",sans-serif;font-size:10px;letter-spacing:.26em;text-transform:uppercase;color:var(--down);margin-bottom:8px}
+  .risk-card ul{margin:0;padding-left:18px;font-size:12.5px;color:var(--muted);line-height:1.7}
+  .shield-setup{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:16px}
+
+  /* JOURNAL page */
+  .j-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:14px}
+  canvas.equity{width:100%;height:210px;display:block}
+  .jtable{width:100%;border-collapse:collapse;font-family:"JetBrains Mono",monospace;font-size:12px}
+  .jtable th,.jtable td{text-align:right;padding:8px 10px;border-bottom:1px solid var(--line)}
+  .jtable th{color:var(--muted);font-weight:500;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;position:sticky;top:0;background:var(--panel)}
+  .jtable th:first-child,.jtable td:first-child{text-align:left}
+  .jtable td:nth-child(2){text-align:left}
+  .rec-btn{border:1px solid var(--line);background:var(--panel2);color:var(--muted);border-radius:5px;padding:3px 8px;font-family:"JetBrains Mono",monospace;font-size:10px;cursor:pointer;transition:.12s}
+  .rec-btn:hover{color:var(--brass);border-color:var(--brass-dim)}
+  .rec-row td{background:var(--panel2);text-align:left;padding:12px 14px}
+  .rec-row .agents{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .rec-row ul{margin:6px 0 0;padding-left:18px;color:var(--muted);font-size:12px;line-height:1.65}
+  .tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;max-height:420px;overflow-y:auto}
+
+  @media(max-width:920px){.auto-grid{grid-template-columns:1fr}.an-grid{grid-template-columns:1fr}}
+  @media(max-width:820px){.legs{grid-template-columns:1fr}.deltanode{order:-1}}
+  @media (prefers-reduced-motion: reduce){
+    .dial-wrap.scanning .sweepg{animation:none}
+    .mview.on,.at-view.on,.panel-state.on{animation:none}
+  }
+
+  /* ===== V3: shadow mode + Super Automato ===== */
+  #mv-automato{--sim:#7FA6C9}
+  .tag.sim{color:var(--sim);border-color:rgba(127,166,201,.45)}
+  .chip.sim{color:var(--sim);border-color:rgba(127,166,201,.35)}
+  .pnl-big.simc{color:var(--sim)}
+  .sup-state{display:flex;gap:12px;align-items:center;flex-wrap:wrap;border:1px solid var(--line);background:var(--panel2);border-radius:8px;padding:9px 12px;margin-top:12px;font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted)}
+  .sup-dim{opacity:.45;pointer-events:none}
+  .tgl input:disabled + i{opacity:.5}
 </style>
 </head>
 <body>
-<div class="demobar">SOUL-TRADE MODULE · DEMO OFFLINE · dữ liệu giả · mọi thứ bấm được (bản thật chạy trong SuperCitadel)</div>
+<div class="demobar">SOUL-TRADE MODULE V1.1 · DEMO OFFLINE · dữ liệu giả · mọi thứ bấm được (bản thật chạy trong SuperCitadel)</div>
 <div class="wrap">
   <header class="tape">
-    <div class="brand"><span class="led"></span><div><h1>SOUL-TRADE</h1><small>control room</small></div></div>
+    <div class="brand"><span class="led"></span><div><h1>SOUL-TRADE</h1><small>citadel module · v1.1</small></div></div>
     <div class="readout"><div class="lbl">total equity</div><div class="val" id="totalEq">$0.00</div><div class="meta" id="botMeta">—</div></div>
   </header>
+
+  <nav class="menu">
+    <button class="menu-item on" data-mv="control"><b>Control Room</b><small>bots · agents · backtest lab</small></button>
+    <button class="menu-item" data-mv="automato"><b>Automato<span class="newb">MỚI</span></b><small>soul trade · 1 nút · risk shell · super</small></button>
+  </nav>
+
+  <section class="mview on" id="mv-control">
 
   <div class="eyebrow"><span class="k">Bots</span><span class="rule"></span><span class="meta">isolated · per-org RLS · auto-trade loop</span></div>
   <div class="toolbar"><button class="btn primary" onclick="toggleForm()">+ New bot</button></div>
@@ -180,6 +388,304 @@
   </div>
 
   <p class="footnote">Paper first · backtest + walk-forward before real money · live keys: Read + Trade only. · Tiểu Tâm: “tạo bot paper trên bybit” / “bot main thắng bao nhiêu %?”</p>
+  </section>
+
+<section class="mview" id="mv-automato">
+
+  <div class="at-meta">
+    <span class="chip brass" id="atMode">PAPER</span>
+    <span class="chip sim" id="atShadow">giả lập +0.00%</span>
+    <span class="chip">BINGX · CCXT</span>
+    <span class="chip" id="atClock">--:--:--</span>
+    <span class="sp"></span>
+    <span class="at-eq" id="atEq">$10,000.00</span>
+    <span class="at-eqsub" id="atEqSub">phiên +0.00%</span>
+  </div>
+
+  <nav class="at-tabs">
+    <button class="at-tab on" data-atv="auto">Auto<span class="n">1 nút · risk shell</span></button>
+    <button class="at-tab" data-atv="analysis">Phân tích<span class="n">thị trường · tín hiệu</span></button>
+    <button class="at-tab" data-atv="shield">Shield<span class="n">delta-neutral · funding</span></button>
+    <button class="at-tab" data-atv="journal">Nhật ký<span class="n">lệnh · hồ sơ quyết định</span></button>
+  </nav>
+
+  <!-- ============ AUTO ============ -->
+  <div class="at-view on" id="at-auto">
+    <div class="auto-grid">
+      <div>
+        <div class="card dial-card">
+          <div class="marks"><span><b>SL phiên</b> <span id="markSl">−3.0%</span></span><span><span id="markTp">+6.0%</span> <b>TP phiên</b></span></div>
+          <div class="dial-wrap" id="dialWrap">
+            <svg viewBox="0 0 220 220" aria-hidden="true">
+              <circle class="ring-track" cx="110" cy="110" r="96"/>
+              <g class="sweepg"><circle class="ring-sweep" cx="110" cy="110" r="96"/></g>
+              <circle class="ring-gain" id="ringGain" cx="110" cy="110" r="96"/>
+            </svg>
+            <button class="core" id="armBtn" aria-live="polite">
+              <span class="glyph" id="dialGlyph">⬡</span>
+              <span class="word" id="dialWord">ARM</span>
+              <span class="subw" id="dialSub">phiên mới · paper</span>
+            </button>
+          </div>
+          <div class="phase-line" id="phaseLine">standby — cấu hình risk shell rồi ARM</div>
+        </div>
+
+        <div class="card cfg" id="superCard" style="margin-top:16px">
+          <h3>Super Automato</h3>
+          <div class="trow" style="padding-top:2px"><span class="tx"><b style="color:var(--ink)">Bật Super Automato</b><small>giả lập chờ chuỗi thua đủ dài → vào VỐN THẬT · thắng dồn lãi vào lệnh sau, thua 1 lệnh quay về giả lập</small></span><label class="tgl"><input type="checkbox" id="tglSuper"><i></i></label></div>
+          <div id="supBody" class="sup-dim">
+            <div class="preset-row" id="supModes" style="margin-top:10px">
+              <button class="pbtn on" data-sm="soft">Soft Think · 3</button>
+              <button class="pbtn" data-sm="hard">Hard Think · 5</button>
+              <button class="pbtn" data-sm="custom">Custom</button>
+            </div>
+            <div id="superCustom" hidden>
+              <div class="row"><div><label>Chờ chuỗi thua giả lập</label><input type="range" id="supN" min="2" max="10" step="1" value="3"></div><div class="val" id="supNV">3 lệnh</div></div>
+              <div class="row"><div><label>% lãi dồn vào lệnh sau</label><input type="range" id="supPct" min="0" max="50" step="5" value="10"></div><div class="val" id="supPctV">10%</div></div>
+              <div class="row"><div><label>Trần stake (an toàn)</label><input type="range" id="supCap" min="2" max="10" step="1" value="5"></div><div class="val" id="supCapV">×5 cơ bản</div></div>
+            </div>
+            <div class="sup-state"><span class="tag sim" id="supPhase">GIẢ LẬP</span><span id="supStreak">chuỗi thua sim 0/3 ○○○</span><span id="supStake">stake $50</span></div>
+            <div class="honest" style="margin-top:12px"><div class="t">Audit thật</div><p>Theo xác suất thống kê toán học: nếu các lệnh độc lập, chuỗi thua giả lập <b>không</b> làm lệnh kế tiếp dễ thắng hơn. Cơ chế này chỉ có giá trị nếu hiệu suất strategy có tính đảo chiều theo giai đoạn — kiểm chứng bằng walk-forward A/B trước khi tin. Giả lập dùng chung engine &amp; phí với vốn thật; hoà không tính là thua; stake bị chặn trần để không phình.</p></div>
+          </div>
+        </div>
+
+        <div class="card cfg" style="margin-top:16px">
+          <h3>Risk shell — vỏ an toàn của phiên</h3>
+          <div class="preset-row">
+            <button class="pbtn" data-p="safe">Thận trọng</button>
+            <button class="pbtn on" data-p="std">Chuẩn</button>
+            <button class="pbtn" data-p="aggr">Chủ động</button>
+            <button class="pbtn ai" id="pAI">✦ AI gợi ý</button>
+          </div>
+          <div class="row"><div><label>Rủi ro mỗi lệnh (% vốn)</label><input type="range" id="cfgRisk" min="0.25" max="2" step="0.25" value="0.5"></div><div class="val" id="valRisk">0.50%</div></div>
+          <div class="row"><div><label>Giới hạn số lệnh / phiên</label><input type="range" id="cfgMax" min="1" max="30" step="1" value="10"></div><div class="val" id="valMax">10 lệnh</div></div>
+          <div class="row"><div><label>Ngắt phiên khi lãi (TP)</label><input type="range" id="cfgTp" min="2" max="12" step="0.5" value="6"></div><div class="val up" id="valTp">+6.0%</div></div>
+          <div class="row"><div><label>Ngắt phiên khi lỗ (SL)</label><input type="range" id="cfgSl" min="1" max="8" step="0.5" value="3"></div><div class="val down" id="valSl">−3.0%</div></div>
+
+          <div class="riskest" id="riskEst">—</div>
+
+          <h3 style="margin-top:18px">Quản lý lệnh — máy tự chăm vị thế</h3>
+          <div class="trow"><span class="tx">Dời SL về hoà vốn ở +1R<small>chạm +1R là lệnh hết rủi ro lỗ</small></span><label class="tgl"><input type="checkbox" id="tglBE" checked><i></i></label></div>
+          <div class="trow"><span class="tx">Trailing stop sau +1R<small>bám đỉnh −0.7R, giữ trend chạy</small></span><label class="tgl"><input type="checkbox" id="tglTrail"><i></i></label></div>
+          <div class="trow"><span class="tx">Chốt 50% ở +1R<small>khoá +0.5R, nửa còn lại chạy tiếp</small></span><label class="tgl"><input type="checkbox" id="tglPartial"><i></i></label></div>
+          <div class="trow"><span class="tx">Time-stop — đóng lệnh ì<small>lệnh lình xình quá lâu thì trả vốn về</small></span><label class="tgl"><input type="checkbox" id="tglTs" checked><i></i></label></div>
+
+          <h3 style="margin-top:18px">Ngắt mạch — chống cháy dây chuyền</h3>
+          <div class="trow"><span class="tx">Nghỉ 15′ sau 3 lệnh thua liên tiếp<small>chống "gỡ" theo quán tính máy</small></span><label class="tgl"><input type="checkbox" id="tglStreak" checked><i></i></label></div>
+          <div class="trow"><span class="tx">Né mốc funding &amp; tin vĩ mô (CPI/FOMC)<small>hoãn tín hiệu quanh cửa sổ biến động</small></span><label class="tgl"><input type="checkbox" id="tglEvents" checked><i></i></label></div>
+          <div class="row"><div><label>Khung giờ giao dịch</label><select id="selHours"><option>24/7</option><option>07:00 – 23:00</option><option>08:00 – 22:00</option></select></div><div></div></div>
+
+          <h3 style="margin-top:18px">Chế độ vốn</h3>
+          <div class="trow"><span class="tx">Giả lập (shadow)<small>dữ liệu &amp; khớp lệnh thật · không dùng vốn</small></span><label class="tgl"><input type="checkbox" id="tglShadow"><i></i></label></div>
+          <div class="row"><div><label>Strategy</label><select id="cfgStrat">
+            <option value="ensemble">Ensemble (3 strategy + AI)</option>
+            <option value="rsi_ema">rsi_ema</option>
+            <option value="donchian_breakout">donchian_breakout</option>
+            <option value="bollinger_meanrev">bollinger_meanrev</option>
+          </select></div><div></div></div>
+          <div class="row" style="border-bottom:0"><div><label>Chế độ</label><div class="mode-seg">
+            <button class="on" type="button">PAPER</button>
+            <button type="button" disabled title="Mock: Live khoá — chỉ mở sau khi tự kiểm chứng">LIVE 🔒</button>
+          </div></div><div></div></div>
+
+          <div class="oos">
+            <div class="t">Walk-forward · out-of-sample · 365 ngày</div>
+            <div class="nums" id="oosNums"></div>
+            <div class="note">Số liệu backtest OOS thật của strategy trên dữ liệu quá khứ — <b>không phải cam kết lợi nhuận</b>. Hiệu suất tương lai có thể khác.</div>
+          </div>
+
+          <div class="honest">
+            <div class="t">Minh bạch</div>
+            <p>Bot chỉ vào lệnh khi strategy + AI đồng thuận, và luôn nằm trong risk shell bạn đặt ở trên. Mỗi quyết định đều ghi hồ sơ (tab Nhật ký). Bạn toàn quyền KILL bất cứ lúc nào.</p>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <!-- STANDBY -->
+        <div class="card panel-state on" id="ps-standby">
+          <h3>Kiểm tra trước phiên</h3>
+          <div class="check"><span class="ok">✓</span> API key BingX — <b>chỉ Read + Trade, tắt quyền rút tiền</b>, bật IP whitelist</div>
+          <div class="check"><span class="ok">✓</span> Dữ liệu nến 15m — 200 nến, bỏ nến đang hình thành</div>
+          <div class="check"><span class="ok">✓</span> Risk shell — SL/TP từng lệnh (reduce-only trên sàn) + kill-switch phiên</div>
+          <div class="check"><span class="ok">✓</span> AI ensemble — signal · risk · sentiment agent</div>
+          <div class="check"><span class="ok">✓</span> <span>Telegram — báo vào/ra lệnh, kill-switch, /stop_all</span><span class="sp"></span><label class="tgl"><input type="checkbox" id="tglTg" checked><i></i></label></div>
+          <p style="color:var(--muted);font-size:12.5px;margin:14px 0 0">Bấm <b style="color:var(--brass)">ARM</b> để mở phiên. Khi chưa có tín hiệu đủ mạnh, bot đứng ngoài và màn hình chạy phân tích thị trường trực tiếp — đứng ngoài cũng là một quyết định.</p>
+        </div>
+
+        <!-- SCANNING -->
+        <div class="card panel-state" id="ps-scanning">
+          <h3>Đang quét — chưa vào lệnh</h3>
+          <div class="sess-strip" style="grid-template-columns:repeat(4,1fr)">
+            <div class="metric"><div class="m-l">Lệnh</div><div class="m-v" id="scanN">0/10</div></div>
+            <div class="metric"><div class="m-l">PnL phiên</div><div class="m-v" id="scanPnl">+0.00%</div></div>
+            <div class="metric"><div class="m-l">Giả lập</div><div class="m-v" id="scanSim">0 · +0.00%</div></div>
+            <div class="metric"><div class="m-l">Thời gian</div><div class="m-v" id="scanT">00:00</div></div>
+          </div>
+          <div class="feed" id="scanFeed"></div>
+          <p class="dim mono" style="font-size:10.5px;margin:10px 0 0">demo tua nhanh thời gian · lý do lấy từ chính strategies.ts (reasons)</p>
+        </div>
+
+        <!-- LIVE -->
+        <div class="card panel-state" id="ps-live">
+          <div class="pos-head">
+            <span class="psym" id="posSym">BTC/USDT</span>
+            <span style="display:flex;gap:8px"><span class="tag brass" id="posSrc">VỐN THẬT</span><span class="tag" id="posDir">LONG</span><span class="tag" id="posStrat">rsi_ema</span></span>
+          </div>
+          <div class="pnl-big" id="posPnl">+$0.00 <small id="posPnlPct">(+0.00% vốn)</small></div>
+          <div class="rows">
+            <div class="row"><span>Entry</span><b id="posEntry">—</b></div>
+            <div class="row"><span>Size</span><b id="posSize">—</b></div>
+            <div class="row"><span>SL lệnh</span><b class="down" id="posSl">—</b></div>
+            <div class="row"><span>TP lệnh</span><b class="up" id="posTp">—</b></div>
+            <div class="row"><span>Rủi ro lệnh này</span><b id="posRisk">—</b></div>
+            <div class="row"><span>Lý do vào</span><b id="posWhy" style="font-size:11px">—</b></div>
+          </div>
+          <div class="m-l" style="margin-bottom:4px">Tiến tới ngưỡng ngắt phiên</div>
+          <div class="cutbar"><div class="zero" id="cutZero"></div><div class="fill" id="cutFill"></div></div>
+          <div class="cutlbl"><span id="cutL">−3.0%</span><span>0</span><span id="cutR">+6.0%</span></div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <button class="btn danger" id="killBtn">■ KILL — đóng &amp; ngắt phiên</button>
+            <span class="dim mono" style="font-size:10.5px" id="posGuard">SL/TP reduce-only đã đặt sẵn trên sàn</span>
+          </div>
+        </div>
+
+        <!-- HALTED -->
+        <div class="card panel-state report" id="ps-halted">
+          <h3>Phiên đã ngắt</h3>
+          <p class="why" id="haltWhy">—</p>
+          <div class="sess-strip" style="grid-template-columns:repeat(4,1fr)">
+            <div class="metric"><div class="m-l">Lệnh thật</div><div class="m-v" id="repN">0</div></div>
+            <div class="metric"><div class="m-l">Thắng thật</div><div class="m-v" id="repW">0</div></div>
+            <div class="metric"><div class="m-l">PnL phiên</div><div class="m-v" id="repPnl">0%</div></div>
+            <div class="metric"><div class="m-l">Equity</div><div class="m-v" id="repEq">$—</div></div>
+          </div>
+          <p class="mono dim" id="repSplit" style="font-size:11px;margin:2px 2px 0">—</p>
+          <div class="mini-trades" id="repTrades"></div>
+          <p style="color:var(--muted);font-size:12.5px;margin:14px 0 0">Xoay núm <b style="color:var(--brass)">RESET</b> để mở phiên mới. Hồ sơ từng lệnh đã ghi vào tab Nhật ký.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PHÂN TÍCH ============ -->
+  <div class="at-view" id="at-analysis">
+    <div class="eyebrow"><span class="k">Bàn phân tích</span><span class="rule"></span><span class="meta">regime · funding · tín hiệu 3 strategy + AI</span></div>
+    <div class="an-grid">
+      <div>
+        <div class="card" style="padding:6px 4px">
+          <div id="board"></div>
+        </div>
+        <div class="card chart-card">
+          <div class="chart-meta"><span id="chartTitle">BTC/USDT · 15m</span><span>— giá &nbsp;<span style="color:var(--brass)">—</span> EMA nhanh &nbsp;<span class="dim">—</span> EMA chậm</span></div>
+          <canvas class="bigchart" id="bigChart"></canvas>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <h3>Ma trận tín hiệu — bấm ô để xem lý do</h3>
+          <div style="overflow-x:auto"><table class="matrix" id="matrix"></table></div>
+          <div class="reason-box" id="reasonBox">
+            <div class="head"><b id="rbTitle">Chọn một ô tín hiệu</b><span class="tag" id="rbTag">—</span></div>
+            <ul id="rbList"><li class="dim">Lý do vào/đứng ngoài của từng strategy sẽ hiện ở đây — đúng chuỗi <span class="mono">reasons</span> mà engine ghi lại.</li></ul>
+            <div class="strength"><i id="rbStr"></i></div>
+            <div class="str-lbl">strength <span id="rbStrV" class="mono">—</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SHIELD ============ -->
+  <div class="at-view" id="at-shield">
+    <div class="eyebrow"><span class="k">Shield mode</span><span class="rule"></span><span class="meta">delta-neutral · 2 tài khoản của chính bạn · thu funding</span></div>
+    <p style="color:var(--muted);font-size:13px;max-width:760px;margin:0 0 16px">
+      Hai tài khoản <b>của cùng một người</b> giữ hai chân ngược nhau trên cùng khối lượng: biến động giá triệt tiêu (Δ ≈ 0),
+      phần thu về là <b>funding</b> mà bên Long perp trả cho bên Short khi funding dương. Đây là chiến lược thật, có rủi ro thật — đọc khung đỏ bên dưới.
+    </p>
+    <div class="legs">
+      <div class="card leg">
+        <div class="acct">Tài khoản A · sub-account</div>
+        <div class="dirline"><b>LONG</b><span class="tag long">SPOT / PERP</span></div>
+        <div class="rows">
+          <div class="row"><span>Cặp</span><b>BTC/USDT</b></div>
+          <div class="row"><span>Size</span><b>$2,000</b></div>
+          <div class="row"><span>Đòn bẩy</span><b>1×</b></div>
+          <div class="row"><span>Entry</span><b class="mono" id="legAEntry">—</b></div>
+        </div>
+      </div>
+      <div class="deltanode">
+        <div class="l">Net delta</div>
+        <div class="d" id="netDelta">Δ ≈ 0.000 BTC</div>
+        <div class="flow">funding → về phía Short</div>
+        <span class="tag brass" id="shieldState">CHƯA KÍCH HOẠT</span>
+      </div>
+      <div class="card leg">
+        <div class="acct">Tài khoản B · sub-account</div>
+        <div class="dirline"><b>SHORT</b><span class="tag short">PERP</span></div>
+        <div class="rows">
+          <div class="row"><span>Cặp</span><b>BTC/USDT</b></div>
+          <div class="row"><span>Size</span><b>$2,000</b></div>
+          <div class="row"><span>Đòn bẩy</span><b>1×</b></div>
+          <div class="row"><span>Entry</span><b class="mono" id="legBEntry">—</b></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fund-grid">
+      <div class="metric"><div class="m-l">Funding hiện tại</div><div class="m-v mono" style="color:var(--brass)" id="fundNow">+0.0100% / 8h</div></div>
+      <div class="metric"><div class="m-l">Quy đổi APR (dao động)</div><div class="m-v mono" id="fundApr">~10.9%</div></div>
+      <div class="metric"><div class="m-l">Funding đã thu (demo tua nhanh)</div><div class="m-v mono up" id="fundAcc">$0.0000</div></div>
+      <div class="metric"><div class="m-l">Phí mở 2 chân (ước)</div><div class="m-v mono down">−$2.00</div></div>
+    </div>
+
+    <div class="risk-card">
+      <div class="t">Rủi ro thật — đọc trước khi bật</div>
+      <ul>
+        <li><b>Funding đảo chiều âm</b>: khi thị trường bearish kéo dài, chân Short phải trả funding thay vì nhận — lợi nhuận thành chi phí.</li>
+        <li><b>Lệch chân khi biến động mạnh</b>: pump/dump nhanh có thể đẩy một chân về gần thanh lý trước khi kịp cân — dùng đòn bẩy thấp và bộ cân tự động.</li>
+        <li><b>Phí ăn mòn</b>: mở/đóng 4 lượt phí; vòng đời vị thế quá ngắn thì phí lớn hơn funding thu được.</li>
+        <li>Không có "không rủi ro". Shield giảm rủi ro <i>giá</i>, không xoá rủi ro <i>vận hành</i>.</li>
+      </ul>
+    </div>
+
+    <div class="shield-setup">
+      <div class="field"><label>Tài khoản A</label><select><option>main (spot)</option><option>sub-01</option></select></div>
+      <div class="field"><label>Tài khoản B</label><select><option>sub-02 (perp)</option><option>sub-03</option></select></div>
+      <div class="field"><label>Size mỗi chân</label><input value="$2,000" inputmode="numeric"></div>
+      <div class="field"><label>Tự cân khi lệch</label><select><option>&gt; 0.5%</option><option>&gt; 1.0%</option></select></div>
+      <button class="btn primary" id="shieldBtn">⛨ Kích hoạt Shield</button>
+    </div>
+  </div>
+
+  <!-- ============ NHẬT KÝ ============ -->
+  <div class="at-view" id="at-journal">
+    <div class="eyebrow"><span class="k">Nhật ký</span><span class="rule"></span><span class="meta">paper · mỗi lệnh một hồ sơ quyết định</span></div>
+    <div class="j-metrics">
+      <div class="metric"><div class="m-l">PnL 30 ngày</div><div class="m-v up">+4.7%</div></div>
+      <div class="metric"><div class="m-l">Win rate</div><div class="m-v">53.1%</div></div>
+      <div class="metric"><div class="m-l">Profit factor</div><div class="m-v">1.38</div></div>
+      <div class="metric"><div class="m-l">Max drawdown</div><div class="m-v down">−5.2%</div></div>
+      <div class="metric"><div class="m-l">Số lệnh</div><div class="m-v">49</div></div>
+    </div>
+    <div class="card" style="margin-bottom:16px">
+      <h3>Equity — 30 ngày (paper)</h3>
+      <canvas class="equity" id="eqCurve"></canvas>
+    </div>
+    <div class="card">
+      <h3>Lệnh gần nhất — bấm "hồ sơ" để xem vì sao bot vào lệnh</h3>
+      <div class="tbl-wrap">
+        <table class="jtable" id="jTable">
+          <thead><tr><th>Thời gian</th><th>Cặp</th><th>Hướng</th><th>Strategy</th><th>R</th><th>PnL</th><th></th></tr></thead>
+          <tbody id="jBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <p class="footnote">AUTOMATO · mock trong demo offline · số liệu mô phỏng · Paper trước — Live chỉ mở sau khi tự kiểm chứng backtest &amp; risk shell</p>
+</section>
+
 </div>
 <div class="toast" id="toast"></div>
 
@@ -308,6 +814,577 @@ setInterval(()=>{bots.forEach(b=>{if(b.status!=="running")return;
   });render();},2500);
 window.addEventListener("resize",()=>bots.forEach(b=>{const cv=$("spark-"+b.name);if(cv)spark(cv,eqHist[b.name]||[]);}));
 render();
+</script>
+<script>
+/* ================= AUTOMATO (v3 menu view) ================= */
+(function(){
+"use strict";
+const q=s=>document.querySelector(s), qa=s=>[...document.querySelectorAll(s)];
+const fmt$=v=>(v<0?'−':'')+'$'+Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtP=(v,d=2)=>(v>=0?'+':'−')+Math.abs(v).toFixed(d)+'%';
+const px=v=>v>=1000?v.toLocaleString('en-US',{maximumFractionDigits:0}):v>=10?v.toFixed(2):v.toFixed(4);
+const rnd=(a,b)=>a+Math.random()*(b-a);
+const pick=a=>a[(Math.random()*a.length)|0];
+
+function walk(n,base,vol){let x=base;const a=[];for(let i=0;i<n;i++){x*=(1+(Math.random()-0.5)*vol);a.push(x);}return a;}
+function ema(arr,k){const out=[];let e=arr[0];const al=2/(k+1);for(const v of arr){e=v*al+e*(1-al);out.push(e);}return out;}
+function setupCv(c){const dpr=window.devicePixelRatio||1,w=c.clientWidth,h=c.clientHeight;
+  c.width=w*dpr;c.height=h*dpr;const g=c.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);return [g,w,h];}
+function sparkA(c,data,color){if(!c.clientWidth)return;const[g,w,h]=setupCv(c);g.clearRect(0,0,w,h);
+  const min=Math.min(...data),max=Math.max(...data),sp=(max-min)||1;
+  g.beginPath();data.forEach((v,i)=>{const x=i/(data.length-1)*(w-2)+1,y=h-3-((v-min)/sp)*(h-6);i?g.lineTo(x,y):g.moveTo(x,y);});
+  g.strokeStyle=color;g.lineWidth=1.5;g.stroke();
+  g.lineTo(w-1,h);g.lineTo(1,h);g.closePath();
+  const gr=g.createLinearGradient(0,0,0,h);gr.addColorStop(0,color+'33');gr.addColorStop(1,'transparent');
+  g.fillStyle=gr;g.fill();}
+function lineChart(c,series,overlays){if(!c.clientWidth)return;const[g,w,h]=setupCv(c);g.clearRect(0,0,w,h);
+  const all=series.concat(...overlays.map(o=>o.data));
+  const min=Math.min(...all),max=Math.max(...all),sp=(max-min)||1;
+  const X=i=>i/(series.length-1)*(w-56)+8, Y=v=>h-18-((v-min)/sp)*(h-34);
+  g.strokeStyle='#212B38';g.lineWidth=1;g.font='10px JetBrains Mono, monospace';g.fillStyle='#465364';
+  for(let i=0;i<4;i++){const yy=14+i*(h-34)/3;g.beginPath();g.moveTo(8,yy);g.lineTo(w-48,yy);g.stroke();
+    g.fillText(px(max-sp*i/3),w-44,yy+3);}
+  overlays.forEach(o=>{g.beginPath();o.data.forEach((v,i)=>{i?g.lineTo(X(i),Y(v)):g.moveTo(X(i),Y(v));});
+    g.strokeStyle=o.color;g.lineWidth=1;g.stroke();});
+  g.beginPath();series.forEach((v,i)=>{i?g.lineTo(X(i),Y(v)):g.moveTo(X(i),Y(v));});
+  g.strokeStyle='#DCE4EC';g.lineWidth=1.6;g.stroke();
+  const lastY=Y(series[series.length-1]);
+  g.fillStyle='#E8B04B';g.fillRect(w-48,lastY-8,46,15);
+  g.fillStyle='#20170a';g.fillText(px(series[series.length-1]),w-45,lastY+3);}
+
+/* ---- market mock ---- */
+const SYMS=[
+  {s:'BTC/USDT',b:67420,v:0.010},{s:'ETH/USDT',b:3521,v:0.014},{s:'SOL/USDT',b:158.4,v:0.022},
+  {s:'BNB/USDT',b:602.3,v:0.012},{s:'XRP/USDT',b:0.5234,v:0.018},{s:'DOGE/USDT',b:0.1382,v:0.028},
+];
+SYMS.forEach(m=>{
+  m.ser=walk(64,m.b,m.v);
+  m.fund=rnd(-0.008,0.028);
+  m.chg=(m.ser[63]/m.ser[40]-1)*100;
+  const rel=m.ser.slice(-20),mean=rel.reduce((a,b)=>a+b)/20;
+  const sd=Math.sqrt(rel.reduce((a,b)=>a+(b-mean)**2,0)/20)/mean;
+  m.regime= sd<0.006?'NÉN': sd<0.013?'THƯỜNG':'BÙNG';
+});
+function sigOf(m,strat){
+  const s=m.ser,n=s.length-1,last=s[n];
+  const slope=(last/s[n-8]-1)*100;
+  const rel=s.slice(-20),mean=rel.reduce((a,b)=>a+b)/20;
+  const sd=Math.sqrt(rel.reduce((a,b)=>a+(b-mean)**2,0)/20);
+  const rsi=(50+slope*6).toFixed(1);
+  if(strat==='rsi_ema'){
+    if(slope>0.45)return{d:'long',st:Math.min(1,.5+slope/6),why:['uptrend — EMA nhanh > EMA chậm','RSI '+rsi+' quay đầu lên từ vùng thấp','MACD hist đang tăng']};
+    if(slope<-0.45)return{d:'short',st:Math.min(1,.5-slope/6),why:['downtrend — EMA nhanh < EMA chậm','RSI '+rsi+' quay đầu xuống từ vùng cao','MACD hist đang giảm']};
+    return{d:'flat',st:0,why:['no setup — RSI vùng trung tính, MACD không xác nhận']};
+  }
+  if(strat==='donchian_breakout'){
+    const hi=Math.max(...s.slice(n-20,n)),lo=Math.min(...s.slice(n-20,n));
+    if(last>hi)return{d:'long',st:Math.min(1,.6+(last-hi)/sd*.2),why:['breakout trên đỉnh 20 nến ('+px(hi)+')','ATR mở rộng — theo đà']};
+    if(last<lo)return{d:'short',st:Math.min(1,.6+(lo-last)/sd*.2),why:['breakdown dưới đáy 20 nến ('+px(lo)+')','ATR mở rộng — theo đà']};
+    return{d:'flat',st:0,why:['inside channel — giá nằm giữa '+px(lo)+' và '+px(hi)]};
+  }
+  if(strat==='bollinger_meanrev'){
+    const up=mean+2*sd,lo2=mean-2*sd;
+    if(last<mean-1.4*sd)return{d:'long',st:Math.min(1,.5+(mean-last)/(mean-lo2)*.5),why:['chạm dải dưới '+px(lo2)+' và bật lên','kỳ vọng hồi về mid '+px(mean)]};
+    if(last>mean+1.4*sd)return{d:'short',st:Math.min(1,.5+(last-mean)/(up-mean)*.5),why:['chạm dải trên '+px(up)+' và quay xuống','kỳ vọng hồi về mid '+px(mean)]};
+    return{d:'flat',st:0,why:['within bands — chưa chạm mép dải']};
+  }
+  const parts=['rsi_ema','donchian_breakout','bollinger_meanrev'].map(k=>sigOf(m,k));
+  const score=parts.reduce((a,p)=>a+(p.d==='long'?p.st:p.d==='short'?-p.st:0),0);
+  if(score>0.55)return{d:'long',st:Math.min(1,score/1.8),why:['đồng thuận nghiêng LONG',...parts.filter(p=>p.d==='long').map(p=>p.why[0]),'AI score xác nhận ≥ ngưỡng']};
+  if(score<-0.55)return{d:'short',st:Math.min(1,-score/1.8),why:['đồng thuận nghiêng SHORT',...parts.filter(p=>p.d==='short').map(p=>p.why[0]),'AI score xác nhận ≥ ngưỡng']};
+  return{d:'flat',st:0,why:['các strategy chưa đồng thuận — đứng ngoài']};
+}
+
+/* ---- routers ---- */
+qa('.menu-item').forEach(b=>b.addEventListener('click',()=>{
+  qa('.menu-item').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  qa('.mview').forEach(v=>v.classList.remove('on'));
+  q('#mv-'+b.dataset.mv).classList.add('on');
+  requestAnimationFrame(drawVisible);
+}));
+qa('.at-tab').forEach(t=>t.addEventListener('click',()=>{
+  qa('.at-tab').forEach(x=>x.classList.remove('on'));t.classList.add('on');
+  qa('.at-view').forEach(v=>v.classList.remove('on'));
+  q('#at-'+t.dataset.atv).classList.add('on');
+  requestAnimationFrame(drawVisible);
+}));
+function drawVisible(){
+  if(!q('#mv-automato').classList.contains('on'))return;
+  if(q('#at-analysis').classList.contains('on')){drawBoardSparks();drawBig();}
+  if(q('#at-journal').classList.contains('on'))drawEquity();
+}
+window.addEventListener('resize',()=>{clearTimeout(window.__atrz);window.__atrz=setTimeout(drawVisible,150);});
+setInterval(()=>{q('#atClock').textContent=new Date().toLocaleTimeString('vi-VN',{hour12:false});},1000);
+
+/* ---- OOS strip ---- */
+const OOS={
+  ensemble:{wr:'52.9%',pf:'1.48',dd:'−7.4%',n:'188'},
+  rsi_ema:{wr:'54.2%',pf:'1.42',dd:'−8.6%',n:'214'},
+  donchian_breakout:{wr:'41.8%',pf:'1.51',dd:'−11.2%',n:'163'},
+  bollinger_meanrev:{wr:'58.6%',pf:'1.27',dd:'−9.8%',n:'241'},
+};
+function renderOOS(){
+  const o=OOS[q('#cfgStrat').value];
+  q('#oosNums').innerHTML=
+    '<div class="n"><div class="v">'+o.wr+'</div><div class="l">win rate</div></div>'+
+    '<div class="n"><div class="v">'+o.pf+'</div><div class="l">profit factor</div></div>'+
+    '<div class="n"><div class="v down">'+o.dd+'</div><div class="l">max dd</div></div>'+
+    '<div class="n"><div class="v">'+o.n+'</div><div class="l">lệnh OOS</div></div>';
+}
+q('#cfgStrat').addEventListener('change',renderOOS);
+
+/* ---- risk shell config + session ledgers ---- */
+const cfg={risk:0.5,max:10,tp:6,sl:3};
+const sess={n:0,wins:0,pnl:0,simN:0,simWins:0,simPnl:0,eq0:10000,trades:[],t0:0,streak:0};
+const sup={on:false,mode:'soft',need:3,pct:10,cap:5,phase:'sim',lossStreak:0,winStreak:0,base:0,stake:0};
+function baseRisk$(){return sess.eq0*cfg.risk/100;}
+function pureShadow(){return !sup.on&&q('#tglShadow').checked;}   // mode B
+function tradeSrc(){return sup.on?sup.phase:(q('#tglShadow').checked?'sim':'real');}
+
+function syncCfg(){
+  q('#markTp').textContent='+'+cfg.tp.toFixed(1)+'%';
+  q('#markSl').textContent='−'+cfg.sl.toFixed(1)+'%';
+  q('#cutR').textContent='+'+cfg.tp.toFixed(1)+'%';
+  q('#cutL').textContent='−'+cfg.sl.toFixed(1)+'%';
+  q('#scanN').textContent=(pureShadow()?sess.simN:sess.n)+'/'+cfg.max;
+  q('#cutZero').style.left=(cfg.sl/(cfg.sl+cfg.tp)*100)+'%';
+  q('#riskEst').innerHTML='Xấu nhất phiên: <b>−'+cfg.sl.toFixed(1)+'% ≈ −$'+Math.round(sess.eq0*cfg.sl/100)+'</b>'
+    +' · rủi ro/lệnh: $'+Math.round(baseRisk$())+' ('+cfg.risk.toFixed(2)+'% vốn)'
+    +' · mỗi lệnh: SL −1R / TP +2R';
+  renderSup();
+}
+function bindRange(id,key,fm,out){
+  const el=q(id);el.addEventListener('input',()=>{cfg[key]=+el.value;q(out).textContent=fm(+el.value);
+    qa('.pbtn[data-p]').forEach(x=>x.classList.remove('on'));q('#pAI').classList.remove('on');syncCfg();});
+}
+bindRange('#cfgRisk','risk',v=>v.toFixed(2)+'%','#valRisk');
+bindRange('#cfgMax','max',v=>v+' lệnh','#valMax');
+bindRange('#cfgTp','tp',v=>'+'+v.toFixed(1)+'%','#valTp');
+bindRange('#cfgSl','sl',v=>'−'+v.toFixed(1)+'%','#valSl');
+
+/* presets + AI suggest */
+const PRESETS={
+  safe:{c:{risk:.25,max:6,tp:4,sl:2},t:{tglBE:1,tglTrail:0,tglPartial:1,tglTs:1,tglStreak:1,tglEvents:1}},
+  std:{c:{risk:.5,max:10,tp:6,sl:3},t:{tglBE:1,tglTrail:0,tglPartial:0,tglTs:1,tglStreak:1,tglEvents:1}},
+  aggr:{c:{risk:1,max:15,tp:8,sl:4},t:{tglBE:0,tglTrail:1,tglPartial:0,tglTs:0,tglStreak:1,tglEvents:0}},
+};
+function applyCfg(c){cfg.risk=c.risk;cfg.max=c.max;cfg.tp=c.tp;cfg.sl=c.sl;
+  q('#cfgRisk').value=c.risk;q('#cfgMax').value=c.max;q('#cfgTp').value=c.tp;q('#cfgSl').value=c.sl;
+  q('#valRisk').textContent=c.risk.toFixed(2)+'%';q('#valMax').textContent=c.max+' lệnh';
+  q('#valTp').textContent='+'+c.tp.toFixed(1)+'%';q('#valSl').textContent='−'+c.sl.toFixed(1)+'%';syncCfg();}
+function applyTgl(t){for(const k in t)q('#'+k).checked=!!t[k];}
+qa('.pbtn[data-p]').forEach(b=>b.addEventListener('click',()=>{
+  qa('.pbtn[data-p]').forEach(x=>x.classList.remove('on'));q('#pAI').classList.remove('on');b.classList.add('on');
+  const p=PRESETS[b.dataset.p];applyCfg(p.c);applyTgl(p.t);
+  toast('Preset "'+b.textContent.trim()+'" — risk shell & quản lý lệnh đã đặt');
+}));
+q('#pAI').addEventListener('click',()=>{
+  const hot=SYMS.filter(m=>m.regime==='BÙNG').map(m=>m.s.split('/')[0]);
+  qa('.pbtn[data-p]').forEach(x=>x.classList.remove('on'));q('#pAI').classList.add('on');
+  let msg;
+  if(hot.length>=2){applyCfg({risk:.25,max:6,tp:4,sl:2});applyTgl({tglBE:1,tglTrail:0,tglPartial:1,tglTs:1,tglStreak:1,tglEvents:1});
+    msg='AI gợi ý: vol cao ('+hot.join(', ')+' đang BÙNG) → hạ risk 0.25%/lệnh, SL phiên −2%, bật chốt 50% + ngắt mạch';}
+  else if(hot.length===1){applyCfg({risk:.5,max:10,tp:6,sl:3});applyTgl({tglBE:1,tglTrail:0,tglPartial:1,tglTs:1,tglStreak:1,tglEvents:1});
+    msg='AI gợi ý: vol vừa ('+hot[0]+' BÙNG) → giữ chuẩn 0.5%/lệnh, bật dời SL hoà vốn + chốt 50% ở +1R';}
+  else{applyCfg({risk:.75,max:12,tp:8,sl:3});applyTgl({tglBE:0,tglTrail:1,tglPartial:0,tglTs:1,tglStreak:1,tglEvents:1});
+    msg='AI gợi ý: regime êm, trend sạch → nới TP phiên +8%, bật trailing để bám trend';}
+  toast(msg);
+});
+q('#tglTg').addEventListener('change',e=>toast(e.target.checked?'Telegram: bật báo vào/ra lệnh & kill-switch':'Telegram: tắt thông báo'));
+q('#tglShadow').addEventListener('change',e=>{
+  toast(e.target.checked?'Giả lập BẬT — chạy dữ liệu thật, không dùng vốn':'Giả lập TẮT — lệnh dùng vốn (paper)');
+  syncCfg();
+});
+
+/* ---- Super Automato ---- */
+const SUPM={soft:{need:3,pct:10},hard:{need:5,pct:10}};
+function renderSup(){
+  const ph=q('#supPhase');
+  if(sup.phase==='real'){ph.textContent='VỐN THẬT';ph.className='tag brass';}
+  else{ph.textContent='GIẢ LẬP';ph.className='tag sim';}
+  const dots='●'.repeat(Math.min(sup.lossStreak,sup.need))+'○'.repeat(Math.max(0,sup.need-sup.lossStreak));
+  q('#supStreak').textContent= sup.phase==='sim'
+    ? ('chuỗi thua sim '+sup.lossStreak+'/'+sup.need+' '+dots)
+    : ('chuỗi thắng thật '+sup.winStreak+' · thua 1 lệnh → về giả lập');
+  const capHit=sup.phase==='real'&&sup.base>0&&sup.stake>=sup.base*sup.cap-0.01;
+  q('#supStake').textContent='stake '+fmt$(sup.phase==='real'?sup.stake:baseRisk$())+(capHit?' (trần ×'+sup.cap+')':'');
+}
+q('#tglSuper').addEventListener('change',e=>{
+  sup.on=e.target.checked;
+  const sh=q('#tglShadow');
+  q('#supBody').classList.toggle('sup-dim',!sup.on);
+  if(sup.on){
+    sup.phase='sim';sup.lossStreak=0;sup.winStreak=0;sup.base=baseRisk$();sup.stake=sup.base;
+    sh.checked=true;sh.disabled=true;
+    toast('Super Automato BẬT — giả lập, chờ chuỗi '+sup.need+' thua rồi mới vào vốn thật');
+  }else{
+    sh.disabled=false;
+    toast('Super Automato TẮT — chạy theo công tắc Giả lập');
+  }
+  renderSup();syncCfg();
+});
+qa('[data-sm]').forEach(b=>b.addEventListener('click',()=>{
+  qa('[data-sm]').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  sup.mode=b.dataset.sm;
+  const cu=q('#superCustom');
+  if(sup.mode==='custom'){
+    cu.hidden=false;
+    sup.need=+q('#supN').value;sup.pct=+q('#supPct').value;sup.cap=+q('#supCap').value;
+    toast('Super custom — tự chỉnh số lượt đợi thua & % lãi dồn');
+  }else{
+    cu.hidden=true;
+    sup.need=SUPM[sup.mode].need;sup.pct=SUPM[sup.mode].pct;sup.cap=5;
+    toast(sup.mode==='soft'?'Soft Think — đợi 3 lệnh giả lập thua liên tiếp':'Hard Think — đợi 5 lệnh giả lập thua liên tiếp');
+  }
+  sup.lossStreak=Math.min(sup.lossStreak,sup.need);
+  renderSup();
+}));
+function bindSup(id,out,fm,key){
+  const el=q(id);el.addEventListener('input',()=>{q(out).textContent=fm(+el.value);sup[key]=+el.value;
+    if(key==='need')sup.lossStreak=Math.min(sup.lossStreak,sup.need);renderSup();});
+}
+bindSup('#supN','#supNV',v=>v+' lệnh','need');
+bindSup('#supPct','#supPctV',v=>v+'%','pct');
+bindSup('#supCap','#supCapV',v=>'×'+v+' cơ bản','cap');
+
+/* ---- ARM state machine ---- */
+const CIRC=2*Math.PI*96;
+let phase='standby';
+let live=null;
+const timers={};
+function clearTimers(){for(const k in timers){clearInterval(timers[k]);clearTimeout(timers[k]);delete timers[k];}}
+function eff(r){return live&&live.didPartial?0.5+0.5*r:r;}
+function ledgerPnl(){return pureShadow()?sess.simPnl:sess.pnl;}
+function sessFrac(){const P=ledgerPnl();const f=P>=0?P/cfg.tp:P/cfg.sl;return Math.max(-1,Math.min(1,f));}
+function paintSession(proj,isSim){
+  const frac=Math.max(-1,Math.min(1,proj>=0?proj/cfg.tp:proj/cfg.sl));
+  const r=q('#ringGain');
+  r.style.strokeDasharray=(Math.abs(frac)*CIRC)+' '+CIRC;
+  r.style.stroke=isSim?'var(--sim)':(frac>0?'var(--up)':frac<0?'var(--down)':'var(--brass)');
+  const zero=cfg.sl/(cfg.sl+cfg.tp)*100,span=100/(cfg.sl+cfg.tp);
+  const fill=q('#cutFill');
+  fill.style.background=isSim?'var(--sim)':(proj>=0?'var(--up)':'var(--down)');
+  if(proj>=0){fill.style.left=zero+'%';fill.style.width=Math.min(100-zero,proj*span)+'%';}
+  else{const w=Math.min(zero,-proj*span);fill.style.left=(zero-w)+'%';fill.style.width=w+'%';}
+}
+function updEq(extra){extra=extra||0;const pct=sess.pnl+extra;
+  q('#atEq').textContent=fmt$(sess.eq0*(1+pct/100));
+  q('#atEqSub').textContent='phiên '+fmtP(pct);}
+function updSim(extra){q('#atShadow').textContent='giả lập '+fmtP(sess.simPnl+(extra||0));}
+function fmtT(ms){const s=(ms/1000)|0;return String((s/60)|0).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
+function setPhase(p){
+  phase=p;
+  q('#dialWrap').className='dial-wrap '+(p==='standby'?'':p);
+  qa('.panel-state').forEach(x=>x.classList.remove('on'));
+  q('#ps-'+p).classList.add('on');
+  const word=q('#dialWord'),sub=q('#dialSub'),gl=q('#dialGlyph'),pl=q('#phaseLine');
+  if(p==='standby'){word.textContent='ARM';word.style.color='';gl.textContent='⬡';sub.textContent='phiên mới · paper';
+    pl.textContent='standby — cấu hình risk shell rồi ARM';paintSession(0,false);}
+  if(p==='scanning'){word.textContent='QUÉT';word.style.color='';gl.textContent='◌';sub.textContent='bấm để dừng';
+    pl.textContent='đang quét — vào lệnh khi strategy + AI đồng thuận';paintSession(ledgerPnl(),pureShadow());}
+  if(p==='live'){
+    const sim=live.src==='sim';
+    word.textContent='+0.00%';word.style.color=sim?'var(--sim)':'var(--up)';
+    gl.textContent=live.dir==='long'?'▲':'▼';sub.textContent=(sim?'GIẢ LẬP · ':'')+live.sym;
+    pl.textContent=sim?'đang giữ vị thế GIẢ LẬP — không dùng vốn':'đang giữ vị thế VỐN THẬT — KILL để đóng và ngắt phiên';}
+  if(p==='halted'){word.textContent='RESET';word.style.color='';gl.textContent='⬡';sub.textContent='mở phiên mới';
+    pl.textContent='phiên đã ngắt bởi risk shell';}
+}
+const SCANLINES=[
+  ['BTC','RSI {r} quay đầu lên · MACD rising · chờ đồng thuận'],
+  ['ETH','inside channel — giá kẹt giữa dải 20 nến'],
+  ['SOL','ATR nở {a}% · regime chuyển BÙNG'],
+  ['BNB','funding {f}%/8h — phe Long đang trả phí'],
+  ['XRP','within bands — chưa chạm mép Bollinger'],
+  ['DOGE','volume spike ×{v} · sentiment-agent: trung tính'],
+  ['BTC','risk-agent: size ×0.8 nếu vào — spread ổn'],
+  ['ETH','breakout hụt trên đỉnh 20 nến — chờ nến đóng'],
+];
+function feedLine(sym,txt){
+  const el=document.createElement('div');el.className='ev';
+  el.innerHTML='<span class="t">'+new Date().toLocaleTimeString('vi-VN',{hour12:false})+'</span><span class="sym">'+sym+'</span><span class="txt">'+txt+'</span>';
+  const f=q('#scanFeed');f.prepend(el);while(f.children.length>34)f.lastChild.remove();
+}
+function scanLine(){
+  const L=pick(SCANLINES);
+  feedLine(L[0],L[1].replace('{r}',(38+Math.random()*24).toFixed(1)).replace('{a}',(3+Math.random()*9).toFixed(0))
+    .replace('{f}',(Math.random()*0.03).toFixed(3)).replace('{v}',(1.2+Math.random()*2).toFixed(1)));
+}
+function startScanTicker(){
+  timers.scan=setInterval(()=>{scanLine();q('#scanT').textContent=fmtT(Date.now()-sess.t0);
+    q('#scanN').textContent=(pureShadow()?sess.simN:sess.n)+'/'+cfg.max;
+    q('#scanPnl').textContent=fmtP(pureShadow()?sess.simPnl:sess.pnl);
+    q('#scanSim').textContent=sess.simN+' · '+fmtP(sess.simPnl);},900);
+}
+function scheduleSignal(ms){
+  timers.sig=setTimeout(()=>{
+    if(q('#tglEvents').checked&&Math.random()<0.18){
+      feedLine('⏸','Cửa sổ funding / tin vĩ mô — hoãn tín hiệu (demo 4s)');
+      scheduleSignal(4000);return;
+    }
+    openTrade();
+  },ms);
+}
+function openTrade(){
+  const strat=q('#cfgStrat').value;
+  const cands=SYMS.map(m=>({m,g:sigOf(m,strat)})).filter(x=>x.g.d!=='flat');
+  const c=cands.length?cands.sort((a,b)=>b.g.st-a.g.st)[0]
+    :{m:pick(SYMS),g:{d:pick(['long','short']),st:.62,why:['tín hiệu demo — đồng thuận vừa đủ ngưỡng']}};
+  const entry=c.m.ser[c.m.ser.length-1];
+  const src=tradeSrc();
+  const stake=(src==='real'&&sup.on)?sup.stake:baseRisk$();
+  live={sym:c.m.s,dir:c.g.d,entry,strat,why:c.g.why[0],src,stake$:stake,
+        raw:0,peak:0,ticks:0,didPartial:false,beNoted:false,trNoted:false};
+  q('#posSym').textContent=live.sym;
+  q('#posDir').textContent=live.dir.toUpperCase();q('#posDir').className='tag '+live.dir;
+  q('#posStrat').textContent=strat;
+  const sb=q('#posSrc');
+  if(src==='sim'){sb.textContent='GIẢ LẬP';sb.className='tag sim';}
+  else{sb.textContent='VỐN THẬT';sb.className='tag brass';}
+  q('#posEntry').textContent=px(entry);
+  const sl=live.dir==='long'?entry*0.99:entry*1.01;
+  const tp=live.dir==='long'?entry*1.02:entry*0.98;
+  q('#posSl').textContent=px(sl)+' (−1R)';q('#posTp').textContent=px(tp)+' (+2R)';
+  q('#posSize').textContent=fmt$(stake*100);
+  q('#posRisk').textContent=fmt$(stake)+(src==='sim'?' · giả lập, không trừ vốn':' · '+(stake/sess.eq0*100).toFixed(2)+'% vốn');
+  q('#posWhy').textContent=live.why;
+  feedLine(src==='sim'?'◇':'⬥','['+(src==='sim'?'SIM':'THẬT')+'] Vào '+live.dir.toUpperCase()+' '+live.sym+' · stake '+fmt$(stake));
+  setPhase('live');
+  timers.pnl=setInterval(tickLive,240);
+}
+function tickLive(){
+  const be=q('#tglBE').checked,trail=q('#tglTrail').checked,partial=q('#tglPartial').checked,ts=q('#tglTs').checked;
+  live.raw+=(Math.random()-0.47)*0.16;
+  live.raw=Math.max(-1.15,Math.min(2.15,live.raw));
+  live.peak=Math.max(live.peak,live.raw);
+  live.ticks++;
+  if(partial&&!live.didPartial&&live.raw>=1){
+    live.didPartial=true;
+    toast('Chốt 50% ở +1R — khoá +0.5R, nửa còn lại chạy tiếp');
+    q('#posTp').textContent='đã chốt 50% · nửa còn lại chạy';
+  }
+  if(live.peak>=1){
+    if(trail&&!live.trNoted){live.trNoted=true;toast('Trailing bật — SL bám đỉnh −0.7R');
+      q('#posSl').textContent='trailing (đỉnh −0.7R)';}
+    else if(be&&!trail&&!live.beNoted){live.beNoted=true;toast('SL đã dời về hoà vốn — lệnh hết rủi ro lỗ');
+      q('#posSl').textContent='hoà vốn (entry)';}
+  }
+  const isSim=live.src==='sim';
+  const effR=eff(live.raw),pnl$=effR*live.stake$,pnlPct=pnl$/sess.eq0*100;
+  const el=q('#posPnl');
+  el.firstChild.textContent=(pnl$>=0?'+':'')+fmt$(pnl$)+' ';
+  el.className='pnl-big '+(isSim?'simc':(pnl$>=0?'up':'down'));
+  q('#posPnlPct').textContent='('+fmtP(pnlPct)+(isSim?' ảo':' vốn')+')';
+  const word=q('#dialWord');word.textContent=fmtP(pnlPct);
+  word.style.color=isSim?'var(--sim)':(pnl$>=0?'var(--up)':'var(--down)');
+  if(!isSim){paintSession(sess.pnl+pnlPct,false);updEq(pnlPct);}
+  else if(pureShadow()){paintSession(sess.simPnl+pnlPct,true);updSim(pnlPct);updEq(0);}
+  else{paintSession(sess.pnl,false);updSim(pnlPct);updEq(0);}
+  if(live.raw>=2)return closeTrade(eff(2),'TP lệnh chạm (+2R)');
+  if(trail&&live.peak>=1&&live.raw<=live.peak-0.7)return closeTrade(eff(live.peak-0.7),'Trailing stop — chốt theo đỉnh');
+  if(be&&!trail&&live.peak>=1&&live.raw<=0)
+    return closeTrade(eff(0),live.didPartial?'Hoà vốn phần còn lại — giữ +0.5R đã khoá':'SL hoà vốn — lệnh không lỗ');
+  if(live.raw<=-1)return closeTrade(eff(-1),live.didPartial?'SL nửa còn lại — tổng hoà nhờ chốt 50%':'SL lệnh chạm (−1R)');
+  if(ts&&live.ticks>110&&Math.abs(live.raw)<0.35)return closeTrade(eff(live.raw),'Time-stop — lệnh ì, trả vốn về');
+}
+function bookClose(effR,reason){
+  const pnl$=effR*live.stake$,pnlPct=pnl$/sess.eq0*100;
+  sess.trades.push({sym:live.sym,dir:live.dir,pnl:pnlPct,why:reason,src:live.src});
+  if(live.src==='sim'){
+    sess.simN++;sess.simPnl+=pnlPct;
+    if(pnlPct>0.001)sess.simWins++;
+    if(sup.on){
+      if(pnlPct<-0.001)sup.lossStreak++;
+      else if(pnlPct>0.001)sup.lossStreak=0;
+      renderSup();
+    }
+    updSim(0);
+  }else{
+    sess.n++;sess.pnl+=pnlPct;
+    if(pnlPct>0.001){sess.wins++;sess.streak=0;}
+    else if(pnlPct<-0.001){sess.streak++;}
+    updEq();
+    if(sup.on){
+      if(pnlPct>0.001){
+        sup.winStreak++;
+        const add=sup.pct/100*pnl$,old=sup.stake;
+        sup.stake=Math.min(sup.base*sup.cap,sup.stake+add);
+        feedLine('↑','[THẬT] Thắng '+fmtP(pnlPct)+' → dồn '+sup.pct+'% lãi: stake '+fmt$(old)+' → '+fmt$(sup.stake));
+      }else if(pnlPct<-0.001){
+        sup.phase='sim';sup.lossStreak=0;sup.winStreak=0;sup.base=baseRisk$();sup.stake=sup.base;
+        feedLine('↩','[THẬT] Thua 1 lệnh → về GIẢ LẬP, chờ chuỗi '+sup.need+' thua');
+        toast('Super Automato: thua 1 lệnh vốn thật → quay về giả lập');
+      }
+      renderSup();
+    }
+  }
+  return pnlPct;
+}
+function closeTrade(effR,reason){
+  clearInterval(timers.pnl);
+  const src=live.src;
+  bookClose(effR,reason);
+  const tagged='['+(src==='sim'?'SIM':'THẬT')+'] '+reason;
+  if(src==='real'){
+    if(sess.pnl>=cfg.tp)return halt('Đạt ngưỡng chốt lãi phiên +'+cfg.tp.toFixed(1)+'% — risk shell tự ngắt.');
+    if(sess.pnl<=-cfg.sl)return halt('Chạm ngưỡng cắt lỗ phiên −'+cfg.sl.toFixed(1)+'% — kill-switch tự ngắt.');
+    if(sess.n>=cfg.max)return halt('Đủ '+cfg.max+' lệnh vốn thật của phiên — dừng theo giới hạn bạn đặt.');
+  }else if(!sup.on){
+    if(sess.simPnl>=cfg.tp)return halt('Giả lập đạt ngưỡng chốt lãi phiên +'+cfg.tp.toFixed(1)+'% — dry-run kết thúc.');
+    if(sess.simPnl<=-cfg.sl)return halt('Giả lập chạm ngưỡng cắt lỗ phiên −'+cfg.sl.toFixed(1)+'% — dry-run kết thúc.');
+    if(sess.simN>=cfg.max)return halt('Đủ '+cfg.max+' lệnh giả lập của phiên — dry-run kết thúc.');
+  }
+  if(sup.on&&sup.phase==='sim'&&sup.lossStreak>=sup.need){
+    sup.phase='real';sup.base=baseRisk$();sup.stake=sup.base;sup.winStreak=0;
+    feedLine('⚡','Chuỗi '+sup.need+' thua giả lập → chuyển VỐN THẬT · stake '+fmt$(sup.stake));
+    toast('Super Automato: vào VỐN THẬT — stake '+fmt$(sup.stake));
+    renderSup();
+  }
+  let extra=0;
+  if(src==='real'&&q('#tglStreak').checked&&sess.streak>=3){extra=8000;sess.streak=0;
+    setTimeout(()=>feedLine('◉','Ngắt mạch: 3 lệnh THẬT thua liên tiếp — nghỉ 15′ (demo 8s)'),50);}
+  live=null;startScanBack(tagged,extra);
+}
+function startScanBack(reason,extra){
+  setPhase('scanning');
+  feedLine('✓','Đóng lệnh — '+reason+'. Quét tiếp…');
+  startScanTicker();
+  scheduleSignal(rnd(3200,6500)+(extra||0));
+}
+function halt(why){
+  clearTimers();live=null;
+  setPhase('halted');paintSession(ledgerPnl(),pureShadow());
+  q('#haltWhy').textContent=why;
+  q('#repN').textContent=sess.n;q('#repW').textContent=sess.wins;
+  const p=q('#repPnl');p.textContent=fmtP(sess.pnl);p.className='m-v '+(sess.pnl>=0?'up':'down');
+  q('#repEq').textContent=fmt$(sess.eq0*(1+sess.pnl/100));
+  q('#repSplit').textContent='Giả lập: '+sess.simN+' lệnh · '+fmtP(sess.simPnl)+' (ảo, không tính vào vốn) — Vốn thật: '+sess.n+' lệnh · '+fmtP(sess.pnl);
+  q('#repTrades').innerHTML=sess.trades.map(t=>
+    '<div class="mt"><span><span class="tag '+(t.src==='sim'?'sim':'brass')+'" style="margin-right:6px">'+(t.src==='sim'?'SIM':'THẬT')+'</span>'
+    +t.sym+' · <span class="'+(t.dir==='long'?'up':'down')+'">'+t.dir.toUpperCase()+'</span></span>'
+    +'<span class="dim">'+t.why+'</span><span class="'+(t.src==='sim'?'':(t.pnl>=0?'up':'down'))+'"'+(t.src==='sim'?' style="color:var(--sim)"':'')+'>'+fmtP(t.pnl)+'</span></div>').join('');
+  toast('Phiên ngắt — '+why);
+}
+function resetSession(){
+  sess.n=0;sess.wins=0;sess.pnl=0;sess.simN=0;sess.simWins=0;sess.simPnl=0;sess.streak=0;sess.trades=[];
+  if(sup.on){sup.phase='sim';sup.lossStreak=0;sup.winStreak=0;sup.base=baseRisk$();sup.stake=sup.base;}
+  q('#scanFeed').innerHTML='';updEq();updSim(0);syncCfg();renderSup();setPhase('standby');
+}
+q('#armBtn').addEventListener('click',()=>{
+  if(phase==='standby'){sess.t0=Date.now();setPhase('scanning');startScanTicker();scheduleSignal(rnd(5200,9000));
+    toast(sup.on?'Phiên mở — Super Automato: bắt đầu bằng GIẢ LẬP':'Phiên mở — bot tự quét & vào lệnh trong risk shell');}
+  else if(phase==='scanning'){clearTimers();setPhase('standby');toast('Đã dừng quét — chưa vào lệnh nào thêm');}
+  else if(phase==='halted'){resetSession();}
+});
+q('#killBtn').addEventListener('click',()=>{
+  if(phase!=='live')return;
+  clearInterval(timers.pnl);
+  bookClose(eff(live.raw),'Kill thủ công');
+  halt('Kill thủ công — bạn đóng vị thế và ngắt phiên.');
+});
+
+/* ---- ANALYSIS ---- */
+let selSym=0;
+function renderBoard(){
+  q('#board').innerHTML=SYMS.map((m,i)=>
+    '<button class="sym-row '+(i===selSym?'sel':'')+'" data-i="'+i+'">'
+    +'<span class="sname">'+m.s.split('/')[0]+'<small>'+m.s+'</small></span>'
+    +'<canvas data-spark="'+i+'"></canvas>'
+    +'<span class="sprice"><span class="p">'+px(m.ser[63])+'</span><br><span class="c '+(m.chg>=0?'up':'down')+'">'+fmtP(m.chg)+'</span></span>'
+    +'<span class="btags"><span class="tag '+(m.regime==='BÙNG'?'brass':'')+'">'+m.regime+'</span>'
+    +'<span class="tag '+(m.fund>=0?'':'short')+'">fund '+(m.fund>=0?'+':'')+m.fund.toFixed(3)+'%</span></span></button>').join('');
+  qa('#board .sym-row').forEach(b=>b.addEventListener('click',()=>{selSym=+b.dataset.i;renderBoard();drawBoardSparks();drawBig();}));
+}
+function drawBoardSparks(){qa('#board canvas').forEach(c=>{const m=SYMS[+c.dataset.spark];
+  sparkA(c,m.ser.slice(-40),m.chg>=0?'#57C88A':'#E8695C');});}
+function drawBig(){const m=SYMS[selSym];
+  q('#chartTitle').textContent=m.s+' · 15m';
+  lineChart(q('#bigChart'),m.ser,[{data:ema(m.ser,8),color:'#E8B04B'},{data:ema(m.ser,21),color:'#465364'}]);}
+const STRATS=[['rsi_ema','RSI·EMA'],['donchian_breakout','DONCH'],['bollinger_meanrev','BOLL'],['ensemble','AI ⬡']];
+function renderMatrix(){
+  let html='<tr><th>Cặp</th>'+STRATS.map(s=>'<th>'+s[1]+'</th>').join('')+'</tr>';
+  SYMS.forEach((m,i)=>{
+    html+='<tr><td class="mono">'+m.s.split('/')[0]+'</td>'+STRATS.map(s=>{
+      const g=sigOf(m,s[0]);const ch=g.d==='long'?'▲':g.d==='short'?'▼':'—';
+      return '<td><button class="sig '+g.d+'" data-i="'+i+'" data-s="'+s[0]+'">'+ch+'</button></td>';
+    }).join('')+'</tr>';
+  });
+  q('#matrix').innerHTML=html;
+  qa('.sig').forEach(b=>b.addEventListener('click',()=>{
+    qa('.sig').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');
+    const m=SYMS[+b.dataset.i],g=sigOf(m,b.dataset.s);
+    q('#rbTitle').textContent=m.s+' · '+b.dataset.s;
+    const tg=q('#rbTag');tg.textContent=g.d.toUpperCase();tg.className='tag '+(g.d==='flat'?'':g.d);
+    q('#rbList').innerHTML=g.why.map(w=>'<li>'+w+'</li>').join('');
+    q('#rbStr').style.width=(g.st*100)+'%';q('#rbStrV').textContent=g.st.toFixed(2);
+  }));
+}
+
+/* ---- SHIELD ---- */
+let shieldOn=false,acc=0;
+q('#legAEntry').textContent=px(SYMS[0].ser[63]);q('#legBEntry').textContent=px(SYMS[0].ser[63]);
+q('#shieldBtn').addEventListener('click',()=>{
+  shieldOn=!shieldOn;
+  q('#shieldState').textContent=shieldOn?'ĐANG CHẠY':'CHƯA KÍCH HOẠT';
+  q('#shieldBtn').textContent=shieldOn?'⛨ Tắt Shield':'⛨ Kích hoạt Shield';
+  toast(shieldOn?'Shield chạy — hai chân đã khoá, thu funding (demo tua nhanh)':'Shield tắt — hai chân đã đóng');
+});
+setInterval(()=>{if(!shieldOn)return;
+  acc+=4000*0.0001/(8*3600)*2200;
+  q('#fundAcc').textContent='$'+acc.toFixed(4);
+  q('#netDelta').textContent='Δ ≈ '+Math.abs(rnd(-0.0008,0.0008)).toFixed(3)+' BTC';
+},1000);
+
+/* ---- JOURNAL ---- */
+const JT=[
+  {t:'07/07 21:14',s:'BTC/USDT',d:'long',st:'rsi_ema',r:'+2.0R',p:'+$100.00',
+    why:['uptrend — EMA nhanh > EMA chậm','RSI 39.8 quay đầu lên từ oversold','MACD hist đang tăng'],ai:'0.78 · confirm',ag:{sig:'long 0.74',risk:'size ×1.0',sen:'tắt'}},
+  {t:'07/07 18:02',s:'SOL/USDT',d:'short',st:'donchian_breakout',r:'−1.0R',p:'−$50.00',
+    why:['breakdown dưới đáy 20 nến (151.2)','ATR mở rộng — theo đà'],ai:'0.66 · confirm',ag:{sig:'short 0.69',risk:'size ×0.8 (vol cao)',sen:'trung tính'}},
+  {t:'07/07 15:47',s:'ETH/USDT',d:'long',st:'bollinger_meanrev',r:'+2.0R',p:'+$100.00',
+    why:['chạm dải dưới 3,441 và bật lên','kỳ vọng hồi về mid 3,502'],ai:'0.71 · confirm',ag:{sig:'long 0.65',risk:'size ×1.0',sen:'tích cực nhẹ'}},
+  {t:'07/07 11:20',s:'BTC/USDT',d:'long',st:'ensemble',r:'+0.6R',p:'+$30.00',
+    why:['đồng thuận nghiêng LONG (2/3 strategy)','AI score 0.72 ≥ ngưỡng 0.6'],ai:'0.72 · confirm',ag:{sig:'long 0.72',risk:'size ×1.0',sen:'trung tính'}},
+  {t:'06/07 22:31',s:'DOGE/USDT',d:'short',st:'rsi_ema',r:'−1.0R',p:'−$50.00',
+    why:['downtrend — EMA nhanh < EMA chậm','RSI 66.4 quay đầu xuống'],ai:'0.61 · confirm',ag:{sig:'short 0.63',risk:'size ×0.8',sen:'tiêu cực'}},
+  {t:'06/07 19:05',s:'BNB/USDT',d:'long',st:'donchian_breakout',r:'+2.0R',p:'+$100.00',
+    why:['breakout trên đỉnh 20 nến (596.8)'],ai:'0.69 · confirm',ag:{sig:'long 0.70',risk:'size ×1.0',sen:'tắt'}},
+  {t:'06/07 14:52',s:'XRP/USDT',d:'long',st:'bollinger_meanrev',r:'−1.0R',p:'−$50.00',
+    why:['chạm dải dưới 0.5104 và bật lên'],ai:'0.58 · advisory (dưới ngưỡng, vẫn vào theo cấu hình)',ag:{sig:'long 0.55',risk:'size ×0.8',sen:'trung tính'}},
+  {t:'06/07 09:18',s:'ETH/USDT',d:'short',st:'ensemble',r:'+1.3R',p:'+$65.00',
+    why:['đồng thuận nghiêng SHORT','funding +0.021% — phe Long quá tải'],ai:'0.75 · confirm',ag:{sig:'short 0.77',risk:'size ×1.0',sen:'tiêu cực nhẹ'}},
+];
+function renderJournal(){
+  q('#jBody').innerHTML=JT.map((t,i)=>
+    '<tr><td class="mono dim">'+t.t+'</td><td class="mono">'+t.s+'</td>'
+    +'<td><span class="tag '+t.d+'">'+t.d.toUpperCase()+'</span></td>'
+    +'<td class="dim">'+t.st+'</td><td>'+t.r+'</td>'
+    +'<td class="'+(t.p.startsWith('+')?'up':'down')+'">'+t.p+'</td>'
+    +'<td><button class="rec-btn" data-i="'+i+'">hồ sơ ▾</button></td></tr>'
+    +'<tr class="rec-row" data-r="'+i+'" hidden><td colspan="7">'
+    +'<b style="font-family:\'Space Grotesk\',sans-serif;font-size:12px;letter-spacing:.08em">HỒ SƠ QUYẾT ĐỊNH #'+(49-i)+'</b>'
+    +'<ul>'+t.why.map(w=>'<li>'+w+'</li>').join('')+'</ul>'
+    +'<div class="agents"><span class="tag brass">AI '+t.ai+'</span>'
+    +'<span class="tag">signal-agent · '+t.ag.sig+'</span>'
+    +'<span class="tag">risk-agent · '+t.ag.risk+'</span>'
+    +'<span class="tag">sentiment · '+t.ag.sen+'</span></div>'
+    +'</td></tr>').join('');
+  qa('.rec-btn').forEach(b=>b.addEventListener('click',()=>{
+    const row=q('.rec-row[data-r="'+b.dataset.i+'"]');row.hidden=!row.hidden;
+    b.textContent=row.hidden?'hồ sơ ▾':'đóng ▴';
+  }));
+}
+function drawEquity(){
+  const pts=[];let e=10000;
+  for(let i=0;i<60;i++){e*=(1+(Math.random()-0.465)*0.006);pts.push(e);}
+  pts[59]=10470;
+  lineChart(q('#eqCurve'),pts,[]);
+}
+
+/* ---- init ---- */
+renderOOS();syncCfg();updEq();updSim(0);renderSup();renderBoard();renderMatrix();renderJournal();
+requestAnimationFrame(drawVisible);
+})();
 </script>
 </body>
 </html>

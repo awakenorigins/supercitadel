@@ -1,7 +1,7 @@
 {
   "name": "@citadel/module-soul-trade",
-  "version": "1.0.0",
-  "description": "Soul-Trade \u2014 AI crypto trading module for SuperCitadel (bots, strategies, backtest, per-bot LLM + agents, memory & analytics)",
+  "version": "1.1.0",
+  "description": "Soul-Trade — AI crypto trading module for SuperCitadel (bots, strategies, backtest, per-bot LLM + agents, memory & analytics)",
   "type": "module",
   "exports": {
     ".": "./src/index.ts",

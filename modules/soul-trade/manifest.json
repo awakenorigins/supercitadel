@@ -1,16 +1,32 @@
 {
   "id": "soul-trade",
   "name": "Soul-Trade — AI Trading",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "tier": "paid",
   "priceOm": 2200,
   "icon": "trending-up",
   "description": "Bot giao dịch crypto AI: nhiều bot cô lập, backtest, nguồn dữ liệu thật (ccxt), LLM riêng từng bot + tự chia agent, cắm local model, lưu trí nhớ & phân tích thắng thua. Tiểu Tâm điều khiển bằng tiếng Việt.",
-  "permissions": ["trade.bot.read", "trade.bot.write", "trade.bot.control", "trade.history.read", "trade.analytics.read", "trade.backtest.run"],
+  "permissions": [
+    "trade.bot.read",
+    "trade.bot.write",
+    "trade.bot.control",
+    "trade.history.read",
+    "trade.analytics.read",
+    "trade.backtest.run"
+  ],
   "routes": "/api/v1/soul-trade",
   "docs": "README.md",
   "engine": "^1.0.0",
   "group": "Giao dịch",
-  "rentPlans": { "30": 300 },
-  "events": { "emits": ["trade.module.installed", "trade.module.activated", "trade.bot.created", "trade.turn.evaluated"] }
+  "rentPlans": {
+    "30": 300
+  },
+  "events": {
+    "emits": [
+      "trade.module.installed",
+      "trade.module.activated",
+      "trade.bot.created",
+      "trade.turn.evaluated"
+    ]
+  }
 }
