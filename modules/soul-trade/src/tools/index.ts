@@ -14,7 +14,7 @@ import { recentTrades, recentDecisions } from '../services/memory.service.js';
 import { botAnalytics, orgAnalytics, agentContribution } from '../services/analytics.service.js';
 import { backtestAndSave, evaluateTurn, walkforwardAndSave } from '../turn.service.js';
 import { resolveEmbeddingProvider, recallSimilar } from '../embeddings.js';
-import { getOrCreateAutomatoConfig, configureAutomato, applyAutomatoPreset, setAutomatoArmed, automatoLog, automatoAnalytics } from '../automato.service.js';
+import { getOrCreateAutomatoConfig, configureAutomato, applyAutomatoPreset, setAutomatoArmed, automatoLog, automatoAnalytics, getAutomatoPosition, closeAutomatoPosition } from '../automato.service.js';
 
 export type ToolKind = 'tool' | 'action';
 export type TradeToolCtx = TradeCtx & { env?: HostLLMEnv };
@@ -38,6 +38,9 @@ export const tradeReadTools: TradeToolDefinition[] = [
   define({ name: 'soul-trade.automato.status', kind: 'tool', permission: 'trade.automato.read',
     description: 'AUTOMATO status/config for one bot.', inputSchema: S.automatoRefSchema, docs: 'docs/AUTOMATO.md',
     run: async (ctx, i) => ({ bot: i.name, config: await getOrCreateAutomatoConfig(ctx, (await mustBot(ctx, i.name)).id) }) }),
+  define({ name: 'soul-trade.automato.position', kind: 'tool', permission: 'trade.automato.read',
+    description: 'Current AUTOMATO session position + live PnL.', inputSchema: S.automatoRefSchema, docs: 'docs/AUTOMATO.md#position',
+    run: async (ctx, i) => getAutomatoPosition(ctx, await mustBot(ctx, i.name)) }),
   define({ name: 'soul-trade.automato.log', kind: 'tool', permission: 'trade.automato.read',
     description: 'AUTOMATO journal log.', inputSchema: S.automatoLogSchema, docs: 'docs/AUTOMATO.md#journal',
     run: async (ctx, i) => automatoLog(ctx, (await mustBot(ctx, i.name)).id, i.limit ?? 50) }),
@@ -81,6 +84,10 @@ export const tradeReadTools: TradeToolDefinition[] = [
 
 export const tradeWriteActions: TradeToolDefinition[] = [
 
+  define({ name: 'soul-trade.automato.kill', kind: 'action', permission: 'trade.automato.control',
+    description: 'KILL current AUTOMATO position and halt session.', inputSchema: S.automatoRefSchema,
+    docs: 'docs/AUTOMATO.md#kill', run: async (ctx, i) => closeAutomatoPosition(ctx, await mustBot(ctx, i.name), 'kill') }),
+
   define({ name: 'soul-trade.automato.configure', kind: 'action', permission: 'trade.automato.write',
     description: 'Configure AUTOMATO risk shell, shield and Super Automato.', inputSchema: S.automatoConfigureSchema,
     docs: 'docs/AUTOMATO.md', run: async (ctx, i) => { const b = await mustBot(ctx, i.name); const { name, ...patch } = i as any; return configureAutomato(ctx, b.id, patch); } }),
@@ -89,10 +96,10 @@ export const tradeWriteActions: TradeToolDefinition[] = [
     docs: 'docs/AUTOMATO.md#quickstart', run: async (ctx, i) => { const b = await mustBot(ctx, i.name); await updateBotSymbols(ctx, i.name, [i.symbol]); await configureAutomato(ctx, b.id, { mode: 'shadow', super_mode: 'ultra', risk_per_trade: 1, super_cfg: { ultra: { maxRiskPct: 1, tpPct: 2, trailGivebackPct: 0.5, stopLossPct: 1, timeframe: '1m' } } }); const cfg = await setAutomatoArmed(ctx, b.id, true); await setStatus(ctx, i.name, 'running'); return { bot: i.name, symbol: i.symbol, running: true, config: cfg }; } }),
   define({ name: 'soul-trade.automato.arm', kind: 'action', permission: 'trade.automato.control',
     description: 'ARM AUTOMATO session (sensitive).', inputSchema: S.automatoRefSchema,
-    docs: 'docs/AUTOMATO.md#arm', run: async (ctx, i) => setAutomatoArmed(ctx, (await mustBot(ctx, i.name)).id, true) }),
+    docs: 'docs/AUTOMATO.md#arm', run: async (ctx, i) => { const b = await mustBot(ctx, i.name); await setStatus(ctx, i.name, 'running'); return setAutomatoArmed(ctx, b.id, true); } }),
   define({ name: 'soul-trade.automato.disarm', kind: 'action', permission: 'trade.automato.control',
     description: 'DISARM AUTOMATO session.', inputSchema: S.automatoRefSchema,
-    docs: 'docs/AUTOMATO.md#arm', run: async (ctx, i) => setAutomatoArmed(ctx, (await mustBot(ctx, i.name)).id, false) }),
+    docs: 'docs/AUTOMATO.md#arm', run: async (ctx, i) => { const b = await mustBot(ctx, i.name); await setStatus(ctx, i.name, 'idle'); return setAutomatoArmed(ctx, b.id, false); } }),
   define({ name: 'soul-trade.automato.preset', kind: 'action', permission: 'trade.automato.write',
     description: 'Apply AUTOMATO preset: cautious/standard/active.', inputSchema: S.automatoPresetSchema,
     docs: 'docs/AUTOMATO.md#preset', run: async (ctx, i) => applyAutomatoPreset(ctx, (await mustBot(ctx, i.name)).id, i.preset) }),

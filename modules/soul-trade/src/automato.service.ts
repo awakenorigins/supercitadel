@@ -1,4 +1,7 @@
-import type { TradeCtx } from './types.js';
+import type { TradeCtx, Direction } from './types.js';
+import { addIndicators } from './indicators.js';
+import { fetchLiveOHLCV, fetchLivePrice } from './datasource.js';
+import { recordTrade } from './services/memory.service.js';
 import { j } from './db/client.js';
 
 export const AUTOMATO_PRESETS: Record<string, any> = {
@@ -6,7 +9,7 @@ export const AUTOMATO_PRESETS: Record<string, any> = {
   standard: { preset: 'standard', risk_per_trade: 0.5, max_trades_session: 10, session_tp: 6, session_sl: 3, cb_loss_streak: 3, cb_cooldown_min: 15, breakeven_at_r: 1, trailing_atr: 0, partial_tp_at_r: 1.5, partial_tp_pct: 50, time_stop_bars: 24 },
   active: { preset: 'active', risk_per_trade: 1, max_trades_session: 18, session_tp: 10, session_sl: 5, cb_loss_streak: 4, cb_cooldown_min: 10, breakeven_at_r: 1, trailing_atr: 0.7, partial_tp_at_r: 1.5, partial_tp_pct: 50, time_stop_bars: 36 },
 };
-const DEFAULT_STATE = { phase: 'SIM', simLossStreak: 0, realLossStreak: 0, sessionTrades: 0, sessionPnl: 0, stakeMult: 1, phaseHistory: [] as any[], cooldownUntil: null as string | null };
+const DEFAULT_STATE = { uiPhase: 'standby', phase: 'SIM', simLossStreak: 0, realLossStreak: 0, sessionTrades: 0, sessionPnl: 0, stakeMult: 1, phaseHistory: [] as any[], cooldownUntil: null as string | null, openPosition: null as any, haltedReport: null as any };
 export const DEFAULT_ULTRA = { maxRiskPct: 1, tpPct: 2, trailGivebackPct: 0.5, stopLossPct: 1, timeframe: '1m', sizeMult: 1 };
 const DEFAULT_SUPER = { lossN: 3, profitReinvestPct: 10, stakeCapMult: 5, ultra: DEFAULT_ULTRA };
 const num = (v: any) => Number(v ?? 0);
@@ -108,6 +111,63 @@ export async function afterAutomatoTradeClosed(ctx: TradeCtx, botId: string, tra
   await configureAutomato(ctx, botId, { state: st });
   await logAutomato(ctx, botId, 'trade_close', 'Cập nhật ledger AUTOMATO sau đóng lệnh', { trade, state: st, phase });
   return st;
+}
+
+
+function sideMul(side: string) { return side === 'short' ? -1 : 1; }
+function pnlFor(p: any, livePrice: number) {
+  const entry = num(p.entry), size = num(p.size), capital = Math.max(1, num(p.capital ?? p.entry * p.size));
+  const pnlAbs = (livePrice - entry) * size * sideMul(p.side);
+  const pnlPct = pnlAbs / capital * 100;
+  return { pnlAbs, pnlPct };
+}
+function uiPhase(cfg: any, st: any) { if (st.uiPhase === 'halted') return 'halted'; if (st.openPosition) return 'live'; if (cfg.armed) return 'scanning'; return 'standby'; }
+function normalizeSym(s: string) { return String(s || 'BTC/USDT').replace(':USDT',''); }
+
+export async function getAutomatoPosition(ctx: TradeCtx, bot: any) {
+  const cfg = await getOrCreateAutomatoConfig(ctx, bot.id); const st = { ...DEFAULT_STATE, ...(cfg.state ?? {}) };
+  const symbol = normalizeSym(st.openPosition?.symbol ?? bot.symbols?.[0] ?? 'BTC/USDT');
+  let livePrice = 0;
+  try { livePrice = await fetchLivePrice(bot.exchange ?? 'binance', symbol); } catch { livePrice = num(st.openPosition?.lastPrice ?? st.openPosition?.entry); }
+  if (cfg.armed && bot.status === 'running') await automatoHeartbeat(ctx, bot, cfg, st, livePrice, symbol);
+  const cfg2 = await getOrCreateAutomatoConfig(ctx, bot.id); const st2 = { ...DEFAULT_STATE, ...(cfg2.state ?? {}) };
+  const p = st2.openPosition;
+  if (p) { try { livePrice = await fetchLivePrice(bot.exchange ?? 'binance', normalizeSym(p.symbol)); } catch {} }
+  const pnl = p ? pnlFor(p, livePrice) : { pnlAbs: 0, pnlPct: 0 };
+  return { bot: bot.name, phase: uiPhase(cfg2, st2), openPosition: p ? { ...p, mode: p.mode ?? (currentPhase(cfg2)==='SIM'?'sim':'real') } : null,
+    livePrice, pnlAbs: pnl.pnlAbs, pnlPct: pnl.pnlPct, sessionPnlPct: num(st2.sessionPnl), sessionTpPct: num(cfg2.session_tp ?? 6), sessionSlPct: num(cfg2.session_sl ?? 3), tradeCount: num(st2.sessionTrades), maxTrades: num(cfg2.max_trades_session ?? 10), mode: currentPhase(cfg2)==='SIM'?'sim':'real', haltedReport: st2.haltedReport ?? null };
+}
+
+export async function automatoHeartbeat(ctx: TradeCtx, bot: any, cfg0?: any, st0?: any, livePrice0?: number, symbol0?: string) {
+  const cfg = cfg0 ?? await getOrCreateAutomatoConfig(ctx, bot.id); const st = { ...DEFAULT_STATE, ...(st0 ?? cfg.state ?? {}) };
+  if (!cfg.armed || st.uiPhase === 'halted') return st;
+  const symbol = normalizeSym(symbol0 ?? st.openPosition?.symbol ?? bot.symbols?.[0] ?? 'BTC/USDT');
+  const livePrice = livePrice0 && livePrice0 > 0 ? livePrice0 : await fetchLivePrice(bot.exchange ?? 'binance', symbol);
+  if (st.openPosition) {
+    const p = st.openPosition; const { pnlAbs, pnlPct } = pnlFor(p, livePrice); const uc = ultraCfg(cfg);
+    p.lastPrice = livePrice; p.pnlAbs = pnlAbs; p.pnlPct = pnlPct; p.peakPnlPct = Math.max(num(p.peakPnlPct), pnlPct); p.updatedAt = new Date().toISOString(); st.openPosition = p; st.uiPhase = 'live';
+    const slHit = pnlPct <= -Math.abs(num(uc.stopLossPct ?? cfg.risk_per_trade ?? 1));
+    const tpHit = pnlPct >= Math.abs(num(uc.tpPct ?? 2));
+    const trailHit = p.peakPnlPct >= Math.abs(num(uc.tpPct ?? 2)) && pnlPct <= p.peakPnlPct - Math.abs(num(uc.trailGivebackPct ?? 0.5));
+    if (slHit || tpHit || trailHit) return closeAutomatoPosition(ctx, bot, slHit ? 'ultra_stop_loss' : trailHit ? 'ultra_trailing_lock' : 'ultra_take_profit', livePrice, st, cfg);
+    await configureAutomato(ctx, bot.id, { state: st }); return st;
+  }
+  const guard = await evaluateAutomatoGuards(ctx, bot, cfg, {}); if (!guard.allowed) { st.uiPhase = 'scanning'; await configureAutomato(ctx, bot.id, { state: st }); return st; }
+  const candles = await fetchLiveOHLCV(bot.exchange ?? 'binance', symbol, ultraCfg(cfg).timeframe ?? '1m', 200);
+  const series = candles.slice(0, -1); const ind = addIndicators(series, { ...(bot.params ?? {}) } as any); const dir = ultraDirection(series, ind) as Direction;
+  if (dir === 'flat') { st.uiPhase = 'scanning'; await configureAutomato(ctx, bot.id, { state: st }); return st; }
+  const equity = Math.max(1, num(bot.equity ?? 1000)); const uc = ultraCfg(cfg); const riskPct = Math.min(num(uc.maxRiskPct ?? cfg.risk_per_trade ?? 1), 1);
+  const stopPct = Math.max(0.05, num(uc.stopLossPct ?? 1)); const tpPct = Math.max(0.1, num(uc.tpPct ?? 2)); const capital = equity; const size = (capital * riskPct / 100) / (livePrice * stopPct / 100);
+  st.openPosition = { symbol, side: dir, entry: livePrice, size, capital, sl: dir==='long'?livePrice*(1-stopPct/100):livePrice*(1+stopPct/100), tp: dir==='long'?livePrice*(1+tpPct/100):livePrice*(1-tpPct/100), riskPct, reason: 'ULTRA scalping EMA/RSI/momentum', mode: currentPhase(cfg)==='SIM'?'sim':'real', strategy: 'ULTRA', openedAt: new Date().toISOString(), peakPnlPct: 0, pnlAbs: 0, pnlPct: 0 };
+  st.uiPhase = 'live'; await configureAutomato(ctx, bot.id, { state: st }); await logAutomato(ctx, bot.id, 'ultra_entry', `ULTRA vào ${String(dir).toUpperCase()} — state.openPosition`, st.openPosition); return st;
+}
+
+export async function closeAutomatoPosition(ctx: TradeCtx, bot: any, reason = 'kill', price?: number, st0?: any, cfg0?: any) {
+  const cfg = cfg0 ?? await getOrCreateAutomatoConfig(ctx, bot.id); const st = { ...DEFAULT_STATE, ...(st0 ?? cfg.state ?? {}) }; const p = st.openPosition; if (!p) { st.uiPhase = 'halted'; await configureAutomato(ctx, bot.id, { armed: false, state: st }); return st; }
+  const exit = price ?? await fetchLivePrice(bot.exchange ?? 'binance', normalizeSym(p.symbol)); const { pnlAbs, pnlPct } = pnlFor(p, exit);
+  await recordTrade(ctx, { botId: bot.id, symbol: p.symbol, direction: p.side, entry: p.entry, exit, size: p.size, pnl: pnlAbs, r: pnlPct / Math.max(0.0001, num(p.riskPct)), reason, strategy: bot.strategy, closed: true });
+  st.sessionTrades = num(st.sessionTrades) + 1; st.sessionPnl = num(st.sessionPnl) + pnlPct; st.haltedReport = { symbol: p.symbol, side: p.side, entry: p.entry, exit, pnlAbs, pnlPct, reason, closedAt: new Date().toISOString(), trades: st.sessionTrades, equity: num(bot.equity ?? 0) + pnlAbs }; st.openPosition = null; st.uiPhase = 'halted';
+  await configureAutomato(ctx, bot.id, { armed: false, state: st }); await logAutomato(ctx, bot.id, 'kill', reason === 'kill' ? 'KILL — đóng & ngắt phiên' : `Đóng vị thế: ${reason}`, st.haltedReport); return st;
 }
 
 export async function automatoLog(ctx: TradeCtx, botId: string, limit = 50) { return (await ctx.db.query(`SELECT at,kind,message,data FROM st_automato_log WHERE org_id=$1 AND bot_id=$2 ORDER BY at DESC LIMIT $3`, [ctx.orgId, botId, limit])).rows; }

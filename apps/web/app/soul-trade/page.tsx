@@ -776,6 +776,7 @@ function AutomatoPanel({
   const [cfg, setCfg] = useState<any>(null);
   const [log, setLog] = useState<any[]>([]);
   const [ana, setAna] = useState<any>(null);
+  const [pos, setPos] = useState<any>(null);
   const [busy, setBusy] = useState(false);
   const load = useCallback(async () => {
     if (!bot) return;
@@ -784,6 +785,7 @@ function AutomatoPanel({
       setCfg(st.config ?? st);
       setLog(await api<any[]>(`/trade/bots/${bot}/automato/log?limit=80`));
       setAna(await api<any>(`/trade/bots/${bot}/automato/analytics`));
+      setPos(await api<any>(`/trade/bots/${bot}/automato/position`));
     } catch (e: any) {
       say(`AUTOMATO: ${e.message}`);
     }
@@ -838,11 +840,13 @@ function AutomatoPanel({
   const n = (v: any, d = 0) => Number(v ?? d);
   const armed = !!cfg?.armed,
     st = cfg?.state ?? {},
-    phase = armed ? (st.phase === "REAL" ? "holding" : "scanning") : "standby";
-  const pnl = n(st.sessionPnl),
-    tp = n(cfg?.session_tp, 6),
-    sl = n(cfg?.session_sl, 3);
-  const sweep = Math.min(604, Math.abs(pnl >= 0 ? pnl / tp : pnl / sl) * 604);
+    uiPhase = pos?.phase ?? (armed ? (st.openPosition ? "live" : "scanning") : "standby"),
+    phase = uiPhase === "live" ? "live" : uiPhase;
+  const pnl = n(pos?.pnlPct ?? st.openPosition?.pnlPct ?? st.sessionPnl),
+    sessPnl = n(pos?.sessionPnlPct ?? st.sessionPnl),
+    tp = n(pos?.sessionTpPct ?? cfg?.session_tp, 6),
+    sl = n(pos?.sessionSlPct ?? cfg?.session_sl, 3);
+  const sweep = Math.min(604, Math.max(0, pnl / Math.max(0.0001, tp)) * 604);
   const mode = cfg?.mode === "shadow" ? "PAPER · SHADOW" : "PAPER";
   const superMode = cfg?.super_mode ?? "off";
   const logs = log ?? [];
@@ -867,8 +871,8 @@ function AutomatoPanel({
           {fmt(bots.find((b) => b.name === bot)?.equity ?? 0)}
         </span>
         <span className="at-eqsub">
-          phiên {pnl >= 0 ? "+" : ""}
-          {pnl.toFixed(2)}%
+          phiên {sessPnl >= 0 ? "+" : ""}
+          {sessPnl.toFixed(2)}%
         </span>
       </div>
       <nav className="at-tabs">
@@ -943,16 +947,18 @@ function AutomatoPanel({
                   aria-live="polite"
                 >
                   <span className="glyph">{armed ? "◌" : "⬡"}</span>
-                  <span className="word">{armed ? "QUÉT" : "ARM"}</span>
+                  <span className="word">{uiPhase === "live" ? `${pnl >= 0 ? "+" : ""}${pnl.toFixed(2)}%` : armed ? "QUÉT" : "ARM"}</span>
                   <span className="subw">
                     {armed ? "bấm để disarm" : "phiên mới · paper"}
                   </span>
                 </button>
               </div>
               <div className="phase-line">
-                {armed
-                  ? "đang quét — vào lệnh khi strategy + AI đồng thuận"
-                  : "standby — cấu hình risk shell rồi ARM"}
+                {uiPhase === "live"
+                  ? "ĐANG GIỮ VỊ THẾ — P&L live theo giá ccxt"
+                  : armed
+                    ? "đang quét — vào lệnh khi strategy + AI đồng thuận"
+                    : "standby — cấu hình risk shell rồi ARM"}
               </div>
             </div>
             <div className="card cfg" style={{ marginTop: 16 }}>
@@ -1100,31 +1106,7 @@ function AutomatoPanel({
                 />
               </div>
             </div>
-            <div className="card panel-state on" style={{ marginTop: 16 }}>
-              <h3>
-                {armed ? "Đang quét — chưa vào lệnh" : "Kiểm tra trước phiên"}
-              </h3>
-              <div className="check">
-                <span className="ok">✓</span> API key — Read + Trade, tắt quyền
-                rút tiền
-              </div>
-              <div className="check">
-                <span className="ok">✓</span> Dữ liệu nến — bỏ nến đang hình
-                thành
-              </div>
-              <div className="check">
-                <span className="ok">✓</span> Risk shell — SL/TP + kill-switch
-                phiên
-              </div>
-              <div className="check">
-                <span className="ok">✓</span> AI ensemble — signal · risk ·
-                sentiment agent
-              </div>
-              <p className="dim" style={{ fontSize: 12.5 }}>
-                Bấm <b style={{ color: "var(--brass)" }}>ARM</b> để mở phiên.
-                Không có confirm/dialog: REST route được gọi trực tiếp.
-              </p>
-            </div>
+            <AutomatoStatePanel bot={bot} pos={pos} cfg={cfg} armed={armed} say={say} load={load} />
           </div>
         </div>
       )}
@@ -1620,6 +1602,28 @@ function Sel({
     </label>
   );
 }
+function AutomatoStatePanel({ bot, pos, cfg, armed, say, load }: { bot:string; pos:any; cfg:any; armed:boolean; say:(m:string)=>void; load:()=>Promise<void> }) {
+  const phase = pos?.phase ?? (armed ? "scanning" : "standby"); const p = pos?.openPosition;
+  const tp = Number(pos?.sessionTpPct ?? cfg?.session_tp ?? 6), sl = Number(pos?.sessionSlPct ?? cfg?.session_sl ?? 3), pnl = Number(pos?.pnlPct ?? 0);
+  const x = Math.max(0, Math.min(100, 33.33 + (pnl >= 0 ? (pnl/tp)*66.67 : (pnl/sl)*33.33)));
+  const kill = async()=>{ try { await api(`/trade/bots/${bot}/automato/kill`, "POST"); say("KILL — đã đóng & ngắt phiên"); await load(); } catch(e:any){ say(`KILL: ${e.message}`); } };
+  return <div style={{ marginTop: 16 }}>
+    <div id="ps-standby" className={`card panel-state ${phase === "standby" ? "on" : ""}`}>
+      <h3>Kiểm tra trước phiên</h3><div className="check"><span className="ok">✓</span> API key — Read + Trade, tắt quyền rút tiền</div><div className="check"><span className="ok">✓</span> Dữ liệu nến live ccxt</div><div className="check"><span className="ok">✓</span> Risk shell — SL/TP + kill-switch phiên</div><p className="dim" style={{fontSize:12.5}}>Bấm <b style={{color:"var(--brass)"}}>ARM</b> để mở phiên.</p>
+    </div>
+    <div id="ps-scanning" className={`card panel-state ${phase === "scanning" ? "on" : ""}`}>
+      <h3>Đang quét — chưa vào lệnh</h3><div className="sess-strip"><div className="metric"><div className="m-l">Lệnh</div><div className="m-v">{pos?.tradeCount ?? 0}/{pos?.maxTrades ?? 10}</div></div><div className="metric"><div className="m-l">PnL phiên</div><div className="m-v">{Number(pos?.sessionPnlPct ?? 0).toFixed(2)}%</div></div><div className="metric"><div className="m-l">Giả lập</div><div className="m-v">{pos?.mode === "sim" ? "ON" : "REAL"}</div></div></div><div className="feed"><div className="ev"><span className="sym">SCAN</span><span className="txt">strategy + AI + guard đang chờ entry</span><span className="tag">live</span></div></div>
+    </div>
+    <div id="ps-live" className={`card panel-state ${phase === "live" ? "on" : ""}`}>
+      <div className="pos-head"><span className="psym">{p?.symbol ?? "—"}</span><span className={`tag ${p?.mode === "sim" ? "sim" : "brass"}`}>{p?.mode === "sim" ? "SIM" : "VỐN THẬT"}</span><span className={`tag ${p?.side === "short" ? "short" : "long"}`}>{String(p?.side ?? "LONG").toUpperCase()}</span><span className="tag">{p?.strategy ?? "ULTRA"}</span></div>
+      <div className={`pnl-big ${p?.mode === "sim" ? "simc" : pnl >= 0 ? "up" : "down"}`}>{fmt(Number(pos?.pnlAbs ?? 0))} <small>({pnl >= 0 ? "+" : ""}{pnl.toFixed(2)}% vốn)</small></div>
+      <div className="rows"><div className="row"><span>Entry</span><b>{Number(p?.entry ?? 0).toFixed(4)}</b></div><div className="row"><span>Size</span><b>{Number(p?.size ?? 0).toFixed(6)}</b></div><div className="row"><span>SL lệnh</span><b>{Number(p?.sl ?? 0).toFixed(4)}</b></div><div className="row"><span>TP lệnh</span><b>{Number(p?.tp ?? 0).toFixed(4)}</b></div><div className="row"><span>Rủi ro</span><b>{Number(p?.riskPct ?? 0).toFixed(2)}%</b></div><div className="row"><span>Lý do vào</span><b>{p?.reason ?? "—"}</b></div></div>
+      <div className="cutbar"><i className="zero"/><i className="fill" style={{left:pnl<0?`${x}%`:"33.33%", width:pnl<0?`${33.33-x}%`:`${x-33.33}%`, background:pnl<0?"var(--down)":"var(--up)"}}/></div><div className="cutlbl"><span>−{sl.toFixed(1)}%</span><span>0</span><span>+{tp.toFixed(1)}%</span></div><button id="killBtn" className="btn danger" onClick={kill}>■ KILL — đóng & ngắt phiên</button>
+    </div>
+    <div id="ps-halted" className={`card panel-state report ${phase === "halted" ? "on" : ""}`}><h3>Phiên đã ngắt</h3><p className="why">{pos?.haltedReport?.reason ?? "halted"}</p><div className="sess-strip"><div className="metric"><div className="m-l">Lệnh thật</div><div className="m-v">{pos?.haltedReport?.trades ?? pos?.tradeCount ?? 0}</div></div><div className="metric"><div className="m-l">PnL</div><div className="m-v">{Number(pos?.haltedReport?.pnlPct ?? pos?.sessionPnlPct ?? 0).toFixed(2)}%</div></div><div className="metric"><div className="m-l">Equity</div><div className="m-v">{fmt(Number(pos?.haltedReport?.equity ?? 0))}</div></div></div></div>
+  </div>;
+}
+
 function Inp({
   l,
   v,
@@ -1673,7 +1677,7 @@ function Style() {
 .st-root .eyebrow .rule{flex:1;height:1px;background:var(--line)}
 .st-root .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
 .st-root .menu,.st-root .at-tabs{display:flex;gap:6px;margin:16px 0;border:1px solid var(--line);background:var(--panel2);border-radius:var(--r);padding:6px;overflow-x:auto;scrollbar-width:none}.st-root .menu-item,.st-root .at-tab{flex:1;background:transparent;color:var(--muted);border:0;border-radius:8px;padding:10px 14px;font-family:'Space Grotesk';letter-spacing:.16em;text-transform:uppercase;cursor:pointer;min-width:96px}.st-root .menu-item.on,.st-root .at-tab.on{background:var(--panel);color:var(--brass);box-shadow:inset 0 -2px 0 var(--brass),0 0 0 1px var(--line)}.st-root .at-tab .n{font-family:'JetBrains Mono';font-size:9px;color:var(--dim);display:block;letter-spacing:.1em;margin-top:2px}
-.st-root .automato-v12{--sim:#7FA6C9}.st-root .botpick{font-family:'JetBrains Mono';font-size:10px;color:var(--brass);border:1px solid var(--brass-dim);background:var(--panel2);border-radius:5px;padding:3px 8px;letter-spacing:.06em}.st-root .at-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 2px 14px}.st-root .chip{font-family:'JetBrains Mono';font-size:10px;color:var(--muted);border:1px solid var(--line);padding:3px 8px;border-radius:5px;letter-spacing:.06em}.st-root .chip.brass{color:var(--brass);border-color:var(--brass-dim)}.st-root .chip.sim,.st-root .tag.sim,.st-root .simc{color:var(--sim);border-color:rgba(127,166,201,.45)}.st-root .sp{flex:1}.st-root .at-eq{font-family:'JetBrains Mono';font-weight:700;font-size:16px;color:var(--brass)}.st-root .at-eqsub{font-family:'JetBrains Mono';font-size:11px;color:var(--dim)}.st-root .auto-grid{display:grid;grid-template-columns:400px 1fr;gap:16px;align-items:start}.st-root .dial-card{border:1px solid var(--line);background:linear-gradient(180deg,var(--panel),var(--panel2));border-radius:var(--r);padding:22px 16px 18px;text-align:center}.st-root .dial-wrap{position:relative;width:min(290px,74vw);margin:4px auto 8px;aspect-ratio:1}.st-root .dial-wrap svg{position:absolute;inset:0;width:100%;height:100%}.st-root .ring-track{fill:none;stroke:var(--line);stroke-width:6}.st-root .ring-sweep{fill:none;stroke:var(--brass);stroke-width:3;stroke-dasharray:5 17;opacity:0;transition:opacity .3s}.st-root .sweepg{transform-origin:110px 110px}.st-root .dial-wrap.scanning .ring-sweep,.st-root .dial-wrap.holding .ring-sweep{opacity:.85}.st-root .dial-wrap.scanning .sweepg,.st-root .dial-wrap.holding .sweepg{animation:spin 3.2s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.st-root .ring-gain{fill:none;stroke:var(--brass);stroke-width:6;stroke-linecap:round;stroke-dasharray:0 604;transform:rotate(-90deg);transform-origin:110px 110px;transition:stroke-dasharray .25s linear,stroke .25s}.st-root .core{position:absolute;inset:13%;width:auto;height:auto;aspect-ratio:1/1;box-sizing:border-box;appearance:none;-webkit-appearance:none;padding:0;margin:0;border-radius:50%!important;overflow:hidden;cursor:pointer;border:1px solid var(--line);background:radial-gradient(120% 120% at 50% 20%,#1a2330 0%,var(--panel2) 60%);box-shadow:inset 0 0 0 6px #0b0f15,inset 0 0 0 7px var(--line),0 14px 40px -18px rgba(0,0,0,.8);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;transition:.2s;color:var(--ink)}.st-root .core:hover{border-color:var(--brass-dim)}.st-root .core:disabled{opacity:.75;cursor:wait}.st-root .core .glyph,.st-root .glyph{font-size:26px;color:var(--brass);line-height:1;text-shadow:0 0 18px rgba(232,176,75,.45)}.st-root .core .word,.st-root .word{font-family:'Space Grotesk';font-weight:700;font-size:26px;letter-spacing:.3em;text-indent:.3em}.st-root .dial-wrap.scanning .core,.st-root .dial-wrap.holding .core{border-color:var(--brass-dim);box-shadow:inset 0 0 0 6px #0b0f15,inset 0 0 0 7px var(--brass-dim),0 0 34px -12px rgba(232,176,75,.75),0 14px 40px -18px rgba(0,0,0,.8)}.st-root .dial-wrap.scanning .word,.st-root .dial-wrap.holding .word{font-size:29px;letter-spacing:.02em;text-indent:0}.st-root .core .subw,.st-root .subw{font-family:'JetBrains Mono';font-size:10px;color:var(--muted);letter-spacing:.12em}.st-root .marks{display:flex;justify-content:space-between;font-family:'JetBrains Mono';font-size:11px;color:var(--dim);max-width:min(290px,74vw);margin:0 auto 4px}.st-root .marks b{color:var(--muted);font-weight:500}.st-root .phase-line{font-family:'JetBrains Mono';font-size:11px;color:var(--muted);min-height:18px}.st-root .preset-row{display:flex;gap:6px;margin:8px 0 14px}.st-root .pbtn{flex:1;font-family:'JetBrains Mono';font-size:11px;padding:7px;border:1px solid var(--line);background:var(--panel2);color:var(--muted);border-radius:7px;cursor:pointer}.st-root .pbtn.on{color:var(--brass);border-color:var(--brass-dim);background:rgba(232,176,75,.08)}.st-root .riskest{margin:12px 0;border:1px dashed var(--line);border-radius:8px;padding:9px 12px;font-family:'JetBrains Mono';font-size:11px;color:var(--muted);line-height:1.7}.st-root .riskest b{color:var(--down)}.st-root .cfg h3,.st-root .automato-v12 .card h3{font-family:'Space Grotesk';font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:8px 0 12px;font-weight:500}.st-root .cfgrows{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}.st-root .sup-state{display:flex;gap:12px;align-items:center;flex-wrap:wrap;border:1px solid var(--line);background:var(--panel2);border-radius:8px;padding:9px 12px;margin-top:12px;font-family:'JetBrains Mono';font-size:11px;color:var(--muted)}.st-root .honest{margin-top:12px;border:1px dashed var(--brass-dim);border-radius:8px;padding:12px}.st-root .honest .t{font-family:'Space Grotesk';font-size:10px;letter-spacing:.26em;text-transform:uppercase;color:var(--brass);margin-bottom:6px}.st-root .honest p{margin:0;font-size:12px;color:var(--muted);line-height:1.55}.st-root .check{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px dotted var(--line);font-size:13px}.st-root .check .ok{color:var(--up);font-family:'JetBrains Mono'}.st-root .an-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:16px}.st-root .ev .sym{font-family:'JetBrains Mono';color:var(--brass);flex:none}.st-root .ev .txt{flex:1}.st-root .tbl-wrap{overflow:auto;border:1px solid var(--line);border-radius:8px;max-height:420px}
+.st-root .automato-v12{--sim:#7FA6C9}.st-root .botpick{font-family:'JetBrains Mono';font-size:10px;color:var(--brass);border:1px solid var(--brass-dim);background:var(--panel2);border-radius:5px;padding:3px 8px;letter-spacing:.06em}.st-root .at-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 2px 14px}.st-root .chip{font-family:'JetBrains Mono';font-size:10px;color:var(--muted);border:1px solid var(--line);padding:3px 8px;border-radius:5px;letter-spacing:.06em}.st-root .chip.brass{color:var(--brass);border-color:var(--brass-dim)}.st-root .chip.sim,.st-root .tag.sim,.st-root .simc{color:var(--sim);border-color:rgba(127,166,201,.45)}.st-root .sp{flex:1}.st-root .at-eq{font-family:'JetBrains Mono';font-weight:700;font-size:16px;color:var(--brass)}.st-root .at-eqsub{font-family:'JetBrains Mono';font-size:11px;color:var(--dim)}.st-root .auto-grid{display:grid;grid-template-columns:400px 1fr;gap:16px;align-items:start}.st-root .dial-card{border:1px solid var(--line);background:linear-gradient(180deg,var(--panel),var(--panel2));border-radius:var(--r);padding:22px 16px 18px;text-align:center}.st-root .dial-wrap{position:relative;width:min(290px,74vw);margin:4px auto 8px;aspect-ratio:1}.st-root .dial-wrap svg{position:absolute;inset:0;width:100%;height:100%}.st-root .ring-track{fill:none;stroke:var(--line);stroke-width:6}.st-root .ring-sweep{fill:none;stroke:var(--brass);stroke-width:3;stroke-dasharray:5 17;opacity:0;transition:opacity .3s}.st-root .sweepg{transform-origin:110px 110px}.st-root .dial-wrap.scanning .ring-sweep{opacity:.85}.st-root .dial-wrap.scanning .sweepg{animation:spin 3.2s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.st-root .ring-gain{fill:none;stroke:var(--brass);stroke-width:6;stroke-linecap:round;stroke-dasharray:0 604;transform:rotate(-90deg);transform-origin:110px 110px;transition:stroke-dasharray .25s linear,stroke .25s}.st-root .core{position:absolute;inset:13%;width:auto;height:auto;aspect-ratio:1/1;box-sizing:border-box;appearance:none;-webkit-appearance:none;padding:0;margin:0;border-radius:50%!important;overflow:hidden;cursor:pointer;border:1px solid var(--line);background:radial-gradient(120% 120% at 50% 20%,#1a2330 0%,var(--panel2) 60%);box-shadow:inset 0 0 0 6px #0b0f15,inset 0 0 0 7px var(--line),0 14px 40px -18px rgba(0,0,0,.8);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;transition:.2s;color:var(--ink)}.st-root .core:hover{border-color:var(--brass-dim)}.st-root .core:disabled{opacity:.75;cursor:wait}.st-root .core .glyph,.st-root .glyph{font-size:26px;color:var(--brass);line-height:1;text-shadow:0 0 18px rgba(232,176,75,.45)}.st-root .core .word,.st-root .word{font-family:'Space Grotesk';font-weight:700;font-size:26px;letter-spacing:.3em;text-indent:.3em}.st-root .dial-wrap.scanning .core,.st-root .dial-wrap.live .core{border-color:var(--brass-dim);box-shadow:inset 0 0 0 6px #0b0f15,inset 0 0 0 7px var(--brass-dim),0 0 34px -12px rgba(232,176,75,.75),0 14px 40px -18px rgba(0,0,0,.8)}.st-root .dial-wrap.scanning .word,.st-root .dial-wrap.live .word{font-size:29px;letter-spacing:.02em;text-indent:0}.st-root .core .subw,.st-root .subw{font-family:'JetBrains Mono';font-size:10px;color:var(--muted);letter-spacing:.12em}.st-root .marks{display:flex;justify-content:space-between;font-family:'JetBrains Mono';font-size:11px;color:var(--dim);max-width:min(290px,74vw);margin:0 auto 4px}.st-root .marks b{color:var(--muted);font-weight:500}.st-root .phase-line{font-family:'JetBrains Mono';font-size:11px;color:var(--muted);min-height:18px}.st-root .preset-row{display:flex;gap:6px;margin:8px 0 14px}.st-root .pbtn{flex:1;font-family:'JetBrains Mono';font-size:11px;padding:7px;border:1px solid var(--line);background:var(--panel2);color:var(--muted);border-radius:7px;cursor:pointer}.st-root .pbtn.on{color:var(--brass);border-color:var(--brass-dim);background:rgba(232,176,75,.08)}.st-root .riskest{margin:12px 0;border:1px dashed var(--line);border-radius:8px;padding:9px 12px;font-family:'JetBrains Mono';font-size:11px;color:var(--muted);line-height:1.7}.st-root .riskest b{color:var(--down)}.st-root .cfg h3,.st-root .automato-v12 .card h3{font-family:'Space Grotesk';font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:8px 0 12px;font-weight:500}.st-root .cfgrows{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}.st-root .sup-state{display:flex;gap:12px;align-items:center;flex-wrap:wrap;border:1px solid var(--line);background:var(--panel2);border-radius:8px;padding:9px 12px;margin-top:12px;font-family:'JetBrains Mono';font-size:11px;color:var(--muted)}.st-root .honest{margin-top:12px;border:1px dashed var(--brass-dim);border-radius:8px;padding:12px}.st-root .honest .t{font-family:'Space Grotesk';font-size:10px;letter-spacing:.26em;text-transform:uppercase;color:var(--brass);margin-bottom:6px}.st-root .honest p{margin:0;font-size:12px;color:var(--muted);line-height:1.55}.st-root .check{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px dotted var(--line);font-size:13px}.st-root .check .ok{color:var(--up);font-family:'JetBrains Mono'}.st-root .an-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:16px}.st-root .ev .sym{font-family:'JetBrains Mono';color:var(--brass);flex:none}.st-root .ev .txt{flex:1}.st-root .panel-state{display:none}.st-root .panel-state.on{display:block;animation:fadein .18s ease}.st-root .sess-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}.st-root .pos-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap}.st-root .pos-head .psym{font-family:'Space Grotesk';font-weight:700;font-size:19px;letter-spacing:.04em}.st-root .pnl-big{font-family:'JetBrains Mono';font-weight:700;font-size:34px;line-height:1.1;margin:2px 0 12px}.st-root .pnl-big small{font-size:14px;color:var(--muted);font-weight:400}.st-root .cutbar{position:relative;height:12px;border:1px solid var(--line);border-radius:6px;background:var(--panel2);margin:6px 0 4px;overflow:hidden}.st-root .cutbar .zero{position:absolute;top:0;bottom:0;left:33.33%;width:1px;background:var(--dim)}.st-root .cutbar .fill{position:absolute;top:2px;bottom:2px;border-radius:4px;transition:.2s}.st-root .cutlbl{display:flex;justify-content:space-between;font-family:'JetBrains Mono';font-size:10px;color:var(--dim);margin-bottom:12px}.st-root .report .why{font-size:13px;color:var(--ink);border-left:2px solid var(--brass);padding:2px 0 2px 12px;margin:0 0 14px}.st-root .tag.long{color:var(--up);border-color:rgba(87,200,138,.4)}.st-root .tag.short{color:var(--down);border-color:rgba(232,105,92,.4)}.st-root .tbl-wrap{overflow:auto;border:1px solid var(--line);border-radius:8px;max-height:420px}
 .st-root .chipbtn{background:rgba(232,176,75,.06);cursor:pointer}.st-root .pair-card{border-color:var(--brass-dim);background:linear-gradient(180deg,rgba(232,176,75,.06),var(--panel2))}.st-root .pair-sub{font-family:'JetBrains Mono';font-size:10px;color:var(--dim);margin:-4px 0 10px;letter-spacing:.08em}.st-root .pair-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}.st-root .coin-chip{font-family:'JetBrains Mono';font-weight:700;color:var(--brass);border:1px solid var(--line);background:var(--panel2);border-radius:9px;padding:9px 7px;cursor:pointer;box-shadow:inset 0 -1px 0 rgba(232,176,75,.12)}.st-root .coin-chip:hover{border-color:var(--brass-dim);background:rgba(232,176,75,.08)}.st-root .coin-chip span{font-weight:500;color:var(--muted);font-size:10px;margin-left:2px}.st-root .coin-chip:disabled{opacity:.55;cursor:wait}
 .st-root .btn{font-family:'Space Grotesk',sans-serif;font-size:12px;letter-spacing:.06em;background:var(--panel);color:var(--ink);border:1px solid var(--line);padding:9px 15px;border-radius:8px;cursor:pointer;transition:.14s;text-transform:uppercase;display:inline-flex;align-items:center;gap:6px}
 .st-root .btn:hover{border-color:var(--brass-dim);color:#fff}
