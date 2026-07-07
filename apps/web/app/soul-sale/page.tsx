@@ -33,7 +33,41 @@ const ACTION_VI: Record<string, string> = {
   chase_quote: 'Chốt báo giá', remind_debt: 'Nhắc nợ', merge_customer: 'Gộp khách trùng', win_back: 'Gọi lại khách',
   call: 'Gọi', send_quote: 'Gửi báo giá', upsell: 'Bán thêm', collect_deposit: 'Thu cọc',
 };
+const KIND_VI: Record<string, string> = { person: 'Cá nhân', company: 'Công ty', agency: 'Đại lý', retailer: 'Điểm bán', distributor: 'NPP' };
 const P = '/api/v1/soul-sale';
+
+/* ─────────── tên tác vụ tiếng Việt — user KHÔNG phải đọc mã máy ─────────── */
+const TASK_VI: Record<string, string> = {
+  // write actions
+  'soulsale.customer.create': 'Tạo khách hàng', 'soulsale.customer.update': 'Cập nhật khách hàng', 'soulsale.customer.merge': 'Gộp khách trùng',
+  'soulsale.agency.create': 'Tạo đại lý / NPP', 'soulsale.retailer.create': 'Tạo shop / điểm bán', 'soulsale.agency.move': 'Chuyển tuyến kênh', 'soulsale.territory.assign': 'Gán khu vực',
+  'soulsale.lead.create': 'Ghi lead mới', 'soulsale.lead.assign': 'Giao lead cho nhân viên', 'soulsale.lead.disqualify': 'Loại lead', 'soulsale.lead.convert': 'Chuyển lead thành khách + deal',
+  'soulsale.deal.create': 'Tạo cơ hội bán (deal)', 'soulsale.deal.move-stage': 'Chuyển giai đoạn deal', 'soulsale.activity.log': 'Ghi hoạt động chăm khách',
+  'soulsale.quote.create': 'Tạo báo giá', 'soulsale.quote.close': 'Chốt báo giá', 'soulsale.order.create': 'Tạo đơn hàng', 'soulsale.order.confirm': 'Xác nhận đơn',
+  'soulsale.order.cancel': 'Hủy đơn', 'soulsale.order.hold-toggle': 'Giữ / thả đơn', 'soulsale.payment.record': 'Ghi nhận tiền về', 'soulsale.payment.term-set': 'Gán điều khoản thanh toán',
+  'soulsale.price.rule-set': 'Đặt giá bán / khuyến mãi', 'soulsale.credit.limit-set': 'Đặt hạn mức công nợ', 'soulsale.credit.hold-toggle': 'Khoá / mở công nợ',
+  'soulsale.target.set': 'Giao chỉ tiêu doanh số', 'soulsale.commission.plan-set': 'Tạo plan hoa hồng', 'soulsale.commission.post': 'Chốt hoa hồng kỳ', 'soulsale.debt.snapshot-close': 'Chốt kỳ công nợ',
+  'soulsale.import.statement-upload': 'Nạp bảng kê đại lý', 'soulsale.import.batch-reconcile': 'Đối soát bảng kê', 'soulsale.import.row-resolve': 'Xử lý dòng ngoại lệ',
+  'soulsale.import.split-confirm': 'Chốt bảng kê', 'soulsale.import.batch-void': 'Hủy bảng kê',
+  // read tools
+  'soulsale.customer.search': 'Tìm khách hàng', 'soulsale.customer.profile': 'Hồ sơ khách', 'soulsale.customer.history': 'Lịch sử giao dịch khách', 'soulsale.customer.duplicate-check': 'Soát khách trùng',
+  'soulsale.agency.tree': 'Xem cây kênh phân phối', 'soulsale.retailer.by-agency': 'Điểm bán theo đại lý', 'soulsale.pipeline.summary': 'Tổng quan pipeline', 'soulsale.deal.health': 'Sức khoẻ deal',
+  'soulsale.activity.timeline': 'Dòng thời gian hoạt động', 'soulsale.quote.status': 'Trạng thái báo giá', 'soulsale.order.search': 'Tìm đơn hàng', 'soulsale.revenue.summary': 'Tổng hợp doanh thu',
+  'soulsale.target.progress': 'Tiến độ chỉ tiêu', 'soulsale.price.check': 'Tra giá bán', 'soulsale.credit.check': 'Tra hạn mức & nợ', 'soulsale.debt.summary': 'Tổng hợp công nợ',
+  'soulsale.sellthrough.summary': 'Hàng bán ra kênh (sell-through)', 'soulsale.sales.forecast': 'Dự báo doanh số', 'soulsale.churn.risk-list': 'Khách có nguy cơ rời bỏ',
+  'soulsale.intel.next-best': 'Việc nên làm tiếp', 'soulsale.import.batch-status': 'Trạng thái bảng kê', 'soulsale.reconciliation.exceptions': 'Danh sách case đối soát', 'soulsale.commission.preview': 'Xem trước hoa hồng',
+};
+const GROUP_OF: Record<string, string> = {
+  customer: '👤 Khách hàng', agency: '🏪 Đại lý & Điểm bán', retailer: '🏪 Đại lý & Điểm bán', territory: '🏪 Đại lý & Điểm bán',
+  lead: '🧲 CRM — lead & deal', deal: '🧲 CRM — lead & deal', activity: '🧲 CRM — lead & deal',
+  quote: '🛒 Bán hàng', order: '🛒 Bán hàng', payment: '🛒 Bán hàng',
+  price: '💰 Giá & Công nợ', credit: '💰 Giá & Công nợ', target: '💰 Giá & Công nợ', commission: '💰 Giá & Công nợ', debt: '💰 Giá & Công nợ',
+  import: '📋 Đối soát bảng kê', reconciliation: '📋 Đối soát bảng kê',
+  pipeline: '📊 Báo cáo & phân tích', revenue: '📊 Báo cáo & phân tích', sellthrough: '📊 Báo cáo & phân tích',
+  sales: '📊 Báo cáo & phân tích', churn: '📊 Báo cáo & phân tích', intel: '📊 Báo cáo & phân tích',
+};
+const GROUP_ORDER = ['👤 Khách hàng', '🏪 Đại lý & Điểm bán', '🧲 CRM — lead & deal', '🛒 Bán hàng', '💰 Giá & Công nợ', '📋 Đối soát bảng kê', '📊 Báo cáo & phân tích'];
+const groupOf = (name: string) => GROUP_OF[name.split('.')[1]] ?? '📊 Báo cáo & phân tích';
 
 /* ─────────── preview → tiếng Việt dễ đọc (KHÔNG dump JSON cho user) ─────────── */
 const PREVIEW_VI: Record<string, string> = {
@@ -112,12 +146,13 @@ interface ActDef { name: string; title: string; icon?: string; sensitive?: boole
 
 export default function SoulSalePage() {
   const router = useRouter();
-  const [tab, setTab] = useState<'tq' | 'kenh' | 'crm' | 'ban' | 'no' | 'doisoat' | 'dstv'>('tq');
+  const [tab, setTab] = useState<'tq' | 'kenh' | 'daily' | 'crm' | 'ban' | 'no' | 'doisoat' | 'dstv'>('tq');
   const [locked, setLocked] = useState(false);
   const [pipeline, setPipeline] = useState<{ stages: StageRow[]; openCount: number; weightedTotal: string } | null>(null);
   const [nextBest, setNextBest] = useState<NextBest[] | null>(null);
   const [tree, setTree] = useState<TreeNode[] | null>(null);
   const [custs, setCusts] = useState<CustRow[] | null>(null);
+  const [retailers, setRetailers] = useState<CustRow[] | null>(null);
   const [orders, setOrders] = useState<OrderRow[] | null>(null);
   const [leads, setLeads] = useState<LeadRow[] | null>(null);
   const [debt, setDebt] = useState<{ topDebtors: Debtor[]; totalOutstanding: string } | null>(null);
@@ -140,6 +175,7 @@ export default function SoulSalePage() {
     api(`${P}/intel/next-best?limit=8`).then((r) => setNextBest(r.data)).catch(gate);
     api(`${P}/agency-tree`).then((r) => setTree(r.data)).catch(gate);
     api(`${P}/customers?q=${encodeURIComponent(keyword ?? '')}&limit=50`).then((r) => setCusts(r.data)).catch(gate);
+    api(`${P}/customers?kind=retailer&limit=50`).then((r) => setRetailers(r.data)).catch(gate);
     api(`${P}/orders?limit=30`).then((r) => setOrders(r.data)).catch(gate);
     api(`${P}/leads?limit=30`).then((r) => setLeads(Array.isArray(r.data) ? r.data : (r.data?.leads ?? []))).catch(gate);
     api(`${P}/debt/summary?topN=10`).then((r) => setDebt(r.data)).catch(gate);
@@ -271,7 +307,7 @@ export default function SoulSalePage() {
   );
 
   const TABS: [typeof tab, string][] = [
-    ['tq', 'Tổng quan'], ['kenh', 'Khách & Kênh'], ['crm', 'CRM'], ['ban', 'Bán hàng'],
+    ['tq', 'Tổng quan'], ['kenh', 'Khách hàng'], ['daily', 'Đại lý & Điểm bán'], ['crm', 'CRM'], ['ban', 'Bán hàng'],
     ['no', 'Giá & Công nợ'], ['doisoat', 'Đối soát'], ['dstv', 'Tất cả tác vụ'],
   ];
 
@@ -336,16 +372,10 @@ export default function SoulSalePage() {
         </div>
       )}
 
-      {/* ═══════════ KHÁCH & KÊNH ═══════════ */}
+      {/* ═══════════ KHÁCH HÀNG ═══════════ */}
       {tab === 'kenh' && (
         <div className="grid2">
           <div>
-            <section className="card">
-              <h3>Cây kênh phân phối</h3>
-              {!tree?.length
-                ? <EmptyState icon="users" title="Chưa dựng cây kênh" sub="Dùng form Tạo đại lý / Tạo điểm bán bên cạnh" />
-                : tree.map((n) => <Tree key={n.id} n={n} d={0} />)}
-            </section>
             <section className="card">
               <h3>Khách hàng</h3>
               <div className="row">
@@ -357,7 +387,7 @@ export default function SoulSalePage() {
                 : (
                   <table className="tbl"><thead><tr><th>Mã</th><th>Tên</th><th>Loại</th><th>SĐT</th><th></th></tr></thead>
                     <tbody>{custs.map((c) => (
-                      <tr key={c.id}><td>{c.code}</td><td>{c.name}</td><td>{c.kind}</td><td>{c.phone ?? '—'}</td>
+                      <tr key={c.id}><td>{c.code}</td><td>{c.name}</td><td>{KIND_VI[c.kind] ?? c.kind}</td><td>{c.phone ?? '—'}</td>
                         <td><button title="Copy ID" onClick={() => { navigator.clipboard?.writeText(c.id); setMsg({ t: `Đã copy ID ${c.code}`, ok: true }); }}>⧉</button></td></tr>
                     ))}</tbody></table>
                 )}
@@ -378,6 +408,35 @@ export default function SoulSalePage() {
               { k: 'sourceId', label: 'Khách nguồn (bị gộp)', type: 'customer', req: true },
               { k: 'targetId', label: 'Khách đích (giữ lại)', type: 'customer', req: true },
             ] }} />
+          </div>
+        </div>
+      )}
+
+      {/* ═══════════ ĐẠI LÝ & ĐIỂM BÁN ═══════════ */}
+      {tab === 'daily' && (
+        <div className="grid2">
+          <div>
+            <section className="card">
+              <h3>Cây kênh phân phối</h3>
+              <div className="muted" style={{ fontSize: 13, marginBottom: 6 }}>NPP → đại lý các cấp → điểm bán. Bấm ⧉ để lấy mã dùng cho form.</div>
+              {!tree?.length
+                ? <EmptyState icon="users" title="Chưa dựng cây kênh" sub="Dùng form Tạo đại lý / Tạo điểm bán bên cạnh" />
+                : tree.map((n) => <Tree key={n.id} n={n} d={0} />)}
+            </section>
+            <section className="card">
+              <h3>Danh sách điểm bán lẻ</h3>
+              {!retailers?.length
+                ? <EmptyState icon="bag" title="Chưa có điểm bán" sub="Tạo shop/điểm bán bằng form bên cạnh" />
+                : (
+                  <table className="tbl"><thead><tr><th>Mã</th><th>Tên</th><th>SĐT</th><th></th></tr></thead>
+                    <tbody>{retailers.map((c) => (
+                      <tr key={c.id}><td>{c.code}</td><td>{c.name}</td><td>{c.phone ?? '—'}</td>
+                        <td><button title="Copy ID" onClick={() => { navigator.clipboard?.writeText(c.id); setMsg({ t: `Đã copy ID ${c.code}`, ok: true }); }}>⧉</button></td></tr>
+                    ))}</tbody></table>
+                )}
+            </section>
+          </div>
+          <div>
             <ActForm def={{ name: 'soulsale.agency.create', title: 'Tạo đại lý / NPP', fields: [
               { k: 'name', label: 'Tên', req: true }, { k: 'level', label: 'Cấp (1-5)', type: 'int' },
               { k: 'parentAgencyCustomerId', label: 'Tuyến trên', type: 'customer' },
@@ -389,9 +448,9 @@ export default function SoulSalePage() {
               { k: 'shopType', label: 'Loại shop', ph: 'tạp hoá / cửa hàng...' }, { k: 'territoryCode', label: 'Mã khu vực' },
               { k: 'phone', label: 'SĐT' }, { k: 'email', label: 'Email' }, { k: 'segmentCode', label: 'Segment' },
             ] }} />
-            <ActForm def={{ name: 'soulsale.agency.move', title: 'Chuyển tuyến node kênh', sensitive: true, fields: [
-              { k: 'customerId', label: 'Node cần chuyển', type: 'customer', req: true },
-              { k: 'newParentId', label: 'Cha mới', type: 'customer' },
+            <ActForm def={{ name: 'soulsale.agency.move', title: 'Chuyển tuyến đại lý / điểm bán', sensitive: true, fields: [
+              { k: 'customerId', label: 'Đại lý / điểm bán cần chuyển', type: 'customer', req: true },
+              { k: 'newParentId', label: 'Tuyến trên mới', type: 'customer' },
             ] }} />
             <ActForm def={{ name: 'soulsale.territory.assign', title: 'Gán khu vực', fields: [
               { k: 'customerId', label: 'Đại lý / shop', type: 'customer', req: true },
@@ -604,27 +663,33 @@ export default function SoulSalePage() {
         </div>
       )}
 
-      {/* ═══════════ TẤT CẢ TÁC VỤ ═══════════ */}
+      {/* ═══════════ TẤT CẢ TÁC VỤ — nhóm tiếng Việt, không lộ mã máy ═══════════ */}
       {tab === 'dstv' && (
         <div>
-          <section className="card">
-            <h3>34 thao tác ghi (write actions){' '}<span className="muted" style={{ fontSize: 13 }}>🔐 = nhạy cảm, cần xác nhận 2 bước</span></h3>
-            <div style={{ overflowX: 'auto' }}>
-              <table className="tbl"><thead><tr><th>Tác vụ</th><th>Mô tả</th><th>Ví dụ nói với Tiểu Tâm</th></tr></thead>
-                <tbody>{(catalog?.actions ?? []).map((a) => (
-                  <tr key={a.name}><td style={{ whiteSpace: 'nowrap' }}>{a.sensitive ? '🔐 ' : ''}{a.name.replace('soulsale.', '')}</td><td>{a.description}</td><td className="muted">{a.examples[0] ?? ''}</td></tr>
-                ))}</tbody></table>
-            </div>
-          </section>
-          <section className="card">
-            <h3>23 tra cứu (read tools)</h3>
-            <div style={{ overflowX: 'auto' }}>
-              <table className="tbl"><thead><tr><th>Tác vụ</th><th>Mô tả</th><th>Ví dụ</th></tr></thead>
-                <tbody>{(catalog?.tools ?? []).map((t) => (
-                  <tr key={t.name}><td style={{ whiteSpace: 'nowrap' }}>{t.name.replace('soulsale.', '')}</td><td>{t.description}</td><td className="muted">{t.examples[0] ?? ''}</td></tr>
-                ))}</tbody></table>
-            </div>
-          </section>
+          <div className="card" style={{ marginBottom: 10 }}>
+            <div className="muted" style={{ fontSize: 13.5 }}>Toàn bộ 57 việc Soul-Sale làm được, xếp theo nhóm. Mỗi việc đều bấm được ở tab tương ứng, hoặc nói với Tiểu Tâm như cột ví dụ. 🔐 = việc nhạy cảm, có bước xem trước → xác nhận.</div>
+          </div>
+          {GROUP_ORDER.map((g) => {
+            const acts = (catalog?.actions ?? []).filter((a) => groupOf(a.name) === g);
+            const tools = (catalog?.tools ?? []).filter((t) => groupOf(t.name) === g);
+            if (!acts.length && !tools.length) return null;
+            return (
+              <section className="card" key={g}>
+                <h3>{g}</h3>
+                <div style={{ overflowX: 'auto' }}>
+                  <table className="tbl"><thead><tr><th>Việc</th><th>Nói với Tiểu Tâm</th></tr></thead>
+                    <tbody>
+                      {acts.map((a) => (
+                        <tr key={a.name}><td>{a.sensitive ? '🔐 ' : ''}<b>{TASK_VI[a.name] ?? a.description.split('(')[0]}</b><div className="muted" style={{ fontSize: 12 }}>{a.description}</div></td><td className="muted" style={{ fontStyle: 'italic' }}>“{a.examples[0] ?? ''}”</td></tr>
+                      ))}
+                      {tools.map((t) => (
+                        <tr key={t.name}><td>🔍 <b>{TASK_VI[t.name] ?? t.description.split('(')[0]}</b><div className="muted" style={{ fontSize: 12 }}>{t.description}</div></td><td className="muted" style={{ fontStyle: 'italic' }}>“{t.examples[0] ?? ''}”</td></tr>
+                      ))}
+                    </tbody></table>
+                </div>
+              </section>
+            );
+          })}
         </div>
       )}
 
