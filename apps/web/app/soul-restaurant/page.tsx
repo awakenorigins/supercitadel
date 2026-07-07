@@ -133,76 +133,93 @@ function coerce(field: UiField, raw: string): unknown {
   return raw;
 }
 
+
+const KEY_VI: Record<string, string> = {
+  ok: 'Kết quả', status: 'Trạng thái', data: 'Dữ liệu', error: 'Lỗi', code: 'Mã', message: 'Thông báo', issues: 'Chi tiết lỗi',
+  revenue: 'Doanh thu', revenue_fmt: 'Doanh thu', today: 'Hôm nay', open_orders: 'Đơn đang mở', pending_kots: 'Phiếu bếp chờ', oldest_minutes: 'Chờ lâu nhất (phút)', by_station: 'Theo trạm bếp', kitchen: 'Bếp', total: 'Tổng', count: 'Số lượng', qty: 'Số lượng', quantity: 'Số lượng', price: 'Giá', unit_price: 'Đơn giá', subtotal: 'Tạm tính', discount: 'Giảm giá', tax: 'Thuế', grand_total: 'Tổng thanh toán', amount: 'Số tiền', paid: 'Đã thanh toán', remaining: 'Còn lại',
+  tables: 'Bàn', table: 'Bàn', table_name: 'Tên bàn', area: 'Khu vực', capacity: 'Số chỗ', shape: 'Hình bàn', active: 'Đang dùng', clean: 'Đã dọn', occupied: 'Có khách', available: 'Còn trống',
+  order: 'Đơn', orders: 'Đơn hàng', order_code: 'Mã đơn', type: 'Loại đơn', guests: 'Số khách', customer_name: 'Tên khách', customer_phone: 'SĐT khách', note: 'Ghi chú', items: 'Món', item: 'Món', item_name: 'Tên món', course: 'Lượt ra món', options: 'Tùy chọn', reason: 'Lý do',
+  kot: 'Phiếu bếp', kots: 'Phiếu bếp', kot_code: 'Mã phiếu bếp', station: 'Trạm bếp', queue: 'Hàng đợi', started_at: 'Bắt đầu lúc', ready_at: 'Sẵn sàng lúc',
+  menu: 'Menu', name: 'Tên', sku: 'Mã món', category: 'Danh mục', sold_out: 'Hết món', include_soldout: 'Gồm món hết', combo_items: 'Thành phần combo', lines: 'Dòng', coverage: 'Độ phủ', missing: 'Còn thiếu',
+  bill: 'Bill', bills: 'Bill', bill_code: 'Mã bill', method: 'Phương thức', payment: 'Thanh toán', payments: 'Thanh toán',
+  reservation: 'Đặt bàn', reservations: 'Danh sách đặt bàn', date: 'Ngày', days: 'Số ngày', party_size: 'Số khách', at: 'Thời điểm', duration_min: 'Thời lượng (phút)', include_done: 'Gồm đã xong', op: 'Thao tác',
+  promo: 'Khuyến mãi', promotions: 'Khuyến mãi', discount_type: 'Kiểu giảm', value: 'Giá trị', min_subtotal: 'Đơn tối thiểu', max_discount: 'Trần giảm', usage_limit: 'Giới hạn lượt', per_customer_limit: 'Lượt/khách', active_only: 'Chỉ đang bật', remove: 'Gỡ mã', kind: 'Loại',
+  customer: 'Khách', customers: 'Khách hàng', phone: 'SĐT', tier: 'Hạng', points: 'Điểm', balance: 'Số dư điểm', history: 'Lịch sử',
+  from: 'Từ ngày', to: 'Đến ngày', limit: 'Giới hạn', top_items: 'Món bán chạy', settings: 'Cấu hình', service_charge_pct: 'Phí phục vụ %', tax_pct: 'VAT %', price_includes_tax: 'VAT gộp trong giá', deduct_on: 'Trừ kho khi', auto_deduct_stock: 'Tự trừ kho', table_auto_clean: 'Tự dọn bàn', loyalty_enabled: 'Bật tích điểm', loyalty_earn_pct: 'Tỷ lệ tích điểm %', loyalty_min_redeem: 'Đổi điểm tối thiểu',
+  created_at: 'Tạo lúc', updated_at: 'Cập nhật lúc', createdAt: 'Tạo lúc', updatedAt: 'Cập nhật lúc', result: 'Kết quả', dry_run: 'Chạy thử', preview: 'Xem trước', input: 'Thông tin nhập', success: 'Thành công',
+};
+const VALUE_VI: Record<string, string> = {
+  open: 'Đang mở', closed: 'Đã đóng', cancelled: 'Đã hủy', paid: 'Đã thanh toán', void: 'Đã hủy', draft: 'Nháp', pending: 'Đang chờ', completed: 'Hoàn tất', ready: 'Sẵn sàng', preparing: 'Đang làm', queued: 'Đang chờ', served: 'Đã lên món',
+  dine_in: 'Ăn tại bàn', takeaway: 'Mang đi', delivery: 'Giao hàng', cash: 'Tiền mặt', bank: 'Chuyển khoản', card: 'Thẻ', momo: 'MoMo', zalopay: 'ZaloPay', vnpay: 'VNPay', points: 'Điểm', other: 'Khác',
+  square: 'Vuông', round: 'Tròn', rect: 'Chữ nhật', bar: 'Quầy bar', percent: 'Theo %', amount: 'Theo số tiền', voucher: 'Voucher', happy_hour: 'Giờ vàng', auto: 'Tự động', create: 'Tạo mới', confirm: 'Xác nhận', seat: 'Xếp bàn', cancel: 'Hủy', no_show: 'Khách không đến',
+};
+const HIDE_KEYS = new Set(['id','uuid','orgId','org_id','userId','user_id','customerId','customer_id','orderId','order_id','billId','bill_id','tableId','table_id','kotId','kot_id','promoId','promo_id','recipeId','recipe_id','reservationId','reservation_id','_id']);
+const EMPTY_BY_KEY: Record<string, string> = { open_orders: 'Chưa có đơn nào đang mở', orders: 'Chưa có đơn hàng nào', tables: 'Chưa có bàn nào', items: 'Chưa có món nào', kots: 'Chưa có phiếu bếp nào', by_station: 'Chưa có dữ liệu theo trạm', bills: 'Chưa có bill nào', reservations: 'Chưa có lịch đặt bàn nào', promotions: 'Chưa có khuyến mãi nào', customers: 'Chưa có khách hàng nào' };
+const moneyLike = (k: string) => /(revenue|price|amount|total|subtotal|tax|discount|paid|remaining|value|min|max|charge)/i.test(k) && !/(pct|percent|qty|count|limit|code|phone)/i.test(k);
+const viKey = (k: string) => KEY_VI[k] ?? k.replace(/_/g, ' ').replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase();
+const isUuid = (v: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+function fmtValue(k: string, v: unknown): string {
+  if (v === null || v === undefined || v === '') return '—';
+  if (typeof v === 'boolean') return v ? 'Có' : 'Không';
+  if (typeof v === 'number') return moneyLike(k) ? `${v.toLocaleString('vi-VN')}đ` : v.toLocaleString('vi-VN');
+  if (typeof v === 'string') {
+    if (isUuid(v)) return '—';
+    if (/^-?\d+(\.\d+)?$/.test(v) && moneyLike(k)) return `${Number(v).toLocaleString('vi-VN')}đ`;
+    return VALUE_VI[v] ?? v;
+  }
+  return String(v);
+}
+function cleanEntries(obj: Record<string, unknown>) { return Object.entries(obj).filter(([k,v]) => !(HIDE_KEYS.has(k) || (typeof v === 'string' && isUuid(v)))); }
+function friendlyPayload(result: unknown): unknown {
+  if (!result || typeof result !== 'object') return result;
+  const r = result as ApiResult;
+  if (r.ok && r.data !== undefined) return r.data;
+  if (!r.ok) return { status: r.status, ...(r.error ?? { message: 'Không chạy được thao tác này' }) };
+  return result;
+}
+function EmptyHint({ nameKey }: { nameKey?: string }) { return <div style={{ padding: 12, borderRadius: 10, background: 'rgba(15,23,42,.04)', color: '#64748b', fontSize: 13 }}>{(nameKey && EMPTY_BY_KEY[nameKey]) || 'Chưa có dữ liệu để hiển thị'}</div>; }
+function DataTable({ rows }: { rows: Record<string, unknown>[] }) {
+  const keys = Array.from(new Set(rows.flatMap((r) => cleanEntries(r).map(([k]) => k)))).slice(0, 8);
+  if (!rows.length || !keys.length) return <EmptyHint />;
+  return <div style={{ overflowX: 'auto' }}><table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}><thead><tr>{keys.map(k => <th key={k} style={{ textAlign: 'left', padding: '7px 8px', borderBottom: '1px solid #e2e8f0', color: '#475569' }}>{viKey(k)}</th>)}</tr></thead><tbody>{rows.map((r,i) => <tr key={i}>{keys.map(k => <td key={k} style={{ padding: '7px 8px', borderBottom: '1px solid #f1f5f9', verticalAlign: 'top' }}>{typeof r[k] === 'object' && r[k] !== null ? <SmartData data={r[k]} nameKey={k} /> : fmtValue(k, r[k])}</td>)}</tr>)}</tbody></table></div>;
+}
+function SmartData({ data, nameKey }: { data: unknown; nameKey?: string }) {
+  if (data === null || data === undefined || data === '') return <span>—</span>;
+  if (Array.isArray(data)) {
+    if (!data.length) return <EmptyHint nameKey={nameKey} />;
+    if (data.every((x) => x && typeof x === 'object' && !Array.isArray(x))) return <DataTable rows={data as Record<string, unknown>[]} />;
+    return <div>{data.map((x,i) => <div key={i} style={{ padding: '3px 0' }}><SmartData data={x} nameKey={nameKey} /></div>)}</div>;
+  }
+  if (typeof data !== 'object') return <span>{fmtValue(nameKey ?? '', data)}</span>;
+  const entries = cleanEntries(data as Record<string, unknown>);
+  if (!entries.length) return <EmptyHint nameKey={nameKey} />;
+  return <div style={{ display: 'grid', gap: 6 }}>{entries.map(([k,v]) => <div key={k} style={{ borderBottom: '1px solid rgba(148,163,184,.18)', paddingBottom: 5 }}><div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'baseline' }}><span style={{ color: '#64748b', fontSize: 13 }}>{viKey(k)}</span>{(v === null || typeof v !== 'object') && <b style={{ textAlign: 'right', fontSize: 13.5 }}>{fmtValue(k,v)}</b>}</div>{v !== null && typeof v === 'object' && <div style={{ marginTop: 6, paddingLeft: 8, borderLeft: '2px solid rgba(14,165,233,.18)' }}><SmartData data={v} nameKey={k} /></div>}</div>)}</div>;
+}
+function ResultView({ result }: { result: unknown }) {
+  const [json, setJson] = useState(false);
+  const payload = friendlyPayload(result);
+  return <div style={{ marginTop: 10, border: '1px solid #e2e8f0', borderRadius: 12, padding: 12, background: '#fff' }}><SmartData data={payload} /><button type="button" onClick={() => setJson(!json)} style={{ marginTop: 10, fontSize: 12, padding: '4px 8px', borderRadius: 999, border: '1px solid #cbd5e1', background: '#f8fafc', color: '#334155' }}>{json ? 'Ẩn JSON' : 'Xem JSON'}</button>{json && <pre style={{ marginTop: 8, maxHeight: 240, overflow: 'auto', background: '#0b1021', color: '#d7e0ff', padding: 10, borderRadius: 8, fontSize: 12 }}>{JSON.stringify(result, null, 2)}</pre>}</div>;
+}
+const optionLabel = (o: string) => VALUE_VI[o] ?? o;
 function CapabilityCard({ cap, api }: { cap: UiCapability; api: RestaurantApi }) {
   const [form, setForm] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<unknown>(null);
-  const [confirming, setConfirming] = useState(false);
-
-  async function run(confirm?: boolean) {
+  async function run() {
+    if (cap.sensitive && !window.confirm(`Bạn chắc chắn muốn ${cap.label.toLowerCase()}? Thao tác này có thể ảnh hưởng đơn/bill/dữ liệu quán.`)) return;
     setBusy(true); setResult(null);
     const params: Record<string, unknown> = {};
-    for (const f of cap.fields) {
-      const v = coerce(f, form[f.name] ?? '');
-      if (v !== undefined) params[f.name] = v;
-    }
-    if (cap.sensitive && confirm) params.confirm = true;
-    const res = await api.call(cap, params);
-    setResult(res);
-    setBusy(false);
-    setConfirming(false);
+    for (const f of cap.fields) { const v = coerce(f, form[f.name] ?? ''); if (v !== undefined) params[f.name] = v; }
+    if (cap.sensitive) params.confirm = true;
+    const res = await api.call(cap, params); setResult(res); setBusy(false);
   }
-
-  return (
-    <div style={{ border: '1px solid #e5e7eb', borderRadius: 12, padding: 14, background: '#fff' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-        <strong>{cap.label}</strong>
-        <span style={{ fontSize: 11, color: cap.kind === 'action' ? '#b45309' : '#0369a1' }}>
-          {cap.method} · {cap.tool}{cap.sensitive ? ' · 🔒' : ''}
-        </span>
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, margin: '10px 0' }}>
-        {cap.fields.map((f) => (
-          <label key={f.name} style={{ fontSize: 12, display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <span>{f.label}{f.required ? ' *' : ''}</span>
-            {f.type === 'select' ? (
-              <select value={form[f.name] ?? ''} onChange={(e) => setForm({ ...form, [f.name]: e.target.value })}>
-                <option value="">—</option>
-                {(f.options ?? []).map((o) => <option key={o} value={o}>{o}</option>)}
-              </select>
-            ) : f.type === 'bool' ? (
-              <select value={form[f.name] ?? ''} onChange={(e) => setForm({ ...form, [f.name]: e.target.value })}>
-                <option value="">—</option><option value="true">Có</option><option value="false">Không</option>
-              </select>
-            ) : f.type === 'json' || f.type === 'textarea' ? (
-              <textarea rows={2} placeholder={f.placeholder} value={form[f.name] ?? ''}
-                onChange={(e) => setForm({ ...form, [f.name]: e.target.value })} />
-            ) : (
-              <input type={f.type === 'number' ? 'number' : 'text'} placeholder={f.placeholder}
-                value={form[f.name] ?? ''} onChange={(e) => setForm({ ...form, [f.name]: e.target.value })} />
-            )}
-          </label>
-        ))}
-      </div>
-      {cap.sensitive && !confirming ? (
-        <button disabled={busy} onClick={() => setConfirming(true)}>Chuẩn bị {cap.label}…</button>
-      ) : cap.sensitive && confirming ? (
-        <span>
-          <button disabled={busy} onClick={() => run(true)}>Xác nhận chạy</button>{' '}
-          <button disabled={busy} onClick={() => setConfirming(false)}>Hủy</button>
-        </span>
-      ) : (
-        <button disabled={busy} onClick={() => run(false)}>{busy ? 'Đang chạy…' : 'Chạy'}</button>
-      )}
-      {result != null && (
-        <pre style={{ marginTop: 10, maxHeight: 260, overflow: 'auto', background: '#0b1021', color: '#d7e0ff', padding: 10, borderRadius: 8, fontSize: 12 }}>
-          {JSON.stringify(result, null, 2)}
-        </pre>
-      )}
-    </div>
-  );
+  return <div style={{ border: '1px solid #e2e8f0', borderRadius: 16, padding: 14, background: '#fff', boxShadow: '0 12px 30px rgba(15,23,42,.08)' }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}><strong style={{ color: '#0f172a' }}>{cap.label}</strong><span style={{ fontSize: 11, color: cap.kind === 'action' ? '#b45309' : '#0369a1', fontWeight: 700 }}>{cap.kind === 'action' ? 'Thao tác' : 'Tra cứu'}{cap.sensitive ? ' · Cần xác nhận' : ''}</span></div>
+    {cap.fields.length > 0 && <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 8, margin: '12px 0' }}>{cap.fields.map((f) => <label key={f.name} style={{ fontSize: 12.5, display: 'flex', flexDirection: 'column', gap: 4, color: '#475569', fontWeight: 600 }}><span>{f.label}{f.required ? ' *' : ''}</span>{f.type === 'select' ? <select value={form[f.name] ?? ''} onChange={(e) => setForm({ ...form, [f.name]: e.target.value })} style={{ border: '1px solid #cbd5e1', borderRadius: 10, padding: '8px 9px', background: '#f8fafc', color: '#0f172a' }}><option value="">— chọn —</option>{(f.options ?? []).map((o) => <option key={o} value={o}>{optionLabel(o)}</option>)}</select> : f.type === 'bool' ? <select value={form[f.name] ?? ''} onChange={(e) => setForm({ ...form, [f.name]: e.target.value })} style={{ border: '1px solid #cbd5e1', borderRadius: 10, padding: '8px 9px', background: '#f8fafc', color: '#0f172a' }}><option value="">— chọn —</option><option value="true">Có</option><option value="false">Không</option></select> : f.type === 'json' || f.type === 'textarea' ? <textarea rows={2} placeholder={f.placeholder ?? 'Nhập danh sách theo mẫu'} value={form[f.name] ?? ''} onChange={(e) => setForm({ ...form, [f.name]: e.target.value })} style={{ border: '1px solid #cbd5e1', borderRadius: 10, padding: '8px 9px', background: '#f8fafc', color: '#0f172a' }} /> : <input type={f.type === 'number' ? 'number' : 'text'} placeholder={f.placeholder} value={form[f.name] ?? ''} onChange={(e) => setForm({ ...form, [f.name]: e.target.value })} style={{ border: '1px solid #cbd5e1', borderRadius: 10, padding: '8px 9px', background: '#f8fafc', color: '#0f172a' }} />}</label>)}</div>}
+    <button className="btn-primary" disabled={busy} onClick={run} style={{ border: 0, borderRadius: 999, padding: '8px 14px', background: cap.sensitive ? '#b45309' : '#0f766e', color: '#fff', fontWeight: 800, cursor: 'pointer' }}>{busy ? 'Đang chạy…' : cap.sensitive ? `Xác nhận ${cap.label}` : 'Chạy thử'}</button>
+    {result != null && <ResultView result={result} />}
+  </div>;
 }
-
 function RestaurantConsole({ baseUrl, token }: { baseUrl?: string; token?: string }) {
   const api = useMemo(() => new RestaurantApi(baseUrl, token), [baseUrl, token]);
   const [group, setGroup] = useState<string>(UI_GROUPS[0]);
@@ -229,10 +246,10 @@ function RestaurantConsole({ baseUrl, token }: { baseUrl?: string; token?: strin
         ))}
       </aside>
       <main>
-        {group === 'Bảng điều khiển' && (
-          <pre style={{ background: '#0b1021', color: '#d7e0ff', padding: 12, borderRadius: 10, maxHeight: 220, overflow: 'auto', fontSize: 12 }}>
-            {JSON.stringify(dash, null, 2)}
-          </pre>
+        {group === 'Bảng điều khiển' && dash != null && (
+          <div style={{ marginBottom: 12 }}>
+            <ResultView result={{ ok: true, status: 200, data: dash }} />
+          </div>
         )}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 12 }}>
           {caps.map((c) => <CapabilityCard key={c.tool} cap={c} api={api} />)}
