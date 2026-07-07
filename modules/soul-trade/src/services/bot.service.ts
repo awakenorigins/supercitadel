@@ -28,6 +28,9 @@ export async function getBot(ctx: TradeCtx, name: string) {
 export async function setStatus(ctx: TradeCtx, name: string, status: string) {
   await ctx.db.query(`UPDATE st_bots SET status=$3, updated_at=now() WHERE org_id=$1 AND name=$2`, [ctx.orgId, name, status]);
 }
+export async function updateBotSymbols(ctx: TradeCtx, name: string, symbols: string[]) {
+  await ctx.db.query(`UPDATE st_bots SET symbols=$3::jsonb, updated_at=now() WHERE org_id=$1 AND name=$2`, [ctx.orgId, name, j(symbols)]);
+}
 export async function setEquity(ctx: TradeCtx, botId: string, equity: number) {
   await ctx.db.query(`UPDATE st_bots SET equity=$3 WHERE org_id=$1 AND id=$2`, [ctx.orgId, botId, equity]);
 }

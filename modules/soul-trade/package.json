@@ -17,7 +17,7 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "tsx tests/logic.test.ts && tsx tests/smoke.test.ts && tsx tests/agents.test.ts && tsx tests/turn.test.ts && tsx tests/optimize.test.ts && tsx tests/embeddings.test.ts && tsx tests/executor.test.ts && tsx tests/runner.test.ts"
+    "test": "tsx tests/logic.test.ts && tsx tests/smoke.test.ts && tsx tests/agents.test.ts && tsx tests/turn.test.ts && tsx tests/optimize.test.ts && tsx tests/embeddings.test.ts && tsx tests/executor.test.ts && tsx tests/runner.test.ts && tsx tests/automato.test.ts"
   },
   "dependencies": {
     "@citadel/core": "workspace:*",

@@ -73,10 +73,11 @@ export const automatoConfigureSchema = z.object({
   cb_cooldown_min: z.number().int().min(0).max(10080).optional(),
   avoid_funding: z.boolean().optional(),
   trade_hours: z.record(z.any()).optional(),
-  super_mode: z.enum(['off','soft','hard','custom']).optional(),
+  super_mode: z.enum(['off','soft','hard','custom','ultra']).optional(),
   super_cfg: z.record(z.any()).optional(),
   state: z.record(z.any()).optional(),
 }).strict();
 export const automatoPresetSchema = z.object({ name: z.string().min(1), preset: z.enum(['cautious','standard','active']) }).strict();
 export const automatoRefSchema = z.object({ name: z.string().min(1) }).strict();
+export const automatoQuickstartSchema = z.object({ name: z.string().min(1), symbol: z.string().min(3) }).strict();
 export const automatoLogSchema = z.object({ name: z.string().min(1), limit: z.number().int().min(1).max(500).optional() }).strict();

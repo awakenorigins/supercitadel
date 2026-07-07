@@ -7,7 +7,8 @@ export const AUTOMATO_PRESETS: Record<string, any> = {
   active: { preset: 'active', risk_per_trade: 1, max_trades_session: 18, session_tp: 10, session_sl: 5, cb_loss_streak: 4, cb_cooldown_min: 10, breakeven_at_r: 1, trailing_atr: 0.7, partial_tp_at_r: 1.5, partial_tp_pct: 50, time_stop_bars: 36 },
 };
 const DEFAULT_STATE = { phase: 'SIM', simLossStreak: 0, realLossStreak: 0, sessionTrades: 0, sessionPnl: 0, stakeMult: 1, phaseHistory: [] as any[], cooldownUntil: null as string | null };
-const DEFAULT_SUPER = { lossN: 3, profitReinvestPct: 10, stakeCapMult: 5 };
+export const DEFAULT_ULTRA = { maxRiskPct: 1, tpPct: 2, trailGivebackPct: 0.5, stopLossPct: 1, timeframe: '1m', sizeMult: 1 };
+const DEFAULT_SUPER = { lossN: 3, profitReinvestPct: 10, stakeCapMult: 5, ultra: DEFAULT_ULTRA };
 const num = (v: any) => Number(v ?? 0);
 
 export async function logAutomato(ctx: TradeCtx, botId: string, kind: string, message: string, data: any = {}) {
@@ -76,6 +77,19 @@ export async function evaluateAutomatoGuards(ctx: TradeCtx, bot: any, cfg0?: any
 }
 
 export function currentPhase(cfg: any): 'SIM' | 'REAL' { return cfg.super_mode && cfg.super_mode !== 'off' ? ((cfg.state?.phase === 'REAL') ? 'REAL' : 'SIM') : (cfg.mode === 'shadow' ? 'SIM' : 'REAL'); }
+
+export function ultraCfg(cfg: any) { return { ...DEFAULT_ULTRA, ...((cfg?.super_cfg?.ultra ?? cfg?.super_cfg) ?? {}) }; }
+
+export function ultraDirection(candles: Array<{ close:number }>, ind: any): 'long' | 'short' | 'flat' {
+  const i = candles.length - 1; const prev = Math.max(0, i - 1);
+  const emaF = ind.emaFast?.[i] ?? ind.ema?.[i] ?? candles[i].close;
+  const emaS = ind.emaSlow?.[i] ?? ind.ema200?.[i] ?? candles[prev].close;
+  const mom = candles[i].close - candles[prev].close;
+  const rsi = Number(ind.rsi?.[i] ?? 50);
+  if (emaF >= emaS && mom >= 0 && rsi < 78) return 'long';
+  if (emaF <= emaS && mom <= 0 && rsi > 22) return 'short';
+  return mom >= 0 ? 'long' : 'short';
+}
 
 export async function afterAutomatoTradeClosed(ctx: TradeCtx, botId: string, trade: { pnl: number; r?: number | null }) {
   const cfg = await getOrCreateAutomatoConfig(ctx, botId); const st = { ...DEFAULT_STATE, ...(cfg.state ?? {}) }; const phase = currentPhase(cfg);

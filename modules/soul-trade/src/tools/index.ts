@@ -9,7 +9,7 @@ import type { TradeCtx } from '../types.js';
 import type { HostLLMEnv } from '../llm.js';
 import { makeDataSource } from '../datasource.js';
 import * as S from '../validation/schemas.js';
-import { createBot, listBots, getBot, setStatus, deleteBot } from '../services/bot.service.js';
+import { createBot, listBots, getBot, setStatus, deleteBot, updateBotSymbols } from '../services/bot.service.js';
 import { recentTrades, recentDecisions } from '../services/memory.service.js';
 import { botAnalytics, orgAnalytics, agentContribution } from '../services/analytics.service.js';
 import { backtestAndSave, evaluateTurn, walkforwardAndSave } from '../turn.service.js';
@@ -84,6 +84,9 @@ export const tradeWriteActions: TradeToolDefinition[] = [
   define({ name: 'soul-trade.automato.configure', kind: 'action', permission: 'trade.automato.write',
     description: 'Configure AUTOMATO risk shell, shield and Super Automato.', inputSchema: S.automatoConfigureSchema,
     docs: 'docs/AUTOMATO.md', run: async (ctx, i) => { const b = await mustBot(ctx, i.name); const { name, ...patch } = i as any; return configureAutomato(ctx, b.id, patch); } }),
+  define({ name: 'soul-trade.automato.quickstart', kind: 'action', permission: 'trade.automato.control',
+    description: 'One-click recommended pair: set symbol, shadow, ultra and ARM.', inputSchema: S.automatoQuickstartSchema,
+    docs: 'docs/AUTOMATO.md#quickstart', run: async (ctx, i) => { const b = await mustBot(ctx, i.name); await updateBotSymbols(ctx, i.name, [i.symbol]); await configureAutomato(ctx, b.id, { mode: 'shadow', super_mode: 'ultra', risk_per_trade: 1, super_cfg: { ultra: { maxRiskPct: 1, tpPct: 2, trailGivebackPct: 0.5, stopLossPct: 1, timeframe: '1m' } } }); const cfg = await setAutomatoArmed(ctx, b.id, true); await setStatus(ctx, i.name, 'running'); return { bot: i.name, symbol: i.symbol, running: true, config: cfg }; } }),
   define({ name: 'soul-trade.automato.arm', kind: 'action', permission: 'trade.automato.control',
     description: 'ARM AUTOMATO session (sensitive).', inputSchema: S.automatoRefSchema,
     docs: 'docs/AUTOMATO.md#arm', run: async (ctx, i) => setAutomatoArmed(ctx, (await mustBot(ctx, i.name)).id, true) }),

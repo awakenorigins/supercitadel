@@ -34,6 +34,7 @@ type Bot = {
 
 type Lang = "vi" | "en";
 type DictKey = keyof typeof T.vi;
+const RECOMMENDED_PAIRS = ["BTC/USDT", "ETH/USDT", "SOL/USDT", "BNB/USDT", "XRP/USDT", "DOGE/USDT", "ADA/USDT", "AVAX/USDT", "LINK/USDT", "TON/USDT"];
 const T = {
   vi: {
     backHome: "← Về Super Citadel",
@@ -126,6 +127,8 @@ const T = {
     walkMsg: "walk-forward",
     gridJson: "Lưới tham số phải là JSON hợp lệ",
     apiError: "Lỗi: {msg}",
+    recommendedPairs: "Cặp đề xuất",
+    quickRun: "click là chạy · shadow + ultra + ARM",
   },
   en: {
     backHome: "← Back to Super Citadel",
@@ -218,6 +221,8 @@ const T = {
     walkMsg: "walk-forward",
     gridJson: "Grid must be valid JSON",
     apiError: "Error: {msg}",
+    recommendedPairs: "Recommended pairs",
+    quickRun: "click to run · shadow + ultra + ARM",
   },
 } as const;
 const tr = (
@@ -849,7 +854,7 @@ function AutomatoPanel({
   return (
     <div className="automato-v12">
       <div className="at-meta">
-        <span className="chip brass">{mode}</span>
+        <button className="chip brass chipbtn" onClick={() => patch({ mode: cfg?.mode === "shadow" ? "live_sim" : "shadow" })}>{mode}</button>
         <span className="chip sim">
           giả lập {Number(ledger.sim?.pnl ?? 0).toFixed(2)}
         </span>
@@ -889,7 +894,18 @@ function AutomatoPanel({
       {tab === "auto" && (
         <div className="auto-grid">
           <div>
-            <div className="card dial-card">
+            <div className="card pair-card">
+              <h3>Cặp đề xuất</h3>
+              <div className="pair-sub">10 coin hot · click là chạy SHADOW ULTRA</div>
+              <div className="pair-grid">
+                {RECOMMENDED_PAIRS.map((sym) => (
+                  <button key={sym} className="coin-chip" disabled={busy} onClick={async () => { setBusy(true); try { await api(`/trade/bots/${bot}/automato/quickstart`, "POST", { symbol: sym }); say(`${sym} — đã bật Shadow + ULTRA + ARM`); await load(); } catch (e:any) { say(`AUTOMATO: ${e.message}`); } finally { setBusy(false); } }}>
+                    {sym.replace("/USDT", "")}<span>/USDT</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="card dial-card" style={{ marginTop: 16 }}>
               <div className="marks">
                 <span>
                   <b>SL phiên</b> −{sl.toFixed(1)}%
@@ -942,7 +958,7 @@ function AutomatoPanel({
             <div className="card cfg" style={{ marginTop: 16 }}>
               <h3>Super Automato</h3>
               <div className="preset-row">
-                {["off", "soft", "hard", "custom"].map((m) => (
+                {["off", "soft", "hard", "ultra", "custom"].map((m) => (
                   <button
                     key={m}
                     className={`pbtn ${superMode === m ? "on" : ""}`}
@@ -954,6 +970,8 @@ function AutomatoPanel({
                         ? "Soft Think · 3"
                         : m === "hard"
                           ? "Hard Think · 5"
+                          : m === "ultra"
+                            ? "ULTRA"
                           : "Custom"}
                   </button>
                 ))}
@@ -1656,6 +1674,7 @@ function Style() {
 .st-root .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
 .st-root .menu,.st-root .at-tabs{display:flex;gap:6px;margin:16px 0;border:1px solid var(--line);background:var(--panel2);border-radius:var(--r);padding:6px;overflow-x:auto;scrollbar-width:none}.st-root .menu-item,.st-root .at-tab{flex:1;background:transparent;color:var(--muted);border:0;border-radius:8px;padding:10px 14px;font-family:'Space Grotesk';letter-spacing:.16em;text-transform:uppercase;cursor:pointer;min-width:96px}.st-root .menu-item.on,.st-root .at-tab.on{background:var(--panel);color:var(--brass);box-shadow:inset 0 -2px 0 var(--brass),0 0 0 1px var(--line)}.st-root .at-tab .n{font-family:'JetBrains Mono';font-size:9px;color:var(--dim);display:block;letter-spacing:.1em;margin-top:2px}
 .st-root .automato-v12{--sim:#7FA6C9}.st-root .botpick{font-family:'JetBrains Mono';font-size:10px;color:var(--brass);border:1px solid var(--brass-dim);background:var(--panel2);border-radius:5px;padding:3px 8px;letter-spacing:.06em}.st-root .at-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 2px 14px}.st-root .chip{font-family:'JetBrains Mono';font-size:10px;color:var(--muted);border:1px solid var(--line);padding:3px 8px;border-radius:5px;letter-spacing:.06em}.st-root .chip.brass{color:var(--brass);border-color:var(--brass-dim)}.st-root .chip.sim,.st-root .tag.sim,.st-root .simc{color:var(--sim);border-color:rgba(127,166,201,.45)}.st-root .sp{flex:1}.st-root .at-eq{font-family:'JetBrains Mono';font-weight:700;font-size:16px;color:var(--brass)}.st-root .at-eqsub{font-family:'JetBrains Mono';font-size:11px;color:var(--dim)}.st-root .auto-grid{display:grid;grid-template-columns:400px 1fr;gap:16px;align-items:start}.st-root .dial-card{border:1px solid var(--line);background:linear-gradient(180deg,var(--panel),var(--panel2));border-radius:var(--r);padding:22px 16px 18px;text-align:center}.st-root .dial-wrap{position:relative;width:min(290px,74vw);margin:4px auto 8px;aspect-ratio:1}.st-root .dial-wrap svg{position:absolute;inset:0;width:100%;height:100%}.st-root .ring-track{fill:none;stroke:var(--line);stroke-width:6}.st-root .ring-sweep{fill:none;stroke:var(--brass);stroke-width:3;stroke-dasharray:5 17;opacity:0;transition:opacity .3s}.st-root .sweepg{transform-origin:110px 110px}.st-root .dial-wrap.scanning .ring-sweep,.st-root .dial-wrap.holding .ring-sweep{opacity:.85}.st-root .dial-wrap.scanning .sweepg,.st-root .dial-wrap.holding .sweepg{animation:spin 3.2s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.st-root .ring-gain{fill:none;stroke:var(--brass);stroke-width:6;stroke-linecap:round;stroke-dasharray:0 604;transform:rotate(-90deg);transform-origin:110px 110px;transition:stroke-dasharray .25s linear,stroke .25s}.st-root .core{position:absolute;inset:13%;width:auto;height:auto;aspect-ratio:1/1;box-sizing:border-box;appearance:none;-webkit-appearance:none;padding:0;margin:0;border-radius:50%!important;overflow:hidden;cursor:pointer;border:1px solid var(--line);background:radial-gradient(120% 120% at 50% 20%,#1a2330 0%,var(--panel2) 60%);box-shadow:inset 0 0 0 6px #0b0f15,inset 0 0 0 7px var(--line),0 14px 40px -18px rgba(0,0,0,.8);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;transition:.2s;color:var(--ink)}.st-root .core:hover{border-color:var(--brass-dim)}.st-root .core:disabled{opacity:.75;cursor:wait}.st-root .core .glyph,.st-root .glyph{font-size:26px;color:var(--brass);line-height:1;text-shadow:0 0 18px rgba(232,176,75,.45)}.st-root .core .word,.st-root .word{font-family:'Space Grotesk';font-weight:700;font-size:26px;letter-spacing:.3em;text-indent:.3em}.st-root .dial-wrap.scanning .core,.st-root .dial-wrap.holding .core{border-color:var(--brass-dim);box-shadow:inset 0 0 0 6px #0b0f15,inset 0 0 0 7px var(--brass-dim),0 0 34px -12px rgba(232,176,75,.75),0 14px 40px -18px rgba(0,0,0,.8)}.st-root .dial-wrap.scanning .word,.st-root .dial-wrap.holding .word{font-size:29px;letter-spacing:.02em;text-indent:0}.st-root .core .subw,.st-root .subw{font-family:'JetBrains Mono';font-size:10px;color:var(--muted);letter-spacing:.12em}.st-root .marks{display:flex;justify-content:space-between;font-family:'JetBrains Mono';font-size:11px;color:var(--dim);max-width:min(290px,74vw);margin:0 auto 4px}.st-root .marks b{color:var(--muted);font-weight:500}.st-root .phase-line{font-family:'JetBrains Mono';font-size:11px;color:var(--muted);min-height:18px}.st-root .preset-row{display:flex;gap:6px;margin:8px 0 14px}.st-root .pbtn{flex:1;font-family:'JetBrains Mono';font-size:11px;padding:7px;border:1px solid var(--line);background:var(--panel2);color:var(--muted);border-radius:7px;cursor:pointer}.st-root .pbtn.on{color:var(--brass);border-color:var(--brass-dim);background:rgba(232,176,75,.08)}.st-root .riskest{margin:12px 0;border:1px dashed var(--line);border-radius:8px;padding:9px 12px;font-family:'JetBrains Mono';font-size:11px;color:var(--muted);line-height:1.7}.st-root .riskest b{color:var(--down)}.st-root .cfg h3,.st-root .automato-v12 .card h3{font-family:'Space Grotesk';font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:8px 0 12px;font-weight:500}.st-root .cfgrows{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}.st-root .sup-state{display:flex;gap:12px;align-items:center;flex-wrap:wrap;border:1px solid var(--line);background:var(--panel2);border-radius:8px;padding:9px 12px;margin-top:12px;font-family:'JetBrains Mono';font-size:11px;color:var(--muted)}.st-root .honest{margin-top:12px;border:1px dashed var(--brass-dim);border-radius:8px;padding:12px}.st-root .honest .t{font-family:'Space Grotesk';font-size:10px;letter-spacing:.26em;text-transform:uppercase;color:var(--brass);margin-bottom:6px}.st-root .honest p{margin:0;font-size:12px;color:var(--muted);line-height:1.55}.st-root .check{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px dotted var(--line);font-size:13px}.st-root .check .ok{color:var(--up);font-family:'JetBrains Mono'}.st-root .an-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:16px}.st-root .ev .sym{font-family:'JetBrains Mono';color:var(--brass);flex:none}.st-root .ev .txt{flex:1}.st-root .tbl-wrap{overflow:auto;border:1px solid var(--line);border-radius:8px;max-height:420px}
+.st-root .chipbtn{background:rgba(232,176,75,.06);cursor:pointer}.st-root .pair-card{border-color:var(--brass-dim);background:linear-gradient(180deg,rgba(232,176,75,.06),var(--panel2))}.st-root .pair-sub{font-family:'JetBrains Mono';font-size:10px;color:var(--dim);margin:-4px 0 10px;letter-spacing:.08em}.st-root .pair-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}.st-root .coin-chip{font-family:'JetBrains Mono';font-weight:700;color:var(--brass);border:1px solid var(--line);background:var(--panel2);border-radius:9px;padding:9px 7px;cursor:pointer;box-shadow:inset 0 -1px 0 rgba(232,176,75,.12)}.st-root .coin-chip:hover{border-color:var(--brass-dim);background:rgba(232,176,75,.08)}.st-root .coin-chip span{font-weight:500;color:var(--muted);font-size:10px;margin-left:2px}.st-root .coin-chip:disabled{opacity:.55;cursor:wait}
 .st-root .btn{font-family:'Space Grotesk',sans-serif;font-size:12px;letter-spacing:.06em;background:var(--panel);color:var(--ink);border:1px solid var(--line);padding:9px 15px;border-radius:8px;cursor:pointer;transition:.14s;text-transform:uppercase;display:inline-flex;align-items:center;gap:6px}
 .st-root .btn:hover{border-color:var(--brass-dim);color:#fff}
 .st-root .btn.primary{background:var(--brass);color:#20170a;border-color:var(--brass);font-weight:700}

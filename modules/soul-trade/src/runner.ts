@@ -14,9 +14,10 @@ import type { TradeToolCtx } from './tools/index.js';
 import { DEFAULT_RISK, buildPlan } from './risk.js';
 import { PaperExecutor, type Executor, type FilledTrade } from './executor.js';
 import { assessSymbol, persistDecision } from './turn.service.js';
+import { addIndicators } from './indicators.js';
 import { getBot, setEquity, setStatus } from './services/bot.service.js';
 import { recordTrade } from './services/memory.service.js';
-import { getOrCreateAutomatoConfig, evaluateAutomatoGuards, afterAutomatoTradeClosed, currentPhase } from './automato.service.js';
+import { getOrCreateAutomatoConfig, configureAutomato, evaluateAutomatoGuards, afterAutomatoTradeClosed, currentPhase, ultraCfg, ultraDirection, logAutomato } from './automato.service.js';
 
 export type RunnerEvent =
   | { type: 'turn'; bot: string; symbol: string; action: Direction; sizeMult: number; note: string }
@@ -126,6 +127,8 @@ export class BotRunner {
 
   private async tickSymbol(ctx: TradeToolCtx, bot: any, symbol: string, risk: RiskParams, marks: Record<string, number>): Promise<void> {
     const candles: Candle[] = await this.source.fetchOHLCV(symbol, this.cfg.timeframe ?? '15m', this.cfg.candles ?? 200);
+    const acfg0 = await getOrCreateAutomatoConfig(ctx, bot.id);
+    if (acfg0.super_mode === 'ultra') return this.tickUltra(ctx, bot, symbol, risk, marks, candles, acfg0);
     const a = await assessSymbol(candles, symbol, bot, this.env, {
       useAgents: this.cfg.useAgents, dropLast: this.cfg.dropLastCandle ?? true,
     });
@@ -166,6 +169,48 @@ export class BotRunner {
     const pos = await this.executor.openPosition(plan);
     this.stats.entries++;
     this.emit({ type: 'open', bot: this.botName, symbol, direction: pos.direction, entry: pos.entry, size: pos.size, stop: pos.stop, takeProfit: pos.takeProfit });
+  }
+
+  private async tickUltra(ctx: TradeToolCtx, bot: any, symbol: string, risk: RiskParams, marks: Record<string, number>, candles: Candle[], acfg: any): Promise<void> {
+    const series = (this.cfg.dropLastCandle ?? true) ? candles.slice(0, -1) : candles;
+    if (series.length < 80) throw new Error(`not enough closed candles (${series.length})`);
+    const ind = addIndicators(series, { ...(bot.params ?? {}) } as any); const bar = series[series.length - 1]; marks[symbol] = bar.close;
+    const uc = ultraCfg(acfg); const state = { ...(acfg.state ?? {}) }; state.ultra = state.ultra ?? {};
+    if (this.executor instanceof PaperExecutor) {
+      const p = this.executor.position(symbol);
+      if (p) {
+        const pnlPct = p.direction === 'long' ? (bar.close / p.entry - 1) * 100 : (p.entry / bar.close - 1) * 100;
+        const peak = Math.max(Number(state.ultra[symbol]?.peakPnlPct ?? -999), pnlPct);
+        state.ultra[symbol] = { peakPnlPct: peak, direction: p.direction, entry: p.entry };
+        await configureAutomato(ctx, bot.id, { state });
+        const slHit = pnlPct <= -Number(uc.stopLossPct ?? 1);
+        const trailHit = peak >= Number(uc.tpPct ?? 2) && pnlPct <= peak - Number(uc.trailGivebackPct ?? 0.5);
+        if (slHit || trailHit) {
+          const t = await this.executor.closePosition(symbol, bar.close, slHit ? 'ultra_stop_loss' : 'ultra_trailing_lock');
+          if (t) { await logAutomato(ctx, bot.id, 'ultra_exit', slHit ? 'ULTRA cắt lỗ an toàn' : 'ULTRA trailing khóa lời', { symbol, pnlPct, peak }); await this.afterClose(ctx, bot, t); }
+          delete state.ultra[symbol]; await configureAutomato(ctx, bot.id, { state }); this.cooldown.set(symbol, slHit ? risk.cooldownBars : 0); return;
+        }
+        return;
+      }
+    }
+    const direction = ultraDirection(series, ind) as Direction;
+    this.emit({ type: 'turn', bot: this.botName, symbol, action: direction, sizeMult: 1, note: 'ULTRA scalping EMA/RSI/momentum' });
+    await persistDecision(ctx, bot.id, bot.strategy, { symbol, direction, sizeMult: 1, note: 'ULTRA scalping EMA/RSI/momentum', votes: [], aiScore: 0, atr: ind.atr[series.length - 1], close: bar.close, high: bar.high, low: bar.low, strategySignal: { ultra: true }, aiSignal: {} }, this.env, bot.llm?.embedding);
+    if (direction === 'flat') return;
+    const guard = await evaluateAutomatoGuards(ctx, bot, acfg, {}); if (!guard.allowed) return;
+    if ((this.cooldown.get(symbol) ?? 0) > 0) { this.cooldown.set(symbol, (this.cooldown.get(symbol) ?? 1) - 1); return; }
+    if ((await Promise.resolve(this.executor.positions())).some(p => p.symbol === symbol)) return;
+    const equity = await this.executor.equity(); const maxRisk = Math.min(Number(uc.maxRiskPct ?? 1), 1) / 100;
+    const stopPct = Math.max(0.05, Number(uc.stopLossPct ?? 1)) / 100;
+    const entry = bar.close * (direction === 'long' ? 1 + risk.slippage : 1 - risk.slippage);
+    const stop = direction === 'long' ? entry * (1 - stopPct) : entry * (1 + stopPct);
+    const takeProfit = direction === 'long' ? entry * (1 + Number(uc.tpPct ?? 2) / 100) : entry * (1 - Number(uc.tpPct ?? 2) / 100);
+    const size = (equity * maxRisk * Number(uc.sizeMult ?? 1)) / Math.abs(entry - stop);
+    const pos = await this.executor.openPosition({ symbol, direction, entry, stop, takeProfit, size, notional: size * entry, riskAmount: equity * maxRisk });
+    state.ultra[symbol] = { peakPnlPct: 0, direction, entry: pos.entry };
+    await configureAutomato(ctx, bot.id, { risk_per_trade: Math.min(Number(acfg.risk_per_trade ?? 1), 1), state });
+    await logAutomato(ctx, bot.id, 'ultra_entry', `ULTRA vào ${direction.toUpperCase()} — risk≤1%, TP≥2%, trailing 0.5%`, { symbol, entry: pos.entry, stop: pos.stop, takeProfit: pos.takeProfit, size: pos.size });
+    this.stats.entries++; this.emit({ type: 'open', bot: this.botName, symbol, direction: pos.direction, entry: pos.entry, size: pos.size, stop: pos.stop, takeProfit: pos.takeProfit });
   }
 
   private async afterClose(ctx: TradeToolCtx, bot: any, t: FilledTrade): Promise<void> {

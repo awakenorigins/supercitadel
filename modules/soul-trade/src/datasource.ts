@@ -59,6 +59,32 @@ export class SyntheticSource implements DataSource {
 
 export const SUPPORTED_EXCHANGES = ['bingx', 'binance', 'bybit', 'okx', 'gate', 'kucoin', 'mexc'] as const;
 
+/** Public live ticker with Binance first and Bybit fallback. No API key needed. */
+export async function fetchLivePrice(exchange = 'binance', symbol = 'BTC/USDT'): Promise<number> {
+  const ids = [exchange, ...(exchange === 'binance' ? ['bybit'] : ['binance', 'bybit'])];
+  let lastErr: any;
+  for (const id of [...new Set(ids)]) {
+    try {
+      const px = await new CcxtSource(id, { marketType: 'spot' }).fetchPrice(symbol);
+      if (Number.isFinite(px) && px > 0) return px;
+    } catch (e) { lastErr = e; }
+  }
+  throw lastErr ?? new Error('live price unavailable');
+}
+
+/** Public live OHLCV with Binance first and Bybit fallback. No API key needed. */
+export async function fetchLiveOHLCV(exchange = 'binance', symbol = 'BTC/USDT', timeframe = '1m', limit = 200): Promise<Candle[]> {
+  const ids = [exchange, ...(exchange === 'binance' ? ['bybit'] : ['binance', 'bybit'])];
+  let lastErr: any;
+  for (const id of [...new Set(ids)]) {
+    try {
+      const rows = await new CcxtSource(id, { marketType: 'spot' }).fetchOHLCV(symbol, timeframe, limit);
+      if (rows.length) return rows;
+    } catch (e) { lastErr = e; }
+  }
+  throw lastErr ?? new Error('live ohlcv unavailable');
+}
+
 export function makeDataSource(exchangeId: string, opts: { apiKey?: string; secret?: string; password?: string; marketType?: string } = {}): DataSource {
   if (exchangeId === 'synthetic') return new SyntheticSource();
   return new CcxtSource(exchangeId, opts);

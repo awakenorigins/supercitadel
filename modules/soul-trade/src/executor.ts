@@ -43,6 +43,8 @@ export class PaperExecutor implements Executor {
     return null;
   }
   positions(): Position[] { return [...this.pos.values()]; }
+  position(symbol: string): Position | undefined { return this.pos.get(symbol); }
+  updatePosition(symbol: string, patch: Partial<Position>): void { const p = this.pos.get(symbol); if (p) this.pos.set(symbol, { ...p, ...patch }); }
   async equity(): Promise<number> { return this._equity; }
   unrealized(marks: Record<string, number>): number {
     let u = 0; for (const p of this.pos.values()) { const m = marks[p.symbol]; if (m) u += p.direction === 'long' ? (m - p.entry) * p.size : (p.entry - m) * p.size; }

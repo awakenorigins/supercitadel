@@ -28,6 +28,7 @@ export function createTradeRoutes(): TradeRouteDefinition[] {
     route({ method: 'GET', path: '/trade/bots/:name/agents', tool: 'soul-trade.agents.contribution', mapInput: ({ params }) => ({ name: params.name }) }),
     route({ method: 'GET', path: '/trade/bots/:name/automato', tool: 'soul-trade.automato.status', mapInput: ({ params }) => ({ name: params.name }) }),
     route({ method: 'POST', path: '/trade/bots/:name/automato/configure', tool: 'soul-trade.automato.configure', mapInput: ({ params, body }) => ({ name: params.name, ...(body as object ?? {}) }) }),
+    route({ method: 'POST', path: '/trade/bots/:name/automato/quickstart', tool: 'soul-trade.automato.quickstart', mapInput: ({ params, body }) => ({ name: params.name, ...(body as object ?? {}) }) }),
     route({ method: 'POST', path: '/trade/bots/:name/automato/arm', tool: 'soul-trade.automato.arm', mapInput: ({ params }) => ({ name: params.name }) }),
     route({ method: 'POST', path: '/trade/bots/:name/automato/disarm', tool: 'soul-trade.automato.disarm', mapInput: ({ params }) => ({ name: params.name }) }),
     route({ method: 'POST', path: '/trade/bots/:name/automato/preset', tool: 'soul-trade.automato.preset', mapInput: ({ params, body }) => ({ name: params.name, ...(body as object ?? {}) }) }),

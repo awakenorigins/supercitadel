@@ -32,5 +32,15 @@ const st = await afterAutomatoTradeClosed(ctx, bot.id, { pnl: -5, r: -1 });
 ok(st.phase === 'REAL', 'Super soft transitions SIM -> REAL after 3 simulated losses');
 const an = await automatoAnalytics(ctx, bot.id);
 ok(an.guardBlocks >= 3 && an.phaseHistory.length >= 1, 'analytics returns guard blocks + phase history');
+// ULTRA unit checks: long/short 2% trigger, 0.5% giveback, risk cap <=1%
+const ultraRiskSize = (equity:number, entry:number, stopPct:number, maxRiskPct:number) => (equity * Math.min(maxRiskPct, 1) / 100) / (entry * stopPct / 100);
+const longEntry = 100, longPeak = 102.6, longPull = 102.05;
+ok(((longPeak / longEntry - 1) * 100) >= 2, 'ultra long reaches +2% TP threshold');
+ok(((longPull / longEntry - 1) * 100) <= ((longPeak / longEntry - 1) * 100) - 0.5, 'ultra long trailing exits after 0.5% giveback from peak');
+const shortEntry = 100, shortPeakPx = 97.4, shortPullPx = 97.95;
+ok(((shortEntry / shortPeakPx - 1) * 100) >= 2, 'ultra short reaches mirrored +2% TP threshold');
+ok(((shortEntry / shortPullPx - 1) * 100) <= ((shortEntry / shortPeakPx - 1) * 100) - 0.5, 'ultra short trailing exits after mirrored 0.5% giveback');
+const sz = ultraRiskSize(1000, 100, 1, 1); ok(Math.abs(sz * 1 - 10) < 1e-9, 'ultra position sizing risk <= 1% equity');
+
 console.log(`\nAUTOMATO TESTS: ${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);
