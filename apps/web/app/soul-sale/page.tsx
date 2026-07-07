@@ -35,6 +35,76 @@ const ACTION_VI: Record<string, string> = {
 };
 const P = '/api/v1/soul-sale';
 
+/* ─────────── preview → tiếng Việt dễ đọc (KHÔNG dump JSON cho user) ─────────── */
+const PREVIEW_VI: Record<string, string> = {
+  source: 'Khách nguồn (bị gộp)', target: 'Khách đích (giữ lại)', childrenBlocking: 'Node con đang chặn',
+  willMove: 'Sẽ chuyển sang khách đích', contacts: 'Liên hệ', addresses: 'Địa chỉ', deals: 'Deal', quotes: 'Báo giá',
+  orders: 'Đơn hàng', payments: 'Thanh toán', order: 'Đơn hàng', status: 'Trạng thái', grandTotal: 'Tổng tiền',
+  grandTotalFmt: 'Tổng tiền', subtreeSize: 'Số node trong tuyến', note: 'Ghi chú', batch: 'Batch', period: 'Kỳ',
+  split: 'Tách dòng tiền', rowCount: 'Số dòng', creditLimit: 'Hạn mức hiện tại', outstanding: 'Đang nợ',
+  available: 'Còn được nợ', hold: 'Đang khoá nợ', creditHold: 'Đang khoá nợ', limit: 'Hạn mức', limitAmount: 'Hạn mức',
+  currentResolution: 'Giá đang áp dụng', incoming: 'Giá sắp đặt', unitPrice: 'Đơn giá', unitPriceFmt: 'Đơn giá',
+  discountPct: 'Chiết khấu %', scope: 'Phạm vi áp dụng', amount: 'Số tiền', amountFmt: 'Số tiền', kind: 'Loại',
+  customer: 'Khách', code: 'Mã', name: 'Tên', totalRows: 'Tổng dòng', exceptions: 'Case ngoại lệ', plan: 'Plan',
+  ratePct: 'Tỷ lệ %', total: 'Tổng', totalFmt: 'Tổng', lines: 'Số dòng', beneficiary: 'Người hưởng',
+  opening: 'Nợ đầu kỳ', incurred: 'Phát sinh', collected: 'Đã thu', closing: 'Nợ cuối kỳ', customers: 'Số khách',
+  paid: 'Đã thu', remaining: 'Còn lại', method: 'Hình thức', category: 'Nhóm', paidTotal: 'Đã thu',
+  alreadyRefunded: 'Đã hoàn', refundable: 'Có thể hoàn', gate: 'Cổng công nợ', pass: 'Qua cổng', blocked: 'Bị chặn',
+  reason: 'Lý do', warnings: 'Cảnh báo', productCode: 'Mã SP', qty: 'Số lượng', priceBook: 'Bảng giá',
+};
+const SKIP_KEYS = new Set(['id', 'orgId', 'customerId', 'sourceId', 'targetId', 'refId', 'batchId', 'rowId', 'orderId', 'dealId', 'leadId', 'quoteId', 'planId', 'segmentId', 'ownerUserId', 'territoryId', 'grandTotal', 'unitPrice', 'amount', 'total']);
+const viKey = (k: string) => PREVIEW_VI[k] ?? k.replace(/([A-Z])/g, ' $1').toLowerCase();
+const isMoneyKey = (k: string) => /amount|total|price|limit|outstanding|opening|closing|incurred|collected|available|paid|refund/i.test(k) && !/fmt|pct|count/i.test(k);
+const fmtVal = (k: string, v: unknown): string => {
+  if (v === null || v === undefined || v === '') return '—';
+  if (typeof v === 'boolean') return v ? 'Có' : 'Không';
+  if (typeof v === 'number') return isMoneyKey(k) ? `${v.toLocaleString('vi-VN')}đ` : v.toLocaleString('vi-VN');
+  if (typeof v === 'string') {
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}/.test(v)) return '—'; // uuid → ẩn
+    if (/^\d+$/.test(v) && isMoneyKey(k)) return `${Number(v).toLocaleString('vi-VN')}đ`;
+    return STATUS_VI[v] ?? v;
+  }
+  return String(v);
+};
+/** Render preview object thành các dòng label–value tiếng Việt, đệ quy 2 cấp, ẩn id kỹ thuật. */
+function PreviewRows({ data, depth = 0 }: { data: unknown; depth?: number }) {
+  if (data === null || data === undefined) return null;
+  if (Array.isArray(data)) {
+    return <>{data.map((it, i) => (
+      <div key={i} style={{ marginLeft: depth * 12, borderLeft: depth ? '2px solid rgba(52,211,184,.25)' : undefined, paddingLeft: depth ? 8 : 0, marginBottom: 6 }}>
+        <PreviewRows data={it} depth={depth + 1} />
+      </div>
+    ))}</>;
+  }
+  if (typeof data !== 'object') return <div>{String(data)}</div>;
+  const obj = data as Record<string, unknown>;
+  // object dạng {code, name} → 1 dòng gọn
+  if (obj.code && obj.name && Object.keys(obj).filter((k) => !SKIP_KEYS.has(k)).length <= 3) {
+    return <div><b>{String(obj.code)}</b> · {String(obj.name)}</div>;
+  }
+  return (
+    <>{Object.entries(obj).filter(([k]) => !SKIP_KEYS.has(k) || typeof obj[k] === 'object').map(([k, v]) => {
+      if (v !== null && typeof v === 'object') {
+        return (
+          <div key={k} style={{ marginTop: 6 }}>
+            <div className="muted" style={{ fontSize: 12.5, fontWeight: 700 }}>{viKey(k)}</div>
+            <div style={{ marginLeft: 10, borderLeft: '2px solid rgba(52,211,184,.25)', paddingLeft: 8 }}>
+              <PreviewRows data={v} depth={depth + 1} />
+            </div>
+          </div>
+        );
+      }
+      const shown = fmtVal(k, v);
+      if (shown === '—' && SKIP_KEYS.has(k)) return null;
+      return (
+        <div key={k} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '3px 0', fontSize: 13.5 }}>
+          <span className="muted">{viKey(k)}</span><b style={{ textAlign: 'right' }}>{shown}</b>
+        </div>
+      );
+    })}</>
+  );
+}
+
 /* ─────────────── form field spec (schema-driven) ─────────────── */
 type FieldType = 'text' | 'int' | 'vnd' | 'select' | 'bool' | 'textarea' | 'customer';
 interface Field { k: string; label: string; type?: FieldType; opts?: [string, string][]; req?: boolean; ph?: string }
@@ -91,7 +161,7 @@ export default function SoulSalePage() {
       const r = await api(`${P}/actions/${name}`, { method: 'POST', body: JSON.stringify(body) });
       const d = r.data;
       if (d && typeof d === 'object' && (d as any).dry_run === true) {
-        setPending({ name, title, params, preview: (d as any).preview ?? (d as any) });
+        setPending({ name, title, params, preview: (d as any).preview ?? (d as any).input ?? {} });
       } else {
         setPending(null);
         setMsg({ t: `✅ ${title} — xong`, ok: true });
@@ -219,10 +289,10 @@ export default function SoulSalePage() {
           onClick={() => setPending(null)}>
           <div className="card" style={{ maxWidth: 560, width: '100%', maxHeight: '80vh', overflow: 'auto' }} onClick={(e) => e.stopPropagation()}>
             <h3>🔐 Xác nhận: {pending.title}</h3>
-            <div className="muted" style={{ fontSize: 13 }}>Thao tác nhạy cảm — xem trước rồi mới chạy thật.</div>
-            <pre style={{ fontSize: 12, whiteSpace: 'pre-wrap', wordBreak: 'break-word', background: 'rgba(127,127,127,.1)', padding: 8, borderRadius: 8 }}>
-              {JSON.stringify(pending.preview, null, 1)}
-            </pre>
+            <div className="muted" style={{ fontSize: 13, marginBottom: 8 }}>Kiểm tra lại thông tin dưới đây rồi bấm xác nhận để chạy thật.</div>
+            <div style={{ background: 'rgba(127,127,127,.08)', padding: '10px 12px', borderRadius: 10 }}>
+              <PreviewRows data={pending.preview} />
+            </div>
             <div className="row">
               <button className="btn-primary" disabled={busy !== null}
                 onClick={() => runAction(pending.name, pending.title, pending.params, true)}>
