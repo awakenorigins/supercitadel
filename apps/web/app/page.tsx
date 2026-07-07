@@ -23,14 +23,18 @@ const STATS = [
   { value: 13, suffix: '', label: 'Ký tự token là vào ngay' },
 ];
 
-// ô sáng ngẫu nhiên trên grid — deterministic per mount, thuần CSS animation
+// ô sáng trên grid — deterministic để tránh hydration mismatch/React #418 khi SSR
+function gridRand(i: number, salt: number) {
+  const x = Math.sin(i * 12.9898 + salt * 78.233) * 43758.5453;
+  return x - Math.floor(x);
+}
 function useGridCells(n = 14) {
   return useMemo(() => Array.from({ length: n }, (_, i) => ({
     id: i,
-    left: Math.floor(Math.random() * 24) * 44,
-    top: Math.floor(Math.random() * 16) * 44,
-    dur: 3.5 + Math.random() * 4,
-    delay: Math.random() * 5,
+    left: Math.floor(gridRand(i, 1) * 24) * 44,
+    top: Math.floor(gridRand(i, 2) * 16) * 44,
+    dur: 3.5 + gridRand(i, 3) * 4,
+    delay: gridRand(i, 4) * 5,
   })), [n]);
 }
 
