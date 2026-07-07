@@ -10,7 +10,7 @@
  */
 import type { PgDatabase } from 'drizzle-orm/pg-core';
 import type { z } from 'zod';
-import { ssActionAudit } from './schema.js';
+import { ssActionAudit, ssUndoLog } from './schema.js';
 
 /** Db — chấp nhận cả postgres-js (host) lẫn pglite (test) qua structural typing. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -100,7 +100,28 @@ export async function executeAction<P>(
   }
 
   try {
-    const result = await db.transaction(async (tx) => action.handler(tx as unknown as Db, ctx, parsed));
+    // Undo support: chụp snapshot TRƯỚC khi handler chạy (đọc-không-ghi), lưu cùng transaction với kết quả.
+    const { UNDO_DEFS, summarize } = await import('./registry/undo.js');
+    const udef = UNDO_DEFS[action.name];
+    const result = await db.transaction(async (tx) => {
+      const txDb = tx as unknown as Db;
+      let snapshot: Record<string, unknown> | null = null;
+      if (udef?.snapshot) {
+        try { snapshot = await udef.snapshot(txDb, ctx, input as Record<string, unknown>); } catch { snapshot = null; }
+      }
+      const r = await action.handler(txDb, ctx, parsed);
+      if (udef?.undo) {
+        try {
+          const resObj = (r && typeof r === 'object') ? (r as Record<string, unknown>) : null;
+          await txDb.insert(ssUndoLog).values({
+            orgId: ctx.orgId, actorUserId: ctx.userId, action: action.name,
+            input: input as Record<string, unknown>, result: resObj, snapshot,
+            summary: summarize(action.name, input as Record<string, unknown>, resObj),
+          });
+        } catch { /* undo log không được làm vỡ nghiệp vụ */ }
+      }
+      return r;
+    });
     await writeAudit(db, ctx, action.name, 'ok', input);
     await hostAudit?.({ org_id: ctx.orgId, user_id: ctx.userId, module: 'soul-sale', action: action.name, payload: input, result: 'ok' });
     return result;

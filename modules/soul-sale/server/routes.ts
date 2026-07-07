@@ -11,6 +11,9 @@ import { executeAction } from '../src/contract.js';
 import { SsError } from '../src/lib/util.js';
 import { readTools } from '../src/registry/reads.js';
 import { writeActions } from '../src/registry/writes.js';
+import { UNDO_DEFS } from '../src/registry/undo.js';
+import { ssUndoLog } from '../src/schema.js';
+import { and, eq, desc } from 'drizzle-orm';
 import * as M from '../src/services/master.service.js';
 import * as C from '../src/services/crm.service.js';
 import * as S from '../src/services/sales.service.js';
@@ -152,6 +155,43 @@ export function buildSoulSaleRoutes(deps: SoulSaleRouteDeps): Hono {
   });
 
   /* ---- host gọi 1 lần khi activate module cho org (idempotent) ---- */
+  /* ---- Hoàn tác (Ctrl+Z): lịch sử thao tác + bấm lùi ---- */
+  const ACTION_TITLE = new Map(writeActions.map((a) => [a.name, a.description] as [string, string]));
+  app.get('/undo/history', deps.requireAuth, deps.gate('soulsale.customer.read'), async (c) => {
+    const ctx = ctxOf(c);
+    const limit = Math.min(Number(c.req.query('limit') ?? 30), 100);
+    const rows = await withOrg(ctx.orgId, (tx) => tx.select().from(ssUndoLog)
+      .where(eq(ssUndoLog.orgId, ctx.orgId)).orderBy(desc(ssUndoLog.at)).limit(limit));
+    return c.json({ ok: true, data: rows.map((r) => ({
+      id: r.id, action: r.action, title: ACTION_TITLE.get(r.action) ?? r.action,
+      summary: r.summary, actor: r.actorUserId, at: r.at,
+      undone: r.undone, undoneAt: r.undoneAt,
+      canUndo: !r.undone && !!UNDO_DEFS[r.action]?.undo,
+      reason: UNDO_DEFS[r.action]?.reason ?? null,
+    })) });
+  });
+  app.post('/undo/:id', deps.requireAuth, deps.gate('soulsale.customer.write'), async (c) => {
+    const ctx = ctxOf(c);
+    const id = c.req.param('id');
+    const result = await withOrg(ctx.orgId, async (tx) => {
+      const rows = await tx.select().from(ssUndoLog).where(and(eq(ssUndoLog.orgId, ctx.orgId), eq(ssUndoLog.id, id)));
+      const entry = rows[0];
+      if (!entry) throw new SsError('NOT_FOUND', 'Không thấy mục lịch sử này');
+      if (entry.undone) throw new SsError('ALREADY_UNDONE', 'Đã hoàn tác rồi');
+      const udef = UNDO_DEFS[entry.action];
+      if (!udef?.undo) throw new SsError('NOT_UNDOABLE', udef?.reason ?? 'Thao tác này không hoàn tác được');
+      const r = await udef.undo(tx, ctx, {
+        input: (entry.input ?? {}) as Record<string, unknown>,
+        result: (entry.result ?? null) as Record<string, unknown> | null,
+        snapshot: (entry.snapshot ?? null) as Record<string, unknown> | null,
+      });
+      await tx.update(ssUndoLog).set({ undone: true, undoneAt: new Date(), undoneBy: ctx.userId, undoneResult: r })
+        .where(and(eq(ssUndoLog.orgId, ctx.orgId), eq(ssUndoLog.id, id)));
+      return r;
+    });
+    return c.json({ ok: true, data: result });
+  });
+
   app.post('/setup', deps.requireAuth, deps.gate('soulsale.customer.write'), async (c) => {
     const ctx = ctxOf(c);
     await withOrg(ctx.orgId, (tx) => M.ensureDefaults(tx, ctx));

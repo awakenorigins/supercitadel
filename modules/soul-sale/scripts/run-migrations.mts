@@ -27,7 +27,7 @@ async function main() {
     await sql.unsafe(`CREATE TABLE IF NOT EXISTS public._soulsale_migrations (name TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now());`);
     const applied = new Set((await sql<{ name: string }[]>`SELECT name FROM public._soulsale_migrations`).map((r) => r.name));
 
-    for (const file of ['0000_init.sql', '0001_rls.sql']) {
+    for (const file of ['0000_init.sql', '0001_rls.sql', '0002_undo_log.sql']) {
       if (applied.has(file)) { console.log(`[soul-sale] skip ${file} (đã chạy)`); continue; }
       const text = await readFile(join(MIG, file), 'utf8');
       const stmts = splitStatements(text);

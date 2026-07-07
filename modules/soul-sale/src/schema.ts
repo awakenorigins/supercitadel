@@ -482,6 +482,22 @@ export const ssActionAudit = soulsale.table('ss_action_audit', {
   at: tsCol('at').defaultNow().notNull(),
 }, (t) => [index('ss_aa_org_idx').on(t.orgId), index('ss_aa_action_idx').on(t.orgId, t.action)]);
 
+/** Nhật ký hoàn tác — mỗi write action thực thi thật ghi 1 dòng: input + result + snapshot trước khi đổi. */
+export const ssUndoLog = soulsale.table('ss_undo_log', {
+  id: idCol(), orgId: orgCol(),
+  actorUserId: varchar('actor_user_id', { length: 128 }).notNull(),
+  action: varchar('action', { length: 64 }).notNull(),
+  input: jsonb('input'),
+  result: jsonb('result'),
+  snapshot: jsonb('snapshot'),
+  summary: text('summary'),
+  undone: boolean('undone').notNull().default(false),
+  undoneAt: tsCol('undone_at'),
+  undoneBy: varchar('undone_by', { length: 128 }),
+  undoneResult: jsonb('undone_result'),
+  at: tsCol('at').defaultNow().notNull(),
+}, (t) => [index('ss_ul_org_idx').on(t.orgId), index('ss_ul_at_idx').on(t.orgId, t.at)]);
+
 export const ssInboxEvents = soulsale.table('ss_inbox_events', {
   id: idCol(), orgId: orgCol(),
   topic: varchar('topic', { length: 64 }).notNull(),
@@ -498,5 +514,5 @@ export const allTables = {
   ssQuotes, ssQuoteItems, ssOrders, ssOrderItems, ssOrderStatusLog, ssPayments,
   ssTargets, ssCommissionPlans, ssCommissionEntries, ssDebtSnapshots,
   ssImportBatches, ssImportRawRows, ssImportRows, ssReconciliationCases, ssSplitResults, ssAgencyStatements,
-  ssScores, ssSuggestions, ssCounters, ssActionAudit, ssInboxEvents,
+  ssScores, ssSuggestions, ssCounters, ssActionAudit, ssInboxEvents, ssUndoLog,
 };

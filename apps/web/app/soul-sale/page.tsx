@@ -20,6 +20,7 @@ interface LeadRow { id: string; code?: string; name: string; source: string; sta
 interface Debtor { customerId: string; code: string; name: string; outstanding: string }
 interface BatchRow { id: string; code: string; period: string; status: string; rowCount: number; exceptionCount: number }
 interface CatalogItem { name: string; description: string; permission: string; securityLevel?: number; sensitive?: boolean; examples: string[] }
+interface UndoRow { id: string; action: string; title: string; summary: string | null; at: string; undone: boolean; canUndo: boolean; reason: string | null }
 interface Item { productCode: string; productName: string; qty: number; unitPrice?: string }
 
 const num = (s: string | number | null | undefined) => Number(s ?? 0).toLocaleString('vi-VN');
@@ -162,13 +163,17 @@ export default function SoulSalePage() {
   const [msg, setMsg] = useState<{ t: string; ok: boolean } | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   // modal dry-run→confirm
-  const [pending, setPending] = useState<{ name: string; title: string; params: Record<string, unknown>; preview: unknown } | null>(null);
+  const [pending, setPending] = useState<{ name: string; title: string; params: Record<string, unknown>; preview: unknown; error?: string } | null>(null);
+  const [undoList, setUndoList] = useState<UndoRow[] | null>(null);
+  const [undoOpen, setUndoOpen] = useState(false);
 
   const gate = (e: unknown) => {
     const m = e instanceof Error ? e.message : String(e);
     if (/kích hoạt|hết hạn thuê|INACTIVE|RENT_EXPIRED/i.test(m)) setLocked(true);
+    else if (/Bearer|token|401|đăng nhập/i.test(m)) { clearSessionSafe(); router.push('/'); }
     else setMsg({ t: m, ok: false });
   };
+  const clearSessionSafe = () => { try { localStorage.removeItem('citadel.session'); } catch { /* noop */ } };
 
   const loadAll = useCallback((keyword?: string) => {
     api(`${P}/pipeline/summary`).then((r) => setPipeline(r.data)).catch(gate);
@@ -203,7 +208,26 @@ export default function SoulSalePage() {
         setMsg({ t: `✅ ${title} — xong`, ok: true });
         loadAll(kw);
       }
-    } catch (e) { gate(e); } finally { setBusy(null); }
+    } catch (e) {
+      const m = e instanceof Error ? e.message : String(e);
+      // Lỗi khi đang ở modal xác nhận → hiện NGAY TRONG modal (trước đây toast bị modal che → tưởng bấm không ăn)
+      if (confirmed) setPending((p) => (p ? { ...p, error: m } : p));
+      else gate(e);
+      if (/Bearer|token|401/i.test(m)) { clearSessionSafe(); router.push('/'); }
+    } finally { setBusy(null); }
+  };
+
+  /* ───────── Hoàn tác (Ctrl+Z) ───────── */
+  const loadUndo = () => api(`${P}/undo/history?limit=30`).then((r) => setUndoList(r.data)).catch(gate);
+  const doUndo = async (row: UndoRow) => {
+    if (!window.confirm(`Hoàn tác: ${row.title}${row.summary ? ` (${row.summary})` : ''}?`)) return;
+    setBusy('undo');
+    try {
+      await api(`${P}/undo/${row.id}`, { method: 'POST', body: '{}' });
+      setMsg({ t: `↩ Đã hoàn tác: ${row.title}`, ok: true });
+      loadUndo(); loadAll(kw);
+    } catch (e) { setMsg({ t: `Không hoàn tác được: ${e instanceof Error ? e.message : e}`, ok: false }); }
+    finally { setBusy(null); }
   };
 
   if (locked) return <Shell><ModuleLocked id="soul-sale" name="Soul-Sale 1A" /></Shell>;
@@ -234,7 +258,7 @@ export default function SoulSalePage() {
     return (
       <div className="card" style={{ marginBottom: 10 }}>
         <div className="row" style={{ justifyContent: 'space-between', cursor: 'pointer' }} onClick={() => setOpen(!open)}>
-          <b>{def.sensitive ? '🔐 ' : ''}{def.title}</b>
+          <b>{def.sensitive ? '⚠️ ' : ''}{def.title}</b>
           <button onClick={(e) => { e.stopPropagation(); setOpen(!open); }}>{open ? '−' : '+'}</button>
         </div>
         {open && (
@@ -315,8 +339,36 @@ export default function SoulSalePage() {
     <Shell>
       <div className="page-head">
         <h1><Icon name="target" /> Soul-Sale 1A</h1>
-        <div className="muted">Bán hàng & kênh phân phối — 23 tra cứu + 34 thao tác, bấm trực tiếp hoặc nhờ Tiểu Tâm · 🔐 = thao tác nhạy cảm, xem trước rồi xác nhận mới chạy</div>
+        <div className="muted">Bán hàng & kênh phân phối — 23 tra cứu + 34 thao tác, bấm trực tiếp hoặc nhờ Tiểu Tâm · ⚠️ = thao tác quan trọng, xem trước rồi xác nhận mới chạy</div>
+        <div className="row" style={{ marginTop: 6 }}>
+          <button onClick={() => { setUndoOpen(true); loadUndo(); }}>↩ Hoàn tác · Lịch sử thao tác</button>
+        </div>
       </div>
+
+      {/* panel Hoàn tác (Ctrl+Z) */}
+      {undoOpen && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.55)', zIndex: 55, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+          onClick={() => setUndoOpen(false)}>
+          <div className="card" style={{ maxWidth: 620, width: '100%', maxHeight: '82vh', overflow: 'auto' }} onClick={(e) => e.stopPropagation()}>
+            <h3>↩ Lịch sử thao tác — bấm Hoàn tác để lùi lại</h3>
+            <div className="muted" style={{ fontSize: 13, marginBottom: 8 }}>30 thao tác gần nhất. Việc đã bị thao tác khác đè lên có thể không lùi được — hệ thống sẽ báo rõ.</div>
+            {!undoList ? <div className="muted">Đang tải…</div>
+              : !undoList.length ? <EmptyState icon="book" title="Chưa có thao tác nào" sub="Làm gì đó trước đã rồi mới có cái để lùi chứ 😉" />
+              : undoList.map((u) => (
+                <div key={u.id} className="row" style={{ justifyContent: 'space-between', borderBottom: '1px solid rgba(127,127,127,.15)', padding: '7px 0' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <b style={{ fontSize: 13.5 }}>{u.undone ? '☑️ ' : ''}{TASK_VI[u.action] ?? u.title}</b>
+                    {u.summary && <span className="muted" style={{ fontSize: 12.5 }}> · {u.summary}</span>}
+                    <div className="muted" style={{ fontSize: 11.5 }}>{new Date(u.at).toLocaleString('vi-VN')}{u.undone ? ' · đã hoàn tác' : ''}</div>
+                  </div>
+                  {u.undone ? <span className="pill">Đã lùi</span>
+                    : u.canUndo ? <button disabled={busy === 'undo'} onClick={() => doUndo(u)}>↩ Hoàn tác</button>
+                    : <span className="muted" style={{ fontSize: 11.5, maxWidth: 170, textAlign: 'right' }} title={u.reason ?? ''}>{u.reason ? 'Không lùi được' : ''}</span>}
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
       {msg && <div className={msg.ok ? 'toast ok' : 'toast err'} onClick={() => setMsg(null)}>{msg.t}</div>}
 
       {/* modal dry-run→confirm */}
@@ -324,17 +376,22 @@ export default function SoulSalePage() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.55)', zIndex: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
           onClick={() => setPending(null)}>
           <div className="card" style={{ maxWidth: 560, width: '100%', maxHeight: '80vh', overflow: 'auto' }} onClick={(e) => e.stopPropagation()}>
-            <h3>🔐 Xác nhận: {pending.title}</h3>
+            <h3>⚠️ Xác nhận: {pending.title}</h3>
             <div className="muted" style={{ fontSize: 13, marginBottom: 8 }}>Kiểm tra lại thông tin dưới đây rồi bấm xác nhận để chạy thật.</div>
             <div style={{ background: 'rgba(127,127,127,.08)', padding: '10px 12px', borderRadius: 10 }}>
               <PreviewRows data={pending.preview} />
             </div>
+            {pending.error && (
+              <div style={{ background: 'rgba(244,63,94,.12)', border: '1px solid rgba(244,63,94,.4)', borderRadius: 10, padding: '9px 12px', marginTop: 8, fontSize: 13.5 }}>
+                ❌ Không chạy được: {pending.error}
+              </div>
+            )}
             <div className="row">
               <button className="btn-primary" disabled={busy !== null}
                 onClick={() => runAction(pending.name, pending.title, pending.params, true)}>
-                {busy ? 'Đang chạy…' : '✅ Xác nhận chạy thật'}
+                {busy ? 'Đang chạy…' : pending.error ? '🔁 Thử lại' : '✅ Xác nhận chạy thật'}
               </button>
-              <button onClick={() => setPending(null)}>Hủy</button>
+              <button onClick={() => setPending(null)}>Đóng</button>
             </div>
           </div>
         </div>
@@ -667,7 +724,7 @@ export default function SoulSalePage() {
       {tab === 'dstv' && (
         <div>
           <div className="card" style={{ marginBottom: 10 }}>
-            <div className="muted" style={{ fontSize: 13.5 }}>Toàn bộ 57 việc Soul-Sale làm được, xếp theo nhóm. Mỗi việc đều bấm được ở tab tương ứng, hoặc nói với Tiểu Tâm như cột ví dụ. 🔐 = việc nhạy cảm, có bước xem trước → xác nhận.</div>
+            <div className="muted" style={{ fontSize: 13.5 }}>Toàn bộ 57 việc Soul-Sale làm được, xếp theo nhóm. Mỗi việc đều bấm được ở tab tương ứng, hoặc nói với Tiểu Tâm như cột ví dụ. ⚠️ = việc quan trọng, có bước xem trước → xác nhận.</div>
           </div>
           {GROUP_ORDER.map((g) => {
             const acts = (catalog?.actions ?? []).filter((a) => groupOf(a.name) === g);
@@ -680,7 +737,7 @@ export default function SoulSalePage() {
                   <table className="tbl"><thead><tr><th>Việc</th><th>Nói với Tiểu Tâm</th></tr></thead>
                     <tbody>
                       {acts.map((a) => (
-                        <tr key={a.name}><td>{a.sensitive ? '🔐 ' : ''}<b>{TASK_VI[a.name] ?? a.description.split('(')[0]}</b><div className="muted" style={{ fontSize: 12 }}>{a.description}</div></td><td className="muted" style={{ fontStyle: 'italic' }}>“{a.examples[0] ?? ''}”</td></tr>
+                        <tr key={a.name}><td>{a.sensitive ? '⚠️ ' : ''}<b>{TASK_VI[a.name] ?? a.description.split('(')[0]}</b><div className="muted" style={{ fontSize: 12 }}>{a.description}</div></td><td className="muted" style={{ fontStyle: 'italic' }}>“{a.examples[0] ?? ''}”</td></tr>
                       ))}
                       {tools.map((t) => (
                         <tr key={t.name}><td>🔍 <b>{TASK_VI[t.name] ?? t.description.split('(')[0]}</b><div className="muted" style={{ fontSize: 12 }}>{t.description}</div></td><td className="muted" style={{ fontStyle: 'italic' }}>“{t.examples[0] ?? ''}”</td></tr>
