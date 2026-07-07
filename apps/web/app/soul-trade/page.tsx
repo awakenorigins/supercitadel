@@ -14,6 +14,47 @@ function sessionJwt(): string {
 }
 
 type Bot = { id: string; name: string; exchange: string; strategy: string; mode: string; status: string; equity: number; symbols: string[]; llm?: any; has_keys?: boolean };
+
+type Lang = 'vi' | 'en';
+type DictKey = keyof typeof T.vi;
+const T = {
+  vi: {
+    backHome: '← Về Super Citadel', controlRoom: 'phòng điều khiển', totalEquity: 'tổng vốn', botsMeta: 'bot giao dịch', running: 'đang chạy',
+    bots: 'Bot giao dịch', isolated: 'tách biệt · RLS theo tổ chức · vòng tự giao dịch', newBot: '+ Tạo bot', back: '← Quay lại',
+    noBots: 'Chưa có bot nào — bấm + Tạo bot (chế độ paper không cần key) hoặc nhờ Tiểu Tâm: “tạo bot paper trên bybit”.',
+    strategy: 'Chiến lược', status: 'Trạng thái', symbols: 'Cặp coin', agents: 'Tác nhân', start: 'Chạy', stop: 'Dừng', evaluate: 'Đánh giá', delete: 'Xoá',
+    performance: 'hiệu suất', acrossTrades: 'trên toàn bộ lệnh', totalPnl: 'Tổng PnL', trades: 'Lệnh', winRate: 'Tỷ lệ thắng', profitFactor: 'Hệ số lợi nhuận', avgR: 'R trung bình', turnsLSF: 'Lượt L/S/F', loading: 'đang tải…',
+    decisionMemory: 'Bộ nhớ quyết định', decisionSub: 'mỗi lượt · chiến lược + AI + tác nhân', noDecisions: 'chưa có quyết định — bấm Đánh giá hoặc chạy bot', noAgentVotes: 'Chưa có phiếu tác nhân — chạy Đánh giá kèm tác nhân.',
+    recentTrades: 'Lệnh gần đây', symbol: 'Cặp coin', side: 'Phía', entry: 'Vào lệnh', exit: 'Thoát', pnl: 'PnL', r: 'R', exitBy: 'Thoát bởi', noClosedTrades: 'chưa có lệnh đã đóng',
+    name: 'Tên', exchange: 'Sàn', market: 'Thị trường', mode: 'Chế độ', symbolsComma: 'Cặp coin (phẩy)', createBot: 'Tạo bot', paperMode: 'paper (mô phỏng)', liveMode: 'live (lệnh thật)', paperHint: 'Chế độ paper giao dịch giá thật bằng tiền ảo — không cần API key.',
+    semanticRecall: 'Hồi tưởng ngữ nghĩa', recall: 'Tìm', recallPlaceholder: 'BTC breakout xu hướng tăng mạnh…', nothingSimilar: 'chưa có gì tương tự (cần embeddings)',
+    backtestLab: 'Phòng backtest', backtestSub: 'vào lệnh ở nến kế · stop ATR · thoát trong nến', timeframe: 'Khung nến', candles: 'Số nến', runBacktest: 'Chạy backtest', runningEllipsis: 'Đang chạy…', totalReturn: 'Tổng lợi nhuận', maxDrawdown: 'Sụt giảm tối đa', sharpe: 'Sharpe', avgWin: 'Thắng TB', avgLoss: 'Thua TB',
+    walkForward: 'Kiểm chứng walk-forward', walkSub: 'tối ưu in-sample · kiểm chứng out-of-sample', paramGrid: 'Lưới tham số (JSON)', runWalk: 'Chạy walk-forward', optimizing: 'Đang tối ưu…', oosReturn: 'Lợi nhuận OOS', windows: 'Cửa sổ', oosTrades: 'Lệnh OOS', oosWinRate: 'Tỷ lệ thắng OOS', oosMaxDD: 'Max DD OOS', final: 'Cuối kỳ',
+    footnote: 'Paper trước · backtest + walk-forward rồi mới tiền thật · key live: chỉ Read + Trade.',
+    nameRequired: 'Vui lòng nhập tên bot.', botCreated: 'Đã tạo bot', deleteConfirm: 'Xoá bot "{name}"?', deleted: '{name} đã xoá', started: '{name} đã chạy', stopped: '{name} đã dừng', turn: 'lượt', backtestMsg: 'backtest', walkMsg: 'walk-forward', gridJson: 'Lưới tham số phải là JSON hợp lệ', apiError: 'Lỗi: {msg}'
+  },
+  en: {
+    backHome: '← Back to Super Citadel', controlRoom: 'control room', totalEquity: 'total equity', botsMeta: 'bot', running: 'running',
+    bots: 'Bots', isolated: 'isolated · per-org RLS · auto-trade loop', newBot: '+ New bot', back: '← Back',
+    noBots: 'No bots yet. Hit + New bot (paper mode needs no keys) — or ask Tiểu Tâm: “tạo bot paper trên bybit”.',
+    strategy: 'Strategy', status: 'Status', symbols: 'Symbols', agents: 'Agents', start: 'Start', stop: 'Stop', evaluate: 'Evaluate', delete: 'Delete',
+    performance: 'performance', acrossTrades: 'across total trades', totalPnl: 'Total PnL', trades: 'Trades', winRate: 'Win rate', profitFactor: 'Profit factor', avgR: 'Avg R', turnsLSF: 'Turns L/S/F', loading: 'loading…',
+    decisionMemory: 'Decision memory', decisionSub: 'per-turn · strategy + AI + agents', noDecisions: 'no decisions yet — press Evaluate or start the bot', noAgentVotes: 'No agent votes yet — run Evaluate with agents.',
+    recentTrades: 'Recent trades', symbol: 'Symbol', side: 'Side', entry: 'Entry', exit: 'Exit', pnl: 'PnL', r: 'R', exitBy: 'Exit by', noClosedTrades: 'no closed trades yet',
+    name: 'Name', exchange: 'Exchange', market: 'Market', mode: 'Mode', symbolsComma: 'Symbols (comma)', createBot: 'Create bot', paperMode: 'paper (simulated)', liveMode: 'live (real orders)', paperHint: 'Paper mode trades live prices with virtual money — no keys needed.',
+    semanticRecall: 'Semantic recall', recall: 'Recall', recallPlaceholder: 'BTC breakout strong uptrend…', nothingSimilar: 'nothing similar yet (needs embeddings)',
+    backtestLab: 'Backtest lab', backtestSub: 'enter next open · atr stop · intrabar exits', timeframe: 'Timeframe', candles: 'Candles', runBacktest: 'Run backtest', runningEllipsis: 'Running…', totalReturn: 'Total return', maxDrawdown: 'Max drawdown', sharpe: 'Sharpe', avgWin: 'Avg win', avgLoss: 'Avg loss',
+    walkForward: 'Walk-forward', walkSub: 'optimize in-sample · validate out-of-sample', paramGrid: 'Param grid (JSON)', runWalk: 'Run walk-forward', optimizing: 'Optimizing…', oosReturn: 'OOS return', windows: 'Windows', oosTrades: 'OOS trades', oosWinRate: 'OOS win rate', oosMaxDD: 'OOS max DD', final: 'Final',
+    footnote: 'Paper first · backtest + walk-forward before real money · live keys: Read + Trade only.',
+    nameRequired: 'Name required.', botCreated: 'Bot created', deleteConfirm: 'Delete bot "{name}"?', deleted: '{name} deleted', started: '{name} started', stopped: '{name} stopped', turn: 'turn', backtestMsg: 'backtest', walkMsg: 'walk-forward', gridJson: 'Grid must be valid JSON', apiError: 'Error: {msg}'
+  }
+} as const;
+const tr = (lang: Lang, key: DictKey, vars?: Record<string, string | number>) => {
+  let out = T[lang][key] as string;
+  if (vars) for (const [k, v] of Object.entries(vars)) out = out.replaceAll(`{${k}}`, String(v));
+  return out;
+};
+
 type Analytics = { total_trades: number; wins: number; win_rate: number; profit_factor: number; total_pnl: number; avg_r: number; turns_by_action: Record<string, number> };
 
 async function api<T = any>(path: string, method = 'GET', body?: unknown): Promise<T> {
@@ -59,8 +100,12 @@ export default function SoulTradePage() {
   const [contrib, setContrib] = useState<any[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [toast, setToast] = useState('');
+  const [lang, setLang] = useState<Lang>('vi');
+  const t = useCallback((key: DictKey, vars?: Record<string, string | number>) => tr(lang, key, vars), [lang]);
   const eqHist = useRef<Record<string, number[]>>({});
   const say = (m: string) => { setToast(m); setTimeout(() => setToast(''), 2400); };
+  useEffect(() => { try { const saved = localStorage.getItem('st.lang') as Lang | null; if (saved === 'en' || saved === 'vi') setLang(saved); } catch {} }, []);
+  const switchLang = (next: Lang) => { setLang(next); try { localStorage.setItem('st.lang', next); } catch {} };
 
   const refresh = useCallback(async () => {
     try {
@@ -71,9 +116,9 @@ export default function SoulTradePage() {
         if (b.equity != null) { h.push(Number(b.equity)); if (h.length > 40) h.shift(); }
       }
       setBots(list);
-      setSel(s => s ?? list[0]?.name ?? null);
-    } catch (e: any) { say(e.message); }
-  }, []);
+      setSel(s => (s && list.some(b => b.name === s)) ? s : null);
+    } catch (e: any) { say(t('apiError', { msg: e.message })); }
+  }, [t]);
 
   useEffect(() => { refresh(); const t = setInterval(refresh, 5000); return () => clearInterval(t); }, [refresh]);
   useEffect(() => {
@@ -87,9 +132,9 @@ export default function SoulTradePage() {
   const totalEq = bots.reduce((s, b) => s + Number(b.equity || 0), 0);
   const running = bots.filter(b => b.status === 'running').length;
 
-  const act = async (name: string, verb: 'start' | 'stop') => { try { await api(`/trade/bots/${name}/${verb}`, 'POST'); say(`${name} ${verb === 'start' ? 'started' : 'stopped'}`); refresh(); } catch (e: any) { say(e.message); } };
-  const del = async (name: string) => { if (!confirm(`Delete bot "${name}"?`)) return; try { await api(`/trade/bots/${name}`, 'DELETE'); delete eqHist.current[name]; setSel(null); say(`${name} deleted`); refresh(); } catch (e: any) { say(e.message); } };
-  const evalTurn = async (name: string) => { try { const r = await api<any>(`/trade/bots/${name}/evaluate`, 'POST', { use_agents: true }); say(`turn: ${r.finalAction} · ${r.note}`); refresh(); } catch (e: any) { say(e.message); } };
+  const act = async (name: string, verb: 'start' | 'stop') => { try { await api(`/trade/bots/${name}/${verb}`, 'POST'); say(t(verb === 'start' ? 'started' : 'stopped', { name })); refresh(); } catch (e: any) { say(t('apiError', { msg: e.message })); } };
+  const del = async (name: string) => { if (!window.confirm(t('deleteConfirm', { name }))) return; try { await api(`/trade/bots/${name}`, 'DELETE'); delete eqHist.current[name]; setSel(null); say(t('deleted', { name })); refresh(); } catch (e: any) { say(t('apiError', { msg: e.message })); } };
+  const evalTurn = async (name: string) => { try { const r = await api<any>(`/trade/bots/${name}/evaluate`, 'POST', { use_agents: true }); say(`${t('turn')}: ${r.finalAction} · ${r.note}`); refresh(); } catch (e: any) { say(t('apiError', { msg: e.message })); } };
 
   return (
     <div className="st-root">
@@ -97,18 +142,19 @@ export default function SoulTradePage() {
       <div className="wrap">
         <header className="tape">
           <div className="header-left">
-            <a className="back-home" href="/home" aria-label="Về Super Citadel">← Về Super Citadel</a>
-            <div className="brand"><span className="led" /><div><h1>SOUL-TRADE</h1><small>control room</small></div></div>
+            <a className="back-home" href="/home" aria-label={t('backHome')}>{t('backHome')}</a>
+            <div className="brand"><span className="led" /><div><h1>SOUL-TRADE</h1><small>{t('controlRoom')}</small></div></div>
           </div>
           <div className="right">
-            <div className="readout"><div className="lbl">total equity</div><div className="val">{fmt(totalEq)}</div></div>
-            <div className="meta">{bots.length} bot{bots.length !== 1 ? 's' : ''} · {running} running</div>
+            <div className="lang-toggle"><button className={`lang-btn ${lang === 'vi' ? 'on' : ''}`} onClick={() => switchLang('vi')}>VI</button><button className={`lang-btn ${lang === 'en' ? 'on' : ''}`} onClick={() => switchLang('en')}>EN</button></div>
+            <div className="readout"><div className="lbl">{t('totalEquity')}</div><div className="val">{fmt(totalEq)}</div></div>
+            <div className="meta">{bots.length} {t('botsMeta')} · {running} {t('running')}</div>
           </div>
         </header>
 
-        <div className="eyebrow"><span className="k">Bots</span><span className="rule" /><span className="mt">isolated · per-org RLS · auto-trade loop</span></div>
-        <div className="toolbar"><button className="btn primary" onClick={() => setShowForm(v => !v)}>+ New bot</button></div>
-        {showForm && <NewBotForm onDone={() => { setShowForm(false); refresh(); }} say={say} />}
+        <div className="eyebrow"><span className="k">{t('bots')}</span><span className="rule" /><span className="mt">{t('isolated')}</span></div>
+        <div className="toolbar"><button className="btn primary" onClick={() => setShowForm(v => !v)}>{t('newBot')}</button></div>
+        {showForm && <NewBotForm onDone={() => { setShowForm(false); refresh(); }} onBack={() => setShowForm(false)} say={say} t={t} />}
 
         <div className="grid">
           {bots.map(b => (
@@ -123,40 +169,41 @@ export default function SoulTradePage() {
               <div className="eq">{fmt(b.equity)}</div>
               <Spark data={eqHist.current[b.name] ?? []} />
               <div className="rows">
-                <div className="row"><span>strategy</span><b>{b.strategy}</b></div>
-                <div className="row"><span>status</span><b>{b.status}</b></div>
-                <div className="row"><span>symbols</span><b>{b.symbols?.length ?? 0}</b></div>
-                <div className="row"><span>agents</span><b>{(b.llm?.agents ?? []).filter((a: any) => a.enabled).length || '—'}</b></div>
+                <div className="row"><span>{t('strategy')}</span><b>{b.strategy}</b></div>
+                <div className="row"><span>{t('status')}</span><b>{b.status}</b></div>
+                <div className="row"><span>{t('symbols')}</span><b>{b.symbols?.length ?? 0}</b></div>
+                <div className="row"><span>{t('agents')}</span><b>{(b.llm?.agents ?? []).filter((a: any) => a.enabled).length || '—'}</b></div>
               </div>
               <div className="actions" onClick={e => e.stopPropagation()}>
                 {b.status === 'running'
-                  ? <button className="btn sm ghost" onClick={() => act(b.name, 'stop')}>Stop</button>
-                  : <button className="btn sm primary" onClick={() => act(b.name, 'start')}>Start</button>}
-                <button className="btn sm ghost" onClick={() => evalTurn(b.name)}>Evaluate</button>
-                <button className="btn sm ghost danger" onClick={() => del(b.name)}>Delete</button>
+                  ? <button className="btn sm ghost" onClick={() => act(b.name, 'stop')}>{t('stop')}</button>
+                  : <button className="btn sm primary" onClick={() => act(b.name, 'start')}>{t('start')}</button>}
+                <button className="btn sm ghost" onClick={() => evalTurn(b.name)}>{t('evaluate')}</button>
+                <button className="btn sm ghost danger" onClick={() => del(b.name)}>{t('delete')}</button>
               </div>
             </div>
           ))}
-          {!bots.length && <div className="empty">No bots yet. Hit <b>+ New bot</b> (paper mode needs no keys) — or ask Tiểu Tâm: “tạo bot paper trên bybit”.</div>}
+          {!bots.length && <div className="empty">{t('noBots')}</div>}
         </div>
 
         {sel && (
           <>
-            <div className="eyebrow"><span className="k">{sel} · performance</span><span className="rule" /><span className="mt">across total trades</span></div>
+            <div className="section-back"><button className="btn ghost" onClick={() => setSel(null)}>{t('back')}</button></div>
+            <div className="eyebrow"><span className="k">{sel} · {t('performance')}</span><span className="rule" /><span className="mt">{t('acrossTrades')}</span></div>
             <div className="metrics">
               {an ? <>
-                <Metric l="Total PnL" v={fmt(an.total_pnl)} cls={an.total_pnl >= 0 ? 'up' : 'down'} />
-                <Metric l="Trades" v={String(an.total_trades)} />
-                <Metric l="Win rate" v={(an.win_rate * 100).toFixed(1) + '%'} />
-                <Metric l="Profit factor" v={an.profit_factor.toFixed(2)} />
-                <Metric l="Avg R" v={an.avg_r.toFixed(2)} />
-                <Metric l="Turns L/S/F" v={`${an.turns_by_action.long ?? 0}/${an.turns_by_action.short ?? 0}/${an.turns_by_action.flat ?? 0}`} />
-              </> : <span className="dim">loading…</span>}
+                <Metric l={t('totalPnl')} v={fmt(an.total_pnl)} cls={an.total_pnl >= 0 ? 'up' : 'down'} />
+                <Metric l={t('trades')} v={String(an.total_trades)} />
+                <Metric l={t('winRate')} v={(an.win_rate * 100).toFixed(1) + '%'} />
+                <Metric l={t('profitFactor')} v={an.profit_factor.toFixed(2)} />
+                <Metric l={t('avgR')} v={an.avg_r.toFixed(2)} />
+                <Metric l={t('turnsLSF')} v={`${an.turns_by_action.long ?? 0}/${an.turns_by_action.short ?? 0}/${an.turns_by_action.flat ?? 0}`} />
+              </> : <span className="dim">{t('loading')}</span>}
             </div>
 
             <div className="cols">
               <div>
-                <div className="eyebrow"><span className="k">Decision memory</span><span className="rule" /><span className="mt">per-turn · strategy + AI + agents</span></div>
+                <div className="eyebrow"><span className="k">{t('decisionMemory')}</span><span className="rule" /><span className="mt">{t('decisionSub')}</span></div>
                 <div className="feed">
                   {mem.length ? mem.map((d, i) => (
                     <div key={i} className="ev">
@@ -164,27 +211,27 @@ export default function SoulTradePage() {
                       <span className="txt"><b>{String(d.final_action).toUpperCase()}</b> <span className="mono">{d.symbol}</span> · ×{Number(d.size_mult).toFixed(2)} <span className="dim">{d.note}</span></span>
                       <span className="t">{new Date(d.created_at).toLocaleTimeString()}</span>
                     </div>
-                  )) : <div className="feed-empty">no decisions yet — press Evaluate or start the bot</div>}
+                  )) : <div className="feed-empty">{t('noDecisions')}</div>}
                 </div>
               </div>
               <div>
-                <div className="eyebrow"><span className="k">Agents</span><span className="rule" /></div>
+                <div className="eyebrow"><span className="k">{t('agents')}</span><span className="rule" /></div>
                 <div className="tgcard">
                   {contrib.length ? contrib.map(c => (
                     <div key={c.name} className="agent-row">
                       <span className="mono">{c.name}</span>
                       <span className="agree">{(c.agreement * 100).toFixed(0)}% <span className="dim">({c.votes})</span></span>
                     </div>
-                  )) : <p className="dim" style={{ fontSize: 12 }}>No agent votes yet — run Evaluate with agents.</p>}
-                  <RecallBox bot={sel} />
+                  )) : <p className="dim" style={{ fontSize: 12 }}>{t('noAgentVotes')}</p>}
+                  <RecallBox bot={sel} t={t} />
                 </div>
               </div>
             </div>
 
-            <div className="eyebrow"><span className="k">Recent trades</span><span className="rule" /></div>
+            <div className="eyebrow"><span className="k">{t('recentTrades')}</span><span className="rule" /></div>
             <div className="trades">
               <table>
-                <thead><tr><th>Symbol</th><th>Side</th><th>Entry</th><th>Exit</th><th>PnL</th><th>R</th><th>Exit by</th></tr></thead>
+                <thead><tr><th>{t('symbol')}</th><th>{t('side')}</th><th>{t('entry')}</th><th>{t('exit')}</th><th>{t('pnl')}</th><th>{t('r')}</th><th>{t('exitBy')}</th></tr></thead>
                 <tbody>
                   {trades.map((t, i) => (
                     <tr key={i}>
@@ -194,16 +241,16 @@ export default function SoulTradePage() {
                       <td>{t.r != null ? Number(t.r).toFixed(2) : '—'}</td><td>{t.reason ?? '—'}</td>
                     </tr>
                   ))}
-                  {!trades.length && <tr><td colSpan={7} className="dim" style={{ textAlign: 'center' }}>no closed trades yet</td></tr>}
+                  {!trades.length && <tr><td colSpan={7} className="dim" style={{ textAlign: 'center' }}>{t('noClosedTrades')}</td></tr>}
                 </tbody>
               </table>
             </div>
           </>
         )}
 
-        <BacktestLab say={say} />
-        <WalkForwardLab say={say} />
-        <p className="footnote">Paper first · backtest + walk-forward before real money · live keys: Read + Trade only.</p>
+        <BacktestLab say={say} t={t} />
+        <WalkForwardLab say={say} t={t} />
+        <p className="footnote">{t('footnote')}</p>
       </div>
       {toast && <div className="toast show">{toast}</div>}
     </div>
@@ -214,39 +261,40 @@ function Metric({ l, v, cls = '' }: { l: string; v: string; cls?: string }) {
   return <div className="metric"><div className="m-l">{l}</div><div className={`m-v ${cls}`}>{v}</div></div>;
 }
 
-function NewBotForm({ onDone, say }: { onDone: () => void; say: (m: string) => void }) {
+function NewBotForm({ onDone, onBack, say, t }: { onDone: () => void; onBack: () => void; say: (m: string) => void; t: (key: DictKey, vars?: Record<string, string | number>) => string }) {
   const [f, setF] = useState({ name: '', exchange: 'bingx', market_type: 'swap', strategy: 'rsi_ema', symbols: 'BTC/USDT:USDT,ETH/USDT:USDT', mode: 'paper' });
   const set = (k: string) => (e: any) => setF({ ...f, [k]: e.target.value });
   const create = async () => {
-    if (!f.name.trim()) { say('Name required'); return; }
+    if (!f.name.trim()) { say(t('nameRequired')); return; }
     try {
       await api('/trade/bots', 'POST', { ...f, name: f.name.trim(), symbols: f.symbols.split(',').map(s => s.trim()).filter(Boolean) });
-      say('Bot created'); onDone();
-    } catch (e: any) { say(e.message); }
+      say(t('botCreated')); onDone();
+    } catch (e: any) { say(t('apiError', { msg: e.message })); }
   };
   return (
     <div className="form">
+      <div className="section-back"><button className="btn ghost" onClick={onBack}>{t('back')}</button></div>
       <div className="grid2">
-        <label className="field"><span>Name</span><input value={f.name} onChange={set('name')} placeholder="main" /></label>
-        <label className="field"><span>Exchange</span>
+        <label className="field"><span>{t('name')}</span><input value={f.name} onChange={set('name')} placeholder="main" /></label>
+        <label className="field"><span>{t('exchange')}</span>
           <select value={f.exchange} onChange={set('exchange')}>{['bingx', 'binance', 'bybit', 'okx', 'gate', 'kucoin', 'mexc', 'synthetic'].map(o => <option key={o}>{o}</option>)}</select></label>
-        <label className="field"><span>Market</span>
+        <label className="field"><span>{t('market')}</span>
           <select value={f.market_type} onChange={set('market_type')}><option value="swap">futures (swap)</option><option value="spot">spot</option></select></label>
-        <label className="field"><span>Strategy</span>
+        <label className="field"><span>{t('strategy')}</span>
           <select value={f.strategy} onChange={set('strategy')}>{['rsi_ema', 'donchian_breakout', 'bollinger_meanrev'].map(o => <option key={o}>{o}</option>)}</select></label>
-        <label className="field"><span>Symbols (comma)</span><input value={f.symbols} onChange={set('symbols')} /></label>
-        <label className="field"><span>Mode</span>
-          <select value={f.mode} onChange={set('mode')}><option value="paper">paper (simulated)</option><option value="live">live (real orders)</option></select></label>
+        <label className="field"><span>{t('symbolsComma')}</span><input value={f.symbols} onChange={set('symbols')} /></label>
+        <label className="field"><span>{t('mode')}</span>
+          <select value={f.mode} onChange={set('mode')}><option value="paper">{t('paperMode')}</option><option value="live">{t('liveMode')}</option></select></label>
       </div>
       <div className="foot-row">
-        <button className="btn primary" onClick={create}>Create bot</button>
-        <span className="hint">Paper mode trades live prices with virtual money — no keys needed.</span>
+        <button className="btn primary" onClick={create}>{t('createBot')}</button>
+        <span className="hint">{t('paperHint')}</span>
       </div>
     </div>
   );
 }
 
-function RecallBox({ bot }: { bot: string }) {
+function RecallBox({ bot, t }: { bot: string; t: (key: DictKey, vars?: Record<string, string | number>) => string }) {
   const [q, setQ] = useState('');
   const [rows, setRows] = useState<any[] | null>(null);
   const go = async () => {
@@ -256,53 +304,53 @@ function RecallBox({ bot }: { bot: string }) {
   };
   return (
     <div className="recall">
-      <div className="m-l" style={{ marginBottom: 6 }}>Semantic recall</div>
+      <div className="m-l" style={{ marginBottom: 6 }}>{t('semanticRecall')}</div>
       <div className="recall-row">
-        <input value={q} onChange={e => setQ(e.target.value)} placeholder="BTC breakout strong uptrend…" onKeyDown={e => e.key === 'Enter' && go()} />
-        <button className="btn sm" onClick={go}>Recall</button>
+        <input value={q} onChange={e => setQ(e.target.value)} placeholder={t('recallPlaceholder')} onKeyDown={e => e.key === 'Enter' && go()} />
+        <button className="btn sm" onClick={go}>{t('recall')}</button>
       </div>
       {rows && (rows.length ? rows.map((r, i) => (
         <div key={i} className="recall-hit">
           <span>{r.final_action === 'long' ? '🟢' : r.final_action === 'short' ? '🔴' : '⚪'} <span className="mono">{r.symbol}</span> <span className="dim">{r.note}</span></span>
           <span className="mono">{(Number(r.similarity) * 100).toFixed(0)}%</span>
         </div>
-      )) : <p className="dim" style={{ fontSize: 12, marginTop: 8 }}>nothing similar yet (needs embeddings)</p>)}
+      )) : <p className="dim" style={{ fontSize: 12, marginTop: 8 }}>{t('nothingSimilar')}</p>)}
     </div>
   );
 }
 
-function BacktestLab({ say }: { say: (m: string) => void }) {
+function BacktestLab({ say, t }: { say: (m: string) => void; t: (key: DictKey, vars?: Record<string, string | number>) => string }) {
   const [f, setF] = useState({ strategy: 'rsi_ema', symbol: 'BTC/USDT:USDT', timeframe: '15m', exchange: 'bybit', candles: 1000 });
   const [busy, setBusy] = useState(false);
   const [m, setM] = useState<any | null>(null);
   const run = async () => {
     setBusy(true);
-    try { const r = await api<any>('/trade/backtest', 'POST', { ...f, candles: Number(f.candles) }); setM(r.metrics); say(`backtest · ${r.metrics.numTrades} trades`); }
-    catch (e: any) { say('backtest: ' + e.message); }
+    try { const r = await api<any>('/trade/backtest', 'POST', { ...f, candles: Number(f.candles) }); setM(r.metrics); say(`${t('backtestMsg')} · ${r.metrics.numTrades} ${t('trades')}`); }
+    catch (e: any) { say(`${t('backtestMsg')}: ${e.message}`); }
     setBusy(false);
   };
   return (
     <>
-      <div className="eyebrow"><span className="k">Backtest lab</span><span className="rule" /><span className="mt">enter next open · atr stop · intrabar exits</span></div>
+      <div className="eyebrow"><span className="k">{t('backtestLab')}</span><span className="rule" /><span className="mt">{t('backtestSub')}</span></div>
       <div className="lab">
         <div className="controls">
-          <Sel l="Strategy" v={f.strategy} onC={v => setF({ ...f, strategy: v })} opts={['rsi_ema', 'donchian_breakout', 'bollinger_meanrev']} />
-          <Inp l="Symbol" v={f.symbol} onC={v => setF({ ...f, symbol: v })} />
-          <Sel l="Timeframe" v={f.timeframe} onC={v => setF({ ...f, timeframe: v })} opts={['5m', '15m', '1h', '4h']} />
-          <Sel l="Exchange" v={f.exchange} onC={v => setF({ ...f, exchange: v })} opts={['bingx', 'binance', 'bybit', 'okx', 'synthetic']} />
-          <Inp l="Candles" v={String(f.candles)} onC={v => setF({ ...f, candles: Number(v) || 1000 })} w={90} />
-          <button className="btn primary" disabled={busy} onClick={run}>{busy ? 'Running…' : 'Run backtest'}</button>
+          <Sel l={t('strategy')} v={f.strategy} onC={v => setF({ ...f, strategy: v })} opts={['rsi_ema', 'donchian_breakout', 'bollinger_meanrev']} />
+          <Inp l={t('symbol')} v={f.symbol} onC={v => setF({ ...f, symbol: v })} />
+          <Sel l={t('timeframe')} v={f.timeframe} onC={v => setF({ ...f, timeframe: v })} opts={['5m', '15m', '1h', '4h']} />
+          <Sel l={t('exchange')} v={f.exchange} onC={v => setF({ ...f, exchange: v })} opts={['bingx', 'binance', 'bybit', 'okx', 'synthetic']} />
+          <Inp l={t('candles')} v={String(f.candles)} onC={v => setF({ ...f, candles: Number(v) || 1000 })} w={90} />
+          <button className="btn primary" disabled={busy} onClick={run}>{busy ? t('runningEllipsis') : t('runBacktest')}</button>
         </div>
         {m && (
           <div className="metrics">
-            <Metric l="Total return" v={(m.totalReturn * 100).toFixed(2) + '%'} cls={m.totalReturn >= 0 ? 'up' : 'down'} />
-            <Metric l="Trades" v={String(m.numTrades)} />
-            <Metric l="Win rate" v={(m.winRate * 100).toFixed(1) + '%'} />
-            <Metric l="Max drawdown" v={(m.maxDrawdown * 100).toFixed(2) + '%'} cls="down" />
-            <Metric l="Profit factor" v={m.profitFactor.toFixed(2)} />
-            <Metric l="Sharpe" v={m.sharpe.toFixed(2)} />
-            <Metric l="Avg win" v={fmt(m.avgWin)} cls="up" />
-            <Metric l="Avg loss" v={fmt(m.avgLoss)} cls="down" />
+            <Metric l={t('totalReturn')} v={(m.totalReturn * 100).toFixed(2) + '%'} cls={m.totalReturn >= 0 ? 'up' : 'down'} />
+            <Metric l={t('trades')} v={String(m.numTrades)} />
+            <Metric l={t('winRate')} v={(m.winRate * 100).toFixed(1) + '%'} />
+            <Metric l={t('maxDrawdown')} v={(m.maxDrawdown * 100).toFixed(2) + '%'} cls="down" />
+            <Metric l={t('profitFactor')} v={m.profitFactor.toFixed(2)} />
+            <Metric l={t('sharpe')} v={m.sharpe.toFixed(2)} />
+            <Metric l={t('avgWin')} v={fmt(m.avgWin)} cls="up" />
+            <Metric l={t('avgLoss')} v={fmt(m.avgLoss)} cls="down" />
           </div>
         )}
       </div>
@@ -310,46 +358,46 @@ function BacktestLab({ say }: { say: (m: string) => void }) {
   );
 }
 
-function WalkForwardLab({ say }: { say: (m: string) => void }) {
+function WalkForwardLab({ say, t }: { say: (m: string) => void; t: (key: DictKey, vars?: Record<string, string | number>) => string }) {
   const [f, setF] = useState({ strategy: 'donchian_breakout', symbol: 'BTC/USDT:USDT', timeframe: '15m', exchange: 'bybit', candles: 2000, grid: '{"channel":[10,20,30]}' });
   const [busy, setBusy] = useState(false);
   const [res, setRes] = useState<any | null>(null);
   const run = async () => {
     let grid: any;
-    try { grid = JSON.parse(f.grid); } catch { say('Grid must be valid JSON'); return; }
+    try { grid = JSON.parse(f.grid); } catch { say(t('gridJson')); return; }
     setBusy(true);
-    try { const r = await api<any>('/trade/walkforward', 'POST', { ...f, candles: Number(f.candles), grid }); setRes(r); say(`walk-forward · ${r.aggregate.windows} windows`); }
-    catch (e: any) { say('walk-forward: ' + e.message); }
+    try { const r = await api<any>('/trade/walkforward', 'POST', { ...f, candles: Number(f.candles), grid }); setRes(r); say(`${t('walkMsg')} · ${r.aggregate.windows} ${t('windows')}`); }
+    catch (e: any) { say(`${t('walkMsg')}: ${e.message}`); }
     setBusy(false);
   };
   const a = res?.aggregate;
   return (
     <>
-      <div className="eyebrow"><span className="k">Walk-forward</span><span className="rule" /><span className="mt">optimize in-sample · validate out-of-sample</span></div>
+      <div className="eyebrow"><span className="k">{t('walkForward')}</span><span className="rule" /><span className="mt">{t('walkSub')}</span></div>
       <div className="lab">
         <div className="controls">
-          <Sel l="Strategy" v={f.strategy} onC={v => setF({ ...f, strategy: v })} opts={['donchian_breakout', 'rsi_ema', 'bollinger_meanrev']} />
-          <Inp l="Symbol" v={f.symbol} onC={v => setF({ ...f, symbol: v })} />
-          <Sel l="Exchange" v={f.exchange} onC={v => setF({ ...f, exchange: v })} opts={['bingx', 'binance', 'bybit', 'okx', 'synthetic']} />
-          <Inp l="Candles" v={String(f.candles)} onC={v => setF({ ...f, candles: Number(v) || 2000 })} w={90} />
-          <Inp l="Param grid (JSON)" v={f.grid} onC={v => setF({ ...f, grid: v })} w={220} />
-          <button className="btn primary" disabled={busy} onClick={run}>{busy ? 'Optimizing…' : 'Run walk-forward'}</button>
+          <Sel l={t('strategy')} v={f.strategy} onC={v => setF({ ...f, strategy: v })} opts={['donchian_breakout', 'rsi_ema', 'bollinger_meanrev']} />
+          <Inp l={t('symbol')} v={f.symbol} onC={v => setF({ ...f, symbol: v })} />
+          <Sel l={t('exchange')} v={f.exchange} onC={v => setF({ ...f, exchange: v })} opts={['bingx', 'binance', 'bybit', 'okx', 'synthetic']} />
+          <Inp l={t('candles')} v={String(f.candles)} onC={v => setF({ ...f, candles: Number(v) || 2000 })} w={90} />
+          <Inp l={t('paramGrid')} v={f.grid} onC={v => setF({ ...f, grid: v })} w={220} />
+          <button className="btn primary" disabled={busy} onClick={run}>{busy ? t('optimizing') : t('runWalk')}</button>
         </div>
         {a && (
           <>
             <div className="metrics">
-              <Metric l="OOS return" v={(a.oos_total_return * 100).toFixed(2) + '%'} cls={a.oos_total_return >= 0 ? 'up' : 'down'} />
-              <Metric l="Windows" v={String(a.windows)} />
-              <Metric l="OOS trades" v={String(a.oos_trades)} />
-              <Metric l="OOS win rate" v={(a.oos_win_rate * 100).toFixed(1) + '%'} />
-              <Metric l="OOS max DD" v={(a.oos_max_drawdown * 100).toFixed(2) + '%'} cls="down" />
-              <Metric l="Final" v={fmt(a.final_equity)} />
+              <Metric l={t('oosReturn')} v={(a.oos_total_return * 100).toFixed(2) + '%'} cls={a.oos_total_return >= 0 ? 'up' : 'down'} />
+              <Metric l={t('windows')} v={String(a.windows)} />
+              <Metric l={t('oosTrades')} v={String(a.oos_trades)} />
+              <Metric l={t('oosWinRate')} v={(a.oos_win_rate * 100).toFixed(1) + '%'} />
+              <Metric l={t('oosMaxDD')} v={(a.oos_max_drawdown * 100).toFixed(2) + '%'} cls="down" />
+              <Metric l={t('final')} v={fmt(a.final_equity)} />
             </div>
             <div className="wf-windows">
               {res.windows.map((w: any) => (
                 <div key={w.window} className="w">
                   <span className="mono">#{w.window} · {JSON.stringify(w.best_params)}</span>
-                  <span className={w.oos_return >= 0 ? 'pos' : 'neg'}>{w.oos_return >= 0 ? '+' : ''}{(w.oos_return * 100).toFixed(2)}% · {w.oos_trades} trades</span>
+                  <span className={w.oos_return >= 0 ? 'pos' : 'neg'}>{w.oos_return >= 0 ? '+' : ''}{(w.oos_return * 100).toFixed(2)}% · {w.oos_trades} {t('trades')}</span>
                 </div>
               ))}
             </div>
@@ -388,7 +436,7 @@ function Style() {
 .st-root .brand{display:flex;align-items:center;gap:12px}
 .st-root .brand h1{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:18px;letter-spacing:.14em;margin:0}
 .st-root .brand small{display:block;color:var(--muted);font-size:10px;letter-spacing:.34em;text-transform:uppercase;margin-top:1px}
-.st-root .right{text-align:right}
+.st-root .right{text-align:right}.st-root .lang-toggle{display:flex;justify-content:flex-end;gap:4px;margin-bottom:6px}.st-root .lang-btn{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);background:transparent;border:1px solid var(--line);border-radius:6px;padding:3px 7px;cursor:pointer}.st-root .lang-btn.on{color:#20170a;background:var(--brass);border-color:var(--brass);font-weight:700}.st-root .section-back{margin:0 0 12px 2px}
 .st-root .readout .lbl{color:var(--muted);font-size:10px;letter-spacing:.28em;text-transform:uppercase}
 .st-root .readout .val{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:26px;color:var(--brass);line-height:1.1}
 .st-root .meta,.st-root .mt{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--dim)}
