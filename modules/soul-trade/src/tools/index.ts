@@ -14,6 +14,7 @@ import { recentTrades, recentDecisions } from '../services/memory.service.js';
 import { botAnalytics, orgAnalytics, agentContribution } from '../services/analytics.service.js';
 import { backtestAndSave, evaluateTurn, walkforwardAndSave } from '../turn.service.js';
 import { resolveEmbeddingProvider, recallSimilar } from '../embeddings.js';
+import { getOrCreateAutomatoConfig, configureAutomato, applyAutomatoPreset, setAutomatoArmed, automatoLog, automatoAnalytics } from '../automato.service.js';
 
 export type ToolKind = 'tool' | 'action';
 export type TradeToolCtx = TradeCtx & { env?: HostLLMEnv };
@@ -33,6 +34,16 @@ async function mustBot(ctx: TradeToolCtx, name: string) {
 }
 
 export const tradeReadTools: TradeToolDefinition[] = [
+
+  define({ name: 'soul-trade.automato.status', kind: 'tool', permission: 'trade.automato.read',
+    description: 'AUTOMATO status/config for one bot.', inputSchema: S.automatoRefSchema, docs: 'docs/AUTOMATO.md',
+    run: async (ctx, i) => ({ bot: i.name, config: await getOrCreateAutomatoConfig(ctx, (await mustBot(ctx, i.name)).id) }) }),
+  define({ name: 'soul-trade.automato.log', kind: 'tool', permission: 'trade.automato.read',
+    description: 'AUTOMATO journal log.', inputSchema: S.automatoLogSchema, docs: 'docs/AUTOMATO.md#journal',
+    run: async (ctx, i) => automatoLog(ctx, (await mustBot(ctx, i.name)).id, i.limit ?? 50) }),
+  define({ name: 'soul-trade.automato.analytics', kind: 'tool', permission: 'trade.automato.read',
+    description: 'AUTOMATO analytics split by SIM/THAT ledgers.', inputSchema: S.automatoRefSchema, docs: 'docs/AUTOMATO.md#analytics',
+    run: async (ctx, i) => automatoAnalytics(ctx, (await mustBot(ctx, i.name)).id) }),
   define({ name: 'soul-trade.bot.list', kind: 'tool', permission: 'trade.bot.read',
     description: 'List all trading bots with status and equity.', inputSchema: S.botListSchema,
     docs: 'docs/TOOLS.md#botlist', run: (ctx) => listBots(ctx) }),
@@ -69,6 +80,19 @@ export const tradeReadTools: TradeToolDefinition[] = [
 ];
 
 export const tradeWriteActions: TradeToolDefinition[] = [
+
+  define({ name: 'soul-trade.automato.configure', kind: 'action', permission: 'trade.automato.write',
+    description: 'Configure AUTOMATO risk shell, shield and Super Automato.', inputSchema: S.automatoConfigureSchema,
+    docs: 'docs/AUTOMATO.md', run: async (ctx, i) => { const b = await mustBot(ctx, i.name); const { name, ...patch } = i as any; return configureAutomato(ctx, b.id, patch); } }),
+  define({ name: 'soul-trade.automato.arm', kind: 'action', permission: 'trade.automato.control',
+    description: 'ARM AUTOMATO session (sensitive).', inputSchema: S.automatoRefSchema,
+    docs: 'docs/AUTOMATO.md#arm', run: async (ctx, i) => setAutomatoArmed(ctx, (await mustBot(ctx, i.name)).id, true) }),
+  define({ name: 'soul-trade.automato.disarm', kind: 'action', permission: 'trade.automato.control',
+    description: 'DISARM AUTOMATO session.', inputSchema: S.automatoRefSchema,
+    docs: 'docs/AUTOMATO.md#arm', run: async (ctx, i) => setAutomatoArmed(ctx, (await mustBot(ctx, i.name)).id, false) }),
+  define({ name: 'soul-trade.automato.preset', kind: 'action', permission: 'trade.automato.write',
+    description: 'Apply AUTOMATO preset: cautious/standard/active.', inputSchema: S.automatoPresetSchema,
+    docs: 'docs/AUTOMATO.md#preset', run: async (ctx, i) => applyAutomatoPreset(ctx, (await mustBot(ctx, i.name)).id, i.preset) }),
   define({ name: 'soul-trade.bot.create', kind: 'action', permission: 'trade.bot.write',
     description: 'Create a trading bot. Paper mode needs no keys.', inputSchema: S.botCreateSchema,
     docs: 'docs/TOOLS.md#botcreate', run: async (ctx, i) => ({ id: await createBot(ctx, i), name: i.name }) }),

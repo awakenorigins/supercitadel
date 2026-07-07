@@ -101,6 +101,7 @@ export default function SoulTradePage() {
   const [showForm, setShowForm] = useState(false);
   const [toast, setToast] = useState('');
   const [lang, setLang] = useState<Lang>('vi');
+  const [view, setView] = useState<'control'|'automato'>('control');
   const t = useCallback((key: DictKey, vars?: Record<string, string | number>) => tr(lang, key, vars), [lang]);
   const eqHist = useRef<Record<string, number[]>>({});
   const say = (m: string) => { setToast(m); setTimeout(() => setToast(''), 2400); };
@@ -152,6 +153,9 @@ export default function SoulTradePage() {
           </div>
         </header>
 
+        <div className="menu"><button className={`menu-item ${view==='control'?'on':''}`} onClick={() => setView('control')}>Control Room</button><button className={`menu-item ${view==='automato'?'on':''}`} onClick={() => setView('automato')}>AUTOMATO</button></div>
+        {view === 'automato' && <AutomatoPanel bots={bots} sel={sel} setSel={setSel} say={say} />}
+        {view === 'control' && <>
         <div className="eyebrow"><span className="k">{t('bots')}</span><span className="rule" /><span className="mt">{t('isolated')}</span></div>
         <div className="toolbar"><button className="btn primary" onClick={() => setShowForm(v => !v)}>{t('newBot')}</button></div>
         {showForm && <NewBotForm onDone={() => { setShowForm(false); refresh(); }} onBack={() => setShowForm(false)} say={say} t={t} />}
@@ -251,10 +255,35 @@ export default function SoulTradePage() {
         <BacktestLab say={say} t={t} />
         <WalkForwardLab say={say} t={t} />
         <p className="footnote">{t('footnote')}</p>
+        </>}
       </div>
       {toast && <div className="toast show">{toast}</div>}
     </div>
   );
+}
+
+
+
+function AutomatoPanel({ bots, sel, setSel, say }: { bots: Bot[]; sel: string | null; setSel: (s: string | null) => void; say: (m: string) => void }) {
+  const bot = sel || bots[0]?.name || '';
+  const [cfg, setCfg] = useState<any | null>(null); const [log, setLog] = useState<any[]>([]); const [ana, setAna] = useState<any | null>(null); const [tab, setTab] = useState<'auto'|'analysis'|'shield'|'journal'>('auto');
+  const load = useCallback(async () => { if (!bot) return; try { const st = await api<any>(`/trade/bots/${bot}/automato`); setCfg(st.config); setLog(await api<any[]>(`/trade/bots/${bot}/automato/log?limit=80`)); setAna(await api<any>(`/trade/bots/${bot}/automato/analytics`)); } catch (e:any) { say(`AUTOMATO: ${e.message}`); } }, [bot, say]);
+  useEffect(() => { load(); }, [load]);
+  const patch = async (p: any) => { if (!bot) return; const r = await api<any>(`/trade/bots/${bot}/automato/configure`, 'POST', p); setCfg(r); load(); };
+  const preset = async (p: string) => { const r = await api<any>(`/trade/bots/${bot}/automato/preset`, 'POST', { preset: p }); setCfg(r); say(`Preset ${p}`); load(); };
+  const arm = async () => { if (!cfg?.armed && !window.confirm('ARM AUTOMATO cho bot này?')) return; const r = await api<any>(`/trade/bots/${bot}/automato/${cfg?.armed ? 'disarm' : 'arm'}`, 'POST'); setCfg(r); say(cfg?.armed ? 'Đã DISARM' : 'Đã ARM'); load(); };
+  const state = cfg?.state ?? {}; const armed = !!cfg?.armed; const status = !armed ? 'standby' : (Number(state.realLossStreak||0) >= Number(cfg?.cb_loss_streak||999) ? 'tripped' : 'scanning');
+  return <div className="automato">
+    <div className="at-meta"><select value={bot} onChange={e => setSel(e.target.value)}>{bots.map(b => <option key={b.name}>{b.name}</option>)}</select><span className="chip brass">{cfg?.mode ?? 'shadow'}</span><span className="chip">phase {state.phase ?? 'SIM'}</span><span className="sp"/><span className="at-eq">AUTOMATO v1.1</span></div>
+    {!bot && <div className="empty">Tạo/chọn bot trước để dùng AUTOMATO.</div>}
+    {bot && <>
+      <nav className="at-tabs">{[['auto','Auto'],['analysis','Phân tích'],['shield','Shield'],['journal','Nhật ký']].map(([k,l]) => <button key={k} className={`at-tab ${tab===k?'on':''}`} onClick={() => setTab(k as any)}>{l}</button>)}</nav>
+      {tab==='auto' && <div className="auto-grid"><div className={`dial-card ${status}`}><button className="core" onClick={arm}><span className="glyph">⬡</span><span className="word">{armed?'ARMED':'ARM'}</span><span className="subw">{status}</span></button><div className="phase-line">{armed?'đang quét trong risk shell':'standby — bấm ARM để mở phiên'}</div></div><div className="card cfg"><h3>Risk shell</h3><div className="preset-row"><button onClick={()=>preset('cautious')} className="pbtn">Thận trọng</button><button onClick={()=>preset('standard')} className="pbtn">Chuẩn</button><button onClick={()=>preset('active')} className="pbtn">Chủ động</button></div><div className="grid2"><Inp l="Risk %/lệnh" v={String(cfg?.risk_per_trade ?? 0.5)} onC={v=>patch({risk_per_trade:Number(v)})}/><Inp l="Max lệnh/phiên" v={String(cfg?.max_trades_session ?? 10)} onC={v=>patch({max_trades_session:Number(v)})}/><Inp l="TP phiên %" v={String(cfg?.session_tp ?? 6)} onC={v=>patch({session_tp:Number(v)})}/><Inp l="SL phiên %" v={String(cfg?.session_sl ?? 3)} onC={v=>patch({session_sl:Number(v)})}/></div><div className="riskest">Xấu nhất phiên ≈ -{Math.min(Number(cfg?.session_sl??3), Number(cfg?.risk_per_trade??0.5)*Number(cfg?.max_trades_session??10)).toFixed(2)}% vốn.</div><h3>Quản lý lệnh</h3><div className="grid2"><Inp l="BE tại R" v={String(cfg?.breakeven_at_r??1)} onC={v=>patch({breakeven_at_r:Number(v)})}/><Inp l="Trailing ATR" v={String(cfg?.trailing_atr??0)} onC={v=>patch({trailing_atr:Number(v)})}/><Inp l="Partial TP R" v={String(cfg?.partial_tp_at_r??1.5)} onC={v=>patch({partial_tp_at_r:Number(v)})}/><Inp l="Time-stop bars" v={String(cfg?.time_stop_bars??24)} onC={v=>patch({time_stop_bars:Number(v)})}/></div><h3>Super Automato</h3><Sel l="Mode" v={cfg?.super_mode??'off'} onC={v=>patch({super_mode:v})} opts={['off','soft','hard','custom']}/></div></div>}
+      {tab==='analysis' && <div><div className="metrics"><Metric l="SIM trades" v={String(ana?.ledger?.sim?.trades??0)}/><Metric l="SIM PnL" v={fmt(ana?.ledger?.sim?.pnl??0)}/><Metric l="THẬT trades" v={String(ana?.ledger?.real?.trades??0)}/><Metric l="THẬT PnL" v={fmt(ana?.ledger?.real?.pnl??0)}/><Metric l="Guard blocks" v={String(ana?.guardBlocks??0)}/></div><div className="card"><h3>Phase history</h3>{(ana?.phaseHistory??[]).map((x:any,i:number)=><div className="ev" key={i}><span className="txt">{x.phase} · {x.reason}</span><span className="t">{new Date(x.at).toLocaleString()}</span></div>)}</div></div>}
+      {tab==='shield' && <div className="card cfg"><h3>Shield / circuit breaker</h3><div className="grid2"><Inp l="CB loss streak" v={String(cfg?.cb_loss_streak??3)} onC={v=>patch({cb_loss_streak:Number(v)})}/><Inp l="Cooldown min" v={String(cfg?.cb_cooldown_min??15)} onC={v=>patch({cb_cooldown_min:Number(v)})}/><Sel l="Avoid funding" v={String(!!cfg?.avoid_funding)} onC={v=>patch({avoid_funding:v==='true'})} opts={['true','false']}/><Sel l="Trade hours" v={cfg?.trade_hours?.mode??'24/7'} onC={v=>patch({trade_hours:{mode:v}})} opts={['24/7','07:00 – 23:00','08:00 – 22:00']}/></div><p className="dim">TODO tin vĩ mô: cần nguồn calendar/news; hiện chỉ né funding window, UI disable graceful.</p></div>}
+      {tab==='journal' && <div className="tbl-wrap"><table><thead><tr><th>Thời gian</th><th>Loại</th><th>Thông điệp</th></tr></thead><tbody>{log.map((l,i)=><tr key={i}><td>{new Date(l.at).toLocaleString()}</td><td>{l.kind}</td><td>{l.message}</td></tr>)}</tbody></table></div>}
+    </>}
+  </div>;
 }
 
 function Metric({ l, v, cls = '' }: { l: string; v: string; cls?: string }) {
@@ -444,6 +473,8 @@ function Style() {
 .st-root .eyebrow .k{font-family:'Space Grotesk',sans-serif;font-size:12px;letter-spacing:.3em;text-transform:uppercase}
 .st-root .eyebrow .rule{flex:1;height:1px;background:var(--line)}
 .st-root .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.st-root .menu,.st-root .at-tabs{display:flex;gap:6px;margin:16px 0;border:1px solid var(--line);background:var(--panel2);border-radius:var(--r);padding:6px}.st-root .menu-item,.st-root .at-tab{flex:1;background:transparent;color:var(--muted);border:0;border-radius:8px;padding:10px 14px;font-family:'Space Grotesk';letter-spacing:.16em;text-transform:uppercase;cursor:pointer}.st-root .menu-item.on,.st-root .at-tab.on{background:var(--panel);color:var(--brass);box-shadow:inset 0 -2px 0 var(--brass)}
+.st-root .at-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 2px 14px}.st-root .chip{font-family:'JetBrains Mono';font-size:10px;color:var(--muted);border:1px solid var(--line);padding:3px 8px;border-radius:5px}.st-root .chip.brass{color:var(--brass);border-color:var(--brass-dim)}.st-root .sp{flex:1}.st-root .at-eq{font-family:'JetBrains Mono';font-weight:700;color:var(--brass)}.st-root .auto-grid{display:grid;grid-template-columns:340px 1fr;gap:16px}.st-root .dial-card{border:1px solid var(--line);background:linear-gradient(180deg,var(--panel),var(--panel2));border-radius:var(--r);padding:26px;text-align:center}.st-root .core{width:230px;height:230px;border-radius:50%;background:radial-gradient(120% 120% at 50% 20%,#1a2330,var(--panel2));border:1px solid var(--brass-dim);color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;margin:auto;cursor:pointer}.st-root .glyph{font-size:28px;color:var(--brass)}.st-root .word{font-family:'Space Grotesk';font-size:30px;font-weight:700;letter-spacing:.22em}.st-root .subw,.st-root .phase-line{font-family:'JetBrains Mono';font-size:11px;color:var(--muted);margin-top:8px}.st-root .preset-row{display:flex;gap:6px;margin:8px 0 14px}.st-root .pbtn{flex:1;font-family:'JetBrains Mono';font-size:11px;padding:7px;border:1px solid var(--line);background:var(--panel2);color:var(--muted);border-radius:7px;cursor:pointer}.st-root .riskest{margin:12px 0;border:1px dashed var(--line);border-radius:8px;padding:9px 12px;font-family:'JetBrains Mono';font-size:11px;color:var(--muted)}.st-root .cfg h3{font-family:'Space Grotesk';font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:8px 0 12px}.st-root .tbl-wrap{overflow:auto;border:1px solid var(--line);border-radius:8px;max-height:420px}
 .st-root .btn{font-family:'Space Grotesk',sans-serif;font-size:12px;letter-spacing:.06em;background:var(--panel);color:var(--ink);border:1px solid var(--line);padding:9px 15px;border-radius:8px;cursor:pointer;transition:.14s;text-transform:uppercase;display:inline-flex;align-items:center;gap:6px}
 .st-root .btn:hover{border-color:var(--brass-dim);color:#fff}
 .st-root .btn.primary{background:var(--brass);color:#20170a;border-color:var(--brass);font-weight:700}

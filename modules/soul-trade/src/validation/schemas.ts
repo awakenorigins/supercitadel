@@ -55,3 +55,28 @@ export const memoryRecallSchema = z.object({
   query: z.string().min(1).max(500),
   limit: z.number().int().min(1).max(50).optional(),
 }).strict();
+
+
+export const automatoConfigureSchema = z.object({
+  name: z.string().min(1),
+  mode: z.enum(['shadow','live_sim','live']).optional(),
+  risk_per_trade: z.number().min(0.01).max(10).optional(),
+  max_trades_session: z.number().int().min(1).max(100).optional(),
+  session_tp: z.number().min(0.1).max(100).optional(),
+  session_sl: z.number().min(0.1).max(100).optional(),
+  breakeven_at_r: z.number().min(0).max(10).optional(),
+  trailing_atr: z.number().min(0).max(10).optional(),
+  partial_tp_at_r: z.number().min(0).max(20).optional(),
+  partial_tp_pct: z.number().int().min(0).max(100).optional(),
+  time_stop_bars: z.number().int().min(0).max(10000).optional(),
+  cb_loss_streak: z.number().int().min(1).max(20).optional(),
+  cb_cooldown_min: z.number().int().min(0).max(10080).optional(),
+  avoid_funding: z.boolean().optional(),
+  trade_hours: z.record(z.any()).optional(),
+  super_mode: z.enum(['off','soft','hard','custom']).optional(),
+  super_cfg: z.record(z.any()).optional(),
+  state: z.record(z.any()).optional(),
+}).strict();
+export const automatoPresetSchema = z.object({ name: z.string().min(1), preset: z.enum(['cautious','standard','active']) }).strict();
+export const automatoRefSchema = z.object({ name: z.string().min(1) }).strict();
+export const automatoLogSchema = z.object({ name: z.string().min(1), limit: z.number().int().min(1).max(500).optional() }).strict();

@@ -12,6 +12,7 @@ import { runWalkForward, type WfResult } from './optimize.js';
 import { DEFAULT_PARAMS } from './config.js';
 import { orchestrate, applyConsensus, DEFAULT_AGENTS, type AgentDef, type AgentVote } from './agents.js';
 import { recordDecision } from './services/memory.service.js';
+import { getOrCreateAutomatoConfig, evaluateAutomatoGuards } from './automato.service.js';
 import { resolveEmbeddingProvider, decisionToText, recordEmbedding } from './embeddings.js';
 
 export interface Assessment {
@@ -81,6 +82,11 @@ export async function evaluateTurn(ctx: TradeCtx, source: DataSource, bot: any, 
   const candles = await source.fetchOHLCV(symbol, opts.timeframe ?? '15m', opts.candles ?? 200);
   const a = await assessSymbol(candles, symbol, bot, env, opts);
   const decisionId = await persistDecision(ctx, bot.id, bot.strategy, a, env, bot.llm?.embedding);
+  if (a.direction !== 'flat') {
+    const cfg = await getOrCreateAutomatoConfig(ctx, bot.id);
+    const guard = await evaluateAutomatoGuards(ctx, bot, cfg, {});
+    if (!guard.allowed) return { symbol, finalAction: 'flat', sizeMult: 0, note: `AUTOMATO BLOCK: ${guard.reasons.join(' · ')}`, decisionId };
+  }
   return { symbol, finalAction: a.direction, sizeMult: a.sizeMult, note: a.note, decisionId };
 }
 

@@ -16,6 +16,7 @@ import { PaperExecutor, type Executor, type FilledTrade } from './executor.js';
 import { assessSymbol, persistDecision } from './turn.service.js';
 import { getBot, setEquity, setStatus } from './services/bot.service.js';
 import { recordTrade } from './services/memory.service.js';
+import { getOrCreateAutomatoConfig, evaluateAutomatoGuards, afterAutomatoTradeClosed, currentPhase } from './automato.service.js';
 
 export type RunnerEvent =
   | { type: 'turn'; bot: string; symbol: string; action: Direction; sizeMult: number; note: string }
@@ -148,6 +149,9 @@ export class BotRunner {
 
     // 2) entries
     if (a.direction === 'flat') return;
+    const acfg = await getOrCreateAutomatoConfig(ctx, bot.id);
+    const guard = await evaluateAutomatoGuards(ctx, bot, acfg, {});
+    if (!guard.allowed) { this.stats.entriesSkippedKillSwitch++; return; }
     const cd = this.cooldown.get(symbol) ?? 0;
     if (cd > 0) { this.cooldown.set(symbol, cd - 1); return; }
     const open = await Promise.resolve(this.executor.positions());
@@ -171,6 +175,7 @@ export class BotRunner {
       size: t.size, pnl: t.pnl, r: t.r, reason: t.reason, strategy: bot.strategy, closed: true,
     });
     this.emit({ type: 'close', bot: this.botName, symbol: t.symbol, pnl: t.pnl, r: t.r, reason: t.reason });
+    await afterAutomatoTradeClosed(ctx, bot.id, { pnl: t.pnl, r: t.r });
   }
 }
 
