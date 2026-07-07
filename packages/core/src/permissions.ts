@@ -120,6 +120,29 @@ export const PERMISSION_REGISTRY = [
   p('sw.import.run','Soul-Wallet — Import sao kê: upload, preview, commit',2,true),
   p('sw.report.read','Soul-Wallet — Xem báo cáo, dashboard, chart, insights'),
   p('sw.export.sensitive','Soul-Wallet — Xuất dữ liệu tài chính nhạy cảm',2,true),
+
+  // ── Soul-Restaurant (Nhà hàng) ──
+  p('resto.table.read','Soul-Restaurant — resto.table.read',1,false),
+  p('resto.table.write','Soul-Restaurant — resto.table.write',2,true),
+  p('resto.menu.read','Soul-Restaurant — resto.menu.read',1,false),
+  p('resto.menu.write','Soul-Restaurant — resto.menu.write',2,true),
+  p('resto.order.read','Soul-Restaurant — resto.order.read',1,false),
+  p('resto.order.write','Soul-Restaurant — resto.order.write',2,true),
+  p('resto.kitchen.read','Soul-Restaurant — resto.kitchen.read',1,false),
+  p('resto.kitchen.write','Soul-Restaurant — resto.kitchen.write',2,true),
+  p('resto.bill.read','Soul-Restaurant — resto.bill.read',1,false),
+  p('resto.bill.write','Soul-Restaurant — resto.bill.write',2,true),
+  p('resto.reservation.read','Soul-Restaurant — resto.reservation.read',1,false),
+  p('resto.reservation.write','Soul-Restaurant — resto.reservation.write',2,true),
+  p('resto.report.read','Soul-Restaurant — resto.report.read',1,false),
+  p('resto.settings.read','Soul-Restaurant — resto.settings.read',1,false),
+  p('resto.settings.write','Soul-Restaurant — resto.settings.write',2,true),
+  p('resto.promo.read','Soul-Restaurant — resto.promo.read',1,false),
+  p('resto.promo.write','Soul-Restaurant — resto.promo.write',2,true),
+  p('resto.customer.read','Soul-Restaurant — resto.customer.read',1,false),
+  p('resto.customer.write','Soul-Restaurant — resto.customer.write',2,true),
+  p('resto.loyalty.read','Soul-Restaurant — resto.loyalty.read',1,false),
+  p('resto.loyalty.write','Soul-Restaurant — resto.loyalty.write',2,true),
   // ── Soul-Trade (AI Trading) ──
   p('trade.bot.read','Soul-Trade — Xem danh sách & trạng thái bot'),
   p('trade.bot.write','Soul-Trade — Tạo/xóa bot',2,true),
@@ -132,7 +155,7 @@ export const PERMISSION_REGISTRY = [
 export const ROLE_PERMISSIONS: Record<RoleType, readonly Permission[]> = {
   super_admin: ['*'],
   owner: ['*'],
-  manager: ['accounting.*','crm.*','inventory.*','hr.*','om.wallet.read','report.*','core.permissions.read','ke-toan-10a.*','kho.*','soulsale.*','sw.*','trade.*'],
+  manager: ['accounting.*','crm.*','inventory.*','hr.*','om.wallet.read','report.*','core.permissions.read','ke-toan-10a.*','kho.*','soulsale.*','sw.*','trade.*','resto.*'],
   staff: ['crm.contact.create','crm.contact.read','hr.attendance.checkin','hr.attendance.checkout','om.wallet.read','report.summary.read','core.permissions.read','ke-toan-10a.report.read'],
 };
 

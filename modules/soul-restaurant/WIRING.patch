@@ -1,0 +1,85 @@
+# SOUL-RESTAURANT v1.0.0 — WIRING.patch
+# Gắn module vào SuperCitadel: git apply modules/soul-restaurant/WIRING.patch
+# (nếu host đã đổi số dòng, apply tay theo 4 điểm chạm — nội dung không đổi)
+#
+# 4 điểm chạm: ① loader (routes builder + emitTx), ② index.ts (read tools),
+# ③ tieu-tam/actions.ts (write actions + emitTx), ④ outbox.ts (subscriber trừ kho).
+# Mọi thứ khác module tự lo qua manifest + onActivate/createRestoRoutes.
+#
+# Host dùng transactional outbox: emitTx = (tx, topic, payload) =>
+#   emitEvent(tx, { orgId: payload.org_id, topic, payload })
+# → event resto.* ghi TRONG cùng transaction nghiệp vụ (atomic).
+
+--- a/services/api/src/modules/loader.ts
++++ b/services/api/src/modules/loader.ts
+@@
+ import { buildSoulInventoryRoutes } from '@citadel/module-soul-inventory/server/host-adapter.js';
++import { buildSoulRestaurantRoutes } from '@citadel/module-soul-restaurant/server/host-adapter.js';
++import { emitEvent } from '@citadel/core';
++
++/** Outbox bridge cho soul-restaurant: payload luôn mang org_id (smoke test khẳng định) */
++export const restoEmitTx = (tx: any, topic: string, payload: Record<string, unknown>) =>
++  emitEvent(tx, { orgId: (payload as { org_id: string }).org_id, topic, payload });
+@@
+   'soul-inventory': (d) => buildSoulInventoryRoutes({ db: d.db, requireAuth: d.requireAuth, gate: d.requireModule(d.db, 'soul-inventory'), audit: d.audit }),
++  'soul-restaurant': (d) => buildSoulRestaurantRoutes({ db: d.db, requireAuth: d.requireAuth, gate: d.requireModule(d.db, 'soul-restaurant'), audit: d.audit, emitTx: restoEmitTx }),
+ };
+
+--- a/services/api/src/index.ts
++++ b/services/api/src/index.ts
+@@
+ import { soulInventoryTools, startSoulInventoryNightlyAutomation } from '@citadel/module-soul-inventory/server/host-adapter.js';
++import { soulRestaurantTools } from '@citadel/module-soul-restaurant/server/host-adapter.js';
+@@
+ try { soulInventoryTools(getDb()).forEach((t) => toolRegistry.register(t as any)); } catch (e) { /* idempotent */ }
++try { soulRestaurantTools(getDb()).forEach((t) => toolRegistry.register(t as any)); } catch (e) { /* idempotent */ }
+
+--- a/services/api/src/tieu-tam/actions.ts
++++ b/services/api/src/tieu-tam/actions.ts
+@@
+ import { soulInventoryTieuTamActions } from '@citadel/module-soul-inventory/server/tieu-tam-actions.js';
++import { soulRestaurantTieuTamActions } from '@citadel/module-soul-restaurant/server/tieu-tam-actions.js';
++import { restoEmitTx } from '../modules/loader.js';
+@@
+ defs.push(...(soulInventoryTieuTamActions() as unknown as TieuTamAction[]));
++// BẮT BUỘC truyền restoEmitTx — event resto.stock.deduct_requested vào outbox
++// trong CÙNG transaction thanh toán → Soul-Inventory trừ kho. Không truyền
++// → bus noop: thao tác vẫn đúng nhưng KHÔNG tự trừ kho.
++defs.push(...(soulRestaurantTieuTamActions(restoEmitTx) as unknown as TieuTamAction[]));
+
+--- a/services/api/src/outbox.ts
++++ b/services/api/src/outbox.ts
+@@
+ import { eventHandlers as notificationEventHandlers } from '@citadel/module-notification/server/events.js';
++import { getKhoTool } from '@citadel/module-soul-inventory';
++import { sql } from 'drizzle-orm';
+@@ registerBuiltinOutboxSubscribers
+   subscribeOutbox('hr.*', async (ev) => { await publishEvent({ type: 'module:event' as any, orgId: ev.orgId, payload: { topic: ev.topic, payload: ev.payload }, ts: Date.now() }); });
++
++  // SOUL-RESTAURANT → SOUL-INVENTORY: trừ kho khi bán (luật ⑤ — chỉ qua event).
++  // Handler bọc 1 transaction (all-or-nothing); outbox retry ≤5 khi cả lô fail.
++  subscribeOutbox('resto.stock.deduct_requested', async (ev, { db }) => {
++    const p = ev.payload as {
++      order_code: string; reason?: string;
++      lines?: Array<{ sku: string; qty: string; name?: string; unit?: string }>;
++      missing_recipe?: string[];
++    };
++    const issue = getKhoTool('kho.stock.issue');
++    if (!issue) return; // chưa cài Soul-Inventory → bỏ qua, quán vẫn chạy
++    await db.transaction(async (tx: any) => {
++      await tx.execute(sql`SELECT set_config('app.current_org_id', ${ev.orgId}, true)`);
++      const ctx = { db: tx, orgId: ev.orgId, bus: { emit: async () => {} } };
++      for (const l of p.lines ?? []) {
++        await issue.handler(ctx as any, {
++          sku: l.sku, quantity: l.qty,
++          note: `${p.reason ?? 'Bán hàng'} (${p.order_code})`,
++        });
++      }
++    });
++    if (p.missing_recipe?.length) {
++      console.warn(`[resto→kho] org=${ev.orgId} món chưa có định lượng, không trừ kho: ${p.missing_recipe.join(', ')}`);
++    }
++  });
++  // Realtime UI (tùy chọn): đẩy mọi event resto.* lên WebSocket như hr.*
++  subscribeOutbox('resto.*', async (ev) => { await publishEvent({ type: 'module:event' as any, orgId: ev.orgId, payload: { topic: ev.topic, payload: ev.payload }, ts: Date.now() }); });
+ }

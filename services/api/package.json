@@ -30,7 +30,8 @@
     "@citadel/module-soul-inventory": "workspace:*",
     "@citadel/module-soul-sale": "workspace:*",
     "@citadel/module-soul-wallet": "workspace:*",
-    "@citadel/module-soul-trade": "workspace:*"
+    "@citadel/module-soul-trade": "workspace:*",
+    "@citadel/module-soul-restaurant": "workspace:*"
   },
   "devDependencies": {
     "tsx": "^4.19.0",

@@ -16,6 +16,7 @@ import { buildSoulInventoryRoutes } from '@citadel/module-soul-inventory/server/
 import { buildSoulSaleRoutes } from '@citadel/module-soul-sale/server/host-adapter.js';
 import { buildSoulWalletRoutes } from '@citadel/module-soul-wallet/server/host-adapter.js';
 import { buildSoulTradeRoutes } from '@citadel/module-soul-trade/server/host-adapter.js';
+import { buildSoulRestaurantRoutes } from '@citadel/module-soul-restaurant/server/host-adapter.js';
 import { eventHandlers as notificationEventHandlers } from '@citadel/module-notification/server/events.js';
 import { soulSaleEventHandlers, SOUL_SALE_SUBSCRIBES } from '@citadel/module-soul-sale/server/host-adapter.js';
 import { subscribeOutbox, type OutboxHandler } from '../outbox.js';
@@ -46,6 +47,7 @@ const builders: Record<string, Builder> = {
   'soul-wallet': (d) => buildSoulWalletRoutes({ db: d.db, requireAuth: d.requireAuth, gate: d.requireModule(d.db, 'soul-wallet'), audit: d.audit } as any),
   // soul-trade: tự quản pool pg riêng (runtime.ts) + org-scoped tx per request (fail-closed RLS)
   'soul-trade': (d) => buildSoulTradeRoutes({ requireAuth: d.requireAuth, gate: d.requireModule(d.db, 'soul-trade') }),
+  'soul-restaurant': (d) => buildSoulRestaurantRoutes({ db: d.db, requireAuth: d.requireAuth, gate: d.requireModule(d.db, 'soul-restaurant'), audit: d.audit, emitTx: (tx: any, topic: string, payload: any) => emitToOutbox(tx, payload?.org_id ?? payload?.orgId ?? '', topic, payload) } as any),
 };
 // Soul-Sale: adapt handlers ({db},evt) → host OutboxHandler (event,{db}); map payload sang InboundEvent shape.
 const soulSaleOutboxHandlers: Record<string, OutboxHandler> = Object.fromEntries(

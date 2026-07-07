@@ -18,6 +18,9 @@ import { soulSaleTools as ssTools } from '@citadel/module-soul-sale/server/tools
 import { soulWalletTieuTamActions } from '@citadel/module-soul-wallet/server/tieu-tam-actions.js';
 import { soulTradeTieuTamActions, soulTradeReadTools } from '@citadel/module-soul-trade/server/tieu-tam-actions.js';
 import { withOrgCtx as stWithOrgCtx } from '@citadel/module-soul-trade/server/host-adapter.js';
+import { soulRestaurantTieuTamActions } from '@citadel/module-soul-restaurant/server/tieu-tam-actions.js';
+import { soulRestaurantTools } from '@citadel/module-soul-restaurant/server/host-adapter.js';
+import { emitEvent } from '@citadel/core';
 
 type DB = any;
 export type TieuTamActionCtx = { db: DB; orgId: string; userId: string; role: Role; securityLevel: number; audit?: (e: { action: string; resource?: string; resourceId?: string; detail?: unknown }) => Promise<void> };
@@ -105,6 +108,24 @@ for (const t of soulTradeReadTools) {
     },
   });
 }
+
+// ===== Soul-Restaurant: 25 write actions + 17 read tools (adapter mở org-scoped tx) =====
+defs.push(...(soulRestaurantTieuTamActions((tx: any, topic: string, payload: any) => emitEvent(tx, { orgId: payload?.org_id ?? payload?.orgId, topic, payload })) as unknown as TieuTamAction[]));
+for (const t of soulRestaurantTools(undefined as any)) {
+  defs.push({
+    name: t.name, description: t.description ?? t.name, requiredModule: 'soul-restaurant',
+    permission: t.requiresPermission as Permission, securityLevel: 1, sensitive: false,
+    parameters: { type: 'object', properties: {}, additionalProperties: true } as any,
+    async execute(ctx, params) {
+      await gate(ctx, 'soul-restaurant');
+      const tools = soulRestaurantTools(ctx.db);
+      const live = tools.find((x: any) => x.name === t.name)!;
+      const data = await live.handler(params ?? {}, { orgId: ctx.orgId });
+      return result(t.name, 'soul-restaurant', `Kết quả: ${t.description ?? t.name}`, data);
+    },
+  });
+}
+
 export const ACTION_REGISTRY = new Map(defs.map(d=>[d.name,d]));
 export function toolSafeName(name:string){ return name.replace(/[^a-zA-Z0-9_-]/g, '_'); }
 const SAFE_TO_ACTION = new Map(defs.map(d=>[toolSafeName(d.name), d.name]));
