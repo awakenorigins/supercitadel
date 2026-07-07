@@ -209,7 +209,7 @@ export default function SoulSalePage() {
     <Shell>
       <div className="page-head">
         <h1><Icon name="target" /> Soul-Sale 1A</h1>
-        <div className="muted">Bán hàng & kênh phân phối — 23 tra cứu + 34 thao tác, bấm trực tiếp hoặc nhờ Tiểu Tâm</div>
+        <div className="muted">Bán hàng & kênh phân phối — 23 tra cứu + 34 thao tác, bấm trực tiếp hoặc nhờ Tiểu Tâm · 🔐 = thao tác nhạy cảm, xem trước rồi xác nhận mới chạy</div>
       </div>
       {msg && <div className={msg.ok ? 'toast ok' : 'toast err'} onClick={() => setMsg(null)}>{msg.t}</div>}
 

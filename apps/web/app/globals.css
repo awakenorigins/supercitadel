@@ -861,6 +861,9 @@ details.tcard summary { user-select: none; }
 .chip-sky { background: var(--sky-soft); color: var(--sky); border-color: rgba(56,189,248,.35); }
 
 /* R11.6m soul-sale full CRUD: primary button + form selects */
+/* R11.6n: nút trong bảng (quick-action) + nút lẻ trong card trước đây rớt về style trắng mặc định của trình duyệt */
+.tbl button { background: var(--jade-soft); color: var(--jade); border: 1px solid rgba(52,211,184,.35); border-radius: 8px; padding: 5px 9px; font-weight: 700; font-size: 12px; cursor: pointer; }
+.card button:not(.btn-primary) { background: var(--jade-soft); color: var(--jade); border: 1px solid rgba(52,211,184,.35); border-radius: 8px; padding: 6px 10px; font-weight: 700; font-size: 12.5px; cursor: pointer; }
 .btn-primary { background: var(--jade-soft, rgba(52,211,184,.15)); color: var(--jade, #34d3b8); border: 1px solid rgba(52,211,184,.4); border-radius: var(--r-md, 10px); padding: 9px 16px; font-weight: 800; cursor: pointer; }
 .btn-primary:disabled { opacity: .5; cursor: default; }
 .row select, .row textarea { background: var(--s2); border: 1px solid var(--bd); border-radius: 10px; color: var(--txt); padding: 9px 10px; font: inherit; outline: none; flex: 1; min-width: 0; }
