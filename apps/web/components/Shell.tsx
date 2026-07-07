@@ -107,6 +107,10 @@ export function Shell({ children, badge, wide }: { children: React.ReactNode; ba
   }, []);
 
   const nav = (to: string) => () => router.push(to);
+  const goBack = () => {
+    if (typeof window !== 'undefined' && window.history.length > 1) router.back();
+    else router.push('/home');
+  };
   const is = (p: string) => path === p || path?.startsWith(p + '/');
   const roleLabel: Record<string, string> = { super_admin: 'Quản trị hệ thống', owner: 'Chủ quán', manager: 'Quản lý', staff: 'Nhân viên' };
   const pageLabel = PAGE_LABEL[Object.keys(PAGE_LABEL).find((p) => is(p)) ?? ''] ?? 'SUPERCITADEL';
@@ -171,6 +175,11 @@ export function Shell({ children, badge, wide }: { children: React.ReactNode; ba
         {/* ── main ── */}
         <div className="main">
           <header className="topbar">
+            {!is('/home') && (
+              <button className="tb-act" onClick={goBack} title="Quay lại" aria-label="Quay lại">
+                <Icon name="back" size={16} />
+              </button>
+            )}
             <div className="tb-crumb">
               <span>SUPERCITADEL</span>
               {groupLabel && <><span className="sep">/</span><span>{groupLabel}</span></>}
