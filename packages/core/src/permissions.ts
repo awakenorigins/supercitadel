@@ -120,12 +120,19 @@ export const PERMISSION_REGISTRY = [
   p('sw.import.run','Soul-Wallet — Import sao kê: upload, preview, commit',2,true),
   p('sw.report.read','Soul-Wallet — Xem báo cáo, dashboard, chart, insights'),
   p('sw.export.sensitive','Soul-Wallet — Xuất dữ liệu tài chính nhạy cảm',2,true),
+  // ── Soul-Trade (AI Trading) ──
+  p('trade.bot.read','Soul-Trade — Xem danh sách & trạng thái bot'),
+  p('trade.bot.write','Soul-Trade — Tạo/xóa bot',2,true),
+  p('trade.bot.control','Soul-Trade — Chạy/dừng bot, chạy lượt đánh giá',2,true),
+  p('trade.history.read','Soul-Trade — Xem lịch sử lệnh'),
+  p('trade.analytics.read','Soul-Trade — Xem phân tích, trí nhớ bot, đóng góp agent'),
+  p('trade.backtest.run','Soul-Trade — Chạy backtest/walk-forward'),
 ] as const satisfies readonly PermissionMeta[];
 
 export const ROLE_PERMISSIONS: Record<RoleType, readonly Permission[]> = {
   super_admin: ['*'],
   owner: ['*'],
-  manager: ['accounting.*','crm.*','inventory.*','hr.*','om.wallet.read','report.*','core.permissions.read','ke-toan-10a.*','kho.*','soulsale.*','sw.*'],
+  manager: ['accounting.*','crm.*','inventory.*','hr.*','om.wallet.read','report.*','core.permissions.read','ke-toan-10a.*','kho.*','soulsale.*','sw.*','trade.*'],
   staff: ['crm.contact.create','crm.contact.read','hr.attendance.checkin','hr.attendance.checkout','om.wallet.read','report.summary.read','core.permissions.read','ke-toan-10a.report.read'],
 };
 

@@ -16,6 +16,8 @@ import { soulInventoryTieuTamActions } from '@citadel/module-soul-inventory/serv
 import { soulSaleTieuTamActions as ssTieuTamActions } from '@citadel/module-soul-sale/server/tieu-tam-actions.js';
 import { soulSaleTools as ssTools } from '@citadel/module-soul-sale/server/tools.js';
 import { soulWalletTieuTamActions } from '@citadel/module-soul-wallet/server/tieu-tam-actions.js';
+import { soulTradeTieuTamActions, soulTradeReadTools } from '@citadel/module-soul-trade/server/tieu-tam-actions.js';
+import { withOrgCtx as stWithOrgCtx } from '@citadel/module-soul-trade/server/host-adapter.js';
 
 type DB = any;
 export type TieuTamActionCtx = { db: DB; orgId: string; userId: string; role: Role; securityLevel: number; audit?: (e: { action: string; resource?: string; resourceId?: string; detail?: unknown }) => Promise<void> };
@@ -89,6 +91,20 @@ for (const t of ssTools) {
   });
 }
 defs.push(...(soulWalletTieuTamActions() as unknown as TieuTamAction[]));
+// ===== Soul-Trade: 6 write actions (adapter tự mở org-scoped tx) + 8 read tools =====
+defs.push(...(soulTradeTieuTamActions() as unknown as TieuTamAction[]));
+for (const t of soulTradeReadTools) {
+  defs.push({
+    name: t.name, description: t.description ?? t.name, requiredModule: 'soul-trade',
+    permission: t.permission as Permission, securityLevel: 1, sensitive: false,
+    parameters: { type: 'object', properties: {}, additionalProperties: true } as any,
+    async execute(ctx, params) {
+      await gate(ctx, 'soul-trade');
+      const data = await stWithOrgCtx(ctx.orgId, ctx.userId, (tctx: any) => t.handler(tctx, params ?? {}));
+      return result(t.name, 'soul-trade', `Kết quả: ${t.description ?? t.name}`, data);
+    },
+  });
+}
 export const ACTION_REGISTRY = new Map(defs.map(d=>[d.name,d]));
 export function toolSafeName(name:string){ return name.replace(/[^a-zA-Z0-9_-]/g, '_'); }
 const SAFE_TO_ACTION = new Map(defs.map(d=>[toolSafeName(d.name), d.name]));

@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SOUL-TRADE · demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--void:#0C1017;--panel:#131A23;--panel2:#0F151D;--line:#212B38;--ink:#DCE4EC;--muted:#6B7A8D;--dim:#465364;
+    --brass:#E8B04B;--brass-dim:#8a6a2c;--up:#57C88A;--down:#E8695C;--r:10px;}
+  *{box-sizing:border-box}html,body{margin:0}
+  body{background:var(--void);color:var(--ink);font-family:"Inter",system-ui,sans-serif;font-size:14px;line-height:1.5;
+    background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:44px 44px;background-position:center;background-attachment:fixed}
+  body::before{content:"";position:fixed;inset:0;background:radial-gradient(120% 90% at 50% -10%,transparent 40%,var(--void) 100%);pointer-events:none;z-index:0}
+  .demobar{position:fixed;top:0;left:0;right:0;z-index:30;background:var(--brass);color:#20170a;text-align:center;
+    font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:12px;letter-spacing:.1em;padding:6px}
+  .wrap{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:52px 20px 60px}
+  .led{width:11px;height:11px;border-radius:50%;background:var(--brass);flex:none;
+    box-shadow:0 0 0 3px rgba(232,176,75,.14),0 0 14px 2px rgba(232,176,75,.55);animation:pulse 2.4s ease-in-out infinite}
+  @keyframes pulse{50%{opacity:.45;box-shadow:0 0 0 3px rgba(232,176,75,.06),0 0 6px 1px rgba(232,176,75,.3)}}
+  .tape{display:flex;align-items:center;justify-content:space-between;gap:20px;border:1px solid var(--line);
+    background:linear-gradient(180deg,var(--panel),var(--panel2));border-radius:var(--r);padding:15px 20px;position:relative;overflow:hidden}
+  .tape::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:linear-gradient(90deg,transparent,var(--brass),transparent);opacity:.5}
+  .brand{display:flex;align-items:center;gap:12px}
+  .brand h1{font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:18px;letter-spacing:.14em;margin:0}
+  .brand small{display:block;color:var(--muted);font-size:10px;letter-spacing:.34em;text-transform:uppercase;margin-top:1px}
+  .readout{text-align:right}
+  .readout .lbl{color:var(--muted);font-size:10px;letter-spacing:.28em;text-transform:uppercase}
+  .readout .val{font-family:"JetBrains Mono",monospace;font-weight:700;font-size:26px;color:var(--brass);line-height:1.1}
+  .meta{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--dim)}
+  .eyebrow{display:flex;align-items:baseline;gap:12px;margin:26px 2px 12px}
+  .eyebrow .k{font-family:"Space Grotesk",sans-serif;font-size:12px;letter-spacing:.3em;text-transform:uppercase}
+  .eyebrow .rule{flex:1;height:1px;background:var(--line)}
+  .btn{font-family:"Space Grotesk",sans-serif;font-size:12px;letter-spacing:.06em;background:var(--panel);color:var(--ink);
+    border:1px solid var(--line);padding:9px 15px;border-radius:8px;cursor:pointer;transition:.14s;text-transform:uppercase;display:inline-flex;align-items:center;gap:6px}
+  .btn:hover{border-color:var(--brass-dim);color:#fff}
+  .btn.primary{background:var(--brass);color:#20170a;border-color:var(--brass);font-weight:700}
+  .btn.primary:hover{filter:brightness(1.08)}
+  .btn.ghost{background:transparent}.btn.sm{padding:5px 10px;font-size:11px}
+  .btn.danger:hover{border-color:var(--down);color:var(--down)}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  .form{border:1px solid var(--brass-dim);background:var(--panel);border-radius:var(--r);padding:16px;margin-bottom:14px}
+  .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+  .field{display:flex;flex-direction:column;gap:5px}
+  .field label{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+  select,input{font-family:"JetBrains Mono",monospace;font-size:13px;background:var(--panel2);color:var(--ink);
+    border:1px solid var(--line);border-radius:7px;padding:8px 10px}
+  select:focus,input:focus{outline:2px solid var(--brass);outline-offset:1px;border-color:var(--brass-dim)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+  .card{border:1px solid var(--line);background:linear-gradient(180deg,var(--panel),var(--panel2));border-radius:var(--r);padding:16px;transition:.16s;cursor:pointer}
+  .card.live{border-color:var(--brass-dim);box-shadow:0 0 0 1px rgba(232,176,75,.12),0 10px 30px -18px rgba(232,176,75,.3)}
+  .card.is-sel{outline:1px solid var(--brass-dim)}
+  .card .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .name{display:flex;align-items:center;gap:9px}
+  .name .dot{width:8px;height:8px;border-radius:50%;background:var(--dim)}
+  .card.live .name .dot{background:var(--brass);box-shadow:0 0 8px var(--brass)}
+  .name b{font-family:"Space Grotesk",sans-serif;font-size:15px}
+  .tag{font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--muted);border:1px solid var(--line);padding:2px 7px;border-radius:5px}
+  .tag.live-badge{color:var(--down);border-color:var(--down)}
+  .eq{font-family:"JetBrains Mono",monospace;font-weight:700;font-size:24px}
+  .spark{width:100%;height:38px;display:block;margin:8px 0 12px}
+  .rows{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;font-size:12px;margin-bottom:14px}
+  .rows .row{display:flex;justify-content:space-between;border-bottom:1px dotted var(--line);padding-bottom:3px}
+  .rows .row span{color:var(--muted)}.rows .row b{font-family:"JetBrains Mono",monospace;font-weight:500}
+  .actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:4px}
+  .metric{border:1px solid var(--line);background:var(--panel2);border-radius:8px;padding:9px 11px}
+  .m-l{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+  .m-v{font-family:"JetBrains Mono",monospace;font-weight:700;font-size:17px;margin-top:2px}
+  .cols{display:grid;grid-template-columns:1fr 340px;gap:14px}
+  .feed{border:1px solid var(--line);background:var(--panel2);border-radius:var(--r);max-height:280px;overflow:auto;padding:6px}
+  .ev{display:flex;align-items:center;gap:10px;padding:8px 10px;border-bottom:1px solid var(--line);font-size:13px}
+  .ev .txt{flex:1}.ev .t{font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--dim)}
+  .tgcard{border:1px solid var(--line);background:var(--panel);border-radius:var(--r);padding:16px}
+  .agent-row{display:flex;justify-content:space-between;font-size:12px;padding:6px 0;border-bottom:1px dotted var(--line)}
+  .agree{font-family:"JetBrains Mono",monospace;color:var(--brass)}
+  .recall{margin-top:14px}
+  .recall-row{display:flex;gap:8px}.recall-row input{flex:1}
+  .recall-hit{display:flex;justify-content:space-between;gap:8px;font-size:12px;padding:6px 0;border-bottom:1px dotted var(--line)}
+  .trades{max-height:230px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+  table{width:100%;border-collapse:collapse;font-family:"JetBrains Mono",monospace;font-size:12px}
+  th,td{text-align:right;padding:6px 12px;border-bottom:1px solid var(--line)}
+  th{position:sticky;top:0;background:var(--panel);color:var(--muted);font-weight:500;font-size:10px;letter-spacing:.1em;text-transform:uppercase}
+  th:first-child,td:first-child{text-align:left}
+  .lab{border:1px solid var(--line);background:var(--panel);border-radius:var(--r);padding:18px}
+  .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px}
+  .curve-wrap{border:1px solid var(--line);background:var(--panel2);border-radius:8px;padding:10px;position:relative;min-height:230px}
+  canvas.curve{width:100%;height:220px;display:block}
+  .curve-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--dim);font-family:"JetBrains Mono",monospace;font-size:12px}
+  .wf-windows{margin-top:12px;font-family:"JetBrains Mono",monospace;font-size:12px}
+  .wf-windows .w{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dotted var(--line)}
+  .wf-windows .pos{color:var(--up)}.wf-windows .neg{color:var(--down)}
+  .mono{font-family:"JetBrains Mono",monospace}
+  .up{color:var(--up)}.down{color:var(--down)}.dim{color:var(--dim)}
+  .empty{border:1px dashed var(--line);border-radius:var(--r);padding:30px;text-align:center;color:var(--dim);font-family:"JetBrains Mono",monospace;font-size:13px}
+  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--panel);border:1px solid var(--brass-dim);
+    color:var(--ink);padding:10px 16px;border-radius:8px;font-size:13px;opacity:0;transition:.25s;pointer-events:none;z-index:40}
+  .toast.show{opacity:1}
+  .footnote{color:var(--dim);font-size:11px;font-family:"JetBrains Mono",monospace;margin-top:26px;text-align:center}
+  @media (max-width:820px){.cols{grid-template-columns:1fr}.tape{flex-wrap:wrap;gap:12px}}
+</style>
+</head>
+<body>
+<div class="demobar">SOUL-TRADE MODULE · DEMO OFFLINE · dữ liệu giả · mọi thứ bấm được (bản thật chạy trong SuperCitadel)</div>
+<div class="wrap">
+  <header class="tape">
+    <div class="brand"><span class="led"></span><div><h1>SOUL-TRADE</h1><small>control room</small></div></div>
+    <div class="readout"><div class="lbl">total equity</div><div class="val" id="totalEq">$0.00</div><div class="meta" id="botMeta">—</div></div>
+  </header>
+
+  <div class="eyebrow"><span class="k">Bots</span><span class="rule"></span><span class="meta">isolated · per-org RLS · auto-trade loop</span></div>
+  <div class="toolbar"><button class="btn primary" onclick="toggleForm()">+ New bot</button></div>
+  <div class="form" id="botForm" style="display:none">
+    <div class="grid2">
+      <div class="field"><label>Name</label><input id="f-name" placeholder="main" /></div>
+      <div class="field"><label>Exchange</label><select id="f-ex"><option>bingx</option><option>binance</option><option>bybit</option><option>okx</option><option>synthetic</option></select></div>
+      <div class="field"><label>Strategy</label><select id="f-strat"><option>rsi_ema</option><option>donchian_breakout</option><option>bollinger_meanrev</option></select></div>
+      <div class="field"><label>Symbols</label><input id="f-sym" value="BTC/USDT:USDT" /></div>
+      <div class="field"><label>Mode</label><select id="f-mode"><option value="paper">paper</option><option value="live">live</option></select></div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;margin-top:14px">
+      <button class="btn primary" onclick="createBot()">Create bot</button>
+      <span class="dim" style="font-size:11px">Paper mode trades live prices with virtual money — no keys needed.</span>
+    </div>
+  </div>
+  <div class="grid" id="bots"></div>
+
+  <div class="eyebrow"><span class="k" id="selTitle">performance</span><span class="rule"></span><span class="meta">across total trades</span></div>
+  <div class="metrics" id="anMetrics"></div>
+
+  <div class="cols">
+    <div>
+      <div class="eyebrow"><span class="k">Decision memory</span><span class="rule"></span><span class="meta">per-turn · strategy + AI + agents</span></div>
+      <div class="feed" id="memFeed"></div>
+    </div>
+    <div>
+      <div class="eyebrow"><span class="k">Agents</span><span class="rule"></span></div>
+      <div class="tgcard">
+        <div id="agentRows"></div>
+        <div class="recall">
+          <div class="m-l" style="margin-bottom:6px">Semantic recall</div>
+          <div class="recall-row"><input id="recallQ" placeholder="BTC breakout strong uptrend…" onkeydown="if(event.key==='Enter')doRecall()" /><button class="btn sm" onclick="doRecall()">Recall</button></div>
+          <div id="recallRows"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="eyebrow"><span class="k">Recent trades</span><span class="rule"></span></div>
+  <div class="trades"><table><thead><tr><th>Symbol</th><th>Side</th><th>Entry</th><th>Exit</th><th>PnL</th><th>R</th><th>Exit by</th></tr></thead><tbody id="tradeRows"></tbody></table></div>
+
+  <div class="eyebrow"><span class="k">Backtest lab</span><span class="rule"></span><span class="meta">enter next open · atr stop · intrabar exits</span></div>
+  <div class="lab">
+    <div class="controls">
+      <div class="field"><label>Strategy</label><select id="bt-strat"><option>rsi_ema</option><option>donchian_breakout</option><option>bollinger_meanrev</option></select></div>
+      <div class="field"><label>Symbol</label><input id="bt-sym" value="BTC/USDT:USDT" /></div>
+      <div class="field"><label>Exchange</label><select id="bt-ex"><option>bybit</option><option>binance</option><option>bingx</option><option>synthetic</option></select></div>
+      <div class="field"><label>Candles</label><input id="bt-n" type="number" value="1000" style="width:90px" /></div>
+      <button class="btn primary" id="bt-run" onclick="runBacktest()">Run backtest</button>
+    </div>
+    <div class="metrics" id="btMetrics"></div>
+    <div class="curve-wrap" style="margin-top:12px"><canvas class="curve" id="btCurve"></canvas><div class="curve-empty" id="btEmpty">run a backtest to plot the equity curve</div></div>
+  </div>
+
+  <div class="eyebrow"><span class="k">Walk-forward</span><span class="rule"></span><span class="meta">optimize in-sample · validate out-of-sample</span></div>
+  <div class="lab">
+    <div class="controls">
+      <div class="field"><label>Strategy</label><select id="wf-strat"><option>donchian_breakout</option><option>rsi_ema</option></select></div>
+      <div class="field"><label>Symbol</label><input id="wf-sym" value="BTC/USDT:USDT" /></div>
+      <div class="field"><label>Param grid (JSON)</label><input id="wf-grid" value='{"channel":[10,20,30]}' style="width:200px" /></div>
+      <button class="btn primary" id="wf-run" onclick="runWalkForward()">Run walk-forward</button>
+    </div>
+    <div class="metrics" id="wfMetrics"></div>
+    <div class="curve-wrap" style="margin-top:12px"><canvas class="curve" id="wfCurve"></canvas><div class="curve-empty" id="wfEmpty">stitched out-of-sample equity appears here</div></div>
+    <div class="wf-windows" id="wfWindows"></div>
+  </div>
+
+  <p class="footnote">Paper first · backtest + walk-forward before real money · live keys: Read + Trade only. · Tiểu Tâm: “tạo bot paper trên bybit” / “bot main thắng bao nhiêu %?”</p>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const fmt=n=>(n==null?"—":"$"+Number(n).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}));
+function toast(m){const t=$("toast");t.textContent=m;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),2200);}
+
+// ── mock state ──
+let bots=[
+  {name:"main",exchange:"bybit",strategy:"rsi_ema",mode:"paper",status:"running",equity:1042.18,symbols:["BTC/USDT:USDT","ETH/USDT:USDT"],
+   agents:[{name:"signal-agent",agree:0.83,votes:24},{name:"risk-agent",agree:0.71,votes:24},{name:"sentiment-agent",agree:0.42,votes:12}]},
+  {name:"alt-breakout",exchange:"binance",strategy:"donchian_breakout",mode:"live",status:"running",equity:2183.55,symbols:["SOL/USDT:USDT"],
+   agents:[{name:"signal-agent",agree:0.77,votes:18},{name:"risk-agent",agree:0.88,votes:18}]},
+  {name:"spot-mr",exchange:"bingx",strategy:"bollinger_meanrev",mode:"paper",status:"idle",equity:500.00,symbols:["BTC/USDT"],agents:[]},
+];
+let sel="main";
+const eqHist={};bots.forEach(b=>eqHist[b.name]=[b.equity]);
+const memRows=[
+  {a:"long",sym:"BTC/USDT:USDT",m:0.75,note:"AI confirms · agents long(0.72)",t:ts(-40)},
+  {a:"flat",sym:"ETH/USDT:USDT",m:0,note:"no setup",t:ts(-95)},
+  {a:"short",sym:"BTC/USDT:USDT",m:0.7,note:"standalone AI · agents flat(0.2)",t:ts(-150)},
+  {a:"long",sym:"ETH/USDT:USDT",m:1,note:"AI confirms · agents long(0.81)",t:ts(-210)},
+];
+const tradeRows=[
+  {sym:"BTC/USDT:USDT",dir:"long",e:63980.5,x:64500.1,pnl:18.42,r:1.98,rs:"take_profit"},
+  {sym:"ETH/USDT:USDT",dir:"long",e:3120.4,x:3098.2,pnl:-9.30,r:-1.02,rs:"stop"},
+  {sym:"BTC/USDT:USDT",dir:"short",e:64890.0,x:64210.7,pnl:21.10,r:1.97,rs:"take_profit"},
+];
+function ts(sec){return new Date(Date.now()+sec*1000).toLocaleTimeString();}
+
+// ── canvas painters (same as the real page) ──
+function spark(cv,data){const dpr=devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight;cv.width=w*dpr;cv.height=h*dpr;
+  const c=cv.getContext("2d");c.scale(dpr,dpr);c.clearRect(0,0,w,h);if(data.length<2)return;
+  const mn=Math.min(...data),mx=Math.max(...data),rg=(mx-mn)||1,x=i=>i/(data.length-1)*w,y=v=>h-3-((v-mn)/rg)*(h-6),up=data[data.length-1]>=data[0];
+  c.beginPath();data.forEach((v,i)=>i?c.lineTo(x(i),y(v)):c.moveTo(x(i),y(v)));c.lineTo(w,h);c.lineTo(0,h);c.closePath();
+  const g=c.createLinearGradient(0,0,0,h);g.addColorStop(0,up?"rgba(87,200,138,.22)":"rgba(232,105,92,.22)");g.addColorStop(1,"transparent");c.fillStyle=g;c.fill();
+  c.beginPath();data.forEach((v,i)=>i?c.lineTo(x(i),y(v)):c.moveTo(x(i),y(v)));c.strokeStyle=up?"#57C88A":"#E8695C";c.lineWidth=1.5;c.stroke();}
+function drawCurve(cvId,emptyId,curve){const cv=$(cvId);$(emptyId).style.display=curve.length?"none":"flex";
+  const dpr=devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight;cv.width=w*dpr;cv.height=h*dpr;
+  const c=cv.getContext("2d");c.scale(dpr,dpr);c.clearRect(0,0,w,h);if(!curve.length)return;
+  const pad=8,mn=Math.min(...curve),mx=Math.max(...curve),rg=(mx-mn)||1,x=i=>pad+i/(curve.length-1)*(w-2*pad),y=v=>h-pad-((v-mn)/rg)*(h-2*pad);
+  c.setLineDash([3,4]);c.strokeStyle="rgba(107,122,141,.4)";c.beginPath();c.moveTo(pad,y(curve[0]));c.lineTo(w-pad,y(curve[0]));c.stroke();c.setLineDash([]);
+  c.beginPath();curve.forEach((v,i)=>i?c.lineTo(x(i),y(v)):c.moveTo(x(i),y(v)));c.lineTo(w-pad,h-pad);c.lineTo(pad,h-pad);c.closePath();
+  const g=c.createLinearGradient(0,0,0,h);g.addColorStop(0,"rgba(232,176,75,.18)");g.addColorStop(1,"transparent");c.fillStyle=g;c.fill();
+  c.beginPath();curve.forEach((v,i)=>i?c.lineTo(x(i),y(v)):c.moveTo(x(i),y(v)));c.strokeStyle="#E8B04B";c.lineWidth=1.8;c.stroke();}
+
+// ── render ──
+function cardHTML(b){const h=eqHist[b.name]||[];const running=b.status==="running";
+  const badge=b.mode==="live"?'<span class="tag live-badge">LIVE</span>':'<span class="tag">'+b.mode+'</span>';
+  return '<div class="card '+(running?'live ':'')+(sel===b.name?'is-sel':'')+'" onclick="selectBot(\''+b.name+'\')">'
+    +'<div class="top"><div class="name"><span class="dot"></span><b>'+b.name+'</b></div><div style="display:flex;gap:6px">'+badge+'<span class="tag">'+b.exchange+'</span></div></div>'
+    +'<div class="eq">'+fmt(b.equity)+'</div><canvas class="spark" id="spark-'+b.name+'"></canvas>'
+    +'<div class="rows"><div class="row"><span>strategy</span><b>'+b.strategy+'</b></div><div class="row"><span>status</span><b>'+b.status+'</b></div>'
+    +'<div class="row"><span>symbols</span><b>'+b.symbols.length+'</b></div><div class="row"><span>agents</span><b>'+(b.agents.length||'—')+'</b></div></div>'
+    +'<div class="actions" onclick="event.stopPropagation()">'
+    +(running?'<button class="btn sm ghost" onclick="setStatus(\''+b.name+'\',\'idle\')">Stop</button>'
+             :'<button class="btn sm primary" onclick="setStatus(\''+b.name+'\',\'running\')">Start</button>')
+    +'<button class="btn sm ghost" onclick="evalTurn(\''+b.name+'\')">Evaluate</button>'
+    +'<button class="btn sm ghost danger" onclick="delBot(\''+b.name+'\')">Delete</button></div></div>';}
+function render(){
+  const total=bots.reduce((s,b)=>s+b.equity,0),run=bots.filter(b=>b.status==="running").length;
+  $("totalEq").textContent=fmt(total);$("botMeta").textContent=bots.length+" bots · "+run+" running";
+  $("bots").innerHTML=bots.length?bots.map(cardHTML).join(""):'<div class="empty">No bots yet.</div>';
+  bots.forEach(b=>{const cv=$("spark-"+b.name);if(cv)spark(cv,eqHist[b.name]||[]);});
+  renderSel();
+}
+function renderSel(){
+  const b=bots.find(x=>x.name===sel);if(!b){$("anMetrics").innerHTML="";$("agentRows").innerHTML="";return;}
+  $("selTitle").textContent=b.name+" · performance";
+  $("anMetrics").innerHTML=metric("Total PnL","+$30.22","up")+metric("Trades","3")+metric("Win rate","66.7%")
+    +metric("Profit factor","4.25")+metric("Avg R","0.98")+metric("Turns L/S/F","2/1/1");
+  $("agentRows").innerHTML=b.agents.length?b.agents.map(a=>'<div class="agent-row"><span class="mono">'+a.name+'</span><span class="agree">'+Math.round(a.agree*100)+'% <span class="dim">('+a.votes+')</span></span></div>').join("")
+    :'<p class="dim" style="font-size:12px">No agent votes yet — run Evaluate with agents.</p>';
+  $("memFeed").innerHTML=memRows.map(d=>'<div class="ev"><span>'+(d.a==="long"?"🟢":d.a==="short"?"🔴":"⚪")+'</span><span class="txt"><b>'+d.a.toUpperCase()+'</b> <span class="mono">'+d.sym+'</span> · ×'+d.m.toFixed(2)+' <span class="dim">'+d.note+'</span></span><span class="t">'+d.t+'</span></div>').join("");
+  $("tradeRows").innerHTML=tradeRows.map(t=>'<tr><td class="mono">'+t.sym+'</td><td>'+t.dir+'</td><td>'+t.e.toFixed(1)+'</td><td>'+t.x.toFixed(1)+'</td><td class="'+(t.pnl>=0?"up":"down")+'">'+(t.pnl>=0?"+":"")+t.pnl.toFixed(2)+'</td><td>'+t.r.toFixed(2)+'</td><td>'+t.rs+'</td></tr>').join("");
+}
+function metric(l,v,cls){return '<div class="metric"><div class="m-l">'+l+'</div><div class="m-v '+(cls||"")+'">'+v+'</div></div>';}
+function selectBot(n){sel=n;render();}
+function setStatus(n,s){const b=bots.find(x=>x.name===n);b.status=s;toast(n+(s==="running"?" started":" stopped"));render();}
+function delBot(n){if(!confirm('Delete bot "'+n+'"?'))return;bots=bots.filter(x=>x.name!==n);delete eqHist[n];if(sel===n)sel=bots[0]&&bots[0].name;toast(n+" deleted");render();}
+function evalTurn(n){const acts=["long","short","flat"],a=acts[Math.floor(Math.random()*3)];
+  memRows.unshift({a,sym:"BTC/USDT:USDT",m:a==="flat"?0:0.7+Math.random()*0.3,note:a==="flat"?"no setup":"AI confirms · agents "+a+"(0."+(5+Math.floor(Math.random()*4))+")",t:ts(0)});
+  if(memRows.length>20)memRows.pop();toast("turn: "+a);renderSel();}
+function toggleForm(){const f=$("botForm");f.style.display=f.style.display==="none"?"block":"none";}
+function createBot(){const name=($("f-name").value||"bot-"+(bots.length+1)).trim();
+  if(bots.find(b=>b.name===name)){toast("name exists");return;}
+  bots.push({name,exchange:$("f-ex").value,strategy:$("f-strat").value,mode:$("f-mode").value,status:"idle",equity:1000,
+    symbols:$("f-sym").value.split(",").map(s=>s.trim()).filter(Boolean),agents:[{name:"signal-agent",agree:0,votes:0},{name:"risk-agent",agree:0,votes:0}]});
+  eqHist[name]=[1000];$("botForm").style.display="none";$("f-name").value="";toast("Bot created");render();}
+function doRecall(){const q=$("recallQ").value.trim();if(!q)return;
+  const hits=[{a:"long",sym:"BTC/USDT:USDT",note:"AI confirms · agents long(0.72)",s:0.89},
+              {a:"long",sym:"BTC/USDT:USDT",note:"breakout above 20-bar high",s:0.75},
+              {a:"short",sym:"ETH/USDT:USDT",note:"reverting off upper band",s:0.31}];
+  $("recallRows").innerHTML=hits.map(h=>'<div class="recall-hit"><span>'+(h.a==="long"?"🟢":"🔴")+' <span class="mono">'+h.sym+'</span> <span class="dim">'+h.note+'</span></span><span class="mono">'+Math.round(h.s*100)+'%</span></div>').join("");
+  toast("recall · 3 similar turns");}
+
+// ── labs (mock generators) ──
+function genCurve(n,drift,vol,start){let e=start;const arr=[start];for(let i=0;i<n;i++){e=Math.max(1,e*(1+drift+(Math.random()-0.5)*vol));arr.push(e);}return arr;}
+function runBacktest(){const b=$("bt-run");b.disabled=true;b.textContent="Running…";
+  setTimeout(()=>{const curve=genCurve(220,0.0006,0.012,1000),ret=curve[curve.length-1]/curve[0]-1;
+    let peak=curve[0],mdd=0;curve.forEach(v=>{peak=Math.max(peak,v);mdd=Math.min(mdd,(v-peak)/peak);});
+    const trades=8+Math.floor(Math.random()*30),wr=0.32+Math.random()*0.22;
+    $("btMetrics").innerHTML=metric("Total return",(ret*100).toFixed(2)+"%",ret>=0?"up":"down")+metric("Trades",trades)
+      +metric("Win rate",(wr*100).toFixed(1)+"%")+metric("Max drawdown",(mdd*100).toFixed(2)+"%","down")
+      +metric("Profit factor",(0.9+Math.random()*0.9).toFixed(2))+metric("Sharpe",(ret>0?0.6+Math.random()*1.8:-(Math.random()*0.8)).toFixed(2));
+    drawCurve("btCurve","btEmpty",curve);toast("backtest · "+trades+" trades");b.disabled=false;b.textContent="Run backtest";},600);}
+function runWalkForward(){const b=$("wf-run");b.disabled=true;b.textContent="Optimizing…";
+  let grid;try{grid=JSON.parse($("wf-grid").value);}catch(e){toast("Grid must be valid JSON");b.disabled=false;b.textContent="Run walk-forward";return;}
+  setTimeout(()=>{const nw=4+Math.floor(Math.random()*4),curve=genCurve(nw*40,0.001,0.01,1000),vals=(grid.channel||[10,20,30]);
+    let peak=curve[0],mdd=0;curve.forEach(v=>{peak=Math.max(peak,v);mdd=Math.min(mdd,(v-peak)/peak);});
+    const ret=curve[curve.length-1]/curve[0]-1,tot=Math.floor(nw*(4+Math.random()*5));
+    $("wfMetrics").innerHTML=metric("OOS return",(ret*100).toFixed(2)+"%",ret>=0?"up":"down")+metric("Windows",nw)
+      +metric("OOS trades",tot)+metric("OOS win rate",(35+Math.random()*20).toFixed(1)+"%")+metric("OOS max DD",(mdd*100).toFixed(2)+"%","down")+metric("Final",fmt(curve[curve.length-1]));
+    drawCurve("wfCurve","wfEmpty",curve);
+    let win=[];for(let i=1;i<=nw;i++){const r=(Math.random()-0.35)*0.06;
+      win.push('<div class="w"><span class="mono">#'+i+' · {"channel":'+vals[Math.floor(Math.random()*vals.length)]+'}</span><span class="'+(r>=0?"pos":"neg")+'">'+(r>=0?"+":"")+(r*100).toFixed(2)+"% · "+(3+Math.floor(Math.random()*6))+" trades</span></div>");}
+    $("wfWindows").innerHTML=win.join("");toast("walk-forward · "+nw+" windows");b.disabled=false;b.textContent="Run walk-forward";},800);}
+
+// ── live simulation: equity ticks + occasional turns/fills ──
+setInterval(()=>{bots.forEach(b=>{if(b.status!=="running")return;
+    b.equity=Math.max(1,b.equity*(1+(Math.random()-0.48)*0.004));
+    const h=eqHist[b.name];h.push(b.equity);if(h.length>40)h.shift();
+    if(Math.random()<0.10&&b.name===sel){evalTurn(b.name);}
+  });render();},2500);
+window.addEventListener("resize",()=>bots.forEach(b=>{const cv=$("spark-"+b.name);if(cv)spark(cv,eqHist[b.name]||[]);}));
+render();
+</script>
+</body>
+</html>
