@@ -96,7 +96,10 @@ export default function SoulTradePage() {
       <Style />
       <div className="wrap">
         <header className="tape">
-          <div className="brand"><span className="led" /><div><h1>SOUL-TRADE</h1><small>control room</small></div></div>
+          <div className="header-left">
+            <a className="back-home" href="/home" aria-label="Về Super Citadel">← Về Super Citadel</a>
+            <div className="brand"><span className="led" /><div><h1>SOUL-TRADE</h1><small>control room</small></div></div>
+          </div>
           <div className="right">
             <div className="readout"><div className="lbl">total equity</div><div className="val">{fmt(totalEq)}</div></div>
             <div className="meta">{bots.length} bot{bots.length !== 1 ? 's' : ''} · {running} running</div>
@@ -379,6 +382,9 @@ function Style() {
 @keyframes stpulse{50%{opacity:.45;box-shadow:0 0 0 3px rgba(232,176,75,.06),0 0 6px 1px rgba(232,176,75,.3)}}
 .st-root .tape{display:flex;align-items:center;justify-content:space-between;gap:20px;border:1px solid var(--line);background:linear-gradient(180deg,var(--panel),var(--panel2));border-radius:var(--r);padding:15px 20px;position:relative;overflow:hidden}
 .st-root .tape::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:linear-gradient(90deg,transparent,var(--brass),transparent);opacity:.5}
+.st-root .header-left{display:flex;align-items:center;gap:14px;min-width:0}
+.st-root .back-home{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.04em;color:var(--brass);text-decoration:none;border:1px solid var(--brass-dim);border-radius:8px;padding:7px 10px;background:rgba(232,176,75,.06);white-space:nowrap;transition:.14s}
+.st-root .back-home:hover{color:#fff;border-color:var(--brass);background:rgba(232,176,75,.12)}
 .st-root .brand{display:flex;align-items:center;gap:12px}
 .st-root .brand h1{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:18px;letter-spacing:.14em;margin:0}
 .st-root .brand small{display:block;color:var(--muted);font-size:10px;letter-spacing:.34em;text-transform:uppercase;margin-top:1px}
@@ -453,7 +459,7 @@ function Style() {
 .st-root .up{color:var(--up)}.st-root .down{color:var(--down)}.st-root .dim{color:var(--dim)}
 .st-root .footnote{color:var(--dim);font-size:11px;font-family:'JetBrains Mono',monospace;margin-top:26px;text-align:center}
 .st-root .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--panel);border:1px solid var(--brass-dim);color:var(--ink);padding:10px 16px;border-radius:8px;font-size:13px;z-index:40}
-@media (max-width:820px){.st-root .cols{grid-template-columns:1fr}.st-root .tape{flex-wrap:wrap;gap:12px}}
+@media (max-width:820px){.st-root .cols{grid-template-columns:1fr}.st-root .tape{flex-wrap:wrap;gap:12px}.st-root .header-left{flex-wrap:wrap}}
 `}</style>
   );
 }
