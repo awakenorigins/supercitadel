@@ -859,3 +859,9 @@ details.tcard summary { user-select: none; }
 .chip-jade { background: var(--jade-soft); color: var(--jade); border-color: rgba(52,211,184,.35); }
 .chip-amber { background: var(--amber-soft); color: var(--amber); border-color: rgba(232,179,102,.35); }
 .chip-sky { background: var(--sky-soft); color: var(--sky); border-color: rgba(56,189,248,.35); }
+
+/* R11.6m soul-sale full CRUD: primary button + form selects */
+.btn-primary { background: var(--jade-soft, rgba(52,211,184,.15)); color: var(--jade, #34d3b8); border: 1px solid rgba(52,211,184,.4); border-radius: var(--r-md, 10px); padding: 9px 16px; font-weight: 800; cursor: pointer; }
+.btn-primary:disabled { opacity: .5; cursor: default; }
+.row select, .row textarea { background: var(--s2); border: 1px solid var(--bd); border-radius: 10px; color: var(--txt); padding: 9px 10px; font: inherit; outline: none; flex: 1; min-width: 0; }
+.row label { flex-shrink: 0; }
