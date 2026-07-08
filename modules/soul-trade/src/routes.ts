@@ -32,6 +32,7 @@ export function createTradeRoutes(): TradeRouteDefinition[] {
     route({ method: 'POST', path: '/trade/bots/:name/automato/arm', tool: 'soul-trade.automato.arm', mapInput: ({ params }) => ({ name: params.name }) }),
     route({ method: 'POST', path: '/trade/bots/:name/automato/disarm', tool: 'soul-trade.automato.disarm', mapInput: ({ params }) => ({ name: params.name }) }),
     route({ method: 'POST', path: '/trade/bots/:name/automato/preset', tool: 'soul-trade.automato.preset', mapInput: ({ params, body }) => ({ name: params.name, ...(body as object ?? {}) }) }),
+    route({ method: 'GET', path: '/trade/bots/:name/automato/ohlcv', tool: 'soul-trade.automato.ohlcv', mapInput: ({ params, query }) => ({ name: params.name, tf: query.tf ?? '1m', ...(toInt(query.limit) !== undefined ? { limit: toInt(query.limit) } : {}) }) }),
     route({ method: 'GET', path: '/trade/bots/:name/automato/position', tool: 'soul-trade.automato.position', mapInput: ({ params }) => ({ name: params.name }) }),
     route({ method: 'POST', path: '/trade/bots/:name/automato/kill', tool: 'soul-trade.automato.kill', mapInput: ({ params }) => ({ name: params.name }) }),
     route({ method: 'GET', path: '/trade/bots/:name/automato/log', tool: 'soul-trade.automato.log', mapInput: ({ params, query }) => ({ name: params.name, ...(toInt(query.limit) !== undefined ? { limit: toInt(query.limit) } : {}) }) }),

@@ -81,3 +81,4 @@ export const automatoPresetSchema = z.object({ name: z.string().min(1), preset: 
 export const automatoRefSchema = z.object({ name: z.string().min(1) }).strict();
 export const automatoQuickstartSchema = z.object({ name: z.string().min(1), symbol: z.string().min(3) }).strict();
 export const automatoLogSchema = z.object({ name: z.string().min(1), limit: z.number().int().min(1).max(500).optional() }).strict();
+export const automatoOhlcvSchema = z.object({ name: z.string().min(1), tf: z.string().min(1).max(8).optional(), limit: z.number().int().min(10).max(500).optional() }).strict();

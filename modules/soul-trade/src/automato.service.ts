@@ -49,7 +49,10 @@ export async function applyAutomatoPreset(ctx: TradeCtx, botId: string, preset: 
   return cfg;
 }
 export async function setAutomatoArmed(ctx: TradeCtx, botId: string, armed: boolean) {
-  const cfg = await configureAutomato(ctx, botId, { armed, state: { ...DEFAULT_STATE, ...((await getOrCreateAutomatoConfig(ctx, botId)).state ?? {}) } });
+  const prev = await getOrCreateAutomatoConfig(ctx, botId);
+  const st = { ...DEFAULT_STATE, ...(prev.state ?? {}) };
+  if (!armed) st.uiPhase = st.openPosition ? 'live' : 'standby';
+  const cfg = await configureAutomato(ctx, botId, { armed, state: st });
   await logAutomato(ctx, botId, armed ? 'arm' : 'disarm', armed ? 'ARM phiên AUTOMATO' : 'DISARM phiên AUTOMATO');
   return cfg;
 }
@@ -168,6 +171,23 @@ export async function closeAutomatoPosition(ctx: TradeCtx, bot: any, reason = 'k
   await recordTrade(ctx, { botId: bot.id, symbol: p.symbol, direction: p.side, entry: p.entry, exit, size: p.size, pnl: pnlAbs, r: pnlPct / Math.max(0.0001, num(p.riskPct)), reason, strategy: bot.strategy, closed: true });
   st.sessionTrades = num(st.sessionTrades) + 1; st.sessionPnl = num(st.sessionPnl) + pnlPct; st.haltedReport = { symbol: p.symbol, side: p.side, entry: p.entry, exit, pnlAbs, pnlPct, reason, closedAt: new Date().toISOString(), trades: st.sessionTrades, equity: num(bot.equity ?? 0) + pnlAbs }; st.openPosition = null; st.uiPhase = 'halted';
   await configureAutomato(ctx, bot.id, { armed: false, state: st }); await logAutomato(ctx, bot.id, 'kill', reason === 'kill' ? 'KILL — đóng & ngắt phiên' : `Đóng vị thế: ${reason}`, st.haltedReport); return st;
+}
+
+
+export async function getAutomatoOHLCV(ctx: TradeCtx, bot: any, timeframe = '1m', limit = 60) {
+  const cfg = await getOrCreateAutomatoConfig(ctx, bot.id); const st = { ...DEFAULT_STATE, ...(cfg.state ?? {}) };
+  const symbol = normalizeSym(st.openPosition?.symbol ?? bot.symbols?.[0] ?? 'BTC/USDT');
+  const exchange = bot.exchange ?? 'binance';
+  try {
+    const candles = await fetchLiveOHLCV(exchange, symbol, timeframe, limit);
+    return { bot: bot.name, exchange, symbol, timeframe, source: 'ccxt', synthetic: false, candles: candles.map(c => ({ t: c.ts, o: c.open, h: c.high, l: c.low, c: c.close, v: c.volume })) };
+  } catch (e: any) {
+    const { SyntheticSource } = await import('./datasource.js');
+    const base = num(st.openPosition?.lastPrice ?? st.openPosition?.entry ?? 100);
+    const candles = await new SyntheticSource(42, base > 0 ? base : 100).fetchOHLCV(symbol, timeframe, limit);
+    await logAutomato(ctx, bot.id, 'ohlcv_fallback', 'OHLCV live ccxt bị chặn/lỗi — dùng synthetic fallback', { exchange, symbol, timeframe, error: e?.message ?? String(e) });
+    return { bot: bot.name, exchange, symbol, timeframe, source: 'synthetic_fallback', synthetic: true, warning: `ccxt live OHLCV unavailable: ${e?.message ?? e}`, candles: candles.map(c => ({ t: c.ts, o: c.open, h: c.high, l: c.low, c: c.close, v: c.volume })) };
+  }
 }
 
 export async function automatoLog(ctx: TradeCtx, botId: string, limit = 50) { return (await ctx.db.query(`SELECT at,kind,message,data FROM st_automato_log WHERE org_id=$1 AND bot_id=$2 ORDER BY at DESC LIMIT $3`, [ctx.orgId, botId, limit])).rows; }
