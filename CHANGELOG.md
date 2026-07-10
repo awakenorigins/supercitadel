@@ -3,6 +3,12 @@
 > Nhánh lab (sandbox) fork từ supercitadel v11.5.0 — nơi phát triển nóng các tính năng trước khi hợp nhất về bản chính.
 > Live: https://supercitadellab.62.146.238.213.sslip.io
 
+## v12.1.0 — 2026-07-10 — "Soul Meeting"
+
+- Tích hợp Soul Meeting vào runtime Lab: module registration, API routes, action tools và giao diện vận hành.
+- Bổ sung migration/schema và luồng dữ liệu phục vụ phiên họp Soul Meeting.
+- Hoàn tất deploy proof và regression verification trên môi trường Lab.
+
 ## v12.0.0 — 2026-07-10 — "Kế Toán Chuẩn Misa: 8 Cột + Đa Tiền Tệ + TT99 + Chuỗi Công Nợ"
 
 > K10A feedback đợt 2 của anh Nắng — 10/10 việc DONE, tất cả deploy + test thật. Căn cứ: mổ toàn kho MISA SME 2026 (869MB, 1117 files) → `MISA-AUDIT-FULL-V12.md`.
