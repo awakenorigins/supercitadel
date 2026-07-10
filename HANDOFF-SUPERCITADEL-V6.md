@@ -62,6 +62,15 @@ Probe scripts: `scripts/v11-gpt-*.mts|sh`, `scripts/v11-final-verify.sh`, logs /
 **⭐ PATTERN GENERIC (chỉ thị anh Nắng: Tiểu Tâm bao trùm, module mới tự động full năng lực):** `Shell.tsx` có `downloadOf()` — BẤT KỲ tool result nào có `data.downloadUrl` → chat tự render nút tải (downloadAuthed kèm Bearer). Module mới chỉ cần trả downloadUrl trong action result là có nút tải, KHÔNG sửa Tiểu Tâm/Shell. Kết hợp ACTION_TOOLS tự động (defs.push từ mọi module đã active) = add module mới tự có đủ tool + download.
 **Verified (log /tmp/v11c-export-test.log):** tsc PASS · build+deploy web+api OK · API trả HTTP 200, 16951 bytes, `file` xác nhận "Microsoft Excel 2007+" · chat Tiểu Tâm gọi tool → trả message + downloadUrl + nút tải, còn tự cảnh báo kỳ chưa chạy lương (net=0) và gợi ý "Chạy lương kỳ 7/2026".
 
+## ✅ V11D DONE (10/07/2026 13:50 — GitHub release v11.8.0 + full tài liệu)
+- Repo MỚI: https://github.com/NachaFromMars/supercitadellab (public, push master:main) — TÁCH RÔI repo gốc supercitadel (bản thật không bị đè).
+- Release: https://github.com/NachaFromMars/supercitadellab/releases/tag/v11.8.0 (curl 200 ✓) — notes đầy đủ v11.6→v11.8.
+- Tài liệu mới: `CHANGELOG.md` (lịch sử lab đầy đủ) + `README.md` update (banner LAB + badge v11.8.0 + release notes v11.6x/v11.7x/v11.8.0). Docs cũ giữ nguyên (MODULE-FORGE-GUIDE, API, DEV_GUIDE, USER_GUIDE, SECURITY...).
+- Bảo mật: `.env.lab.backup` PURGED khỏi toàn bộ git history (filter-branch + reflog expire + gc — commit cũ affa622 thành orphan, không reachable từ HEAD); secret scan tracked files sạch (chỉ còn token lab demo LABOWNERFULL01 vốn public + regex scanner). .gitignore thêm _incoming/, shots-ss/, *.png audit, *.xlsx.
+- Topics repo: ai-assistant, business-os, erp, hono, multi-tenant, nextjs, postgresql, trading-bot, vietnamese.
+- Commit v11.8.0: 66 files (Tiểu Tâm fixes + payroll Excel + downloadUrl pattern + seed script + scripts audit v7-v11).
+- Cách push lần sau: `set -a; source ~/.config/tt-github/env; set +a; git -c credential.helper='!f() { echo "username=x-access-token"; echo "password=$GH_TOKEN"; }; f' push https://github.com/NachaFromMars/supercitadellab.git master:main` · release qua `gh_manager.py create-release --repo NachaFromMars/supercitadellab` (PHẢI có prefix owner, không là 404).
+
 ## ⏳ V11 ĐANG DỞ — LỊCH SỬ (đã hoàn thành ở trên, giữ lại để tham chiếu)
 **ĐÃ XONG (committed, không làm lại):**
 1. Opus 4.6 = model default Tiểu Tâm: DB `tt_soul_state` (ALTER default + UPDATE all rows → opus-4.6) ✓ · `packages/db/src/schema.ts` default('opus-4.6') ✓ · UI ENGINES `apps/web/app/tieu-tam/page.tsx` (opus mặc định, gpt-5.5 phụ) ✓
