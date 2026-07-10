@@ -99,16 +99,24 @@ export default function KeToan10aPage() {
   /* ── Sổ quỹ: phiếu thu / phiếu chi ── */
   const [pKind, setPKind] = useState<'thu' | 'chi'>('thu');
   const [pParty, setPParty] = useState(''); const [pAmt, setPAmt] = useState(''); const [pNote, setPNote] = useState('');
+  // V12: định khoản hiển thị + chọn được TK tiền và TK đối ứng (feedback anh Nắng mục 1)
+  const CASH_OPTS = [['111', '111 — Tiền mặt'], ['112', '112 — Tiền gửi NH']] as const;
+  const THU_OPTS = [['511', '511 — Doanh thu bán hàng'], ['131', '131 — Thu nợ khách hàng'], ['711', '711 — Thu nhập khác'], ['121', '121 — Thu hồi đầu tư'], ['411', '411 — Góp vốn'], ['341', '341 — Đi vay']] as const;
+  const CHI_OPTS = [['642', '642 — Chi phí quản lý'], ['641', '641 — Chi phí bán hàng'], ['627', '627 — Chi phí SX chung'], ['331', '331 — Trả nợ NCC'], ['334', '334 — Trả lương NV'], ['133', '133 — Thuế GTGT đầu vào'], ['156', '156 — Mua hàng hóa'], ['211', '211 — Mua TSCĐ']] as const;
+  const [pCash, setPCash] = useState('111');
+  const [pCounter, setPCounter] = useState('511');
+  const [pDocNo, setPDocNo] = useState(''); // V12 ⑤: số CT nhập tay (tùy chọn, check trùng backend)
   async function savePayment() {
     const amt = Math.round(parseFloat(pAmt.replace(/[^\d.]/g, '')) || 0);
     if (amt <= 0) return;
     try {
       const body = pKind === 'thu'
-        ? { docDate: today(), counterAccountCode: '511', amount: String(amt), payerName: pParty || undefined, reason: pNote || undefined, post: true }
-        : { docDate: today(), counterAccountCode: '642', amount: String(amt), payeeName: pParty || undefined, reason: pNote || undefined, post: true };
+        ? { docDate: today(), cashAccountCode: pCash, counterAccountCode: pCounter, amount: String(amt), payerName: pParty || undefined, reason: pNote || undefined, post: true, docNo: pDocNo.trim() || undefined }
+        : { docDate: today(), cashAccountCode: pCash, counterAccountCode: pCounter, amount: String(amt), payeeName: pParty || undefined, reason: pNote || undefined, post: true, docNo: pDocNo.trim() || undefined };
       await api(`${B}/${pKind === 'thu' ? 'receipts' : 'payments'}`, { method: 'POST', body: JSON.stringify(body) });
-      flash(`Đã ghi PHIẾU ${pKind === 'thu' ? 'THU' : 'CHI'} ${vnd(amt)}₫${pParty ? ' — ' + pParty : ''}`);
-      setPParty(''); setPAmt(''); setPNote(''); load();
+      const dk = pKind === 'thu' ? `Nợ ${pCash} / Có ${pCounter}` : `Nợ ${pCounter} / Có ${pCash}`;
+      flash(`Đã ghi PHIẾU ${pKind === 'thu' ? 'THU' : 'CHI'} ${vnd(amt)}₫ (${dk})${pParty ? ' — ' + pParty : ''}`);
+      setPParty(''); setPAmt(''); setPNote(''); setPDocNo(''); load();
     } catch (e: any) { flash(e.message, false); }
   }
 
@@ -140,6 +148,13 @@ export default function KeToan10aPage() {
       await api(`${B}/${kind}/${inv.id}/payment`, { method: 'POST', body: JSON.stringify({ amount: String(amt) }) });
       flash(`Đã ${kind === 'invoices' ? 'thu' : 'trả'} ${vnd(amt)}₫ — ${inv.docNo}`); load();
     } catch (e: any) { flash(e.message, false); }
+  }
+
+  /* ── V12: lịch sử hoạt động hóa đơn (sổ quỹ của từng HĐ) ── */
+  const [act, setAct] = useState<any>(null);
+  async function showActivity(inv: Inv) {
+    try { setAct(await api<any>(`${B}/invoices/${inv.id}/activity`)); }
+    catch (e: any) { flash(e.message, false); }
   }
 
   /* ── Vận hành: tạm ứng + định kỳ ── */
@@ -268,6 +283,51 @@ export default function KeToan10aPage() {
     } catch (e: any) { flash(e.message, false); }
   }
 
+  /* ── V12: Sổ Nhật ký chung ── */
+  const firstOfMonth = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`; };
+  const [gjFrom, setGjFrom] = useState(firstOfMonth());
+  const [gjTo, setGjTo] = useState(today());
+  const [gj, setGj] = useState<any>(null);
+  const [gjBusy, setGjBusy] = useState(false);
+  async function loadJournal() {
+    setGjBusy(true);
+    try { setGj(await api<any>(`${B}/reports/general-journal?from=${gjFrom}&to=${gjTo}`)); }
+    catch (e: any) { flash(e.message, false); }
+    finally { setGjBusy(false); }
+  }
+
+  /* ── V12 ⑤: Cấu hình số chứng từ per-org ── */
+  const DN_TYPES = [['RECEIPT', 'Phiếu thu'], ['PAYMENT', 'Phiếu chi'], ['INVOICE', 'HĐ bán'], ['BILL', 'HĐ mua'], ['JOURNAL', 'Bút toán'], ['ADV', 'Tạm ứng']] as const;
+  const [dnList, setDnList] = useState<any[] | null>(null);
+  const [dnType, setDnType] = useState('RECEIPT');
+  const [dnPrefix, setDnPrefix] = useState('');
+  const [dnPad, setDnPad] = useState('6');
+  const [dnFormat, setDnFormat] = useState('{prefix}-{year}-{seq}');
+  async function loadDocNums() {
+    try { const d = await api<any>(`${B}/settings/doc-numbers`); setDnList(d.types); } catch { /* module chưa sẵn */ }
+  }
+  async function saveDocNum() {
+    try {
+      const body: any = { docType: dnType, format: dnFormat.trim() || undefined, pad: Number(dnPad) || undefined };
+      if (dnPrefix.trim()) body.prefix = dnPrefix.trim();
+      await api(`${B}/settings/doc-numbers`, { method: 'PUT', body: JSON.stringify(body) });
+      flash(`Đã lưu format số CT cho ${DN_TYPES.find(([t]) => t === dnType)?.[1]}`);
+      loadDocNums();
+    } catch (e: any) { flash(e.message, false); }
+  }
+
+  /* ── V12 ④: Cân đối tài khoản 8 cột chuẩn Misa ── */
+  const [tbmFrom, setTbmFrom] = useState(firstOfMonth());
+  const [tbmTo, setTbmTo] = useState(today());
+  const [tbm, setTbm] = useState<any>(null);
+  const [tbmBusy, setTbmBusy] = useState(false);
+  async function loadTbMisa() {
+    setTbmBusy(true);
+    try { setTbm(await api<any>(`${B}/reports/trial-balance-misa?from=${tbmFrom}&to=${tbmTo}`)); }
+    catch (e: any) { flash(e.message, false); }
+    finally { setTbmBusy(false); }
+  }
+
   /* ── Báo cáo: integrity · Excel · dữ liệu mẫu ── */
   async function checkIntegrity() {
     try { const r = await api<{ ok: boolean; checks: { name: string; ok: boolean }[] }>(`${B}/health/integrity`); flash(r.ok ? 'Toàn vẹn sổ: OK ✓ (mọi kiểm định xanh)' : 'Sổ có vấn đề — xem chi tiết trong checks', r.ok); }
@@ -325,7 +385,7 @@ export default function KeToan10aPage() {
         <div className="biz-main" style={{ display: 'grid', gap: 14 }}>
           <div className="card" style={{ padding: 14 }} data-tut="k10a-quy">
             <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-              {(['thu', 'chi'] as const).map((k) => <button key={k} className={pKind === k ? 'btn-p' : 'btn'} onClick={() => setPKind(k)}>PHIẾU {k.toUpperCase()}</button>)}
+              {(['thu', 'chi'] as const).map((k) => <button key={k} className={pKind === k ? 'btn-p' : 'btn'} onClick={() => { setPKind(k); setPCounter(k === 'thu' ? '511' : '642'); }}>PHIẾU {k.toUpperCase()}</button>)}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 2fr auto', gap: 8 }}>
               <input style={inp} placeholder="Đối tác (tùy chọn)" value={pParty} onChange={(e) => setPParty(e.target.value)} />
@@ -333,7 +393,18 @@ export default function KeToan10aPage() {
               <input style={inp} placeholder="Ghi chú" value={pNote} onChange={(e) => setPNote(e.target.value)} />
               <button className="btn-p" onClick={savePayment}>Ghi sổ</button>
             </div>
-            <div style={{ fontSize: 'var(--fs-micro)', color: 'var(--mut)', marginTop: 6 }}>Thu: Nợ 111 / Có 511 · Chi: Nợ 642 / Có 111 (đổi TK đối ứng ở API/Tiểu Tâm)</div>
+            <div data-tut="k10a-dinh-khoan" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 8 }}>
+              <label style={{ fontSize: 'var(--fs-micro)', color: 'var(--mut)', display: 'grid', gap: 3 }}>TK tiền ({pKind === 'thu' ? 'ghi Nợ' : 'ghi Có'})
+                <select style={inp} value={pCash} onChange={(e) => setPCash(e.target.value)}>{CASH_OPTS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select>
+              </label>
+              <label style={{ fontSize: 'var(--fs-micro)', color: 'var(--mut)', display: 'grid', gap: 3 }}>TK đối ứng ({pKind === 'thu' ? 'ghi Có' : 'ghi Nợ'})
+                <select style={inp} value={pCounter} onChange={(e) => setPCounter(e.target.value)}>{(pKind === 'thu' ? THU_OPTS : CHI_OPTS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select>
+              </label>
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginTop: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+              <input data-tut="k10a-docno" style={{ ...inp, width: 220 }} placeholder="Số CT tự nhập (bỏ trống = tự động)" value={pDocNo} onChange={(e) => setPDocNo(e.target.value)} />
+              <span style={{ fontSize: 'var(--fs-micro)', color: 'var(--jade)', fontFamily: 'var(--fm)' }}>Định khoản: {pKind === 'thu' ? `Nợ ${pCash} / Có ${pCounter}` : `Nợ ${pCounter} / Có ${pCash}`}</span>
+            </div>
           </div>
           {[['Phiếu thu', receipts], ['Phiếu chi', pays]].map(([title, rows]) => (
             <div key={title as string} className="card" style={{ padding: 14 }}>
@@ -381,16 +452,54 @@ export default function KeToan10aPage() {
                   <tbody>{rows.slice(0, 8).map((v) => {
                     const left = Number(v.total) - Number(v.amountPaid);
                     return (<tr key={v.id}><td style={{ fontFamily: 'var(--fm)' }}>{v.docNo}</td><td>{v.contactName ?? '—'}</td><td style={{ textAlign: 'right', fontFamily: 'var(--fm)' }}>{vnd(v.total)}₫</td><td style={{ textAlign: 'right', fontFamily: 'var(--fm)', color: left > 0 ? 'var(--amber)' : 'var(--jade)' }}>{vnd(left)}₫</td><td><Badge s={v.status} /></td>
-                      <td>{left > 0 && v.status !== 'REVERSED' && <button className="btn" onClick={() => collect(v, kind)}>{kind === 'invoices' ? 'Thu tiền' : 'Trả tiền'}</button>}</td></tr>);
+                      <td style={{ whiteSpace: 'nowrap' }}>{left > 0 && v.status !== 'REVERSED' && <button className="btn" onClick={() => collect(v, kind)}>{kind === 'invoices' ? 'Thu tiền' : 'Trả tiền'}</button>}{kind === 'invoices' && <button className="btn" style={{ marginLeft: 4 }} title="Lịch sử thu tiền + còn lại" onClick={() => showActivity(v)}>📜</button>}</td></tr>);
                   })}</tbody></table>
               )}
             </div>
           ))}
+          {act && (
+            <div className="card" style={{ padding: 14, border: '1px solid var(--jade)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <h3 style={{ margin: 0 }}>📜 Lịch sử HĐ {act.invoice.docNo}</h3>
+                <span className="chip chip-sky">Tổng {vnd(act.invoice.total)}₫ · Đã thu {vnd(act.invoice.amountPaid)}₫ · Còn {vnd(act.invoice.remaining)}₫</span>
+                <button className="btn" style={{ marginLeft: 'auto' }} onClick={() => setAct(null)}>Đóng</button>
+              </div>
+              <table className="dt" style={{ marginTop: 10 }}><thead><tr><th>Ngày</th><th>Số CT</th><th>Loại</th><th>Nội dung</th><th style={{ textAlign: 'right' }}>Số tiền</th><th style={{ textAlign: 'right' }}>Còn lại sau</th></tr></thead>
+                <tbody>{act.events.map((e: any, i: number) => (
+                  <tr key={i}><td>{e.date}</td><td style={{ fontFamily: 'var(--fm)' }}>{e.entryNo}</td>
+                    <td>{e.kind === 'GHI_SO' ? <span className="chip chip-sky">Ghi sổ</span> : e.kind === 'THU_TIEN' ? <span className="chip chip-jade">Thu tiền</span> : e.kind === 'DIEU_CHINH' ? <span className="chip chip-amber">Điều chỉnh</span> : e.kind}</td>
+                    <td>{e.memo ?? '—'}</td><td style={{ textAlign: 'right', fontFamily: 'var(--fm)' }}>{vnd(e.amount)}₫</td><td style={{ textAlign: 'right', fontFamily: 'var(--fm)' }}>{vnd(e.remainingAfter)}₫</td></tr>
+                ))}</tbody></table>
+            </div>
+          )}
         </div>
       )}
 
       {tab === 'vh' && (
         <div style={{ display: 'grid', gap: 14 }}>
+          <div className="card" style={{ padding: 14 }} data-tut="k10a-docnum">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <h3 style={{ margin: 0 }}>Số chứng từ tùy chỉnh</h3>
+              <button className="btn" style={{ marginLeft: 'auto' }} onClick={loadDocNums}>Xem cấu hình</button>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 90px 70px 1.6fr auto', gap: 8, marginTop: 10 }}>
+              <select style={inp} value={dnType} onChange={(e) => setDnType(e.target.value)}>{DN_TYPES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select>
+              <input style={inp} placeholder="Tiền tố (PT…)" value={dnPrefix} onChange={(e) => setDnPrefix(e.target.value)} />
+              <input style={inp} placeholder="Số chữ số" inputMode="numeric" value={dnPad} onChange={(e) => setDnPad(e.target.value)} />
+              <input style={inp} placeholder="Format: {prefix}-{year}-{seq}" value={dnFormat} onChange={(e) => setDnFormat(e.target.value)} />
+              <button className="btn-p" onClick={saveDocNum}>Lưu</button>
+            </div>
+            <div style={{ fontSize: 'var(--fs-micro)', color: 'var(--mut)', marginTop: 6 }}>Placeholder: {'{prefix} {year} {yy} {month} {seq}'} — ví dụ {'{prefix}{yy}{month}/{seq}'} → PT2607/000123. Khi lập phiếu cũng nhập được số CT tay (ô “Số CT tự nhập” tab Sổ quỹ) — hệ thống tự chặn trùng.</div>
+            {dnList && (
+              <table className="dt" style={{ marginTop: 10 }}><thead><tr><th>Loại</th><th>Tiền tố</th><th>Format</th><th style={{ textAlign: 'right' }}>Đếm hiện tại</th></tr></thead>
+                <tbody>{dnList.map((d: any) => (
+                  <tr key={d.docType}><td>{DN_TYPES.find(([t]) => t === d.docType)?.[1] ?? d.docType}</td>
+                    <td style={{ fontFamily: 'var(--fm)' }}>{d.setting?.prefix ?? '(mặc định)'}</td>
+                    <td style={{ fontFamily: 'var(--fm)' }}>{d.setting?.format ?? '{prefix}-{year}-{seq}'}</td>
+                    <td style={{ textAlign: 'right', fontFamily: 'var(--fm)' }}>{d.counter}</td></tr>
+                ))}</tbody></table>
+            )}
+          </div>
           <div className="card" style={{ padding: 14 }} data-tut="k10a-vh">
             <h3 style={{ marginTop: 0 }}>Tạm ứng / đặt cọc</h3>
             <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 2fr 1fr auto', gap: 8 }}>
@@ -507,6 +616,78 @@ export default function KeToan10aPage() {
                 <tbody>{fys.map((f) => <tr key={f.id}><td style={{ fontFamily: 'var(--fm)' }}>{f.name}</td><td>{f.startDate}</td><td>{f.endDate}</td><td>{f.isClosed ? <span className="chip chip-amber">ĐÃ KHÓA 🔒</span> : <span className="chip chip-jade">ĐANG MỞ</span>}</td>
                   <td>{f.isClosed && <button className="btn" onClick={() => reopenFiscalYear(f)}>Mở lại</button>}</td></tr>)}</tbody></table>
             )}
+          </div>
+          <div className="card" style={{ padding: 14 }} data-tut="k10a-tbmisa">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <h3 style={{ margin: 0 }}>Bảng cân đối tài khoản (8 cột chuẩn Misa)</h3>
+              <span style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
+                <input style={{ ...inp, width: 130 }} type="date" value={tbmFrom} onChange={(e) => setTbmFrom(e.target.value)} />
+                <input style={{ ...inp, width: 130 }} type="date" value={tbmTo} onChange={(e) => setTbmTo(e.target.value)} />
+                <button className="btn-p" onClick={loadTbMisa}>{tbmBusy ? 'Đang tải…' : 'Xem bảng'}</button>
+              </span>
+            </div>
+            {tbm && (
+              <div style={{ marginTop: 10, overflowX: 'auto' }}>
+                <div style={{ fontSize: 'var(--fs-small)', color: 'var(--mut)', marginBottom: 6 }}>
+                  Kỳ {tbm.from} → {tbm.to} · Lũy kế từ {tbm.yearStart} · {tbm.balanced ? <span className="chip chip-jade">CÂN ✓</span> : <span className="chip chip-amber">LỆCH — kiểm tra sổ!</span>}
+                </div>
+                <table className="dt" style={{ fontSize: 'var(--fs-small)' }}>
+                  <thead>
+                    <tr><th rowSpan={2} style={{ verticalAlign: 'bottom' }}>TK</th><th rowSpan={2} style={{ verticalAlign: 'bottom' }}>Tên tài khoản</th>
+                      <th colSpan={2} style={{ textAlign: 'center' }}>Số dư đầu kỳ</th>
+                      <th colSpan={2} style={{ textAlign: 'center' }}>PS trong kỳ</th>
+                      <th colSpan={2} style={{ textAlign: 'center' }}>Lũy kế đầu năm</th>
+                      <th colSpan={2} style={{ textAlign: 'center' }}>Số dư cuối kỳ</th></tr>
+                    <tr>{['Nợ','Có','Nợ','Có','Nợ','Có','Nợ','Có'].map((h, i) => <th key={i} style={{ textAlign: 'right' }}>{h}</th>)}</tr>
+                  </thead>
+                  <tbody>
+                    {tbm.rows.map((r: any, i: number) => (
+                      <tr key={i} style={r.isParent ? { fontWeight: 600, background: 'var(--bg2, rgba(125,125,125,.06))' } : {}}>
+                        <td style={{ fontFamily: 'var(--fm)', paddingLeft: 8 + r.level * 14 }}>{r.code}</td>
+                        <td>{r.name}</td>
+                        {[r.openDebit, r.openCredit, r.periodDebit, r.periodCredit, r.accumDebit, r.accumCredit, r.closeDebit, r.closeCredit].map((v: string, j: number) => (
+                          <td key={j} style={{ textAlign: 'right', fontFamily: 'var(--fm)' }}>{Number(v) !== 0 ? vnd(v) : ''}</td>
+                        ))}
+                      </tr>
+                    ))}
+                    <tr style={{ fontWeight: 700, borderTop: '2px solid var(--bd2)' }}>
+                      <td colSpan={2}>TỔNG CỘNG</td>
+                      {[tbm.totals.openDebit, tbm.totals.openCredit, tbm.totals.periodDebit, tbm.totals.periodCredit, tbm.totals.accumDebit, tbm.totals.accumCredit, tbm.totals.closeDebit, tbm.totals.closeCredit].map((v: string, j: number) => (
+                        <td key={j} style={{ textAlign: 'right', fontFamily: 'var(--fm)' }}>{vnd(v)}</td>
+                      ))}
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            )}
+            {!tbm && <div style={{ marginTop: 8, fontSize: 'var(--fs-small)', color: 'var(--mut)' }}>Dư đầu kỳ · phát sinh trong kỳ · lũy kế từ đầu năm · dư cuối kỳ (mỗi mục Nợ/Có) — tài khoản cha in đậm, con thụt lề. Chọn kỳ rồi bấm Xem bảng.</div>}
+          </div>
+          <div className="card" style={{ padding: 14 }} data-tut="k10a-journal">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <h3 style={{ margin: 0 }}>Sổ Nhật ký chung</h3>
+              <span style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
+                <input style={{ ...inp, width: 130 }} type="date" value={gjFrom} onChange={(e) => setGjFrom(e.target.value)} />
+                <input style={{ ...inp, width: 130 }} type="date" value={gjTo} onChange={(e) => setGjTo(e.target.value)} />
+                <button className="btn-p" onClick={loadJournal}>{gjBusy ? 'Đang tải…' : 'Xem sổ'}</button>
+              </span>
+            </div>
+            {gj && (
+              <div style={{ marginTop: 10, overflowX: 'auto' }}>
+                <div style={{ fontSize: 'var(--fs-small)', color: 'var(--mut)', marginBottom: 6 }}>{gj.count} bút toán · Tổng Nợ {vnd(gj.totalDebit)}₫ · Tổng Có {vnd(gj.totalCredit)}₫</div>
+                <table className="dt"><thead><tr><th>Ngày</th><th>Số CT</th><th>Diễn giải</th><th>TK</th><th style={{ textAlign: 'right' }}>Nợ</th><th style={{ textAlign: 'right' }}>Có</th></tr></thead>
+                  <tbody>{gj.rows.map((e: any, i: number) => e.lines.map((l: any, j: number) => (
+                    <tr key={`${i}-${j}`} style={j === 0 ? { borderTop: '2px solid var(--bd2)' } : {}}>
+                      <td>{j === 0 ? e.date : ''}</td>
+                      <td style={{ fontFamily: 'var(--fm)' }}>{j === 0 ? e.entryNo : ''}</td>
+                      <td>{j === 0 ? (e.memo ?? '') : (l.memo ?? '')}</td>
+                      <td style={{ fontFamily: 'var(--fm)' }} title={l.accountName}>{Number(l.debit) > 0 ? l.accountCode : `\u00a0\u00a0\u00a0${l.accountCode}`}</td>
+                      <td style={{ textAlign: 'right', fontFamily: 'var(--fm)' }}>{Number(l.debit) > 0 ? vnd(l.debit) : ''}</td>
+                      <td style={{ textAlign: 'right', fontFamily: 'var(--fm)' }}>{Number(l.credit) > 0 ? vnd(l.credit) : ''}</td>
+                    </tr>
+                  )))}</tbody></table>
+              </div>
+            )}
+            {!gj && <div style={{ marginTop: 8, fontSize: 'var(--fs-small)', color: 'var(--mut)' }}>Toàn bộ bút toán đã ghi sổ theo thời gian — ngày, số chứng từ, diễn giải, TK Nợ/Có (form S03a). Chọn khoảng ngày rồi bấm Xem sổ.</div>}
           </div>
           <div className="card" style={{ padding: 14 }}>
             <h3 style={{ marginTop: 0 }}>Báo cáo khác (API)</h3>

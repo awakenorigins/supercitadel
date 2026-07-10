@@ -15,6 +15,8 @@ export * from "./bank.js";
 export * from "./assets.js";
 export * from "./budgets.js";
 export * from "./audit.js";
+export * from "./docsettings.js";
+export * from "./debtchains.js";
 
 // Gom tất cả bảng để tiện truyền vào drizzle({ schema }).
 import { accounts, accountsRelations } from "./accounts.js";
@@ -27,6 +29,8 @@ import {
 } from "./journals.js";
 import { bills, invoices, payments, receipts } from "./documents.js";
 import { auditLog, docCounters } from "./audit.js";
+import { docNumberSettings } from "./docsettings.js";
+import { debtChains } from "./debtchains.js";
 import { fiscalYears, fiscalYearsRelations } from "./fiscal.js";
 import { advances, advancesRelations } from "./advances.js";
 import { recurringTemplates, recurringTemplatesRelations } from "./recurring.js";
@@ -66,4 +70,6 @@ export const schema = {
   budgetsRelations,
   auditLog,
   docCounters,
+  docNumberSettings,
+  debtChains,
 };

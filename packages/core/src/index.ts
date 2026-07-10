@@ -43,7 +43,7 @@ export type AvatarColor = (typeof AVATAR_COLORS)[number];
 /** Access token: 13 chars, uppercase alphanumeric (no ambiguous I/O/0/1 excluded set kept simple). */
 export const TOKEN_LENGTH = 13;
 export const TOKEN_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-// V11: nới cho token tùy chỉnh (beta accounts đặt token riêng như JoliPoli13) —
+// V11: nới cho token tùy chỉnh (beta accounts đặt token riêng dạng chữ hoa-thường + số) —
 // 8-24 ký tự chữ/số, phân biệt hoa thường. Token sinh tự động vẫn 13 ký tự in hoa như cũ.
 export const tokenSchema = z
   .string()
@@ -109,6 +109,7 @@ export interface TieuTamReply {
 }
 
 export * from './errors.js';
+export * from './currency.js';
 export * from './env.js';
 export * from './permissions.js';
 export * from './manifest.js';

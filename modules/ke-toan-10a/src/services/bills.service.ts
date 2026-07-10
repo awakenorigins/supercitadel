@@ -3,7 +3,8 @@ import type { Database } from "../lib/db.js";
 import type { Ctx } from "../lib/context.js";
 import * as Money from "../lib/money.js";
 import { writeAudit } from "../lib/audit.js";
-import { nextDocNumber } from "../lib/docnumber.js";
+import { resolveDocNumber } from "../lib/docnumber.js";
+import { resolveDocCurrency, mulRate } from "../lib/currency.js";
 import {
   InvalidStateError,
   NotFoundError,
@@ -28,6 +29,13 @@ export interface CreateBillInput {
   expenseAccountCode?: string;
   taxAccountCode?: string;
   post?: boolean;
+  /** V12 ⑤: số chứng từ nhập tay (tùy chọn) — được check trùng per-org. */
+  docNo?: string;
+  /** V12 ⑥: đa tiền tệ — subtotal/lines là NGUYÊN TỆ khi currency ≠ VND. */
+  currency?: string;
+  exchangeRate?: string;
+  rateNote?: string;
+  rateDate?: string;
 }
 
 /**
@@ -66,12 +74,18 @@ export class BillsService {
   }
 
   async create(ctx: Ctx, input: CreateBillInput): Promise<Bill> {
-    const { subtotal, lines } = this.computeLines(input);
-    if (Money.compare(subtotal, "0") <= 0) {
+    const { subtotal: subtotalRaw, lines } = this.computeLines(input);
+    if (Money.compare(subtotalRaw, "0") <= 0) {
       throw new ValidationError("Tiền hàng phải lớn hơn 0");
     }
     const taxRate = input.taxRate ?? "0";
-    const taxAmount = Money.taxOf(subtotal, taxRate);
+    // V12 ⑥: tính ở NGUYÊN TỆ rồi quy đổi VND để hạch toán.
+    const taxAmountOC = Money.taxOf(subtotalRaw, taxRate);
+    const totalOC = Money.add(subtotalRaw, taxAmountOC);
+    const cur = resolveDocCurrency(totalOC, input, input.docDate);
+    const isFx = cur.currency !== "VND";
+    const subtotal = isFx ? mulRate(subtotalRaw, cur.exchangeRate) : subtotalRaw;
+    const taxAmount = isFx ? mulRate(taxAmountOC, cur.exchangeRate) : taxAmountOC;
     const total = Money.add(subtotal, taxAmount);
 
     const payable = await this.acc.requireByCode(
@@ -92,7 +106,19 @@ export class BillsService {
 
     const bill = await this.db.transaction(async (tx) => {
       const txDb = tx as unknown as Database;
-      const docNo = await nextDocNumber(txDb, ctx, "BILL", year);
+      const docNo = await resolveDocNumber(txDb, ctx, "BILL", {
+        year,
+        docDate: input.docDate,
+        manualDocNo: input.docNo,
+        checkDup: async (no) => {
+          const dup = await tx
+            .select({ id: bills.id })
+            .from(bills)
+            .where(and(eq(bills.orgId, ctx.orgId), eq(bills.docNo, no)))
+            .limit(1);
+          return dup.length > 0;
+        },
+      });
       const [row] = await tx
         .insert(bills)
         .values({
@@ -108,6 +134,11 @@ export class BillsService {
           taxRate,
           taxAmount,
           total,
+          currency: cur.currency,
+          exchangeRate: cur.exchangeRate,
+          amountOC: totalOC,
+          rateNote: cur.rateNote,
+          rateDate: cur.rateDate,
           description: input.description,
           lines: lines as never,
           status: "DRAFT",

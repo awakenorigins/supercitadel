@@ -4,11 +4,11 @@ import { getDb } from "./lib/db.js";
 import { accounts } from "./schema/accounts.js";
 import { CHART_OF_ACCOUNTS, chartOf, type ChartStandard, type SeedAccount } from "./lib/chart-of-accounts.js";
 
-export { CHART_OF_ACCOUNTS, CHART_TT133, CHART_TT200, chartOf } from "./lib/chart-of-accounts.js";
+export { CHART_OF_ACCOUNTS, CHART_TT133, CHART_TT200, CHART_TT99, chartOf } from "./lib/chart-of-accounts.js";
 export type { SeedAccount, ChartStandard } from "./lib/chart-of-accounts.js";
 
 export interface SeedOptions {
-  /** Chuẩn hệ thống TK: TT133 (SME, mặc định) hoặc TT200 (DN lớn, ~52 TK). */
+  /** Chuẩn hệ thống TK: TT133 (SME, mặc định) · TT99 (thay TT200 từ 2026, ~120 TK) · TT200 (deprecated). */
   standard?: ChartStandard;
   /** Chart tùy biến (ghi đè standard) — mảng SeedAccount từ JSON của DN. */
   custom?: SeedAccount[];

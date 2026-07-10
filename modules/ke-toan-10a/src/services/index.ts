@@ -20,6 +20,7 @@ import { BankService } from "./bank.service.js";
 import { AssetsService } from "./assets.service.js";
 import { BudgetService } from "./budget.service.js";
 import { FxService } from "./fx.service.js";
+import { DebtChainService } from "./debtchain.service.js";
 
 /**
  * KetoanServices — điểm truy cập duy nhất tới toàn bộ nghiệp vụ Kế Toán 10A.
@@ -47,6 +48,7 @@ export class KetoanServices {
   readonly assets: AssetsService;
   readonly budget: BudgetService;
   readonly fx: FxService;
+  readonly debtchain: DebtChainService;
 
   constructor(db: Database) {
     this.accounts = new AccountsService(db);
@@ -70,6 +72,7 @@ export class KetoanServices {
     this.assets = new AssetsService(db);
     this.budget = new BudgetService(db);
     this.fx = new FxService(db);
+    this.debtchain = new DebtChainService(db);
   }
 }
 

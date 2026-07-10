@@ -1,8 +1,8 @@
-// Tạo org "Joli Poli" SẠCH cho beta: owner user + token JoliPoli13 + full module active + Om, KHÔNG dữ liệu test.
+// Tạo org "Joli Poli" SẠCH cho beta: owner user + token (argv) + full module active + Om, KHÔNG dữ liệu test.
 import postgres from 'postgres';
 import { hash } from '@node-rs/argon2';
 
-const TOKEN = 'JoliPoli13'; // sẽ bị ghi đè bởi argv[2] nếu có
+const TOKEN = ''; // KHÔNG hardcode token — truyền qua argv[2]
 const token = process.argv[2] || TOKEN; // phân biệt hoa thường (schema mới 8-24 ký tự)
 if (!/^[A-Za-z0-9]{8,24}$/.test(token)) { console.error(`Token phải 8-24 ký tự A-Za-z0-9, nhận: "${token}" (${token.length} ký tự)`); process.exit(1); }
 

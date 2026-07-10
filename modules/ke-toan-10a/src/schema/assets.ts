@@ -3,6 +3,7 @@ import {
   date,
   index,
   integer,
+  jsonb,
   numeric,
   uuid,
   varchar,
@@ -46,6 +47,11 @@ export const fixedAssets = ketoan10a.table(
     assetAccountId: uuid("asset_account_id").notNull(),
     depreciationAccountId: uuid("depreciation_account_id").notNull(),
     expenseAccountId: uuid("expense_account_id").notNull(),
+    /**
+     * V12 ⑦ — Phân bổ khấu hao NHIỀU TK chi phí (soi Misa: bảng phân bổ nhiều dòng).
+     * [{accountId, code, percent}] — tổng percent = 100. Null = dùng expenseAccountId 100%.
+     */
+    allocations: jsonb("allocations"),
 
     status: assetStatusEnum("status").notNull().default("ACTIVE"),
 

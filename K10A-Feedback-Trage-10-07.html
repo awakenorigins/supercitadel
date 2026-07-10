@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kế Toán 10A — Triage Feedback 10/07/2026</title>
+<style>
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,"Noto Sans","Liberation Sans",sans-serif;background:#F5F0EB;color:#2C2C2C;margin:0;padding:18px;line-height:1.55;font-size:15px}
+.wrap{max-width:860px;margin:0 auto}
+h1{font-size:1.5em;color:#8B1A2F;border-bottom:3px solid #C9A96E;padding-bottom:8px}
+h2{font-size:1.15em;color:#2C2C2C;margin-top:26px;border-left:4px solid #C9A96E;padding-left:10px}
+table{border-collapse:collapse;width:100%;margin:12px 0;font-size:13.5px}
+th{background:#2C2C2C;color:#F5F0EB;padding:8px 9px;text-align:left}
+td{border:1px solid #d8d0c6;padding:7px 9px;vertical-align:top}
+tr:nth-child(even){background:#efe8df}
+.ok{color:#1c6b4a;font-weight:700}
+.miss{color:#8B1A2F;font-weight:700}
+.part{color:#a06a00;font-weight:700}
+.q{background:#fff;border:1px solid #C9A96E;border-radius:10px;padding:12px 14px;margin:10px 0}
+.q b{color:#8B1A2F}
+code{background:#e9e1d6;padding:1px 5px;border-radius:4px;font-size:12.5px}
+.note{background:#B8C9C0;padding:10px 14px;border-radius:10px;margin:14px 0;font-size:13.5px}
+@media(max-width:480px){body{padding:10px;font-size:14px}h1{font-size:1.3em}table{font-size:12px}td,th{padding:5px 6px}}
+</style>
+</head>
+<body class="no-js"><div class="wrap">
+<h1>🧾 Kế Toán 10A — Triage Feedback anh Nấng (10/07/2026)</h1>
+<p>Em đã soi từng feedback vào code thật (<code>modules/ke-toan-10a/src/services/</code>, 22 services, schema, UI). Dưới đây: hiện trạng chính xác từng mục → cái nào <span class="ok">ĐÃ CÓ</span>, <span class="part">CÓ MỘT PHẦN</span>, <span class="miss">CHƯA CÓ</span> — và cuối cùng là <b>5 câu hỏi cần anh quyết</b> trước khi em động tay (đúng nguyên tắc: chưa rõ thì hỏi, không tự làm).</p>
+
+<h2>A. Đối chiếu 13 mục feedback với code</h2>
+<table>
+<tr><th>#</th><th>Feedback</th><th>Hiện trạng code</th><th>Kết luận</th></tr>
+<tr><td>1</td><td>Thu / chi chưa có định khoản</td><td>Backend <b>ĐÃ ghi bút toán thật</b>: phiếu thu = Nợ TK tiền (mặc định 111) / Có TK đối ứng (131, 511, 711…), phiếu chi tương tự (<code>receipts.service.ts</code> dòng 114-121). Nhưng <b>UI không hiển thị định khoản</b> và không cho chọn TK đối ứng rõ ràng.</td><td class="part">CÓ backend, THIẾU UI</td></tr>
+<tr><td>2</td><td>Tùy chỉnh số chứng từ</td><td>Số chứng từ đang <b>auto hoàn toàn</b>: PT-2026-000123, PC-, HD-, HDM-, BT- (<code>docnumber.ts</code>, atomic counter). Không có chỗ nhập tay/đổi format.</td><td class="miss">CHƯA CÓ</td></tr>
+<tr><td>3</td><td>Hóa đơn đang chỉ như phiếu bán hàng</td><td>Hóa đơn có line items + VAT + hạn mức tín dụng, nhưng thiếu: điều khoản thanh toán, hạn thanh toán (due date), người mua/MST, chiết khấu, hình thức TT — chưa đạt mức hóa đơn tài chính chuẩn.</td><td class="part">CÓ MỘT PHẦN</td></tr>
+<tr><td>4</td><td>Tiền Việt / tiền Đô, tỷ giá + note tại ngày quy đổi</td><td><code>fx.service.ts</code> chỉ có <b>đánh giá lại cuối kỳ</b> (revalue). Từng chứng từ (thu/chi/hóa đơn) <b>chưa có</b> trường currency + tỷ giá + ghi chú ngày quy đổi.</td><td class="miss">CHƯA CÓ per-chứng-từ</td></tr>
+<tr><td>5</td><td>Hóa đơn ghi nhận nợ/có chưa?</td><td><b>ĐÃ CÓ</b>: khi POST hóa đơn tự sinh bút toán Nợ 131 (tổng TT) / Có 511 (tiền hàng) + Có 3331 (VAT) (<code>invoices.service.ts</code> dòng 39-40, 167-180).</td><td class="ok">ĐÃ CÓ</td></tr>
+<tr><td>6</td><td>Hóa đơn báo cáo sổ quỹ: ngày thu/chi, nội dung, số tiền còn lại</td><td>Phiếu thu/chi <b>KHÔNG link với hóa đơn</b> (không có invoiceId trong payments/receipts) → không theo dõi được "hóa đơn này đã thu bao nhiêu, còn lại bao nhiêu, thu ngày nào". Đây là gap lớn nhất về nghiệp vụ.</td><td class="miss">CHƯA CÓ — ưu tiên cao</td></tr>
+<tr><td>7</td><td>4/14: phát hiện sai → THÔNG BÁO, đợi quyết định, KHÔNG tự đảo/tự sửa</td><td>Đã có dry-run confirm cho lệnh nhạy cảm, nhưng chưa có quy tắc "phát hiện số liệu sai → dừng + báo + chờ".</td><td class="part">Cần thêm behavior rule</td></tr>
+<tr><td>8</td><td>9/14 TSCĐ: khấu hao đường thẳng, ngoài Nợ 642/Có 214 cần 627/Có 214, 641/Có 214</td><td>Khấu hao đường thẳng <b>ĐÃ CÓ</b>, TK chi phí <b>cho phép truyền</b> (642 mặc định, đổi được 641) — nhưng mỗi TSCĐ chỉ 1 TK chi phí, chưa hỗ trợ <b>phân bổ nhiều bộ phận</b> (1 tài sản → 627 xưởng + 641 bán hàng + 642 QL cùng lúc); 627 cần verify có trong chart.</td><td class="part">CÓ 1 phần, thiếu phân bổ multi-TK</td></tr>
+<tr><td>9</td><td>TT200 đã nâng cấp lên TT99</td><td>Code đang có 2 chart: <b>TT133</b> (mặc định SME) + <b>TT200</b> (~52 TK). <b>Chưa có TT99</b>.</td><td class="miss">CHƯA CÓ — cần nguồn danh mục (hỏi Q2)</td></tr>
+<tr><td>10</td><td>Bảng kế toán đúng form chuẩn Misa</td><td>Các báo cáo hiện là form tự thiết kế, chưa đối chiếu cột/mục theo Misa.</td><td class="miss">Cần mẫu Misa (hỏi Q3)</td></tr>
+<tr><td>11</td><td>Bảng cân đối phát sinh thiếu so với Misa</td><td><code>trialBalance</code> hiện chỉ có tổng Nợ/Có đơn giản. Mẫu chuẩn Misa cần 8 cột: Dư đầu kỳ (Nợ/Có) + Phát sinh trong kỳ (Nợ/Có) + Lũy kế (Nợ/Có) + Dư cuối kỳ (Nợ/Có), theo cấp TK cha-con.</td><td class="part">CÓ khung, thiếu cột chuẩn</td></tr>
+<tr><td>12</td><td>Chưa có nhật ký chung</td><td>Đúng — chỉ có <b>sổ cái theo từng TK</b> (generalLedger per account). <b>Sổ Nhật ký chung</b> (toàn bộ bút toán theo thời gian: ngày ghi sổ, số CT, diễn giải, TK Nợ/Có, số tiền) CHƯA CÓ.</td><td class="miss">CHƯA CÓ</td></tr>
+<tr><td>13</td><td>Chuỗi công nợ: A bán cho B,C,D,E,F — theo dõi toàn chuỗi, ai trả tiền thì đồng bộ cả chuỗi, kể cả đa tiền tệ tại thời điểm thanh toán</td><td>Hiện chỉ theo dõi công nợ <b>trực tiếp</b> giữa org và từng contact (131/331 per contact). Chuỗi nợ nhiều tầng qua nhiều khách <b>CHƯA CÓ</b> — và nghiệp vụ này cần làm rõ trước khi thiết kế (hỏi Q1 — quan trọng nhất).</td><td class="miss">CHƯA CÓ — cần chốt nghiệp vụ</td></tr>
+</table>
+
+<h2>B. 5 câu hỏi cần anh quyết TRƯỚC khi em làm</h2>
+<div class="q"><b>Q1 — Chuỗi công nợ (mục 13, quan trọng nhất):</b> Khi khách A bán tiếp cho B, C, D… thì về pháp lý công nợ của MÌNH chỉ với A. Anh muốn theo cách nào?<br>
+(a) <b>Theo dõi hộ</b>: B,C,D,E,F là "công nợ cấp 2" gắn dưới A để mình nhìn được toàn chuỗi, tiền F trả → ghi nhận vào chuỗi + tự động gợi ý cấn trừ nợ A→mình (nhưng KHÔNG tự hạch toán, chờ xác nhận);<br>
+(b) <b>Hạch toán thật</b>: mỗi mắt xích là chứng từ công nợ riêng trong hệ thống, tiền trả ở bất kỳ mắt xích nào tự động cấn theo thứ tự chuỗi (tự hạch toán luôn);<br>
+(c) Cách khác theo mô tả của anh?<br>
+Và: tiền trả bằng ngoại tệ thì tỷ giá lấy <b>tại ngày thanh toán</b> theo nguồn nào (câu Q5)?</div>
+<div class="q"><b>Q2 — TT99:</b> Em chưa có văn bản danh mục tài khoản TT99 trong tay. Anh có file/nguồn chuẩn gửi em, hay em tự tra cứu rồi <b>trình danh mục để anh duyệt</b> trước khi thay chart? (Em không tự thay khi chưa được duyệt.)</div>
+<div class="q"><b>Q3 — Form Misa:</b> Anh hỏi "có cần vào source Misa tham khảo không" — <b>DẠ CẦN ạ</b>. Tốt nhất anh xuất giúp em từ Misa: (1) Bảng cân đối phát sinh, (2) Phiếu thu + Phiếu chi, (3) Sổ nhật ký chung, (4) Mẫu hóa đơn — dạng Excel/PDF/screenshot đều được. Có mẫu thật em làm 1 lần là chuẩn, khỏi đoán.</div>
+<div class="q"><b>Q4 — Số chứng từ tùy chỉnh:</b> Cho <b>sửa tự do từng chứng từ</b> (hệ thống chỉ check trùng) hay chỉ cho <b>đổi format/prefix</b> (VD: PT-{năm}-{số}, số vẫn auto)? Misa cho cả hai — anh muốn theo kiểu nào?</div>
+<div class="q"><b>Q5 — Đa tiền tệ:</b> Tỷ giá nhập <b>tay từng chứng từ</b> (kèm note nguồn) hay <b>tự động</b> (VD tỷ giá Vietcombank tại ngày, có API)? Hay cả hai: auto-suggest + cho sửa tay?</div>
+
+<h2>C. Thứ tự em đề xuất làm sau khi anh chốt</h2>
+<p>1️⃣ Nhật ký chung (mục 12 — rõ ràng, làm ngay được) → 2️⃣ UI định khoản thu/chi + tùy chỉnh số CT (1, 2) → 3️⃣ Link phiếu thu/chi ↔ hóa đơn + số tiền còn lại + báo cáo sổ quỹ (6) → 4️⃣ Bảng cân đối phát sinh 8 cột + form Misa (10, 11 — sau khi có mẫu Q3) → 5️⃣ Đa tiền tệ per-chứng-từ (4, sau Q5) → 6️⃣ TSCĐ phân bổ 627/641/642 (8) → 7️⃣ TT99 (9, sau Q2) → 8️⃣ Chuỗi công nợ (13, sau Q1 — thiết kế riêng vì lớn nhất) → 9️⃣ Behavior rule "sai → báo → chờ" cài xuyên suốt (7).</p>
+<div class="note">⚠️ Đúng chỉ thị anh: những mục có dấu hỏi em <b>KHÔNG tự làm</b>. Em chỉ bắt đầu phần đã rõ (nhật ký chung, UI định khoản, link hóa đơn-phiếu thu) khi anh gật, và các phần còn lại chờ anh trả lời Q1-Q5.</div>
+</div></body>
+</html>

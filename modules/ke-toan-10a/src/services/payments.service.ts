@@ -3,7 +3,8 @@ import type { Database } from "../lib/db.js";
 import type { Ctx } from "../lib/context.js";
 import * as Money from "../lib/money.js";
 import { writeAudit } from "../lib/audit.js";
-import { nextDocNumber } from "../lib/docnumber.js";
+import { resolveDocNumber } from "../lib/docnumber.js";
+import { resolveDocCurrency } from "../lib/currency.js";
 import {
   InvalidStateError,
   NotFoundError,
@@ -24,6 +25,13 @@ export interface CreatePaymentInput {
   payeeName?: string;
   contactId?: string;
   post?: boolean;
+  /** V12 ⑤: số chứng từ nhập tay (tùy chọn) — được check trùng per-org. */
+  docNo?: string;
+  /** V12 ⑥: đa tiền tệ — amount là NGUYÊN TỆ khi currency ≠ VND. */
+  currency?: string;
+  exchangeRate?: string;
+  rateNote?: string;
+  rateDate?: string;
 }
 
 /**
@@ -43,6 +51,7 @@ export class PaymentsService {
     if (Money.compare(input.amount, "0") <= 0) {
       throw new ValidationError("Số tiền phiếu chi phải lớn hơn 0");
     }
+    const cur = resolveDocCurrency(input.amount, input, input.docDate);
 
     const cashAcc = await this.acc.requireByCode(
       ctx,
@@ -58,7 +67,19 @@ export class PaymentsService {
 
     const payment = await this.db.transaction(async (tx) => {
       const txDb = tx as unknown as Database;
-      const docNo = await nextDocNumber(txDb, ctx, "PAYMENT", year);
+      const docNo = await resolveDocNumber(txDb, ctx, "PAYMENT", {
+        year,
+        docDate: input.docDate,
+        manualDocNo: input.docNo,
+        checkDup: async (no) => {
+          const dup = await tx
+            .select({ id: payments.id })
+            .from(payments)
+            .where(and(eq(payments.orgId, ctx.orgId), eq(payments.docNo, no)))
+            .limit(1);
+          return dup.length > 0;
+        },
+      });
 
       const [row] = await tx
         .insert(payments)
@@ -69,7 +90,12 @@ export class PaymentsService {
           cashAccountId: cashAcc.id,
           counterAccountId: counterAcc.id,
           contactId: input.contactId,
-          amount: input.amount,
+          amount: cur.amountVND,
+          currency: cur.currency,
+          exchangeRate: cur.exchangeRate,
+          amountOC: cur.amountOC,
+          rateNote: cur.rateNote,
+          rateDate: cur.rateDate,
           reason: input.reason,
           payeeName: input.payeeName,
           status: "DRAFT",

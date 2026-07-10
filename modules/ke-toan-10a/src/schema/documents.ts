@@ -19,6 +19,24 @@ import {
  * Phiếu thu (Receipt Voucher) — chứng từ ghi nhận tiền vào.
  * Khi POSTED sinh bút toán: Nợ TK tiền (111/112) / Có TK đối ứng (131/511...).
  */
+/**
+ * V12 ⑥ — Cột đa tiền tệ dùng chung (chuẩn core packages/core/currency.ts, soi Misa
+ * CurrencyID + ExchangeRate + AmountOC): amount/subtotal/total luôn là VND quy đổi;
+ * amountOC là nguyên tệ; VND thì rate=1, amountOC=amount.
+ */
+const currencyColumns = {
+  /** Mã tiền tệ chứng từ (ISO 4217). Mặc định VND. */
+  currency: varchar("currency", { length: 3 }).notNull().default("VND"),
+  /** Tỷ giá quy đổi VND tại ngày giao dịch (VND = 1). */
+  exchangeRate: numeric("exchange_rate", { precision: 18, scale: 6 }).notNull().default("1"),
+  /** Số tiền NGUYÊN TỆ (Original Currency). Với VND = amount/total. */
+  amountOC: numeric("amount_oc", { precision: 20, scale: 2 }),
+  /** Ghi chú nguồn tỷ giá (VD "TGNH VCB 10/07"). */
+  rateNote: varchar("rate_note", { length: 255 }),
+  /** Ngày áp tỷ giá. */
+  rateDate: date("rate_date"),
+};
+
 export const receipts = ketoan10a.table(
   "receipts",
   {
@@ -36,6 +54,7 @@ export const receipts = ketoan10a.table(
     contactId: uuid("contact_id"),
 
     amount: numeric("amount", { precision: 20, scale: 2 }).notNull(),
+    ...currencyColumns,
 
     /** Lý do thu. */
     reason: varchar("reason", { length: 512 }),
@@ -76,6 +95,7 @@ export const payments = ketoan10a.table(
     contactId: uuid("contact_id"),
 
     amount: numeric("amount", { precision: 20, scale: 2 }).notNull(),
+    ...currencyColumns,
 
     reason: varchar("reason", { length: 512 }),
     /** Người nhận tiền. */
@@ -132,6 +152,7 @@ export const invoices = ketoan10a.table(
     amountPaid: numeric("amount_paid", { precision: 20, scale: 2 })
       .notNull()
       .default("0"),
+    ...currencyColumns,
 
     description: varchar("description", { length: 512 }),
     /** Dòng hàng chi tiết (multi-line): [{description, qty, rate, amount}]. */
@@ -184,6 +205,7 @@ export const bills = ketoan10a.table(
     amountPaid: numeric("amount_paid", { precision: 20, scale: 2 })
       .notNull()
       .default("0"),
+    ...currencyColumns,
 
     description: varchar("description", { length: 512 }),
     /** Dòng hàng chi tiết (multi-line). */

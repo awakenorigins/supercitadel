@@ -3,7 +3,8 @@ import type { Database } from "../lib/db.js";
 import type { Ctx } from "../lib/context.js";
 import * as Money from "../lib/money.js";
 import { writeAudit } from "../lib/audit.js";
-import { nextDocNumber } from "../lib/docnumber.js";
+import { resolveDocNumber } from "../lib/docnumber.js";
+import { resolveDocCurrency } from "../lib/currency.js";
 import {
   InvalidStateError,
   NotFoundError,
@@ -25,6 +26,13 @@ export interface CreateReceiptInput {
   contactId?: string;
   /** Ghi sổ ngay hay để nháp. Mặc định true. */
   post?: boolean;
+  /** V12 ⑤: số chứng từ nhập tay (tùy chọn) — được check trùng per-org. */
+  docNo?: string;
+  /** V12 ⑥: đa tiền tệ — amount ở trên là NGUYÊN TỆ khi có currency ≠ VND. */
+  currency?: string;
+  exchangeRate?: string;
+  rateNote?: string;
+  rateDate?: string;
 }
 
 /**
@@ -44,6 +52,8 @@ export class ReceiptsService {
     if (Money.compare(input.amount, "0") <= 0) {
       throw new ValidationError("Số tiền phiếu thu phải lớn hơn 0");
     }
+    // V12 ⑥: input.amount = nguyên tệ; hạch toán bằng VND quy đổi.
+    const cur = resolveDocCurrency(input.amount, input, input.docDate);
 
     const cashAcc = await this.acc.requireByCode(
       ctx,
@@ -59,7 +69,19 @@ export class ReceiptsService {
 
     const receipt = await this.db.transaction(async (tx) => {
       const txDb = tx as unknown as Database;
-      const docNo = await nextDocNumber(txDb, ctx, "RECEIPT", year);
+      const docNo = await resolveDocNumber(txDb, ctx, "RECEIPT", {
+        year,
+        docDate: input.docDate,
+        manualDocNo: input.docNo,
+        checkDup: async (no) => {
+          const dup = await tx
+            .select({ id: receipts.id })
+            .from(receipts)
+            .where(and(eq(receipts.orgId, ctx.orgId), eq(receipts.docNo, no)))
+            .limit(1);
+          return dup.length > 0;
+        },
+      });
 
       const [row] = await tx
         .insert(receipts)
@@ -70,7 +92,12 @@ export class ReceiptsService {
           cashAccountId: cashAcc.id,
           counterAccountId: counterAcc.id,
           contactId: input.contactId,
-          amount: input.amount,
+          amount: cur.amountVND,
+          currency: cur.currency,
+          exchangeRate: cur.exchangeRate,
+          amountOC: cur.amountOC,
+          rateNote: cur.rateNote,
+          rateDate: cur.rateDate,
           reason: input.reason,
           payerName: input.payerName,
           status: "DRAFT",

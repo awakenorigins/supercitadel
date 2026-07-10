@@ -20,6 +20,19 @@ export interface CreateAssetInput {
   expenseAccountCode?: string; // 642
   /** Ghi bút toán mua TSCĐ (Nợ 211 / Có [tiền/phải trả]). */
   acquireFromAccountCode?: string;
+  /**
+   * V12 ⑦: phân bổ khấu hao NHIỀU TK chi phí theo tỷ lệ %, VD 1 máy dùng chung:
+   * [{code:"627",percent:50},{code:"641",percent:30},{code:"642",percent:20}].
+   * Tổng percent PHẢI = 100. Bỏ trống = 100% vào expenseAccountCode.
+   */
+  allocations?: Array<{ code: string; percent: number }>;
+}
+
+/** Dòng phân bổ đã resolve lưu vào jsonb. */
+interface AllocationStored {
+  accountId: string;
+  code: string;
+  percent: number;
 }
 
 /** Cộng N tháng vào ngày, trả về mốc đầu tháng YYYY-MM-01. */
@@ -59,6 +72,27 @@ export class AssetsService {
     const expense = await this.acc.requireByCode(ctx, input.expenseAccountCode ?? "642");
     const code = input.code ?? (await this.autoCode(ctx));
 
+    // V12 ⑦: validate + resolve phân bổ multi-TK.
+    let allocations: AllocationStored[] | null = null;
+    if (input.allocations && input.allocations.length > 0) {
+      const totalPct = input.allocations.reduce((s, a) => s + a.percent, 0);
+      if (Math.abs(totalPct - 100) > 0.001) {
+        throw new ValidationError(`Tổng tỷ lệ phân bổ phải = 100% (đang ${totalPct}%)`);
+      }
+      if (input.allocations.some((a) => a.percent <= 0)) {
+        throw new ValidationError("Tỷ lệ phân bổ từng TK phải > 0");
+      }
+      const codes = input.allocations.map((a) => a.code);
+      if (new Set(codes).size !== codes.length) {
+        throw new ValidationError("TK phân bổ bị trùng — mỗi TK chỉ xuất hiện 1 lần");
+      }
+      allocations = [];
+      for (const a of input.allocations) {
+        const accRow = await this.acc.requireByCode(ctx, a.code);
+        allocations.push({ accountId: accRow.id, code: a.code, percent: a.percent });
+      }
+    }
+
     const [row] = await this.db
       .insert(fixedAssets)
       .values({
@@ -72,6 +106,7 @@ export class AssetsService {
         assetAccountId: asset.id,
         depreciationAccountId: deprec.id,
         expenseAccountId: expense.id,
+        allocations: allocations as never,
         status: "ACTIVE",
       })
       .returning();
@@ -155,13 +190,32 @@ export class AssetsService {
         if (Money.compare(dep, remaining) > 0) dep = remaining;
         if (Money.compare(dep, "0") <= 0) break;
 
+        // V12 ⑦: phân bổ multi-TK — chia dep theo % từng TK, dòng cuối nhận phần dư
+        // làm tròn để tổng Nợ = Có tuyệt đối.
+        const allocs = (asset.allocations as AllocationStored[] | null) ?? null;
+        const debitLines: Array<{ accountId: string; debit: string }> = [];
+        if (allocs && allocs.length > 0) {
+          let assigned = "0";
+          for (let i = 0; i < allocs.length; i++) {
+            const isLast = i === allocs.length - 1;
+            const part = isLast
+              ? Money.sub(dep, assigned)
+              : ((Number(dep) * allocs[i]!.percent) / 100).toFixed(2);
+            if (Money.compare(part, "0") > 0) {
+              debitLines.push({ accountId: allocs[i]!.accountId, debit: part });
+              assigned = Money.add(assigned, part);
+            }
+          }
+        } else {
+          debitLines.push({ accountId: asset.expenseAccountId, debit: dep });
+        }
         await this.ledger.createEntry(ctx, {
           entryDate: period,
           memo: `Khấu hao ${asset.code} kỳ ${period.slice(0, 7)}`,
           sourceType: "MANUAL",
           post: true,
           lines: [
-            { accountId: asset.expenseAccountId, debit: dep },
+            ...debitLines,
             { accountId: asset.depreciationAccountId, credit: dep },
           ],
         });

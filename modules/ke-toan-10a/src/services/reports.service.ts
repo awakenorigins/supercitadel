@@ -25,6 +25,22 @@ export interface TrialBalanceRow {
   credit: string;
 }
 
+/** V12 ④ — Bảng cân đối tài khoản 8 cột chuẩn Misa (form S06/F01). */
+export interface TrialBalanceMisaRow {
+  code: string;
+  name: string;
+  level: number;
+  isParent: boolean;
+  openDebit: string;
+  openCredit: string;
+  periodDebit: string;
+  periodCredit: string;
+  accumDebit: string;
+  accumCredit: string;
+  closeDebit: string;
+  closeCredit: string;
+}
+
 /**
  * ReportsService — mọi báo cáo tài chính đọc từ bút toán đã POSTED.
  * Tất cả đều scope theo org (tenant isolation) và tính bằng Money BigInt.
@@ -133,6 +149,65 @@ export class ReportsService {
   }
 
   /**
+   * SỔ NHẬT KÝ CHUNG (General Journal) — V12 theo feedback anh Nắng 10/07.
+   * Toàn bộ bút toán POSTED theo thời gian: ngày ghi sổ, số CT, diễn giải,
+   * TK Nợ/Có từng dòng, số tiền — đúng form sổ NKC kế toán VN (Misa S03a).
+   */
+  async generalJournal(
+    ctx: Ctx,
+    from?: string,
+    to?: string,
+    limit = 500,
+  ): Promise<{
+    rows: Array<{
+      date: string; entryNo: string; memo: string | null;
+      lines: Array<{ accountCode: string; accountName: string; debit: string; credit: string; memo: string | null }>;
+      totalDebit: string; totalCredit: string;
+    }>;
+    totalDebit: string; totalCredit: string; count: number;
+  }> {
+    const conds = [eq(journalEntries.orgId, ctx.orgId), eq(journalEntries.status, "POSTED")];
+    if (from) conds.push(gte(journalEntries.entryDate, from));
+    if (to) conds.push(lte(journalEntries.entryDate, to));
+
+    const raw = await this.db
+      .select({
+        entryId: journalEntries.id,
+        date: journalEntries.entryDate,
+        entryNo: journalEntries.entryNo,
+        entryMemo: journalEntries.memo,
+        lineMemo: journalLines.memo,
+        accountCode: accounts.code,
+        accountName: accounts.name,
+        debit: journalLines.debit,
+        credit: journalLines.credit,
+      })
+      .from(journalLines)
+      .innerJoin(journalEntries, eq(journalLines.entryId, journalEntries.id))
+      .innerJoin(accounts, eq(journalLines.accountId, accounts.id))
+      .where(and(...conds))
+      .orderBy(asc(journalEntries.entryDate), asc(journalEntries.entryNo), sql`${journalLines.debit} DESC`);
+
+    const byEntry = new Map<string, { date: string; entryNo: string; memo: string | null; lines: any[]; totalDebit: string; totalCredit: string }>();
+    let totalDebit = "0";
+    let totalCredit = "0";
+    for (const r of raw) {
+      let e = byEntry.get(r.entryId);
+      if (!e) {
+        if (byEntry.size >= limit) continue; // cap entries, không cap dòng giữa chừng
+        e = { date: r.date, entryNo: r.entryNo, memo: r.entryMemo, lines: [], totalDebit: "0", totalCredit: "0" };
+        byEntry.set(r.entryId, e);
+      }
+      e.lines.push({ accountCode: r.accountCode, accountName: r.accountName, debit: r.debit, credit: r.credit, memo: r.lineMemo });
+      e.totalDebit = Money.add(e.totalDebit, r.debit);
+      e.totalCredit = Money.add(e.totalCredit, r.credit);
+      totalDebit = Money.add(totalDebit, r.debit);
+      totalCredit = Money.add(totalCredit, r.credit);
+    }
+    return { rows: [...byEntry.values()], totalDebit, totalCredit, count: byEntry.size };
+  }
+
+  /**
    * Bảng cân đối số phát sinh (Trial Balance).
    * Với mỗi tài khoản: tổng phát sinh Nợ/Có trong kỳ.
    * Tổng cột Nợ PHẢI bằng tổng cột Có (kiểm chứng ghi kép).
@@ -188,6 +263,163 @@ export class ReportsService {
       totalDebit,
       totalCredit,
       balanced: Money.compare(totalDebit, totalCredit) === 0,
+    };
+  }
+
+  /**
+   * V12 ④ — BẢNG CÂN ĐỐI TÀI KHOẢN 8 CỘT chuẩn Misa (soi form MISA SME 2026):
+   * Số dư đầu kỳ Nợ/Có · Số phát sinh trong kỳ Nợ/Có · Lũy kế từ đầu năm Nợ/Có
+   * · Số dư cuối kỳ Nợ/Có — kèm phân cấp tài khoản cha-con (cha = tổng các con).
+   * Quy ước dấu: quy mọi số dư về "debit-basis" (Nợ dương) rồi tách cột:
+   * net >= 0 → cột Nợ, net < 0 → cột Có (giá trị tuyệt đối).
+   */
+  async trialBalanceMisa(
+    ctx: Ctx,
+    from?: string,
+    to?: string,
+  ): Promise<{
+    from: string;
+    to: string;
+    yearStart: string;
+    rows: TrialBalanceMisaRow[];
+    totals: {
+      openDebit: string; openCredit: string;
+      periodDebit: string; periodCredit: string;
+      accumDebit: string; accumCredit: string;
+      closeDebit: string; closeCredit: string;
+    };
+    balanced: boolean;
+  }> {
+    const today = new Date().toISOString().slice(0, 10);
+    const at = to ?? today;
+    const start = from ?? `${at.slice(0, 4)}-01-01`;
+    const yearStart = `${start.slice(0, 4)}-01-01`;
+
+    // Toàn bộ tài khoản của org (cả cha lẫn con) để dựng cây.
+    const allAccounts = await this.db
+      .select()
+      .from(accounts)
+      .where(and(eq(accounts.orgId, ctx.orgId), eq(accounts.isActive, true)))
+      .orderBy(asc(accounts.code));
+
+    // 3 aggregate: trước kỳ (prior) · trong kỳ (period) · lũy kế từ đầu năm (accum).
+    const aggBy = async (dateCond: ReturnType<typeof sql>) => {
+      const rows = await this.db
+        .select({
+          accountId: journalLines.accountId,
+          debit: sql<string>`COALESCE(SUM(${journalLines.debit}),0)`,
+          credit: sql<string>`COALESCE(SUM(${journalLines.credit}),0)`,
+        })
+        .from(journalLines)
+        .innerJoin(journalEntries, eq(journalLines.entryId, journalEntries.id))
+        .where(and(eq(journalLines.orgId, ctx.orgId), eq(journalEntries.status, "POSTED"), dateCond))
+        .groupBy(journalLines.accountId);
+      return new Map(rows.map((r) => [r.accountId, { debit: r.debit, credit: r.credit }]));
+    };
+    const [prior, period, accum] = await Promise.all([
+      aggBy(sql`${journalEntries.entryDate} < ${start}`),
+      aggBy(sql`${journalEntries.entryDate} >= ${start} AND ${journalEntries.entryDate} <= ${at}`),
+      aggBy(sql`${journalEntries.entryDate} >= ${yearStart} AND ${journalEntries.entryDate} <= ${at}`),
+    ]);
+
+    // Số liệu "own" từng tài khoản (chưa cộng con) — tất cả về debit-basis với số dư.
+    type Node = {
+      id: string; code: string; name: string; parentId: string | null; level: number;
+      openNet: string; // debit-basis: dương = dư Nợ
+      periodDebit: string; periodCredit: string;
+      accumDebit: string; accumCredit: string;
+      children: Node[];
+    };
+    const nodeById = new Map<string, Node>();
+    for (const a of allAccounts) {
+      const p = prior.get(a.id);
+      const openBase = a.normalBalance === "DEBIT" ? a.openingBalance : Money.sub("0", a.openingBalance);
+      const openNet = Money.add(openBase, Money.sub(p?.debit ?? "0", p?.credit ?? "0"));
+      const pe = period.get(a.id);
+      const ac = accum.get(a.id);
+      nodeById.set(a.id, {
+        id: a.id, code: a.code, name: a.name, parentId: a.parentId, level: 0,
+        openNet,
+        periodDebit: pe?.debit ?? "0", periodCredit: pe?.credit ?? "0",
+        accumDebit: ac?.debit ?? "0", accumCredit: ac?.credit ?? "0",
+        children: [],
+      });
+    }
+    // Dựng cây + tính level.
+    const roots: Node[] = [];
+    for (const n of nodeById.values()) {
+      const parent = n.parentId ? nodeById.get(n.parentId) : undefined;
+      if (parent) parent.children.push(n);
+      else roots.push(n);
+    }
+    const setLevel = (n: Node, lv: number) => { n.level = lv; n.children.forEach((c) => setLevel(c, lv + 1)); };
+    roots.forEach((r) => setLevel(r, 0));
+
+    // Cộng dồn con → cha (đệ quy, cha giữ cả phát sinh own nếu có).
+    const rollup = (n: Node): void => {
+      for (const c of n.children) {
+        rollup(c);
+        n.openNet = Money.add(n.openNet, c.openNet);
+        n.periodDebit = Money.add(n.periodDebit, c.periodDebit);
+        n.periodCredit = Money.add(n.periodCredit, c.periodCredit);
+        n.accumDebit = Money.add(n.accumDebit, c.accumDebit);
+        n.accumCredit = Money.add(n.accumCredit, c.accumCredit);
+      }
+    };
+    roots.forEach(rollup);
+
+    // Trải cây ra danh sách theo mã TK, bỏ tài khoản không có số liệu nào.
+    const split = (net: string): { debit: string; credit: string } =>
+      Money.isNegative(net) ? { debit: "0", credit: Money.abs(net) } : { debit: net, credit: "0" };
+    const rows: TrialBalanceMisaRow[] = [];
+    const walk = (n: Node) => {
+      const closeNet = Money.add(n.openNet, Money.sub(n.periodDebit, n.periodCredit));
+      const hasData = !(
+        Money.isZero(n.openNet) && Money.isZero(n.periodDebit) && Money.isZero(n.periodCredit) &&
+        Money.isZero(n.accumDebit) && Money.isZero(n.accumCredit) && Money.isZero(closeNet)
+      );
+      if (hasData) {
+        const o = split(n.openNet);
+        const c = split(closeNet);
+        rows.push({
+          code: n.code, name: n.name, level: n.level, isParent: n.children.length > 0,
+          openDebit: o.debit, openCredit: o.credit,
+          periodDebit: n.periodDebit, periodCredit: n.periodCredit,
+          accumDebit: n.accumDebit, accumCredit: n.accumCredit,
+          closeDebit: c.debit, closeCredit: c.credit,
+        });
+      }
+      n.children.sort((a, b) => a.code.localeCompare(b.code)).forEach(walk);
+    };
+    roots.sort((a, b) => a.code.localeCompare(b.code)).forEach(walk);
+
+    // Tổng cộng: CHỈ cộng hàng gốc (level 0) để không đếm trùng cha-con.
+    const totals = {
+      openDebit: "0", openCredit: "0", periodDebit: "0", periodCredit: "0",
+      accumDebit: "0", accumCredit: "0", closeDebit: "0", closeCredit: "0",
+    };
+    for (const r of rows) {
+      if (r.level !== 0) continue;
+      totals.openDebit = Money.add(totals.openDebit, r.openDebit);
+      totals.openCredit = Money.add(totals.openCredit, r.openCredit);
+      totals.periodDebit = Money.add(totals.periodDebit, r.periodDebit);
+      totals.periodCredit = Money.add(totals.periodCredit, r.periodCredit);
+      totals.accumDebit = Money.add(totals.accumDebit, r.accumDebit);
+      totals.accumCredit = Money.add(totals.accumCredit, r.accumCredit);
+      totals.closeDebit = Money.add(totals.closeDebit, r.closeDebit);
+      totals.closeCredit = Money.add(totals.closeCredit, r.closeCredit);
+    }
+
+    return {
+      from: start,
+      to: at,
+      yearStart,
+      rows,
+      totals,
+      balanced:
+        Money.compare(totals.periodDebit, totals.periodCredit) === 0 &&
+        Money.compare(totals.openDebit, totals.openCredit) === 0 &&
+        Money.compare(totals.closeDebit, totals.closeCredit) === 0,
     };
   }
 

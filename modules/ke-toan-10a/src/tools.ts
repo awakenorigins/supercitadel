@@ -34,6 +34,26 @@ export function keToan10aTools(db: any): ToolDef[] {
       },
     },
     {
+      name: "ke_toan_10a.trial_balance_misa",
+      module: "ke-toan-10a",
+      description: "BẢNG CÂN ĐỐI TÀI KHOẢN 8 cột chuẩn Misa: dư đầu kỳ Nợ/Có, phát sinh trong kỳ Nợ/Có, lũy kế từ đầu năm, dư cuối kỳ — có TK cha-con. Input: from, to (YYYY-MM-DD, tùy chọn).",
+      requiresPermission: "ke-toan-10a:read",
+      handler: async (input: any, ctx) => {
+        const tb = await svc.reports.trialBalanceMisa(asCtx(ctx.orgId), input?.from, input?.to);
+        return { from: tb.from, to: tb.to, balanced: tb.balanced, totals: tb.totals, rows: tb.rows.slice(0, 40) };
+      },
+    },
+    {
+      name: "ke_toan_10a.general_journal",
+      module: "ke-toan-10a",
+      description: "SỔ NHẬT KÝ CHUNG: toàn bộ bút toán đã ghi sổ theo thời gian (ngày, số CT, diễn giải, TK Nợ/Có, số tiền). Dùng khi hỏi 'nhật ký chung', 'các bút toán tháng này'. Input: from, to (YYYY-MM-DD, tùy chọn).",
+      requiresPermission: "ke-toan-10a:read",
+      handler: async (input: any, ctx) => {
+        const j = await svc.reports.generalJournal(asCtx(ctx.orgId), input?.from, input?.to, 100);
+        return { count: j.count, totalDebit: j.totalDebit, totalCredit: j.totalCredit, entries: j.rows.slice(0, 30) };
+      },
+    },
+    {
       name: "ke_toan_10a.profit_loss",
       module: "ke-toan-10a",
       description: "Đọc kết quả kinh doanh: doanh thu, chi phí, lãi/lỗ trong kỳ",

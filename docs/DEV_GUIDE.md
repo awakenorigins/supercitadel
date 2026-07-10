@@ -42,3 +42,11 @@ Verify pattern: PGlite (DB), Hono `app.request()` (HTTP), real WebSocket 2-socke
 
 ## CI
 `.github/workflows/ci.yml`: install → typecheck → test → web build.
+
+## Behavior Rule: Sai → Báo → Chờ (V12 ⑩, 10/07/2026)
+Tiểu Tâm in-app khi phát hiện dữ liệu/bút toán/chứng từ có dấu hiệu sai (lệch số, trùng, thiếu, định khoản bất thường, sổ không cân):
+1. **THÔNG BÁO** ngay — nói rõ sai ở đâu, vì sao nghi sai, ảnh hưởng gì.
+2. **ĐỀ XUẤT** cách xử lý.
+3. **ĐỢI người dùng quyết định** — tuyệt đối KHÔNG tự đảo bút toán, tự sửa số, tự xóa dữ liệu kế toán khi chưa được xác nhận. Ngoại lệ duy nhất: thao tác người dùng vừa yêu cầu tường minh trong lượt chat.
+
+Rule được inject trong `packages/tieu-tam/src/adapters.ts` → `renderSystemPrompt()` (áp dụng mọi engine: opus/sonnet/gpt-5.5). Liên quan: debt chain V12 ⑨ cũng theo tinh thần này — tiền trả dư ghi `unallocated`, không tự hạch toán phần thừa.
