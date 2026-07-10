@@ -78,3 +78,15 @@ Not deployed. No database migration applied. No Git commit, tag, branch, push, o
 - Route limitation observed honestly: meeting creation auto-added the chair, so explicit participant add returned 422 `PARTICIPANT_DUPLICATE`; the script then lacked that existing participant ID and ballot cast returned 400 (`participant_id` null). Vote close still returned 200 but correctly recorded no valid ballot / not passed. Participant lifecycle is therefore proven via automatic chair creation plus duplicate enforcement, but successful ballot casting remains unproven in this live run.
 - Cleanup used only `smeet_*` tables. Temporary meeting and dependent rows were removed; final `smeet_meetings` residual count for the ID = 0. Settings/catalog were preserved; no `sm_*` table was touched.
 - Discovery/source verification: `smReadTools` contains exactly 10 named read tools; `smWriteActions` contains exactly 22 named actions (32 total definitions). `docs/TIEU-TAM.md` explicitly documents the `10 read + 22 action` contract; `GUIDE.md` and `TUTORIAL.md` remain packaged/discoverable.
+
+## 7. Final Lab runtime proof — 2026-07-10 23:13–23:18 CEST
+
+- Full `./deploy.sh` rerun: **exit 0**. Docker images rebuilt, web production build emitted all routes, core migrations reported clean skips, module migrations remained additive, and seed ended exactly with: `[seed] demo org ca-phe-nha-minh already exists — skip (idempotent)`.
+- Health/UI evidence: API `/health` **200**; web `/ke-toan-10a`, `/soul-manager`, `/soul-wallet`, `/soul-inventory`, `/chat`, `/soul-meeting` each **200**.
+- Authenticated owner-token regression after explicit activation: `ke-toan-10a/accounts` **200**, `soul-manager/employees` **200**, `soul-wallet/accounts` **200**, `soul-inventory/stock` **200**, `chat/rooms` **200**. Soul Meeting `settings`, `types`, `meetings` each **200**.
+- Live Soul Meeting lifecycle through mounted HTTP routes: create meeting → add/publish agenda → start meeting → start agenda item → record decision → create action → stop agenda item → finish meeting → fetch composite detail; **all HTTP 200**. Runtime IDs included meeting `6e557ae8-9192-4db5-80fc-56cae17c577b`, agenda `9ab023e1-5be5-4666-be7a-a008200414db`, decision `46e19b4f-0b3d-4aaf-893c-a891b3d3d9f7`, action `f01ca02a-ceff-43a2-b042-7796ffc8fae2`.
+- Cleanup was restricted to tables matching `smeet_%`; temporary `smeet_runtime_*` meeting graph removed, verification query returned `remaining = 0`. No `sm_*` table was touched.
+- Verification gates: module tests **189/189** (38+27+22+35+20+23+24), module typecheck PASS, API typecheck PASS. Bridge contract explicitly verifies **10 read tools + 22 write actions**, uniqueness, permissions, module gating, normalized schemas, execution, registry, and nightly sweep.
+- Tutorial/docs present and reviewed by the bridge/static gate: `docs/GUIDE.md`, `docs/TIEU-TAM.md`, `docs/TUTORIAL.md` (seven lessons, role guidance, safety/FAQ/quiz).
+
+Evidence logs for this run were captured locally at `/tmp/smeet-deploy-rerun.log`, `/tmp/smeet-live.log`, and `/tmp/smeet-tests.log` (ephemeral machine evidence, not committed).
