@@ -8,3 +8,10 @@ dist/
 *.log
 shots/
 Caddyfile.bak-*
+.env.lab.backup
+_incoming/
+shots-ss/
+scripts/*.png
+leverage-ux*.html
+leverage-ux*.png
+*.xlsx

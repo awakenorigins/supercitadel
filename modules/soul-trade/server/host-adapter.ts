@@ -11,7 +11,7 @@
 import { Hono, type MiddlewareHandler } from 'hono';
 import { createTradeRoutes } from '../src/routes.js';
 import { withOrgCtx } from './runtime.js';
-export { withOrgCtx } from './runtime.js';
+export { withOrgCtx, startAutomatoWorker } from './runtime.js';
 
 export interface SoulTradeDeps { requireAuth: MiddlewareHandler; gate?: MiddlewareHandler; databaseUrl?: string; }
 

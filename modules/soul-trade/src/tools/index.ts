@@ -15,6 +15,9 @@ import { botAnalytics, orgAnalytics, agentContribution } from '../services/analy
 import { backtestAndSave, evaluateTurn, walkforwardAndSave } from '../turn.service.js';
 import { resolveEmbeddingProvider, recallSimilar } from '../embeddings.js';
 import { getOrCreateAutomatoConfig, configureAutomato, applyAutomatoPreset, setAutomatoArmed, automatoLog, automatoAnalytics, getAutomatoPosition, closeAutomatoPosition, getAutomatoOHLCV } from '../automato.service.js';
+import { listOrders, addOrder, updateOrder, removeOrder, setOrderArmed, ordersStatus } from '../automato-orders.service.js';
+import { setBotKeys, clearBotKeys, keysStatus, verifyKeysWithExchange } from '../keys.service.js';
+import { fetchTopMovers } from '../datasource.js';
 
 export type ToolKind = 'tool' | 'action';
 export type TradeToolCtx = TradeCtx & { env?: HostLLMEnv };
@@ -35,6 +38,14 @@ async function mustBot(ctx: TradeToolCtx, name: string) {
 
 export const tradeReadTools: TradeToolDefinition[] = [
 
+  define({ name: 'soul-trade.market.movers', kind: 'tool', permission: 'trade.analytics.read',
+    description: 'Top cặp USDT biến động 24h dữ dội nhất (ticker thật từ sàn, lọc volume ≥2M, cache 30s).',
+    inputSchema: S.marketMoversSchema, docs: 'docs/TOOLS.md#movers',
+    run: async (_ctx, i) => ({ movers: await fetchTopMovers(i.exchange ?? 'binance', i.limit ?? 12) }) }),
+  define({ name: 'soul-trade.bot.keys.status', kind: 'tool', permission: 'trade.analytics.read',
+    description: 'Trạng thái kết nối sàn thật: has_keys + masked key; verify=true gọi fetchBalance lấy số dư USDT live.',
+    inputSchema: S.botKeysStatusSchema, docs: 'docs/TOOLS.md#botkeys',
+    run: async (ctx, i) => keysStatus(ctx, await mustBot(ctx, i.name), { verify: i.verify }) }),
   define({ name: 'soul-trade.automato.status', kind: 'tool', permission: 'trade.analytics.read',
     description: 'AUTOMATO status/config for one bot.', inputSchema: S.automatoRefSchema, docs: 'docs/AUTOMATO.md',
     run: async (ctx, i) => ({ bot: i.name, config: await getOrCreateAutomatoConfig(ctx, (await mustBot(ctx, i.name)).id) }) }),
@@ -50,6 +61,9 @@ export const tradeReadTools: TradeToolDefinition[] = [
   define({ name: 'soul-trade.automato.analytics', kind: 'tool', permission: 'trade.analytics.read',
     description: 'AUTOMATO analytics split by SIM/THAT ledgers.', inputSchema: S.automatoRefSchema, docs: 'docs/AUTOMATO.md#analytics',
     run: async (ctx, i) => automatoAnalytics(ctx, (await mustBot(ctx, i.name)).id) }),
+  define({ name: 'soul-trade.automato.orders.list', kind: 'tool', permission: 'trade.analytics.read',
+    description: 'List multi-order automato slots with live PnL.', inputSchema: S.automatoRefSchema, docs: 'docs/AUTOMATO.md#orders',
+    run: async (ctx, i) => ({ bot: i.name, orders: await ordersStatus(ctx, await mustBot(ctx, i.name)) }) }),
   define({ name: 'soul-trade.bot.list', kind: 'tool', permission: 'trade.bot.read',
     description: 'List all trading bots with status and equity.', inputSchema: S.botListSchema,
     docs: 'docs/TOOLS.md#botlist', run: (ctx) => listBots(ctx) }),
@@ -106,6 +120,22 @@ export const tradeWriteActions: TradeToolDefinition[] = [
   define({ name: 'soul-trade.automato.preset', kind: 'action', permission: 'trade.bot.control',
     description: 'Apply AUTOMATO preset: cautious/standard/active.', inputSchema: S.automatoPresetSchema,
     docs: 'docs/AUTOMATO.md#preset', run: async (ctx, i) => applyAutomatoPreset(ctx, (await mustBot(ctx, i.name)).id, i.preset) }),
+  // Đa lệnh (multi-order slots)
+  define({ name: 'soul-trade.automato.orders.add', kind: 'action', permission: 'trade.bot.control',
+    description: 'Add a multi-order automato slot (max 10).', inputSchema: S.automatoOrderAddSchema, docs: 'docs/AUTOMATO.md#orders',
+    run: async (ctx, i) => { const b = await mustBot(ctx, i.name); const { name, ...patch } = i as any; const o = await addOrder(ctx, b.id, patch); await setStatus(ctx, i.name, 'running'); return o; } }),
+  define({ name: 'soul-trade.automato.orders.update', kind: 'action', permission: 'trade.bot.control',
+    description: 'Update a multi-order slot config.', inputSchema: S.automatoOrderUpdateSchema, docs: 'docs/AUTOMATO.md#orders',
+    run: async (ctx, i) => { const b = await mustBot(ctx, i.name); const { name, orderId, ...patch } = i as any; return updateOrder(ctx, b.id, orderId, patch); } }),
+  define({ name: 'soul-trade.automato.orders.remove', kind: 'action', permission: 'trade.bot.control',
+    description: 'Remove a multi-order slot.', inputSchema: S.automatoOrderRefSchema, docs: 'docs/AUTOMATO.md#orders',
+    run: async (ctx, i) => { const b = await mustBot(ctx, i.name); return { removed: await removeOrder(ctx, b.id, (i as any).orderId) }; } }),
+  define({ name: 'soul-trade.automato.orders.arm', kind: 'action', permission: 'trade.bot.control',
+    description: 'Arm one multi-order slot (start running).', inputSchema: S.automatoOrderRefSchema, docs: 'docs/AUTOMATO.md#orders',
+    run: async (ctx, i) => { const b = await mustBot(ctx, i.name); await setStatus(ctx, i.name, 'running'); return setOrderArmed(ctx, b.id, (i as any).orderId, true); } }),
+  define({ name: 'soul-trade.automato.orders.disarm', kind: 'action', permission: 'trade.bot.control',
+    description: 'Disarm one multi-order slot.', inputSchema: S.automatoOrderRefSchema, docs: 'docs/AUTOMATO.md#orders',
+    run: async (ctx, i) => { const b = await mustBot(ctx, i.name); return setOrderArmed(ctx, b.id, (i as any).orderId, false); } }),
   define({ name: 'soul-trade.bot.create', kind: 'action', permission: 'trade.bot.write',
     description: 'Create a trading bot. Paper mode needs no keys.', inputSchema: S.botCreateSchema,
     docs: 'docs/TOOLS.md#botcreate', run: async (ctx, i) => ({ id: await createBot(ctx, i), name: i.name }) }),
@@ -118,6 +148,20 @@ export const tradeWriteActions: TradeToolDefinition[] = [
   define({ name: 'soul-trade.bot.delete', kind: 'action', permission: 'trade.bot.write',
     description: 'Delete a bot and its history.', inputSchema: S.botRefSchema, docs: 'docs/TOOLS.md#botdelete',
     run: async (ctx, i) => { await mustBot(ctx, i.name); await deleteBot(ctx, i.name); return { deleted: i.name }; } }),
+  // ── Gắn tài khoản sàn THẬT (BingX/Binance/Bybit…) ──
+  define({ name: 'soul-trade.bot.keys.set', kind: 'action', permission: 'trade.bot.write',
+    description: 'Gắn API key sàn thật cho bot: verify fetchBalance trước, PASS mới lưu (AES-256-GCM at rest).',
+    inputSchema: S.botKeysSetSchema, docs: 'docs/TOOLS.md#botkeys',
+    run: async (ctx, i) => {
+      const b = await mustBot(ctx, i.name);
+      const v = await verifyKeysWithExchange(b.exchange ?? 'bingx', { apiKey: i.apiKey, secret: i.secret }, b.market_type ?? 'swap');
+      if (!v.ok) throw new Error(`Key không kết nối được ${b.exchange}: ${v.error}`);
+      await setBotKeys(ctx, i.name, { apiKey: i.apiKey, secret: i.secret });
+      return { bot: i.name, exchange: b.exchange, saved: true, live: v };
+    } }),
+  define({ name: 'soul-trade.bot.keys.clear', kind: 'action', permission: 'trade.bot.write',
+    description: 'Gỡ API key sàn khỏi bot (về paper-only).', inputSchema: S.botRefSchema, docs: 'docs/TOOLS.md#botkeys',
+    run: async (ctx, i) => { await mustBot(ctx, i.name); await clearBotKeys(ctx, i.name); return { bot: i.name, cleared: true }; } }),
   define({ name: 'soul-trade.backtest.run', kind: 'action', permission: 'trade.backtest.run',
     description: 'Backtest a strategy on real exchange data and save the result.', inputSchema: S.backtestRunSchema,
     docs: 'docs/TOOLS.md#backtestrun', run: async (ctx, i) => {

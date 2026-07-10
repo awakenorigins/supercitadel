@@ -129,7 +129,9 @@ for (const t of soulRestaurantTools(undefined as any)) {
 export const ACTION_REGISTRY = new Map(defs.map(d=>[d.name,d]));
 export function toolSafeName(name:string){ return name.replace(/[^a-zA-Z0-9_-]/g, '_'); }
 const SAFE_TO_ACTION = new Map(defs.map(d=>[toolSafeName(d.name), d.name]));
-export const ACTION_TOOLS = defs.map(a=>({ type:'function', function:{ name:toolSafeName(a.name), description:a.description, parameters:a.parameters } }));
+// V11-fix: Anthropic proxy BẮT BUỘC input_schema.type='object' — tool nào thiếu type/properties làm TOÀN BỘ request 400 ("tools.N.custom.input_schema.type: Field required") → Tiểu Tâm tưởng nghẽn. Normalize để không bao giờ tái diễn.
+function normalizeParams(p:any){ const base = (p && typeof p==='object' && !Array.isArray(p)) ? p : {}; return { ...base, type: 'object', properties: (base.properties && typeof base.properties==='object') ? base.properties : {} }; }
+export const ACTION_TOOLS = defs.map(a=>({ type:'function', function:{ name:toolSafeName(a.name), description:a.description, parameters:normalizeParams(a.parameters) } }));
 export async function executeAction(ctx:TieuTamActionCtx, name:string, params:any, opts:ExecuteOptions = {}){
   const realName = SAFE_TO_ACTION.get(name) ?? name; const a=ACTION_REGISTRY.get(realName); if(!a) throw Errors.validation(`Action không hợp lệ: ${name}`);
   await gate(ctx, a.requiredModule);

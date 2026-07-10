@@ -15,6 +15,7 @@ import { soulManagerTools } from '@citadel/module-soul-manager/server/host-adapt
 import { soulInventoryTools, startSoulInventoryNightlyAutomation } from '@citadel/module-soul-inventory/server/host-adapter.js';
 import { startSoulSaleNightlyAutomation } from '@citadel/module-soul-sale/server/host-adapter.js';
 import { soulWalletTools, startSoulWalletNightlyAutomation } from '@citadel/module-soul-wallet/server/host-adapter.js';
+import { startAutomatoWorker } from '@citadel/module-soul-trade/server/host-adapter.js';
 import { buildModuleRoutes, requireModule } from './modules/routes.js';
 import { mountLoadedModules } from './modules/loader.js';
 import { buildCompanyModuleRoutes } from './company-module-routes.js';
@@ -208,6 +209,8 @@ startSoulSaleNightlyAutomation(getDb(), async () => {
 });
 // Soul-Wallet nightly: ví CÁ NHÂN — module tự quét distinct (org, owner) từ sw_accounts
 startSoulWalletNightlyAutomation(getDb());
+// Background automato worker: tick mọi bot armed+running mỗi 8s (chạy nền, thoát UI vẫn chạy).
+startAutomatoWorker({ intervalMs: 8000 });
 serve({ fetch: app.fetch, port }, () => console.log(`[api] listening on :${port}`));
 
 export default app;

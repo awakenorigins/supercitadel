@@ -13,8 +13,9 @@
  */
 import { Hono, type Context, type MiddlewareHandler } from 'hono';
 import { sql } from 'drizzle-orm';
+import * as XLSX from 'xlsx';
 import { createHrRoutes, type HrRouteRequest } from '../src/routes.js';
-import { hrReadTools, hrRecruitmentReadTools, hrWriteActions } from '../src/tools/index.js';
+import { hrReadTools, hrRecruitmentReadTools, hrWriteActions, getHrTool } from '../src/tools/index.js';
 import type { HrCtx, EventBus } from '../src/types.js';
 
 type AuthLike = { orgId: string; sub?: string; role?: string };
@@ -76,6 +77,37 @@ export function buildSoulManagerRoutes(deps: SoulManagerDeps): Hono {
       return c.json(data as any, def.method === 'POST' ? 201 : 200);
     });
   }
+
+  // V11C: Xuất Excel bảng lương kỳ — file .xlsx thật từ payslips (không có trước đó, Tiểu Tâm in-app báo đúng là thiếu).
+  app.get('/payroll/export.xlsx', async (c) => {
+    const auth = authOf(c);
+    const year = Number.parseInt(c.req.query('year') ?? '', 10);
+    const month = Number.parseInt(c.req.query('month') ?? '', 10);
+    const tool = getHrTool('hr.payroll.payslip')!;
+    const data: any = await withOrgTx(deps.db, auth.orgId, async (tx) => {
+      const ctx: HrCtx = { db: tx, orgId: auth.orgId, userId: auth.sub, bus };
+      return tool.handler(ctx, { year, month });
+    });
+    const V = (x: any) => Number(x ?? 0);
+    const aoa: (string | number)[][] = [
+      [`BẢNG LƯƠNG KỲ ${month}/${year}`],
+      [`Trạng thái kỳ: ${data.period?.status ?? ''} · Số NV: ${data.employees ?? 0}`],
+      [],
+      ['Mã NV', 'Họ tên', 'Tổng thu nhập (gross)', 'Bảo hiểm NV đóng', 'Thuế TNCN', 'Thực nhận (net)'],
+      ...(data.payslips ?? []).map((p: any) => [p.employee_code, p.full_name, V(p.gross), V(p.insurance), V(p.pit), V(p.net)]),
+      [],
+      ['TỔNG', '', V(data.total_gross), V(data.total_insurance), V(data.total_pit), V(data.total_net)],
+    ];
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols'] = [{ wch: 10 }, { wch: 26 }, { wch: 20 }, { wch: 18 }, { wch: 14 }, { wch: 18 }];
+    XLSX.utils.book_append_sheet(wb, ws, `Luong ${month}-${year}`);
+    const buf = new Uint8Array(XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }) as Buffer);
+    return c.body(buf as any, 200, {
+      'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition': `attachment; filename="bang-luong-${month}-${year}.xlsx"`,
+    });
+  });
   return app;
 }
 

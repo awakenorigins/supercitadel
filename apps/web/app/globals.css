@@ -779,6 +779,18 @@ button { transition: transform var(--dur-1); }
 @media (min-width: 1024px) { .tut-fab { display: none; } }
 @media (prefers-reduced-motion: reduce) { .tut-hole { animation: none; transition: none; } .tut-dim, .tut-card { animation: none; } }
 
+/* Quiz 3 câu kết thúc tutorial (09/07/2026) */
+.quiz-opt { display: block; width: 100%; text-align: left; border: 1px solid var(--bd); border-radius: 10px; padding: 9px 11px; font-size: 12.5px; line-height: 1.4; background: var(--s2); color: var(--txt, inherit); cursor: pointer; transition: .12s; }
+.quiz-opt:hover:not(:disabled) { border-color: var(--jade); background: var(--s1); }
+.quiz-opt:disabled { cursor: default; }
+.quiz-opt.ok { border-color: var(--jade); background: rgba(52,211,184,.14); color: var(--jade); font-weight: 700; }
+.quiz-opt.bad { border-color: var(--rose); background: rgba(232,105,92,.12); color: var(--rose); }
+.quiz-opt.dim { opacity: .5; }
+.quiz-key { display: inline-grid; place-items: center; width: 20px; height: 20px; margin-right: 8px; border-radius: 6px; background: var(--s1); border: 1px solid var(--bd2); font-family: var(--mono, monospace); font-size: 11px; font-weight: 700; vertical-align: middle; }
+.quiz-opt.ok .quiz-key { background: var(--jade); color: #04231f; border-color: var(--jade); }
+.quiz-opt.bad .quiz-key { background: var(--rose); color: #2a0f0c; border-color: var(--rose); }
+.quiz-mark { font-weight: 700; }
+
 /* ═══════════════ R7.7 THEMED AVATAR + THEME ART ═══════════════ */
 .ta-stage { position: relative; margin: 0 auto; display: grid; place-items: center; }
 .ta-svg { position: relative; z-index: 2; }

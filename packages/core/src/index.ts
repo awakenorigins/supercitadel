@@ -43,10 +43,13 @@ export type AvatarColor = (typeof AVATAR_COLORS)[number];
 /** Access token: 13 chars, uppercase alphanumeric (no ambiguous I/O/0/1 excluded set kept simple). */
 export const TOKEN_LENGTH = 13;
 export const TOKEN_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+// V11: nới cho token tùy chỉnh (beta accounts đặt token riêng như JoliPoli13) —
+// 8-24 ký tự chữ/số, phân biệt hoa thường. Token sinh tự động vẫn 13 ký tự in hoa như cũ.
 export const tokenSchema = z
   .string()
-  .length(TOKEN_LENGTH)
-  .regex(/^[A-Z0-9]{13}$/, 'Token phải gồm 13 ký tự in hoa hoặc số');
+  .min(8, 'Token tối thiểu 8 ký tự')
+  .max(24, 'Token tối đa 24 ký tự')
+  .regex(/^[A-Za-z0-9]{8,24}$/, 'Token chỉ gồm chữ và số (8-24 ký tự)');
 
 /** Decoded JWT payload carried on every authenticated request. */
 export interface JwtPayload {

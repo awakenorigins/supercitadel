@@ -137,9 +137,8 @@ function renderSystemPrompt(profile: WorkProfile): string {
 
 export class OpenAiAdapter implements EngineAdapter {
   readonly name = 'openai';
-  constructor(private apiKey = process.env.OPENAI_API_KEY ?? '', private model = process.env.OPENAI_MODEL ?? 'gpt-4o-mini', private baseUrl = process.env.OPENAI_BASE_URL ?? 'https://api.openai.com/v1') {}
-  async complete(profile: WorkProfile, messages: EngineMessage[], opts?: { tools?: any[]; toolChoice?: 'auto' | 'none' }): Promise<TieuTamReply & { rawMessage?: any }> {
-    if (!this.apiKey) throw new Error('OPENAI_API_KEY chưa cấu hình');
+  constructor(private apiKey = process.env.OPENAI_API_KEY ?? '', private model = process.env.OPENAI_MODEL ?? 'gpt-4o-mini', private baseUrl = process.env.OPENAI_BASE_URL ?? 'https://api.openai.com/v1', private maxTools = 0 /* 0 = không giới hạn */) {}
+  private async callOnce(profile: WorkProfile, messages: EngineMessage[], tools: any[] | undefined, toolChoice: 'auto' | 'none') {
     const res = await fetch(`${this.baseUrl.replace(/\/$/, '')}/chat/completions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${this.apiKey}` },
@@ -149,14 +148,26 @@ export class OpenAiAdapter implements EngineAdapter {
         temperature: 0.7,
         max_tokens: 8192,
         stream: false, // BẮT BUỘC — proxy nội bộ mặc định stream SSE nếu thiếu → res.json() nổ
-        ...(opts?.tools?.length ? { tools: opts.tools, tool_choice: opts.toolChoice ?? 'auto' } : {}),
+        ...(tools?.length ? { tools, tool_choice: toolChoice } : {}),
       }),
     });
     if (!res.ok) throw new Error(`OpenAI ${res.status}: ${(await res.text()).slice(0, 200)}`);
     const raw = await res.text();
     // Phòng hờ: proxy vẫn trả SSE (content-type event-stream hoặc body bắt đầu "data:") → ráp chunks lại
     const data = raw.trimStart().startsWith('data:') ? parseSseCompletion(raw) : (JSON.parse(raw) as any);
-    const msg = data.choices?.[0]?.message ?? {};
+    return data.choices?.[0]?.message ?? {};
+  }
+  async complete(profile: WorkProfile, messages: EngineMessage[], opts?: { tools?: any[]; toolChoice?: 'auto' | 'none' }): Promise<TieuTamReply & { rawMessage?: any }> {
+    if (!this.apiKey) throw new Error('OPENAI_API_KEY chưa cấu hình');
+    // V11-fix: proxy gpt-5.5 (9route :20128) trả finish=in_progress + content RỖNG khi tools >~50 (~16KB payload)
+    // → cap tools theo maxTools cho engine đó; opus/sonnet (:20131) chịu được full 205 tools nên maxTools=0.
+    const tools = this.maxTools > 0 && (opts?.tools?.length ?? 0) > this.maxTools ? opts!.tools!.slice(0, this.maxTools) : opts?.tools;
+    let msg = await this.callOnce(profile, messages, tools, opts?.toolChoice ?? 'auto');
+    // Guard chống trả rỗng: không content + không tool_calls → retry 1 lần KHÔNG tools để luôn có câu trả lời
+    if (!(msg.content ?? '').trim() && !(msg.tool_calls?.length)) {
+      console.warn(`[tieu-tam] ${this.model} trả rỗng (tools=${tools?.length ?? 0}) — retry không tools`);
+      msg = await this.callOnce(profile, messages, undefined, 'none');
+    }
     return { text: msg.content ?? '', mode: 'live', rawMessage: msg };
   }
 }
@@ -189,7 +200,7 @@ const ADAPTERS: Record<string, () => EngineAdapter> = {
   openai: () => new OpenAiAdapter(),
   'sonnet-4.6': () => new OpenAiAdapter(process.env.LLM_API_KEY ?? '', process.env.LLM_MODEL ?? 'cc/claude-sonnet-4-6', process.env.LLM_BASE_URL ?? 'http://100.65.135.62:20131/v1'),
   // R7.5: động cơ thứ 2 — GPT 5.5 qua 9route (OpenAI-compatible). Key/base riêng LLM2_*, fallback dùng chung LLM_API_KEY nếu cùng router.
-  'gpt-5.5': () => new OpenAiAdapter(process.env.LLM2_API_KEY ?? process.env.LLM_API_KEY ?? '', process.env.LLM2_MODEL ?? 'cx/gpt-5.5', process.env.LLM2_BASE_URL ?? 'http://100.65.135.62:20128/v1'),
+  'gpt-5.5': () => new OpenAiAdapter(process.env.LLM2_API_KEY ?? process.env.LLM_API_KEY ?? '', process.env.LLM2_MODEL ?? 'cx/gpt-5.5', process.env.LLM2_BASE_URL ?? 'http://100.65.135.62:20128/v1', Number(process.env.LLM2_MAX_TOOLS ?? 48)),
   // R11.6e: 3 model não — gpt-5.5 (default) · opus-4.6 · sonnet-4.6. Vision + tool sẵn có.
   'opus-4.6': () => new OpenAiAdapter(process.env.LLM_API_KEY ?? '', 'cc/claude-opus-4-6', process.env.LLM_BASE_URL ?? 'http://100.65.135.62:20131/v1'),
   anthropic: () => new AnthropicAdapter(),

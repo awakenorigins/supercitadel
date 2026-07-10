@@ -1,6 +1,9 @@
-# SUPERCITADEL — Pháo đài quản trị doanh nghiệp Việt
+# SUPERCITADEL LAB — Pháo đài quản trị doanh nghiệp Việt (nhánh Lab)
 
-![release](https://img.shields.io/badge/release-v11.0.0-jade) ![stack](https://img.shields.io/badge/stack-Next.js%20%2B%20Hono%20%2B%20Postgres-blue) ![pnpm](https://img.shields.io/badge/pnpm-monorepo-orange) ![beta](https://img.shields.io/badge/beta-open%20access-violet)
+> ⚠️ Đây là **nhánh LAB (sandbox)** fork từ supercitadel v11.5.0 — nơi phát triển nóng: Soul-Trade Automato, Soul-Manager payroll Excel, Tiểu Tâm 2-engine, beta onboarding. Xem `CHANGELOG.md` cho lịch sử lab đầy đủ.
+> Live lab: https://supercitadellab.62.146.238.213.sslip.io
+
+![release](https://img.shields.io/badge/release-v11.8.0-jade) ![stack](https://img.shields.io/badge/stack-Next.js%20%2B%20Hono%20%2B%20Postgres-blue) ![pnpm](https://img.shields.io/badge/pnpm-monorepo-orange) ![beta](https://img.shields.io/badge/beta-open%20access-violet)
 
 SUPERCITADEL là nền tảng quản trị doanh nghiệp Việt theo mô hình **pháo đài số**: mỗi tổ chức có tenant riêng, ví Om riêng, module nghiệp vụ riêng và trợ lý AI **Tiểu Tâm** sống trong hệ thống để hỗ trợ vận hành bằng ngôn ngữ tự nhiên.
 
@@ -43,6 +46,9 @@ SUPERCITADEL là nền tảng quản trị doanh nghiệp Việt theo mô hình 
 - **v9.0.0:** Module Loader FULL strict — 7 manifest v2 được validate tự động, catalog sinh từ manifest, module lỗi bị reject có lý do tiếng Việt, `loader-status` owner-only, CI thêm gate `audit-manifests`.
 - **v10.0.0:** Outbox foundation — bảng `outbox_events`, `emitEvent(tx, ...)` atomic, dispatcher retry an toàn, notification dogfood contract subscribe, admin API `/outbox/stats` + `/outbox/events`, guide cho module kho/ngoài cắm event.
 - **v11.0.0:** Module ngoài đầu tiên **Kế Toán 10A** — loader strict nạp module độc lập, schema `ketoan10a` 18 bảng, giá bán 1000 Om / thuê 150 Om 30 ngày, web `/ke-toan-10a`, 17 action Tiểu Tâm + 15 read-tool, live audit Phase D PASS 26/26.
+- **v11.6.x (lab):** Chat Tiểu Tâm nâng cấp lớn — file upload đủ loại (ảnh vision/xlsx/csv/pdf), caption kèm file chạy lệnh luôn, reply-to-message, memory 120 lượt + auto-summary, invoice card + xuất PDF/Excel; nạp 2 module ngoài **Soul-Wallet** + **Soul-Sale 1A** (57 capabilities).
+- **v11.7.x (lab):** **Soul-Trade Automato** — giá live ccxt, ULTRA scalping, đa lệnh 10 song song + background worker, gắn tài khoản sàn thật BingX (AES-256-GCM, verify trước khi lưu), trang coin biến động dữ dội, nút ARM 3D + %P&L real-time + biểu đồ nến OHLCV.
+- **v11.8.0 (lab):** **Tiểu Tâm hồi sinh 2 engine** — fix schema tool sập Anthropic proxy (normalizeParams) + fix GPT 5.5 trả rỗng khi >48 tools (cap + guard retry); **Soul-Manager xuất Excel bảng lương** (API + nút UI + tool Tiểu Tâm); **downloadUrl pattern generic** — module mới chỉ cần trả `data.downloadUrl` là chat tự hiện nút tải; token beta 8-24 ký tự case-sensitive + seed org sạch.
 
 ### Ví dụ lệnh Tiểu Tâm action layer r6
 

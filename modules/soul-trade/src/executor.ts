@@ -55,7 +55,7 @@ export class PaperExecutor implements Executor {
 export class LiveExecutor implements Executor {
   readonly mode = 'live';
   private client: any = null;
-  constructor(private exchangeId: string, private opts: { apiKey: string; secret: string; password?: string; marketType?: string; leverage?: number }) {}
+  constructor(private exchangeId: string, private opts: { apiKey: string; secret: string; password?: string; marketType?: string; leverage?: number; marginMode?: string }) {}
   private async ex() {
     if (this.client) return this.client;
     // @ts-ignore optional dependency resolved at runtime on the host
@@ -68,6 +68,7 @@ export class LiveExecutor implements Executor {
   async openPosition(plan: TradePlan): Promise<Position> {
     const ex = await this.ex();
     const side = plan.direction === 'long' ? 'buy' : 'sell';
+    try { if (this.opts.marginMode) await ex.setMarginMode(this.opts.marginMode, plan.symbol); } catch { /* some exchanges reject / not needed */ }
     try { if (this.opts.leverage) await ex.setLeverage(this.opts.leverage, plan.symbol); } catch { /* some exchanges reject / not needed */ }
     await ex.createOrder(plan.symbol, 'market', side, plan.size);
     // best-effort reduce-only protective orders (params vary by exchange)
@@ -99,10 +100,10 @@ export class LiveExecutor implements Executor {
   async equity(): Promise<number> { const ex = await this.ex(); const b = await ex.fetchBalance(); return Number(b?.USDT?.total ?? b?.total?.USDT ?? 0); }
 }
 
-export function makeExecutor(mode: 'paper' | 'live', cfg: { startEquity?: number; risk?: RiskParams; exchangeId?: string; keys?: { apiKey: string; secret: string; password?: string }; marketType?: string; leverage?: number }): Executor {
+export function makeExecutor(mode: 'paper' | 'live', cfg: { startEquity?: number; risk?: RiskParams; exchangeId?: string; keys?: { apiKey: string; secret: string; password?: string }; marketType?: string; leverage?: number; marginMode?: string }): Executor {
   if (mode === 'live') {
     if (!cfg.exchangeId || !cfg.keys?.apiKey) throw new Error('live mode requires exchangeId + API keys');
-    return new LiveExecutor(cfg.exchangeId, { ...cfg.keys, marketType: cfg.marketType, leverage: cfg.leverage });
+    return new LiveExecutor(cfg.exchangeId, { ...cfg.keys, marketType: cfg.marketType, leverage: cfg.leverage, marginMode: cfg.marginMode });
   }
   return new PaperExecutor(cfg.startEquity ?? 1000, cfg.risk);
 }

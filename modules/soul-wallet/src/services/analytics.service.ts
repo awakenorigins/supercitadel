@@ -146,11 +146,13 @@ export async function refreshMonthAggregates(ctx: SwCtx, months: string[]): Prom
       }
     }
 
-    await ctx.db.delete(swMonthlySummary)
-      .where(and(own(swMonthlySummary, ctx), eq(swMonthlySummary.month, month)));
-    await ctx.db.insert(swMonthlySummary).values({
-      orgId: ctx.orgId, ownerUserId: ctx.ownerId, month, income, expense,
-    });
+    // UPSERT nguyên tử — cùng bài race như networth (2 request refresh song song)
+    await ctx.db.insert(swMonthlySummary)
+      .values({ orgId: ctx.orgId, ownerUserId: ctx.ownerId, month, income, expense })
+      .onConflictDoUpdate({
+        target: [swMonthlySummary.orgId, swMonthlySummary.ownerUserId, swMonthlySummary.month],
+        set: { income, expense },
+      });
 
     await ctx.db.delete(swCategoryMonthSummary)
       .where(and(own(swCategoryMonthSummary, ctx), eq(swCategoryMonthSummary.month, month)));
@@ -178,11 +180,14 @@ export async function refreshNetworth(ctx: SwCtx, month: string): Promise<{ asse
     if (money.isNeg(bal)) liabilities = money.add(liabilities, money.abs(bal));
     else assets = money.add(assets, bal);
   }
-  await ctx.db.delete(swNetworthSnapshots)
-    .where(and(own(swNetworthSnapshots, ctx), eq(swNetworthSnapshots.month, month)));
-  await ctx.db.insert(swNetworthSnapshots).values({
-    orgId: ctx.orgId, ownerUserId: ctx.ownerId, month, assets, liabilities,
-  });
+  // UPSERT nguyên tử — tránh race delete+insert khi 2 request song song (executive + narrate)
+  // cùng refresh → duplicate key (org_id, owner_user_id, month). Bài học: 500 narrate 06/07.
+  await ctx.db.insert(swNetworthSnapshots)
+    .values({ orgId: ctx.orgId, ownerUserId: ctx.ownerId, month, assets, liabilities })
+    .onConflictDoUpdate({
+      target: [swNetworthSnapshots.orgId, swNetworthSnapshots.ownerUserId, swNetworthSnapshots.month],
+      set: { assets, liabilities },
+    });
   return { assets, liabilities, net: money.sub(assets, liabilities) };
 }
 

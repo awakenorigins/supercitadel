@@ -32,8 +32,8 @@ const KIND_COLOR: Record<string, string> = {
   person: 'var(--jade)', fact: 'var(--sky)', topic: 'var(--violet)', summary: 'var(--amber)', preference: 'var(--rose)',
 };
 const ENGINES = [
-  { v: 'gpt-5.5', label: 'GPT 5.5 🚀 (mặc định)' },
-  { v: 'opus-4.6', label: 'Claude Opus 4.6 👑 (mạnh nhất)' },
+  { v: 'opus-4.6', label: 'Claude Opus 4.6 👑 (mặc định · mạnh nhất)' },
+  { v: 'gpt-5.5', label: 'GPT 5.5 🚀 (phụ)' },
   { v: 'sonnet-4.6', label: 'Claude Sonnet 4.6 ⭐ (nhanh)' },
 ];
 
@@ -258,7 +258,7 @@ export default function TieuTamPage() {
               </div>
             </div>
             <select
-              value={soul?.engine ?? 'gpt-5.5'}
+              value={soul?.engine ?? 'opus-4.6'}
               disabled={busy === 'engine' || soul === null}
               onChange={(e) => switchEngine(e.target.value)}
               style={{ width: '100%', background: 'var(--s2)', border: '1px solid var(--bd)', borderRadius: 12, padding: '12px 13px', color: 'var(--txt)', fontSize: 13.5, fontFamily: 'var(--fb)', outline: 'none', appearance: 'none' }}>

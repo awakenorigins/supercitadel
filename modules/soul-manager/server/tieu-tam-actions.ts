@@ -10,7 +10,7 @@
  * securityLevel/sensitive: payroll.run/approve = lớp 2 (nhạy cảm tiền lương).
  */
 import { sql } from 'drizzle-orm';
-import { hrWriteActions } from '../src/tools/index.js';
+import { hrWriteActions, getHrTool } from '../src/tools/index.js';
 import type { HrCtx, EventBus } from '../src/types.js';
 
 const noopBus: EventBus = { emit: () => {} };
@@ -24,9 +24,41 @@ async function withOrgTx<T>(db: any, orgId: string, fn: (tx: any) => Promise<T>)
   });
 }
 
+/** V11C: xuất Excel bảng lương — verify kỳ tồn tại rồi trả downloadUrl cho UI render nút tải. */
+function payrollExportAction(): any {
+  return {
+    name: 'hr.payroll.export_excel',
+    description: 'XUẤT EXCEL BẢNG LƯƠNG: tạo link tải file .xlsx bảng lương kỳ (year, month). Dùng khi user muốn "xuất bảng lương excel", "tải file lương". Kỳ phải đã chạy lương (hr.payroll.run) trước.',
+    requiredModule: 'soul-manager',
+    permission: 'hr.payroll.read',
+    securityLevel: 1,
+    sensitive: false,
+    parameters: { type: 'object', properties: { year: { type: 'number', description: 'Năm, vd 2026' }, month: { type: 'number', description: 'Tháng 1-12' } }, required: ['year', 'month'] },
+    async execute(ctx: any, p: any) {
+      const year = Number(p?.year), month = Number(p?.month);
+      const tool = getHrTool('hr.payroll.payslip')!;
+      const data: any = await withOrgTx(ctx.db, ctx.orgId, async (tx) => {
+        const hrCtx: HrCtx = { db: tx, orgId: ctx.orgId, userId: ctx.userId, bus: noopBus };
+        return tool.handler(hrCtx, { year, month }); // nổ PERIOD_NOT_FOUND nếu chưa chạy lương → message rõ ràng
+      });
+      await ctx.audit?.({ action: 'hr.payroll.export_excel', detail: { year, month } });
+      return {
+        ok: true, action: 'hr.payroll.export_excel', module: 'soul-manager',
+        message: `Bảng lương kỳ ${month}/${year} (${data.employees ?? 0} NV) đã sẵn sàng — bấm nút tải bên dưới để lấy file Excel`,
+        data: {
+          downloadUrl: `/api/v1/soul-manager/payroll/export.xlsx?year=${year}&month=${month}`,
+          filename: `bang-luong-${month}-${year}.xlsx`,
+          employees: data.employees, total_net: data.total_net,
+        },
+      };
+    },
+  };
+}
+
 /** Trả về action defs; host push thẳng vào mảng defs của tieu-tam/actions.ts. */
 export function soulManagerTieuTamActions(): any[] {
-  return hrWriteActions.map((a) => {
+  const extra = [payrollExportAction()];
+  return [...extra, ...hrWriteActions.map((a) => {
     const sensitive = SENSITIVE.has(a.name);
     return {
       name: a.name,
@@ -45,5 +77,5 @@ export function soulManagerTieuTamActions(): any[] {
         return { ok: true, action: a.name, module: 'soul-manager', message: `Soul-Manager: ${a.name} xong`, data };
       },
     };
-  });
+  })];
 }

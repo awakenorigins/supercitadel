@@ -386,7 +386,7 @@ export default function SoulWalletPage() {
       <div style={{ display: 'grid', gap: 14, paddingBottom: 'calc(96px + env(safe-area-inset-bottom, 0px))' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <h1 style={{ margin: 0, fontSize: 20 }}>👛 Soul-Wallet — Ví Cá Nhân</h1>
-          {msg && <span className={`chip chip-${msg.ok ? 'jade' : 'amber'}`}>{msg.t}</span>}
+          {msg && <span className={`chip chip-${msg.ok ? 'jade' : 'amber'}`} style={{ position: 'fixed', top: 14, left: '50%', transform: 'translateX(-50%)', zIndex: 9999, maxWidth: '92vw', boxShadow: '0 4px 18px rgba(0,0,0,.45)', fontSize: 13, padding: '9px 16px' }}>{msg.ok ? '✅ ' : '⚠️ '}{msg.t}</span>}
         </div>
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           {([['tq', 'Tổng quan'], ['so', 'Sổ tiền'], ['hu', 'Hũ & Mục tiêu'], ['no', 'Sổ nợ'], ['dk', 'Định kỳ'], ['im', 'Import sao kê']] as const).map(([k, label]) => (
@@ -486,7 +486,10 @@ export default function SoulWalletPage() {
                     const accName = accs.find((a) => a.id === t.accountId)?.name ?? '';
                     const toName = tf ? (accs.find((a) => a.id === t.counterAccountId)?.name ?? '') : '';
                     const catName = cats.find((c) => c.id === t.categoryId)?.name ?? '';
-                    const title = t.memo || catName || kindVi;
+                    // memo hệ thống "Đảo SW-TX-..." → dịch đẹp, giấu mã chứng từ khỏi mặt trang
+                    const revMatch = t.memo?.match(/^Đảo SW-TX-\S+(?: — (.*))?$/);
+                    const cleanMemo = revMatch ? `↩️ Hoàn tác${revMatch[1] ? ` — ${revMatch[1]}` : ''}` : t.memo;
+                    const title = cleanMemo || catName || kindVi;
                     const subParts = [t.occurredAt.slice(5, 10).split('-').reverse().join('/'), tf ? `${accName} → ${toName}` : accName, !tf && catName && t.memo ? catName : ''].filter(Boolean);
                     const amtColor = rev ? 'var(--mut)' : tf ? 'var(--sky)' : inc ? 'var(--jade)' : '#e07a5f';
                     const sign = tf ? '' : inc ? '+' : '−';

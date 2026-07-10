@@ -76,9 +76,36 @@ export const automatoConfigureSchema = z.object({
   super_mode: z.enum(['off','soft','hard','custom','ultra']).optional(),
   super_cfg: z.record(z.any()).optional(),
   state: z.record(z.any()).optional(),
+  leverage: z.number().int().min(1).max(125).optional(),
+  margin_mode: z.enum(['isolated','cross']).optional(),
+  auto_leverage: z.boolean().optional(),
+  lev_min: z.number().int().min(1).max(125).optional(),
+  lev_max: z.number().int().min(1).max(125).optional(),
+  lev_risk_model: z.enum(['A','B']).optional(),
+  sim_capital: z.number().min(1).max(1_000_000_000).optional(),
 }).strict();
 export const automatoPresetSchema = z.object({ name: z.string().min(1), preset: z.enum(['cautious','standard','active']) }).strict();
+// Đa lệnh (multi-order slots)
+export const automatoOrderAddSchema = z.object({
+  name: z.string().min(1),
+  symbol: z.string().min(3).optional(),
+  side: z.enum(['long','short','auto']).optional(),
+  leverage: z.number().int().min(1).max(125).optional(),
+  tp_pct: z.number().min(0.1).max(1000).optional(),
+  sl_pct: z.number().min(0.1).max(1000).optional(),
+  risk_pct: z.number().min(0.1).max(100).optional(),
+  sim_capital: z.number().min(1).max(1_000_000_000).optional(),
+}).strict();
+export const automatoOrderUpdateSchema = automatoOrderAddSchema.extend({
+  orderId: z.string().min(1),
+  armed: z.boolean().optional(),
+}).strict();
+export const automatoOrderRefSchema = z.object({ name: z.string().min(1), orderId: z.string().min(1) }).strict();
 export const automatoRefSchema = z.object({ name: z.string().min(1) }).strict();
+// Gắn tài khoản sàn thật: API key + secret (BingX không cần passphrase)
+export const botKeysSetSchema = z.object({ name: z.string().min(1), apiKey: z.string().min(8).max(256), secret: z.string().min(8).max(256) }).strict();
+export const botKeysStatusSchema = z.object({ name: z.string().min(1), verify: z.boolean().optional() }).strict();
+export const marketMoversSchema = z.object({ exchange: z.string().optional(), limit: z.number().int().min(1).max(30).optional() }).strict();
 export const automatoQuickstartSchema = z.object({ name: z.string().min(1), symbol: z.string().min(3) }).strict();
 export const automatoLogSchema = z.object({ name: z.string().min(1), limit: z.number().int().min(1).max(500).optional() }).strict();
 export const automatoOhlcvSchema = z.object({ name: z.string().min(1), tf: z.string().min(1).max(8).optional(), limit: z.number().int().min(10).max(500).optional() }).strict();

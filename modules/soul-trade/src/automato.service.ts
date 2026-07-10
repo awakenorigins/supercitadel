@@ -4,10 +4,14 @@ import { fetchLiveOHLCV, fetchLivePrice } from './datasource.js';
 import { recordTrade } from './services/memory.service.js';
 import { j } from './db/client.js';
 
+// Trần đòn bẩy toàn hệ thống (anh Nấng chốt 08/07/2026): max 125×.
+export const LEVERAGE_MAX = 125;
+export const clampLev = (v: any, max = LEVERAGE_MAX) => Math.max(1, Math.min(max, Math.round(Number(v ?? 1) || 1)));
+
 export const AUTOMATO_PRESETS: Record<string, any> = {
-  cautious: { preset: 'cautious', risk_per_trade: 0.25, max_trades_session: 5, session_tp: 3, session_sl: 1.5, cb_loss_streak: 2, cb_cooldown_min: 30, breakeven_at_r: 1, trailing_atr: 0.7, partial_tp_at_r: 1.5, partial_tp_pct: 50, time_stop_bars: 18 },
-  standard: { preset: 'standard', risk_per_trade: 0.5, max_trades_session: 10, session_tp: 6, session_sl: 3, cb_loss_streak: 3, cb_cooldown_min: 15, breakeven_at_r: 1, trailing_atr: 0, partial_tp_at_r: 1.5, partial_tp_pct: 50, time_stop_bars: 24 },
-  active: { preset: 'active', risk_per_trade: 1, max_trades_session: 18, session_tp: 10, session_sl: 5, cb_loss_streak: 4, cb_cooldown_min: 10, breakeven_at_r: 1, trailing_atr: 0.7, partial_tp_at_r: 1.5, partial_tp_pct: 50, time_stop_bars: 36 },
+  cautious: { preset: 'cautious', risk_per_trade: 0.25, max_trades_session: 5, session_tp: 3, session_sl: 1.5, cb_loss_streak: 2, cb_cooldown_min: 30, breakeven_at_r: 1, trailing_atr: 0.7, partial_tp_at_r: 1.5, partial_tp_pct: 50, time_stop_bars: 18, leverage: 2 },
+  standard: { preset: 'standard', risk_per_trade: 0.5, max_trades_session: 10, session_tp: 6, session_sl: 3, cb_loss_streak: 3, cb_cooldown_min: 15, breakeven_at_r: 1, trailing_atr: 0, partial_tp_at_r: 1.5, partial_tp_pct: 50, time_stop_bars: 24, leverage: 5 },
+  active: { preset: 'active', risk_per_trade: 1, max_trades_session: 18, session_tp: 10, session_sl: 5, cb_loss_streak: 4, cb_cooldown_min: 10, breakeven_at_r: 1, trailing_atr: 0.7, partial_tp_at_r: 1.5, partial_tp_pct: 50, time_stop_bars: 36, leverage: 10 },
 };
 const DEFAULT_STATE = { uiPhase: 'standby', phase: 'SIM', simLossStreak: 0, realLossStreak: 0, sessionTrades: 0, sessionPnl: 0, stakeMult: 1, phaseHistory: [] as any[], cooldownUntil: null as string | null, openPosition: null as any, haltedReport: null as any };
 export const DEFAULT_ULTRA = { maxRiskPct: 1, tpPct: 2, trailGivebackPct: 0.5, stopLossPct: 1, timeframe: '1m', sizeMult: 1 };
@@ -21,7 +25,7 @@ export async function logAutomato(ctx: TradeCtx, botId: string, kind: string, me
 export async function getOrCreateAutomatoConfig(ctx: TradeCtx, botId: string) {
   let r: any;
   try { r = await ctx.db.query(`SELECT * FROM st_automato_configs WHERE org_id=$1 AND bot_id=$2`, [ctx.orgId, botId]); }
-  catch { return { id: 'missing-migration', org_id: ctx.orgId, bot_id: botId, armed: true, mode: 'live_sim', preset: 'standard', risk_per_trade: 0.5, max_trades_session: 10, session_tp: 6, session_sl: 3, cb_loss_streak: 3, cb_cooldown_min: 15, avoid_funding: false, trade_hours: { mode: '24/7' }, super_mode: 'off', super_cfg: DEFAULT_SUPER, state: DEFAULT_STATE }; }
+  catch { return { id: 'missing-migration', org_id: ctx.orgId, bot_id: botId, armed: true, mode: 'live_sim', preset: 'standard', risk_per_trade: 0.5, max_trades_session: 10, session_tp: 6, session_sl: 3, cb_loss_streak: 3, cb_cooldown_min: 15, avoid_funding: false, trade_hours: { mode: '24/7' }, super_mode: 'off', super_cfg: DEFAULT_SUPER, state: DEFAULT_STATE, leverage: 1, margin_mode: 'isolated', auto_leverage: false, lev_min: 2, lev_max: 20, lev_risk_model: 'A', sim_capital: 1000 }; }
   if (!r.rows[0]) {
     await ctx.db.query(`INSERT INTO st_automato_configs(org_id,bot_id) VALUES($1,$2) ON CONFLICT (org_id,bot_id) DO NOTHING`, [ctx.orgId, botId]);
     await logAutomato(ctx, botId, 'config', 'Tạo cấu hình AUTOMATO mặc định Chuẩn', { preset: 'standard' });
@@ -32,7 +36,14 @@ export async function getOrCreateAutomatoConfig(ctx: TradeCtx, botId: string) {
 
 export async function configureAutomato(ctx: TradeCtx, botId: string, patch: Record<string, any>) {
   await getOrCreateAutomatoConfig(ctx, botId);
-  const allowed = ['armed','mode','risk_per_trade','max_trades_session','session_tp','session_sl','breakeven_at_r','trailing_atr','partial_tp_at_r','partial_tp_pct','time_stop_bars','cb_loss_streak','cb_cooldown_min','avoid_funding','trade_hours','super_mode','super_cfg','state'];
+  const allowed = ['armed','mode','risk_per_trade','max_trades_session','session_tp','session_sl','breakeven_at_r','trailing_atr','partial_tp_at_r','partial_tp_pct','time_stop_bars','cb_loss_streak','cb_cooldown_min','avoid_funding','trade_hours','super_mode','super_cfg','state','leverage','margin_mode','auto_leverage','lev_min','lev_max','lev_risk_model','sim_capital'];
+  // clamp vốn giả lập về tối thiểu 1
+  if (patch.sim_capital != null) patch.sim_capital = Math.max(1, Number(patch.sim_capital) || 1000);
+  // clamp đòn bẩy về khoảng hợp lệ trước khi ghi DB
+  if (patch.leverage != null) patch.leverage = clampLev(patch.leverage);
+  if (patch.lev_min != null) patch.lev_min = clampLev(patch.lev_min);
+  if (patch.lev_max != null) patch.lev_max = clampLev(patch.lev_max);
+  if (patch.lev_min != null && patch.lev_max != null && patch.lev_min > patch.lev_max) { const t = patch.lev_min; patch.lev_min = patch.lev_max; patch.lev_max = t; }
   const keys = Object.keys(patch).filter(k => allowed.includes(k));
   if (!keys.length) return getOrCreateAutomatoConfig(ctx, botId);
   const sets = keys.map((k, i) => `${k}=$${i + 3}${['trade_hours','super_cfg','state'].includes(k) ? '::jsonb' : ''}`).join(',');
@@ -50,10 +61,18 @@ export async function applyAutomatoPreset(ctx: TradeCtx, botId: string, preset: 
 }
 export async function setAutomatoArmed(ctx: TradeCtx, botId: string, armed: boolean) {
   const prev = await getOrCreateAutomatoConfig(ctx, botId);
-  const st = { ...DEFAULT_STATE, ...(prev.state ?? {}) };
-  if (!armed) st.uiPhase = st.openPosition ? 'live' : 'standby';
+  let st = { ...DEFAULT_STATE, ...(prev.state ?? {}) };
+  if (armed) {
+    // ARM = mở PHIÊN MỚI: reset sạch trạng thái cũ (halted, cooldown, số lệnh, streak,
+    // báo cáo ngắt, vị thế treo) — nếu không, phiên trước ở 'halted'/đủ max_trades
+    // sẽ khiến ARM bị chặn ngay, UI hiện halted → "ARM không được".
+    st = { ...DEFAULT_STATE, phaseHistory: [] };
+    st.uiPhase = 'scanning';
+  } else {
+    st.uiPhase = st.openPosition ? 'live' : 'standby';
+  }
   const cfg = await configureAutomato(ctx, botId, { armed, state: st });
-  await logAutomato(ctx, botId, armed ? 'arm' : 'disarm', armed ? 'ARM phiên AUTOMATO' : 'DISARM phiên AUTOMATO');
+  await logAutomato(ctx, botId, armed ? 'arm' : 'disarm', armed ? 'ARM phiên AUTOMATO (phiên mới — reset session)' : 'DISARM phiên AUTOMATO');
   return cfg;
 }
 
@@ -118,7 +137,32 @@ export async function afterAutomatoTradeClosed(ctx: TradeCtx, botId: string, tra
 
 
 function sideMul(side: string) { return side === 'short' ? -1 : 1; }
-function pnlFor(p: any, livePrice: number) {
+/**
+ * Chọn đòn bẩy hiệu lực cho lệnh sắp vào.
+ * - auto_leverage=false → dùng cfg.leverage cố định.
+ * - auto_leverage=true  → theo biến động ATR%: vol cao → gần lev_min, vol thấp → gần lev_max.
+ * Luôn clamp trong [1, LEVERAGE_MAX] và [lev_min, lev_max].
+ */
+export function resolveLeverage(cfg: any, series: any[]): number {
+  const lo = clampLev(cfg?.lev_min ?? 2), hi = clampLev(cfg?.lev_max ?? 20);
+  const min = Math.min(lo, hi), max = Math.max(lo, hi);
+  if (!cfg?.auto_leverage) return clampLev(cfg?.leverage ?? 1);
+  const n = Math.min(14, series.length - 1);
+  if (n < 2) return clampLev(cfg?.leverage ?? min, max);
+  let tr = 0; for (let i = series.length - n; i < series.length; i++) {
+    const c = series[i], pc = series[i - 1];
+    const h = Number(c.h ?? c.high), l = Number(c.l ?? c.low), pcl = Number(pc.c ?? pc.close);
+    tr += Math.max(h - l, Math.abs(h - pcl), Math.abs(l - pcl));
+  }
+  const last = Number(series[series.length - 1].c ?? series[series.length - 1].close) || 1;
+  const atrPct = (tr / n) / last * 100;
+  const LOW = 0.15, HIGH = 1.2;
+  const t = Math.max(0, Math.min(1, (atrPct - LOW) / (HIGH - LOW)));
+  const lev = Math.round(max - t * (max - min));
+  return clampLev(lev, max);
+}
+
+export function pnlFor(p: any, livePrice: number) {
   const entry = num(p.entry), size = num(p.size), capital = Math.max(1, num(p.capital ?? p.entry * p.size));
   const pnlAbs = (livePrice - entry) * size * sideMul(p.side);
   const pnlPct = pnlAbs / capital * 100;
@@ -138,7 +182,9 @@ export async function getAutomatoPosition(ctx: TradeCtx, bot: any) {
   if (p) { try { livePrice = await fetchLivePrice(bot.exchange ?? 'binance', normalizeSym(p.symbol)); } catch {} }
   const pnl = p ? pnlFor(p, livePrice) : { pnlAbs: 0, pnlPct: 0 };
   return { bot: bot.name, phase: uiPhase(cfg2, st2), openPosition: p ? { ...p, mode: p.mode ?? (currentPhase(cfg2)==='SIM'?'sim':'real') } : null,
-    livePrice, pnlAbs: pnl.pnlAbs, pnlPct: pnl.pnlPct, sessionPnlPct: num(st2.sessionPnl), sessionTpPct: num(cfg2.session_tp ?? 6), sessionSlPct: num(cfg2.session_sl ?? 3), tradeCount: num(st2.sessionTrades), maxTrades: num(cfg2.max_trades_session ?? 10), mode: currentPhase(cfg2)==='SIM'?'sim':'real', haltedReport: st2.haltedReport ?? null };
+    livePrice, pnlAbs: pnl.pnlAbs, pnlPct: pnl.pnlPct, sessionPnlPct: num(st2.sessionPnl), sessionTpPct: num(cfg2.session_tp ?? 6), sessionSlPct: num(cfg2.session_sl ?? 3), tradeCount: num(st2.sessionTrades), maxTrades: num(cfg2.max_trades_session ?? 10), mode: currentPhase(cfg2)==='SIM'?'sim':'real',
+    leverage: num(p?.leverage ?? cfg2.leverage ?? 1), marginMode: p?.marginMode ?? cfg2.margin_mode ?? 'isolated', autoLeverage: !!cfg2.auto_leverage, levMin: num(cfg2.lev_min ?? 2), levMax: num(cfg2.lev_max ?? 20), levRiskModel: String(cfg2.lev_risk_model ?? 'A'), simCapital: num(cfg2.sim_capital ?? bot.equity ?? 1000), liqPct: num(p?.liqPct ?? (100/Math.max(1,num(p?.leverage ?? cfg2.leverage ?? 1)))),
+    haltedReport: st2.haltedReport ?? null };
 }
 
 export async function automatoHeartbeat(ctx: TradeCtx, bot: any, cfg0?: any, st0?: any, livePrice0?: number, symbol0?: string) {
@@ -159,9 +205,19 @@ export async function automatoHeartbeat(ctx: TradeCtx, bot: any, cfg0?: any, st0
   const candles = await fetchLiveOHLCV(bot.exchange ?? 'binance', symbol, ultraCfg(cfg).timeframe ?? '1m', 200);
   const series = candles.slice(0, -1); const ind = addIndicators(series, { ...(bot.params ?? {}) } as any); const dir = ultraDirection(series, ind) as Direction;
   if (dir === 'flat') { st.uiPhase = 'scanning'; await configureAutomato(ctx, bot.id, { state: st }); return st; }
-  const equity = Math.max(1, num(bot.equity ?? 1000)); const uc = ultraCfg(cfg); const riskPct = Math.min(num(uc.maxRiskPct ?? cfg.risk_per_trade ?? 1), 1);
-  const stopPct = Math.max(0.05, num(uc.stopLossPct ?? 1)); const tpPct = Math.max(0.1, num(uc.tpPct ?? 2)); const capital = equity; const size = (capital * riskPct / 100) / (livePrice * stopPct / 100);
-  st.openPosition = { symbol, side: dir, entry: livePrice, size, capital, sl: dir==='long'?livePrice*(1-stopPct/100):livePrice*(1+stopPct/100), tp: dir==='long'?livePrice*(1+tpPct/100):livePrice*(1-tpPct/100), riskPct, reason: 'ULTRA scalping EMA/RSI/momentum', mode: currentPhase(cfg)==='SIM'?'sim':'real', strategy: 'ULTRA', openedAt: new Date().toISOString(), peakPnlPct: 0, pnlAbs: 0, pnlPct: 0 };
+  // Vốn cơ sở tính size + P&L%: ưu tiên sim_capital (vốn giả lập anh đặt), fallback bot.equity, cuối cùng 1000.
+  const equity = Math.max(1, num(cfg.sim_capital ?? bot.equity ?? 1000)); const uc = ultraCfg(cfg); const riskPct = Math.min(num(uc.maxRiskPct ?? cfg.risk_per_trade ?? 1), 1);
+  const stopPct = Math.max(0.05, num(uc.stopLossPct ?? 1)); const tpPct = Math.max(0.1, num(uc.tpPct ?? 2)); const capital = equity;
+  // ĐÒN BẨY: chọn đòn bẩy (cố định hoặc auto theo ATR)
+  const lev = resolveLeverage(cfg, series);
+  const riskModel = String(cfg?.lev_risk_model ?? 'A').toUpperCase();
+  // size cơ sở theo risk%/SL (mô hình A: giữ nguyên, đòn bẩy chỉ giảm ký quỹ)
+  let size = (capital * riskPct / 100) / (livePrice * stopPct / 100);
+  // mô hình B: đòn bẩy khuếch đại notional → size × lev (P&L% tăng theo đòn bẩy)
+  if (riskModel === 'B') size = size * lev;
+  const marginUsd = (livePrice * size) / Math.max(1, lev);
+  const liqPct = 100 / Math.max(1, lev);
+  st.openPosition = { symbol, side: dir, entry: livePrice, size, capital, leverage: lev, marginMode: cfg?.margin_mode ?? 'isolated', riskModel, marginUsd, liqPct, sl: dir==='long'?livePrice*(1-stopPct/100):livePrice*(1+stopPct/100), tp: dir==='long'?livePrice*(1+tpPct/100):livePrice*(1-tpPct/100), riskPct, reason: 'ULTRA scalping EMA/RSI/momentum', mode: currentPhase(cfg)==='SIM'?'sim':'real', strategy: 'ULTRA', openedAt: new Date().toISOString(), peakPnlPct: 0, pnlAbs: 0, pnlPct: 0 };
   st.uiPhase = 'live'; await configureAutomato(ctx, bot.id, { state: st }); await logAutomato(ctx, bot.id, 'ultra_entry', `ULTRA vào ${String(dir).toUpperCase()} — state.openPosition`, st.openPosition); return st;
 }
 

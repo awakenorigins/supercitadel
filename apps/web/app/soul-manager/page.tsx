@@ -74,6 +74,21 @@ export default function SoulManagerPage() {
       setPayroll(d); setMsg({ t: `Đã chạy lương kỳ ${pm}/${py}`, ok: true });
     } catch (e: any) { setMsg({ t: e.message ?? 'Không chạy được lương', ok: false }); } finally { setBusy(''); }
   }
+  // V11C: xuất Excel bảng lương kỳ — fetch kèm Bearer rồi tải blob
+  async function exportPayrollXlsx() {
+    setBusy('xls'); setMsg(null);
+    try {
+      const s = getSession();
+      const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+      const r = await fetch(`${API}${P}/payroll/export.xlsx?year=${py}&month=${pm}`, { headers: s ? { Authorization: `Bearer ${s.jwt}` } : {} });
+      if (!r.ok) { const d = await r.json().catch(() => ({} as any)); throw new Error((d as any)?.error?.message ?? `Lỗi ${r.status}`); }
+      const blob = await r.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = `bang-luong-${pm}-${py}.xlsx`; document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+      setMsg({ t: `Đã xuất bang-luong-${pm}-${py}.xlsx`, ok: true });
+    } catch (e: any) { setMsg({ t: e.message ?? 'Không xuất được Excel', ok: false }); } finally { setBusy(''); }
+  }
 
   if (locked) return <Shell><ModuleLocked name="Soul-Manager — Nhân sự" id="soul-manager" /></Shell>;
 
@@ -181,6 +196,7 @@ export default function SoulManagerPage() {
                 <input style={inputSt} type="number" value={pm} onChange={(e) => setPm(Number(e.target.value))} placeholder="Tháng" />
                 <input style={inputSt} type="number" value={py} onChange={(e) => setPy(Number(e.target.value))} placeholder="Năm" />
                 <button className="btn-p" style={{ width: 'auto', padding: '0 18px', fontSize: 13 }} disabled={busy === 'pay'} onClick={runPayroll}>{busy === 'pay' ? 'Đang chạy…' : 'Chạy lương'}</button>
+                <button className="tab" data-tut="sm-payroll-export" style={{ width: 'auto', padding: '0 14px', fontSize: 13 }} disabled={busy === 'xls'} onClick={exportPayrollXlsx}>{busy === 'xls' ? 'Đang xuất…' : '⤓ Xuất Excel'}</button>
               </div>
               <div className="mut" style={{ fontSize: 11.5 }}>Tính lương cả kỳ: ngày công, OT, BHXH/BHYT/BHTN, thuế TNCN lũy tiến, thực nhận. Cần bảo mật lớp 2.</div>
             </div>

@@ -82,7 +82,7 @@ export default function Landing() {
           <div className="ld-login">
             <input
               value={token}
-              onChange={(e) => setToken(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 13))}
+              onChange={(e) => setToken(e.target.value.replace(/[^A-Za-z0-9]/g, '').slice(0, 24))}
               onKeyDown={(e) => e.key === 'Enter' && go()}
               placeholder="A7KX9M2PQ4RB3"
               autoFocus

@@ -254,6 +254,16 @@ async function downloadAuthed(path: string, filename: string, openInline = false
   setTimeout(() => URL.revokeObjectURL(url), 60000);
 }
 
+// V11C: bất kỳ tool result nào có data.downloadUrl → render nút tải file ngay trong chat (generic cho MỌI module, module mới cứ trả downloadUrl là có nút).
+function downloadOf(tool: any): { url: string; filename: string } | null {
+  if (!Array.isArray(tool)) return null;
+  for (const t of tool) {
+    const d = t?.result?.data;
+    if (d?.downloadUrl) return { url: String(d.downloadUrl), filename: String(d.filename ?? 'file-xuat.xlsx') };
+  }
+  return null;
+}
+
 // Nhận diện kết quả action là hoá đơn → trả data hoá đơn để render thẻ đẹp + nút xuất file.
 function invoiceOf(tool: any): any | null {
   if (!Array.isArray(tool)) return null;
@@ -433,6 +443,10 @@ function TieuTamSheet({ open, onClose }: { open: boolean; onClose: () => void })
                     ? <InvoiceCard inv={invoiceOf(m.tool)} />
                     : <details className="tcard"><summary className="th" style={{ cursor: 'pointer', listStyle: 'none' }}>{m.tool[0]?.tool} · {m.tool[0]?.module} <span style={{ marginLeft: 'auto', fontSize: 10.5, color: 'var(--mut)' }}>chi tiết ↓</span></summary>
                         <pre className="mono" style={{ padding: 12, fontSize: 11, color: 'var(--dim)', overflow: 'auto' }}>{JSON.stringify(m.tool[0]?.result, null, 1)}</pre></details>
+                )}
+                {m.tool && !m.pendingAction && downloadOf(m.tool) && (
+                  <button className="btn-p" style={{ marginTop: 8, width: 'auto', padding: '10px 16px', fontSize: 13 }}
+                    onClick={() => { const d = downloadOf(m.tool)!; downloadAuthed(d.url, d.filename); }}>⤓ Tải {downloadOf(m.tool)!.filename}</button>
                 )}
                 {m.suggestions && !streaming && (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginTop: 8 }}>

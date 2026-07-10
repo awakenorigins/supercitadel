@@ -68,6 +68,7 @@ export default function KeToan10aPage() {
   const [bills, setBills] = useState<Inv[] | null>(null);
   const [advs, setAdvs] = useState<any[] | null>(null);
   const [tpls, setTpls] = useState<any[] | null>(null);
+  const [fys, setFys] = useState<any[] | null>(null);
   const [assets, setAssets] = useState<Asset[] | null>(null);
   const [bva, setBva] = useState<Bva | null>(null);
   const [recon, setRecon] = useState<any | null>(null);
@@ -87,6 +88,7 @@ export default function KeToan10aPage() {
       api<{ bills: Inv[] }>(`${B}/bills`).then((d) => setBills(d.bills)).catch(() => {});
       api<{ advances: any[] }>(`${B}/advances`).then((d) => setAdvs(d.advances)).catch(() => {});
       api<{ templates: any[] }>(`${B}/recurring`).then((d) => setTpls(d.templates)).catch(() => {});
+      api<{ fiscalYears: any[] }>(`${B}/fiscal-years`).then((d) => setFys(d.fiscalYears)).catch(() => {});
       api<{ assets: Asset[] }>(`${B}/assets`).then((d) => setAssets(d.assets)).catch(() => {});
       api<Bva>(`${B}/reports/budget-vs-actual?year=${new Date().getFullYear()}`).then(setBva).catch(() => {});
       api<PL>(`${B}/reports/profit-loss?from=${today().slice(0, 8)}01&to=${today()}`).then(setPl).catch(() => {});
@@ -154,6 +156,77 @@ export default function KeToan10aPage() {
   }
   async function runRecurring() {
     try { const r = await api<{ generated: number }>(`${B}/recurring/run`, { method: 'POST', body: JSON.stringify({}) }); flash(r.generated ? `Đã sinh ${r.generated} chứng từ định kỳ` : 'Không có mẫu nào tới hạn'); load(); }
+    catch (e: any) { flash(e.message, false); }
+  }
+
+  /* ── Vận hành: tạo mẫu định kỳ ── */
+  const [rName, setRName] = useState(''); const [rKind, setRKind] = useState<'RECEIPT' | 'PAYMENT'>('PAYMENT');
+  const [rFreq, setRFreq] = useState('MONTHLY'); const [rAmt, setRAmt] = useState('');
+  const [rAcc, setRAcc] = useState('642'); const [rStart, setRStart] = useState(today());
+  async function addRecurring() {
+    const amt = Math.round(parseFloat(rAmt.replace(/[^\d.]/g, '')) || 0);
+    if (!rName.trim() || amt <= 0 || !rStart) return;
+    try {
+      await api(`${B}/recurring`, { method: 'POST', body: JSON.stringify({ name: rName.trim(), kind: rKind, frequency: rFreq, payload: { counterAccountCode: rAcc.trim() || (rKind === 'RECEIPT' ? '511' : '642'), cashAccountCode: '111', amount: String(amt) }, startDate: rStart }) });
+      flash(`Đã tạo mẫu định kỳ “${rName.trim()}”: ${rKind === 'RECEIPT' ? 'thu' : 'chi'} ${vnd(amt)}₫ mỗi ${rFreq === 'DAILY' ? 'ngày' : rFreq === 'WEEKLY' ? 'tuần' : rFreq === 'YEARLY' ? 'năm' : 'tháng'}, bắt đầu ${rStart}`);
+      setRName(''); setRAmt(''); load();
+    } catch (e: any) { flash(e.message, false); }
+  }
+
+  /* ── Hóa đơn: hạn mức tín dụng khách ── */
+  const [cName, setCName] = useState(''); const [cLimit, setCLimit] = useState(''); const [cDays, setCDays] = useState('');
+  async function setCreditLimit() {
+    const limit = Math.round(parseFloat(cLimit.replace(/[^\d.]/g, '')) || 0);
+    if (!cName.trim() || limit <= 0) return;
+    try {
+      const cs = await api<{ contacts: any[] }>(`${B}/contacts?search=${encodeURIComponent(cName.trim())}`);
+      const contact = cs.contacts.find((x) => x.name?.toLowerCase() === cName.trim().toLowerCase()) ?? cs.contacts[0];
+      if (!contact) { flash(`Không tìm thấy khách “${cName.trim()}” — tạo hóa đơn cho khách này trước.`, false); return; }
+      const body: any = { creditLimit: String(limit) };
+      const days = parseInt(cDays, 10);
+      if (Number.isFinite(days) && days >= 0) body.paymentTermDays = days;
+      await api(`${B}/contacts/${contact.id}`, { method: 'PATCH', body: JSON.stringify(body) });
+      flash(`Đã đặt hạn mức ${contact.name}: ${vnd(limit)}₫${body.paymentTermDays != null ? ` · nợ tối đa ${body.paymentTermDays} ngày` : ''} — hóa đơn vượt sẽ bị chặn`);
+      setCName(''); setCLimit(''); setCDays(''); load();
+    } catch (e: any) { flash(e.message, false); }
+  }
+
+  /* ── Phân tích: đánh giá lại tỷ giá ── */
+  const [xAcc, setXAcc] = useState('112'); const [xCur, setXCur] = useState('USD');
+  const [xAmt, setXAmt] = useState(''); const [xRate, setXRate] = useState('');
+  async function revalueFx() {
+    const fa = parseFloat(xAmt.replace(/,/g, '.').replace(/[^\d.]/g, '')) || 0;
+    const rate = parseFloat(xRate.replace(/,/g, '.').replace(/[^\d.]/g, '')) || 0;
+    if (!xAcc.trim() || fa <= 0 || rate <= 0) return;
+    try {
+      const r = await api<any>(`${B}/fx/revalue`, { method: 'POST', body: JSON.stringify({ accountCode: xAcc.trim(), foreignCurrency: xCur.trim() || 'USD', foreignAmount: String(fa), newRate: String(rate) }) });
+      const kq = r.result === 'GAIN' ? 'LÃI tỷ giá' : r.result === 'LOSS' ? 'LỖ tỷ giá' : 'không chênh lệch';
+      flash(`Đánh giá lại TK ${xAcc}: ${vnd(r.bookValue)}₫ → ${vnd(r.revaluedValue)}₫ · ${kq} ${vnd(Math.abs(Number(r.difference)))}₫`, r.result !== 'LOSS');
+      setXAmt(''); setXRate(''); load();
+    } catch (e: any) { flash(e.message, false); }
+  }
+
+  /* ── Báo cáo: kết chuyển cuối kỳ / khóa kỳ ── */
+  const [fyName, setFyName] = useState(String(new Date().getFullYear()));
+  async function closeFiscalYear() {
+    const key = fyName.trim();
+    if (!key) return;
+    if (!window.confirm(`Kết chuyển + KHÓA năm tài chính “${key}”? Sau khi khóa không ghi sổ vào kỳ này được nữa.`)) return;
+    try {
+      let list = fys ?? (await api<{ fiscalYears: any[] }>(`${B}/fiscal-years`)).fiscalYears;
+      let fy = list.find((f) => f.id === key || f.name === key);
+      if (!fy) {
+        fy = (await api<{ fiscalYear: any }>(`${B}/fiscal-years`, { method: 'POST', body: JSON.stringify({ name: key, startDate: `${key}-01-01`, endDate: `${key}-12-31` }) })).fiscalYear;
+        flash(`Đã tạo năm tài chính ${key} (01/01 → 31/12)`);
+      }
+      const r = await api<any>(`${B}/fiscal-years/${fy.id}/closing`, { method: 'POST', body: JSON.stringify({}) });
+      flash(`Đã kết chuyển năm ${fy.name}: lãi/lỗ ${vnd(r.netResult)}₫ chuyển về 421 · kỳ ĐÃ KHÓA 🔒`);
+      load();
+    } catch (e: any) { flash(e.message, false); }
+  }
+  async function reopenFiscalYear(fy: any) {
+    if (!window.confirm(`Mở lại năm tài chính “${fy.name}”?`)) return;
+    try { await api(`${B}/fiscal-years/${fy.id}/reopen`, { method: 'POST', body: JSON.stringify({}) }); flash(`Đã mở lại kỳ ${fy.name}`); load(); }
     catch (e: any) { flash(e.message, false); }
   }
 
@@ -290,6 +363,16 @@ export default function KeToan10aPage() {
               <button className="btn-p" onClick={addInvoice}>Tạo HĐ</button>
             </div>
           </div>
+          <div className="card" style={{ padding: 14 }} data-tut="k10a-credit">
+            <h3 style={{ marginTop: 0 }}>Hạn mức tín dụng khách hàng</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 110px auto', gap: 8 }}>
+              <input style={inp} placeholder="Tên khách hàng" value={cName} onChange={(e) => setCName(e.target.value)} />
+              <input style={inp} placeholder="Hạn mức nợ (₫)" inputMode="numeric" value={cLimit} onChange={(e) => setCLimit(e.target.value)} />
+              <input style={inp} placeholder="Số ngày nợ" inputMode="numeric" value={cDays} onChange={(e) => setCDays(e.target.value)} />
+              <button className="btn-p" onClick={setCreditLimit}>Đặt hạn mức</button>
+            </div>
+            <div style={{ fontSize: 'var(--fs-micro)', color: 'var(--mut)', marginTop: 6 }}>Hóa đơn bán làm tổng nợ vượt hạn mức sẽ bị chặn tự động.</div>
+          </div>
           {([['Hóa đơn bán (phải thu)', invs, 'invoices'], ['Hóa đơn mua (phải trả)', bills, 'bills']] as const).map(([title, rows, kind]) => (
             <div key={title} className="card" style={{ padding: 14 }}>
               <h3 style={{ marginTop: 0 }}>{title}</h3>
@@ -328,7 +411,16 @@ export default function KeToan10aPage() {
               <h3 style={{ margin: 0 }}>Giao dịch định kỳ</h3>
               <button className="btn-p" style={{ marginLeft: 'auto' }} onClick={runRecurring} data-tut="k10a-recurring">Chạy tới hạn</button>
             </div>
-            {!tpls ? '…' : tpls.length === 0 ? <EmptyState icon="book" title="Chưa có mẫu định kỳ" sub='Bảo Tiểu Tâm: "đặt định kỳ 10A tiền thuê 20 triệu mỗi tháng".' /> : (
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 90px 1fr auto', gap: 8, marginTop: 10 }} data-tut="k10a-recurring-form">
+              <input style={inp} placeholder="Tên mẫu (VD: Tiền thuê VP)" value={rName} onChange={(e) => setRName(e.target.value)} />
+              <select style={inp} value={rKind} onChange={(e) => setRKind(e.target.value as never)}><option value="PAYMENT">Chi định kỳ</option><option value="RECEIPT">Thu định kỳ</option></select>
+              <select style={inp} value={rFreq} onChange={(e) => setRFreq(e.target.value)}><option value="DAILY">Hàng ngày</option><option value="WEEKLY">Hàng tuần</option><option value="MONTHLY">Hàng tháng</option><option value="YEARLY">Hàng năm</option></select>
+              <input style={inp} placeholder="Số tiền" inputMode="numeric" value={rAmt} onChange={(e) => setRAmt(e.target.value)} />
+              <input style={inp} placeholder="TK đối ứng" value={rAcc} onChange={(e) => setRAcc(e.target.value)} title="642 chi phí · 511 doanh thu" />
+              <input style={inp} type="date" value={rStart} onChange={(e) => setRStart(e.target.value)} title="Ngày bắt đầu" />
+              <button className="btn-p" onClick={addRecurring}>Tạo mẫu</button>
+            </div>
+            {!tpls ? '…' : tpls.length === 0 ? <EmptyState icon="book" title="Chưa có mẫu định kỳ" sub="Tạo mẫu bằng form trên, rồi bấm Chạy tới hạn để sinh chứng từ." /> : (
               <table className="dt" style={{ marginTop: 10 }}><thead><tr><th>Tên</th><th>Tần suất</th><th>Kỳ tiếp</th><th style={{ textAlign: 'right' }}>Đã sinh</th></tr></thead>
                 <tbody>{tpls.slice(0, 6).map((t) => <tr key={t.id}><td>{t.name}</td><td>{t.frequency}</td><td>{t.nextRunDate}</td><td style={{ textAlign: 'right', fontFamily: 'var(--fm)' }}>{t.runCount}</td></tr>)}</tbody></table>
             )}
@@ -374,6 +466,17 @@ export default function KeToan10aPage() {
                 <tbody>{bva.rows.map((r) => <tr key={r.accountCode}><td>{r.accountCode} {r.accountName}</td><td style={{ textAlign: 'right', fontFamily: 'var(--fm)' }}>{vnd(r.budget)}₫</td><td style={{ textAlign: 'right', fontFamily: 'var(--fm)' }}>{vnd(r.actual)}₫</td><td>{r.overBudget ? <span className="chip chip-amber">VƯỢT</span> : <span className="chip chip-jade">OK</span>}</td></tr>)}</tbody></table>
             )}
           </div>
+          <div className="card" style={{ padding: 14 }} data-tut="k10a-fx">
+            <h3 style={{ marginTop: 0 }}>Đánh giá lại tỷ giá cuối kỳ</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '100px 100px 1fr 1fr auto', gap: 8 }}>
+              <input style={inp} placeholder="TK (112…)" value={xAcc} onChange={(e) => setXAcc(e.target.value)} />
+              <input style={inp} placeholder="Ngoại tệ" value={xCur} onChange={(e) => setXCur(e.target.value)} />
+              <input style={inp} placeholder="Số dư ngoại tệ (VD 1000)" inputMode="decimal" value={xAmt} onChange={(e) => setXAmt(e.target.value)} />
+              <input style={inp} placeholder="Tỷ giá mới (VD 25400)" inputMode="decimal" value={xRate} onChange={(e) => setXRate(e.target.value)} />
+              <button className="btn-p" onClick={revalueFx}>Đánh giá</button>
+            </div>
+            <div style={{ fontSize: 'var(--fs-micro)', color: 'var(--mut)', marginTop: 6 }}>Ghi lãi tỷ giá vào 515, lỗ vào 635 — đúng chuẩn đánh giá lại cuối kỳ TT133.</div>
+          </div>
         </div>
       )}
 
@@ -391,6 +494,19 @@ export default function KeToan10aPage() {
               </span>
             </div>
             <div style={{ marginTop: 12 }}>{pl ? <PLBarChart pl={pl} /> : '…'}</div>
+          </div>
+          <div className="card" style={{ padding: 14 }} data-tut="k10a-close">
+            <h3 style={{ marginTop: 0 }}>Kết chuyển cuối kỳ · khóa kỳ</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '140px auto 1fr', gap: 8, alignItems: 'center' }}>
+              <input style={inp} placeholder="Năm (VD 2026)" value={fyName} onChange={(e) => setFyName(e.target.value)} />
+              <button className="btn-p" onClick={closeFiscalYear}>Kết chuyển + Khóa</button>
+              <span style={{ fontSize: 'var(--fs-micro)', color: 'var(--mut)' }}>Doanh thu/chi phí → 911 → 421, sau đó KHÓA kỳ (không ghi sổ thêm được). Chưa có năm tài chính sẽ tự tạo 01/01 → 31/12.</span>
+            </div>
+            {fys && fys.length > 0 && (
+              <table className="dt" style={{ marginTop: 10 }}><thead><tr><th>Năm tài chính</th><th>Từ</th><th>Đến</th><th></th><th></th></tr></thead>
+                <tbody>{fys.map((f) => <tr key={f.id}><td style={{ fontFamily: 'var(--fm)' }}>{f.name}</td><td>{f.startDate}</td><td>{f.endDate}</td><td>{f.isClosed ? <span className="chip chip-amber">ĐÃ KHÓA 🔒</span> : <span className="chip chip-jade">ĐANG MỞ</span>}</td>
+                  <td>{f.isClosed && <button className="btn" onClick={() => reopenFiscalYear(f)}>Mở lại</button>}</td></tr>)}</tbody></table>
+            )}
           </div>
           <div className="card" style={{ padding: 14 }}>
             <h3 style={{ marginTop: 0 }}>Báo cáo khác (API)</h3>
