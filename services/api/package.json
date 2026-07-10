@@ -27,6 +27,7 @@
     "@citadel/module-accounting": "workspace:*",
     "@citadel/module-ke-toan-10a": "workspace:*",
     "@citadel/module-soul-manager": "workspace:*",
+    "@citadel/module-soul-meeting": "workspace:*",
     "@citadel/module-soul-inventory": "workspace:*",
     "@citadel/module-soul-sale": "workspace:*",
     "@citadel/module-soul-wallet": "workspace:*",

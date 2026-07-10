@@ -1,0 +1,1046 @@
+{
+  "org": "a9f16130-0d72-47eb-878e-2c286b17423b",
+  "user": "b2598912-997a-4711-944d-4a763cb46756",
+  "meeting_id": "130f0338-0988-44f7-be2a-9765acc7b2a0",
+  "results": [
+    [
+      "GET",
+      "/ke-toan-10a/settings",
+      404,
+      {
+        "bytes": 13,
+        "ct": "text/plain; charset=UTF-8"
+      }
+    ],
+    [
+      "GET",
+      "/soul-manager/settings",
+      404,
+      {
+        "bytes": 13,
+        "ct": "text/plain; charset=UTF-8"
+      }
+    ],
+    [
+      "GET",
+      "/soul-wallet/settings",
+      404,
+      {
+        "bytes": 13,
+        "ct": "text/plain; charset=UTF-8"
+      }
+    ],
+    [
+      "GET",
+      "/soul-inventory/settings",
+      404,
+      {
+        "bytes": 13,
+        "ct": "text/plain; charset=UTF-8"
+      }
+    ],
+    [
+      "GET",
+      "/chat/rooms",
+      200,
+      {
+        "rooms": [
+          {
+            "id": "514ead22-a02a-4682-bf67-1da9dbe3b744",
+            "orgId": "a9f16130-0d72-47eb-878e-2c286b17423b",
+            "name": "Ca Tối · Team",
+            "isGroup": true,
+            "kind": "group",
+            "departmentId": null,
+            "createdBy": "b2598912-997a-4711-944d-4a763cb46756",
+            "createdAt": "2026-07-06T03:09:56.666Z",
+            "lastMessageAt": "2026-07-06T08:27:39.029Z"
+          }
+        ]
+      }
+    ],
+    [
+      "POST",
+      "/soul-meeting/meetings",
+      200,
+      {
+        "data": {
+          "id": "130f0338-0988-44f7-be2a-9765acc7b2a0",
+          "orgId": "a9f16130-0d72-47eb-878e-2c286b17423b",
+          "seriesId": null,
+          "typeId": null,
+          "title": "TEMP runtime proof 20260710",
+          "goal": "ephemeral API lifecycle proof",
+          "status": "scheduled",
+          "startAt": "2026-07-10T21:22:22.033Z",
+          "endAt": "2026-07-10T22:17:22.033Z",
+          "actualStartAt": null,
+          "actualEndAt": null,
+          "location": null,
+          "onlineLink": null,
+          "chairUserId": "b2598912-997a-4711-944d-4a763cb46756",
+          "secretaryUserId": "b2598912-997a-4711-944d-4a763cb46756",
+          "agendaPublished": false,
+          "costRate": "0",
+          "cancelledReason": null,
+          "reminded1": false,
+          "reminded2": false,
+          "createdBy": "b2598912-997a-4711-944d-4a763cb46756",
+          "createdAt": "2026-07-10T21:17:22.057Z",
+          "updatedAt": "2026-07-10T21:17:22.057Z"
+        }
+      }
+    ],
+    [
+      "POST",
+      "/soul-meeting/participants",
+      422,
+      {
+        "error": {
+          "code": "PARTICIPANT_DUPLICATE",
+          "message": "Người này đã có trong cuộc họp"
+        }
+      }
+    ],
+    [
+      "POST",
+      "/soul-meeting/agenda",
+      200,
+      {
+        "data": {
+          "id": "e8c4af8f-83b2-4a2e-a5af-0061092cf519",
+          "orgId": "a9f16130-0d72-47eb-878e-2c286b17423b",
+          "meetingId": "130f0338-0988-44f7-be2a-9765acc7b2a0",
+          "sortOrder": 0,
+          "title": "Runtime proof agenda",
+          "detail": "temporary",
+          "presenterParticipantId": null,
+          "timeboxMinutes": 10,
+          "status": "pending",
+          "actualStartAt": null,
+          "actualEndAt": null,
+          "source": "manual",
+          "carriedFromItemId": null,
+          "createdBy": "b2598912-997a-4711-944d-4a763cb46756",
+          "createdAt": "2026-07-10T21:17:22.381Z"
+        }
+      }
+    ],
+    [
+      "POST",
+      "/soul-meeting/meetings/130f0338-0988-44f7-be2a-9765acc7b2a0/agenda/publish",
+      200,
+      {
+        "data": {
+          "id": "130f0338-0988-44f7-be2a-9765acc7b2a0",
+          "orgId": "a9f16130-0d72-47eb-878e-2c286b17423b",
+          "seriesId": null,
+          "typeId": null,
+          "title": "TEMP runtime proof 20260710",
+          "goal": "ephemeral API lifecycle proof",
+          "status": "scheduled",
+          "startAt": "2026-07-10T21:22:22.033Z",
+          "endAt": "2026-07-10T22:17:22.033Z",
+          "actualStartAt": null,
+          "actualEndAt": null,
+          "location": null,
+          "onlineLink": null,
+          "chairUserId": "b2598912-997a-4711-944d-4a763cb46756",
+          "secretaryUserId": "b2598912-997a-4711-944d-4a763cb46756",
+          "agendaPublished": true,
+          "costRate": "0",
+          "cancelledReason": null,
+          "reminded1": false,
+          "reminded2": false,
+          "createdBy": "b2598912-997a-4711-944d-4a763cb46756",
+          "createdAt": "2026-07-10T21:17:22.057Z",
+          "updatedAt": "2026-07-10T21:17:22.466Z"
+        }
+      }
+    ],
+    [
+      "POST",
+      "/soul-meeting/meetings/130f0338-0988-44f7-be2a-9765acc7b2a0/start",
+      200,
+      {
+        "data": {
+          "id": "130f0338-0988-44f7-be2a-9765acc7b2a0",
+          "orgId": "a9f16130-0d72-47eb-878e-2c286b17423b",
+          "seriesId": null,
+          "typeId": null,
+          "title": "TEMP runtime proof 20260710",
+          "goal": "ephemeral API lifecycle proof",
+          "status": "in_progress",
+          "startAt": "2026-07-10T21:22:22.033Z",
+          "endAt": "2026-07-10T22:17:22.033Z",
+          "actualStartAt": "2026-07-10T21:17:22.516Z",
+          "actualEndAt": null,
+          "location": null,
+          "onlineLink": null,
+          "chairUserId": "b2598912-997a-4711-944d-4a763cb46756",
+          "secretaryUserId": "b2598912-997a-4711-944d-4a763cb46756",
+          "agendaPublished": true,
+          "costRate": "0",
+          "cancelledReason": null,
+          "reminded1": false,
+          "reminded2": false,
+          "createdBy": "b2598912-997a-4711-944d-4a763cb46756",
+          "createdAt": "2026-07-10T21:17:22.057Z",
+          "updatedAt": "2026-07-10T21:17:22.516Z"
+        }
+      }
+    ],
+    [
+      "POST",
+      "/soul-meeting/notes",
+      200,
+      {
+        "data": {
+          "id": "2701f3fe-a07e-494c-89c0-2ea2f40d44f7",
+          "orgId": "a9f16130-0d72-47eb-878e-2c286b17423b",
+          "meetingId": "130f0338-0988-44f7-be2a-9765acc7b2a0",
+          "agendaItemId": "e8c4af8f-83b2-4a2e-a5af-0061092cf519",
+          "authorUserId": "b2598912-997a-4711-944d-4a763cb46756",
+          "content": "Temporary live note.",
+          "createdAt": "2026-07-10T21:17:22.586Z"
+        }
+      }
+    ],
+    [
+      "POST",
+      "/soul-meeting/votes",
+      200,
+      {
+        "data": {
+          "id": "1fd56f15-5764-43a2-ab5d-ca8d25fb3e87",
+          "orgId": "a9f16130-0d72-47eb-878e-2c286b17423b",
+          "meetingId": "130f0338-0988-44f7-be2a-9765acc7b2a0",
+          "agendaItemId": "e8c4af8f-83b2-4a2e-a5af-0061092cf519",
+          "question": "Approve runtime proof?",
+          "options": [
+            "yes",
+            "no"
+          ],
+          "quorumMode": "none",
+          "quorumThreshold": "50.00",
+          "passThreshold": "50.00",
+          "passBasis": "attending",
+          "passOption": "yes",
+          "status": "open",
+          "result": null,
+          "openedAt": "2026-07-10T21:17:22.730Z",
+          "closedAt": null,
+          "createdBy": "b2598912-997a-4711-944d-4a763cb46756",
+          "createdAt": "2026-07-10T21:17:22.714Z"
+        }
+      }
+    ],
+    [
+      "POST",
+      "/soul-meeting/votes/cast",
+      400,
+      {
+        "error": {
+          "code": "INVALID_INPUT",
+          "message": "Dữ liệu không hợp lệ",
+          "issues": [
+            {
+              "code": "invalid_type",
+              "expected": "string",
+              "received": "null",
+              "path": [
+                "participant_id"
+              ],
+              "message": "Expected string, received null"
+            }
+          ]
+        }
+      }
+    ],
+    [
+      "POST",
+      "/soul-meeting/votes/close",
+      200,
+      {
+        "data": {
+          "vote": {
+            "id": "1fd56f15-5764-43a2-ab5d-ca8d25fb3e87",
+            "orgId": "a9f16130-0d72-47eb-878e-2c286b17423b",
+            "meetingId": "130f0338-0988-44f7-be2a-9765acc7b2a0",
+            "agendaItemId": "e8c4af8f-83b2-4a2e-a5af-0061092cf519",
+            "question": "Approve runtime proof?",
+            "options": [
+              "yes",
+              "no"
+            ],
+            "quorumMode": "none",
+            "quorumThreshold": "50.00",
+            "passThreshold": "50.00",
+            "passBasis": "attending",
+            "passOption": "yes",
+            "status": "closed",
+            "result": {
+              "passed": false,
+              "tallies": {
+                "no": {
+                  "count": 0,
+                  "weight": 0
+                },
+                "yes": {
+                  "count": 0,
+                  "weight": 0
+                }
+              },
+              "pass_basis": "attending",
+              "quorum_met": true,
+              "pass_metric": 0,
+              "pass_option": "yes",
+              "quorum_mode": "none",
+              "invalid_count": 0,
+              "quorum_metric": 100,
+              "eligible_count": 1,
+              "pass_threshold": 50,
+              "present_weight": 0,
+              "attending_count": 0,
+              "eligible_weight": 0,
+              "quorum_threshold": 50
+            },
+            "openedAt": "2026-07-10T21:17:22.730Z",
+            "closedAt": "2026-07-10T21:17:22.877Z",
+            "createdBy": "b2598912-997a-4711-944d-4a763cb46756",
+            "createdAt": "2026-07-10T21:17:22.714Z"
+          },
+          "result": {
+            "quorum_mode": "none",
+            "quorum_met": true,
+            "eligible_count": 1,
+            "attending_count": 0,
+            "eligible_weight": 0,
+            "present_weight": 0,
+            "quorum_metric": 100,
+            "quorum_threshold": 50,
+            "tallies": {
+              "yes": {
+                "count": 0,
+                "weight": 0
+              },
+              "no": {
+                "count": 0,
+                "weight": 0
+              }
+            },
+            "invalid_count": 0,
+            "pass_option": "yes",
+            "pass_basis": "attending",
+            "pass_metric": 0,
+            "pass_threshold": 50,
+            "passed": false
+          }
+        }
+      }
+    ],
+    [
+      "POST",
+      "/soul-meeting/decisions",
+      200,
+      {
+        "data": {
+          "id": "07013ee9-3b67-4ada-bcf2-777912cbe61b",
+          "orgId": "a9f16130-0d72-47eb-878e-2c286b17423b",
+          "meetingId": "130f0338-0988-44f7-be2a-9765acc7b2a0",
+          "agendaItemId": "e8c4af8f-83b2-4a2e-a5af-0061092cf519",
+          "content": "Runtime proof accepted",
+          "method": "vote",
+          "voteId": "1fd56f15-5764-43a2-ab5d-ca8d25fb3e87",
+          "decidedAt": "2026-07-10T21:17:22.988Z",
+          "createdBy": "b2598912-997a-4711-944d-4a763cb46756",
+          "createdAt": "2026-07-10T21:17:22.971Z"
+        }
+      }
+    ],
+    [
+      "POST",
+      "/soul-meeting/actions",
+      200,
+      {
+        "data": {
+          "id": "336a9fa9-4563-43ea-8a98-ed2b6e408e18",
+          "orgId": "a9f16130-0d72-47eb-878e-2c286b17423b",
+          "meetingId": "130f0338-0988-44f7-be2a-9765acc7b2a0",
+          "decisionId": "07013ee9-3b67-4ada-bcf2-777912cbe61b",
+          "agendaItemId": "e8c4af8f-83b2-4a2e-a5af-0061092cf519",
+          "title": "Remove temporary proof data",
+          "description": null,
+          "ownerUserId": "b2598912-997a-4711-944d-4a763cb46756",
+          "externalOwner": null,
+          "dueDate": "2026-07-11",
+          "priority": "normal",
+          "status": "open",
+          "carriedToMeetingId": null,
+          "completedAt": null,
+          "completedBy": null,
+          "createdBy": "b2598912-997a-4711-944d-4a763cb46756",
+          "createdAt": "2026-07-10T21:17:23.287Z",
+          "updatedAt": "2026-07-10T21:17:23.287Z"
+        }
+      }
+    ],
+    [
+      "POST",
+      "/soul-meeting/meetings/130f0338-0988-44f7-be2a-9765acc7b2a0/finish",
+      200,
+      {
+        "data": {
+          "id": "130f0338-0988-44f7-be2a-9765acc7b2a0",
+          "orgId": "a9f16130-0d72-47eb-878e-2c286b17423b",
+          "seriesId": null,
+          "typeId": null,
+          "title": "TEMP runtime proof 20260710",
+          "goal": "ephemeral API lifecycle proof",
+          "status": "completed",
+          "startAt": "2026-07-10T21:22:22.033Z",
+          "endAt": "2026-07-10T22:17:22.033Z",
+          "actualStartAt": "2026-07-10T21:17:22.516Z",
+          "actualEndAt": "2026-07-10T21:17:23.417Z",
+          "location": null,
+          "onlineLink": null,
+          "chairUserId": "b2598912-997a-4711-944d-4a763cb46756",
+          "secretaryUserId": "b2598912-997a-4711-944d-4a763cb46756",
+          "agendaPublished": true,
+          "costRate": "0",
+          "cancelledReason": null,
+          "reminded1": false,
+          "reminded2": false,
+          "createdBy": "b2598912-997a-4711-944d-4a763cb46756",
+          "createdAt": "2026-07-10T21:17:22.057Z",
+          "updatedAt": "2026-07-10T21:17:23.422Z"
+        }
+      }
+    ],
+    [
+      "POST",
+      "/soul-meeting/minutes/generate",
+      200,
+      {
+        "data": {
+          "id": "816e6289-51b9-4f02-b70f-c277814f4ffc",
+          "orgId": "a9f16130-0d72-47eb-878e-2c286b17423b",
+          "meetingId": "130f0338-0988-44f7-be2a-9765acc7b2a0",
+          "version": 1,
+          "content": {
+            "cost": {
+              "rate": 0,
+              "estimate": 0,
+              "present_count": 0,
+              "duration_minutes": 0
+            },
+            "votes": [
+              {
+                "result": {
+                  "passed": false,
+                  "tallies": {
+                    "no": {
+                      "count": 0,
+                      "weight": 0
+                    },
+                    "yes": {
+                      "count": 0,
+                      "weight": 0
+                    }
+                  },
+                  "pass_basis": "attending",
+                  "quorum_met": true,
+                  "pass_metric": 0,
+                  "pass_option": "yes",
+                  "quorum_mode": "none",
+                  "invalid_count": 0,
+                  "quorum_metric": 100,
+                  "eligible_count": 1,
+                  "pass_threshold": 50,
+                  "present_weight": 0,
+                  "attending_count": 0,
+                  "eligible_weight": 0,
+                  "quorum_threshold": 50
+                },
+                "status": "closed",
+                "question": "Approve runtime proof?"
+              }
+            ],
+            "agenda": [
+              {
+                "notes": [
+                  "Temporary live note."
+                ],
+                "title": "Runtime proof agenda",
+                "status": "pending",
+                "timebox_minutes": 10
+              }
+            ],
+            "actions": [
+              {
+                "owner": "b2598912-997a-4711-944d-4a763cb46756",
+                "title": "Remove temporary proof data",
+                "status": "open",
+                "due_date": "2026-07-11"
+              }
+            ],
+            "meeting": {
+              "id": "130f0338-0988-44f7-be2a-9765acc7b2a0",
+              "goal": "ephemeral API lifecycle proof",
+              "title": "TEMP runtime proof 20260710",
+              "end_at": "2026-07-10T22:17:22.033Z",
+              "location": null,
+              "start_at": "2026-07-10T21:22:22.033Z",
+              "type_name": null,
+              "online_link": null,
+              "actual_end_at": "2026-07-10T21:17:23.417Z",
+              "chair_user_id": "b2598912-997a-4711-944d-4a763cb46756",
+              "actual_start_at": "2026-07-10T21:17:22.516Z",
+              "secretary_user_id": "b2598912-997a-4711-944d-4a763cb46756"
+            },
+            "decisions": [
+              {
+                "vote": {
+                  "passed": false,
+                  "tallies": {
+                    "no": {
+                      "count": 0,
+                      "weight": 0
+                    },
+                    "yes": {
+                      "count": 0,
+                      "weight": 0
+                    }
+                  },
+                  "pass_basis": "attending",
+                  "quorum_met": true,
+                  "pass_metric": 0,
+                  "pass_option": "yes",
+                  "quorum_mode": "none",
+                  "invalid_count": 0,
+                  "quorum_metric": 100,
+                  "eligible_count": 1,
+                  "pass_threshold": 50,
+                  "present_weight": 0,
+                  "attending_count": 0,
+                  "eligible_weight": 0,
+                  "quorum_threshold": 50
+                },
+                "method": "vote",
+                "content": "Runtime proof accepted"
+              }
+            ],
+            "quorum_mode": "none",
+            "participants": [
+              {
+                "name": "b2598912-997a-4711-944d-4a763cb46756",
+                "role": "secretary",
+                "attendance": "none",
+                "is_external": false,
+                "vote_weight": 0
+              }
+            ],
+            "general_notes": []
+          },
+          "contentMd": "# BIÊN BẢN CUỘC HỌP\n\n**TEMP runtime proof 20260710**\n\n- Thời gian: 04:17 11/7/26 → 04:17 11/7/26\n- Địa điểm: —\n- Mục đích, chương trình: ephemeral API lifecycle proof\n- Chủ tọa: b2598912-997a-4711-944d-4a763cb46756 · Thư ký: b2598912-997a-4711-944d-4a763cb46756\n\n## I. THÀNH PHẦN THAM DỰ\n\nVắng mặt:\n- b2598912-997a-4711-944d-4a763cb46756 — Chưa điểm danh\n\n## II. NỘI DUNG THẢO LUẬN\n### Runtime proof agenda\n- Temporary live note.\n\n## III. KẾT QUẢ BIỂU QUYẾT\n### Vấn đề 1: Approve runtime proof?\n- Số phiếu hợp lệ: 0 · không hợp lệ: 0\n- no: 0 phiếu\n- yes: 0 phiếu\n- Túc số (quorum): 100% — ĐẠT\n- Tỷ lệ thông qua: 0% → **KHÔNG THÔNG QUA**\n\n## IV. CÁC QUYẾT ĐỊNH\n1. Runtime proof accepted — thông qua với tỷ lệ 0%\n\n## V. PHÂN CÔNG CÔNG VIỆC\n- [ ] Remove temporary proof data — @b2598912-997a-4711-944d-4a763cb46756 — hạn 2026-07-11\n\nBiên bản được đọc và thông qua trước khi kết thúc cuộc họp.\n\n| THƯ KÝ | CHỦ TỌA |\n|---|---|\n| b2598912-997a-4711-944d-4a763cb46756 | b2598912-997a-4711-944d-4a763cb46756 |",
+          "status": "draft",
+          "submittedBy": null,
+          "submittedAt": null,
+          "approvedBy": null,
+          "approvedAt": null,
+          "publishedAt": null,
+          "rejectedReason": null,
+          "createdBy": "b2598912-997a-4711-944d-4a763cb46756",
+          "createdAt": "2026-07-10T21:17:23.462Z",
+          "updatedAt": "2026-07-10T21:17:23.462Z"
+        }
+      }
+    ],
+    [
+      "POST",
+      "/soul-meeting/minutes/submit",
+      200,
+      {
+        "data": {
+          "id": "816e6289-51b9-4f02-b70f-c277814f4ffc",
+          "orgId": "a9f16130-0d72-47eb-878e-2c286b17423b",
+          "meetingId": "130f0338-0988-44f7-be2a-9765acc7b2a0",
+          "version": 1,
+          "content": {
+            "cost": {
+              "rate": 0,
+              "estimate": 0,
+              "present_count": 0,
+              "duration_minutes": 0
+            },
+            "votes": [
+              {
+                "result": {
+                  "passed": false,
+                  "tallies": {
+                    "no": {
+                      "count": 0,
+                      "weight": 0
+                    },
+                    "yes": {
+                      "count": 0,
+                      "weight": 0
+                    }
+                  },
+                  "pass_basis": "attending",
+                  "quorum_met": true,
+                  "pass_metric": 0,
+                  "pass_option": "yes",
+                  "quorum_mode": "none",
+                  "invalid_count": 0,
+                  "quorum_metric": 100,
+                  "eligible_count": 1,
+                  "pass_threshold": 50,
+                  "present_weight": 0,
+                  "attending_count": 0,
+                  "eligible_weight": 0,
+                  "quorum_threshold": 50
+                },
+                "status": "closed",
+                "question": "Approve runtime proof?"
+              }
+            ],
+            "agenda": [
+              {
+                "notes": [
+                  "Temporary live note."
+                ],
+                "title": "Runtime proof agenda",
+                "status": "pending",
+                "timebox_minutes": 10
+              }
+            ],
+            "actions": [
+              {
+                "owner": "b2598912-997a-4711-944d-4a763cb46756",
+                "title": "Remove temporary proof data",
+                "status": "open",
+                "due_date": "2026-07-11"
+              }
+            ],
+            "meeting": {
+              "id": "130f0338-0988-44f7-be2a-9765acc7b2a0",
+              "goal": "ephemeral API lifecycle proof",
+              "title": "TEMP runtime proof 20260710",
+              "end_at": "2026-07-10T22:17:22.033Z",
+              "location": null,
+              "start_at": "2026-07-10T21:22:22.033Z",
+              "type_name": null,
+              "online_link": null,
+              "actual_end_at": "2026-07-10T21:17:23.417Z",
+              "chair_user_id": "b2598912-997a-4711-944d-4a763cb46756",
+              "actual_start_at": "2026-07-10T21:17:22.516Z",
+              "secretary_user_id": "b2598912-997a-4711-944d-4a763cb46756"
+            },
+            "decisions": [
+              {
+                "vote": {
+                  "passed": false,
+                  "tallies": {
+                    "no": {
+                      "count": 0,
+                      "weight": 0
+                    },
+                    "yes": {
+                      "count": 0,
+                      "weight": 0
+                    }
+                  },
+                  "pass_basis": "attending",
+                  "quorum_met": true,
+                  "pass_metric": 0,
+                  "pass_option": "yes",
+                  "quorum_mode": "none",
+                  "invalid_count": 0,
+                  "quorum_metric": 100,
+                  "eligible_count": 1,
+                  "pass_threshold": 50,
+                  "present_weight": 0,
+                  "attending_count": 0,
+                  "eligible_weight": 0,
+                  "quorum_threshold": 50
+                },
+                "method": "vote",
+                "content": "Runtime proof accepted"
+              }
+            ],
+            "quorum_mode": "none",
+            "participants": [
+              {
+                "name": "b2598912-997a-4711-944d-4a763cb46756",
+                "role": "secretary",
+                "attendance": "none",
+                "is_external": false,
+                "vote_weight": 0
+              }
+            ],
+            "general_notes": []
+          },
+          "contentMd": "# BIÊN BẢN CUỘC HỌP\n\n**TEMP runtime proof 20260710**\n\n- Thời gian: 04:17 11/7/26 → 04:17 11/7/26\n- Địa điểm: —\n- Mục đích, chương trình: ephemeral API lifecycle proof\n- Chủ tọa: b2598912-997a-4711-944d-4a763cb46756 · Thư ký: b2598912-997a-4711-944d-4a763cb46756\n\n## I. THÀNH PHẦN THAM DỰ\n\nVắng mặt:\n- b2598912-997a-4711-944d-4a763cb46756 — Chưa điểm danh\n\n## II. NỘI DUNG THẢO LUẬN\n### Runtime proof agenda\n- Temporary live note.\n\n## III. KẾT QUẢ BIỂU QUYẾT\n### Vấn đề 1: Approve runtime proof?\n- Số phiếu hợp lệ: 0 · không hợp lệ: 0\n- no: 0 phiếu\n- yes: 0 phiếu\n- Túc số (quorum): 100% — ĐẠT\n- Tỷ lệ thông qua: 0% → **KHÔNG THÔNG QUA**\n\n## IV. CÁC QUYẾT ĐỊNH\n1. Runtime proof accepted — thông qua với tỷ lệ 0%\n\n## V. PHÂN CÔNG CÔNG VIỆC\n- [ ] Remove temporary proof data — @b2598912-997a-4711-944d-4a763cb46756 — hạn 2026-07-11\n\nBiên bản được đọc và thông qua trước khi kết thúc cuộc họp.\n\n| THƯ KÝ | CHỦ TỌA |\n|---|---|\n| b2598912-997a-4711-944d-4a763cb46756 | b2598912-997a-4711-944d-4a763cb46756 |",
+          "status": "pending_approval",
+          "submittedBy": "b2598912-997a-4711-944d-4a763cb46756",
+          "submittedAt": "2026-07-10T21:17:23.965Z",
+          "approvedBy": null,
+          "approvedAt": null,
+          "publishedAt": null,
+          "rejectedReason": null,
+          "createdBy": "b2598912-997a-4711-944d-4a763cb46756",
+          "createdAt": "2026-07-10T21:17:23.462Z",
+          "updatedAt": "2026-07-10T21:17:23.965Z"
+        }
+      }
+    ],
+    [
+      "POST",
+      "/soul-meeting/minutes/approve",
+      200,
+      {
+        "data": {
+          "id": "816e6289-51b9-4f02-b70f-c277814f4ffc",
+          "orgId": "a9f16130-0d72-47eb-878e-2c286b17423b",
+          "meetingId": "130f0338-0988-44f7-be2a-9765acc7b2a0",
+          "version": 1,
+          "content": {
+            "cost": {
+              "rate": 0,
+              "estimate": 0,
+              "present_count": 0,
+              "duration_minutes": 0
+            },
+            "votes": [
+              {
+                "result": {
+                  "passed": false,
+                  "tallies": {
+                    "no": {
+                      "count": 0,
+                      "weight": 0
+                    },
+                    "yes": {
+                      "count": 0,
+                      "weight": 0
+                    }
+                  },
+                  "pass_basis": "attending",
+                  "quorum_met": true,
+                  "pass_metric": 0,
+                  "pass_option": "yes",
+                  "quorum_mode": "none",
+                  "invalid_count": 0,
+                  "quorum_metric": 100,
+                  "eligible_count": 1,
+                  "pass_threshold": 50,
+                  "present_weight": 0,
+                  "attending_count": 0,
+                  "eligible_weight": 0,
+                  "quorum_threshold": 50
+                },
+                "status": "closed",
+                "question": "Approve runtime proof?"
+              }
+            ],
+            "agenda": [
+              {
+                "notes": [
+                  "Temporary live note."
+                ],
+                "title": "Runtime proof agenda",
+                "status": "pending",
+                "timebox_minutes": 10
+              }
+            ],
+            "actions": [
+              {
+                "owner": "b2598912-997a-4711-944d-4a763cb46756",
+                "title": "Remove temporary proof data",
+                "status": "open",
+                "due_date": "2026-07-11"
+              }
+            ],
+            "meeting": {
+              "id": "130f0338-0988-44f7-be2a-9765acc7b2a0",
+              "goal": "ephemeral API lifecycle proof",
+              "title": "TEMP runtime proof 20260710",
+              "end_at": "2026-07-10T22:17:22.033Z",
+              "location": null,
+              "start_at": "2026-07-10T21:22:22.033Z",
+              "type_name": null,
+              "online_link": null,
+              "actual_end_at": "2026-07-10T21:17:23.417Z",
+              "chair_user_id": "b2598912-997a-4711-944d-4a763cb46756",
+              "actual_start_at": "2026-07-10T21:17:22.516Z",
+              "secretary_user_id": "b2598912-997a-4711-944d-4a763cb46756"
+            },
+            "decisions": [
+              {
+                "vote": {
+                  "passed": false,
+                  "tallies": {
+                    "no": {
+                      "count": 0,
+                      "weight": 0
+                    },
+                    "yes": {
+                      "count": 0,
+                      "weight": 0
+                    }
+                  },
+                  "pass_basis": "attending",
+                  "quorum_met": true,
+                  "pass_metric": 0,
+                  "pass_option": "yes",
+                  "quorum_mode": "none",
+                  "invalid_count": 0,
+                  "quorum_metric": 100,
+                  "eligible_count": 1,
+                  "pass_threshold": 50,
+                  "present_weight": 0,
+                  "attending_count": 0,
+                  "eligible_weight": 0,
+                  "quorum_threshold": 50
+                },
+                "method": "vote",
+                "content": "Runtime proof accepted"
+              }
+            ],
+            "quorum_mode": "none",
+            "participants": [
+              {
+                "name": "b2598912-997a-4711-944d-4a763cb46756",
+                "role": "secretary",
+                "attendance": "none",
+                "is_external": false,
+                "vote_weight": 0
+              }
+            ],
+            "general_notes": []
+          },
+          "contentMd": "# BIÊN BẢN CUỘC HỌP\n\n**TEMP runtime proof 20260710**\n\n- Thời gian: 04:17 11/7/26 → 04:17 11/7/26\n- Địa điểm: —\n- Mục đích, chương trình: ephemeral API lifecycle proof\n- Chủ tọa: b2598912-997a-4711-944d-4a763cb46756 · Thư ký: b2598912-997a-4711-944d-4a763cb46756\n\n## I. THÀNH PHẦN THAM DỰ\n\nVắng mặt:\n- b2598912-997a-4711-944d-4a763cb46756 — Chưa điểm danh\n\n## II. NỘI DUNG THẢO LUẬN\n### Runtime proof agenda\n- Temporary live note.\n\n## III. KẾT QUẢ BIỂU QUYẾT\n### Vấn đề 1: Approve runtime proof?\n- Số phiếu hợp lệ: 0 · không hợp lệ: 0\n- no: 0 phiếu\n- yes: 0 phiếu\n- Túc số (quorum): 100% — ĐẠT\n- Tỷ lệ thông qua: 0% → **KHÔNG THÔNG QUA**\n\n## IV. CÁC QUYẾT ĐỊNH\n1. Runtime proof accepted — thông qua với tỷ lệ 0%\n\n## V. PHÂN CÔNG CÔNG VIỆC\n- [ ] Remove temporary proof data — @b2598912-997a-4711-944d-4a763cb46756 — hạn 2026-07-11\n\nBiên bản được đọc và thông qua trước khi kết thúc cuộc họp.\n\n| THƯ KÝ | CHỦ TỌA |\n|---|---|\n| b2598912-997a-4711-944d-4a763cb46756 | b2598912-997a-4711-944d-4a763cb46756 |",
+          "status": "pending_approval",
+          "submittedBy": "b2598912-997a-4711-944d-4a763cb46756",
+          "submittedAt": "2026-07-10T21:17:23.965Z",
+          "approvedBy": "b2598912-997a-4711-944d-4a763cb46756",
+          "approvedAt": "2026-07-10T21:17:24.066Z",
+          "publishedAt": null,
+          "rejectedReason": null,
+          "createdBy": "b2598912-997a-4711-944d-4a763cb46756",
+          "createdAt": "2026-07-10T21:17:23.462Z",
+          "updatedAt": "2026-07-10T21:17:24.066Z"
+        }
+      }
+    ],
+    [
+      "POST",
+      "/soul-meeting/minutes/publish",
+      200,
+      {
+        "data": {
+          "id": "816e6289-51b9-4f02-b70f-c277814f4ffc",
+          "orgId": "a9f16130-0d72-47eb-878e-2c286b17423b",
+          "meetingId": "130f0338-0988-44f7-be2a-9765acc7b2a0",
+          "version": 1,
+          "content": {
+            "cost": {
+              "rate": 0,
+              "estimate": 0,
+              "present_count": 0,
+              "duration_minutes": 0
+            },
+            "votes": [
+              {
+                "result": {
+                  "passed": false,
+                  "tallies": {
+                    "no": {
+                      "count": 0,
+                      "weight": 0
+                    },
+                    "yes": {
+                      "count": 0,
+                      "weight": 0
+                    }
+                  },
+                  "pass_basis": "attending",
+                  "quorum_met": true,
+                  "pass_metric": 0,
+                  "pass_option": "yes",
+                  "quorum_mode": "none",
+                  "invalid_count": 0,
+                  "quorum_metric": 100,
+                  "eligible_count": 1,
+                  "pass_threshold": 50,
+                  "present_weight": 0,
+                  "attending_count": 0,
+                  "eligible_weight": 0,
+                  "quorum_threshold": 50
+                },
+                "status": "closed",
+                "question": "Approve runtime proof?"
+              }
+            ],
+            "agenda": [
+              {
+                "notes": [
+                  "Temporary live note."
+                ],
+                "title": "Runtime proof agenda",
+                "status": "pending",
+                "timebox_minutes": 10
+              }
+            ],
+            "actions": [
+              {
+                "owner": "b2598912-997a-4711-944d-4a763cb46756",
+                "title": "Remove temporary proof data",
+                "status": "open",
+                "due_date": "2026-07-11"
+              }
+            ],
+            "meeting": {
+              "id": "130f0338-0988-44f7-be2a-9765acc7b2a0",
+              "goal": "ephemeral API lifecycle proof",
+              "title": "TEMP runtime proof 20260710",
+              "end_at": "2026-07-10T22:17:22.033Z",
+              "location": null,
+              "start_at": "2026-07-10T21:22:22.033Z",
+              "type_name": null,
+              "online_link": null,
+              "actual_end_at": "2026-07-10T21:17:23.417Z",
+              "chair_user_id": "b2598912-997a-4711-944d-4a763cb46756",
+              "actual_start_at": "2026-07-10T21:17:22.516Z",
+              "secretary_user_id": "b2598912-997a-4711-944d-4a763cb46756"
+            },
+            "decisions": [
+              {
+                "vote": {
+                  "passed": false,
+                  "tallies": {
+                    "no": {
+                      "count": 0,
+                      "weight": 0
+                    },
+                    "yes": {
+                      "count": 0,
+                      "weight": 0
+                    }
+                  },
+                  "pass_basis": "attending",
+                  "quorum_met": true,
+                  "pass_metric": 0,
+                  "pass_option": "yes",
+                  "quorum_mode": "none",
+                  "invalid_count": 0,
+                  "quorum_metric": 100,
+                  "eligible_count": 1,
+                  "pass_threshold": 50,
+                  "present_weight": 0,
+                  "attending_count": 0,
+                  "eligible_weight": 0,
+                  "quorum_threshold": 50
+                },
+                "method": "vote",
+                "content": "Runtime proof accepted"
+              }
+            ],
+            "quorum_mode": "none",
+            "participants": [
+              {
+                "name": "b2598912-997a-4711-944d-4a763cb46756",
+                "role": "secretary",
+                "attendance": "none",
+                "is_external": false,
+                "vote_weight": 0
+              }
+            ],
+            "general_notes": []
+          },
+          "contentMd": "# BIÊN BẢN CUỘC HỌP\n\n**TEMP runtime proof 20260710**\n\n- Thời gian: 04:17 11/7/26 → 04:17 11/7/26\n- Địa điểm: —\n- Mục đích, chương trình: ephemeral API lifecycle proof\n- Chủ tọa: b2598912-997a-4711-944d-4a763cb46756 · Thư ký: b2598912-997a-4711-944d-4a763cb46756\n\n## I. THÀNH PHẦN THAM DỰ\n\nVắng mặt:\n- b2598912-997a-4711-944d-4a763cb46756 — Chưa điểm danh\n\n## II. NỘI DUNG THẢO LUẬN\n### Runtime proof agenda\n- Temporary live note.\n\n## III. KẾT QUẢ BIỂU QUYẾT\n### Vấn đề 1: Approve runtime proof?\n- Số phiếu hợp lệ: 0 · không hợp lệ: 0\n- no: 0 phiếu\n- yes: 0 phiếu\n- Túc số (quorum): 100% — ĐẠT\n- Tỷ lệ thông qua: 0% → **KHÔNG THÔNG QUA**\n\n## IV. CÁC QUYẾT ĐỊNH\n1. Runtime proof accepted — thông qua với tỷ lệ 0%\n\n## V. PHÂN CÔNG CÔNG VIỆC\n- [ ] Remove temporary proof data — @b2598912-997a-4711-944d-4a763cb46756 — hạn 2026-07-11\n\nBiên bản được đọc và thông qua trước khi kết thúc cuộc họp.\n\n| THƯ KÝ | CHỦ TỌA |\n|---|---|\n| b2598912-997a-4711-944d-4a763cb46756 | b2598912-997a-4711-944d-4a763cb46756 |",
+          "status": "published",
+          "submittedBy": "b2598912-997a-4711-944d-4a763cb46756",
+          "submittedAt": "2026-07-10T21:17:23.965Z",
+          "approvedBy": "b2598912-997a-4711-944d-4a763cb46756",
+          "approvedAt": "2026-07-10T21:17:24.066Z",
+          "publishedAt": "2026-07-10T21:17:24.147Z",
+          "rejectedReason": null,
+          "createdBy": "b2598912-997a-4711-944d-4a763cb46756",
+          "createdAt": "2026-07-10T21:17:23.462Z",
+          "updatedAt": "2026-07-10T21:17:24.147Z"
+        }
+      }
+    ],
+    [
+      "GET",
+      "/soul-meeting/reports/week?week_of=2026-07-06",
+      200,
+      {
+        "data": {
+          "week_start": "2026-07-06",
+          "days": [
+            {
+              "date": "2026-07-06",
+              "meetings": []
+            },
+            {
+              "date": "2026-07-07",
+              "meetings": []
+            },
+            {
+              "date": "2026-07-08",
+              "meetings": []
+            },
+            {
+              "date": "2026-07-09",
+              "meetings": []
+            },
+            {
+              "date": "2026-07-10",
+              "meetings": []
+            },
+            {
+              "date": "2026-07-11",
+              "meetings": [
+                {
+                  "id": "130f0338-0988-44f7-be2a-9765acc7b2a0",
+                  "title": "TEMP runtime proof 20260710",
+                  "status": "completed",
+                  "start_at": "2026-07-10T21:22:22.033Z",
+                  "end_at": "2026-07-10T22:17:22.033Z",
+                  "location": null,
+                  "online_link": null,
+                  "agenda_published": true
+                }
+              ]
+            },
+            {
+              "date": "2026-07-12",
+              "meetings": []
+            }
+          ]
+        }
+      }
+    ],
+    [
+      "GET",
+      "/soul-meeting/actions/export.xlsx?meeting_id=130f0338-0988-44f7-be2a-9765acc7b2a0",
+      200,
+      {
+        "bytes": 16363,
+        "ct": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      }
+    ],
+    [
+      "GET",
+      "/soul-meeting/meetings/130f0338-0988-44f7-be2a-9765acc7b2a0/ics",
+      200,
+      {
+        "bytes": 394,
+        "ct": "text/calendar; charset=utf-8"
+      }
+    ]
+  ]
+}

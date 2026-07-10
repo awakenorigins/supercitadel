@@ -12,6 +12,14 @@ import { answerFromDocs } from './docs.js';
 export type MessageContent = string | Array<{ type: 'text'; text: string } | { type: 'image_url'; image_url: { url: string } }>;
 export interface EngineMessage { role: 'system' | 'user' | 'assistant' | 'tool'; content: MessageContent; tool_call_id?: string; name?: string; tool_calls?: any[] }
 
+function textContent(content: MessageContent): string {
+  if (typeof content === 'string') return content;
+  return content
+    .filter((part): part is Extract<(typeof content)[number], { type: 'text' }> => part.type === 'text')
+    .map((part) => part.text)
+    .join('\n');
+}
+
 export interface EngineAdapter {
   /** Tên engine — vd 'stub-a', 'stub-b', 'openai', 'anthropic'. */
   readonly name: string;
@@ -37,7 +45,7 @@ function matchMemories(profile: WorkProfile, question: string): string[] {
 }
 
 function stubReply(variant: 'a' | 'b', profile: WorkProfile, messages: EngineMessage[]): TieuTamReply {
-  const question = messages.filter((m) => m.role === 'user').at(-1)?.content ?? '';
+  const question = textContent(messages.filter((m) => m.role === 'user').at(-1)?.content ?? '');
   const p = profile.persona;
   // 'help' → trả lời từ GIÁO TRÌNH module thật (V7A P4 — G6), không bịa
   if (detectIntent(question) === 'help') {

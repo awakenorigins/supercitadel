@@ -101,6 +101,21 @@ export const PERMISSION_REGISTRY = [
   p('soulsale.import.read',    'Soul-Sale — Xem batch đối soát', 1, false),
   p('soulsale.import.write',   'Soul-Sale — Nạp/đối soát/chốt bảng kê đại lý', 2, true),
   p('soulsale.report.read',    'Soul-Sale — Báo cáo/dự báo/next-best-actions', 1, false),
+  // ── Soul-Meeting (Cuộc họp) ──
+  p('sm.meeting.read','Soul-Meeting — sm.meeting.read',1,false),
+  p('sm.meeting.write','Soul-Meeting — sm.meeting.write',2,true),
+  p('sm.agenda.write','Soul-Meeting — sm.agenda.write',2,true),
+  p('sm.participant.write','Soul-Meeting — sm.participant.write',2,true),
+  p('sm.decision.write','Soul-Meeting — sm.decision.write',2,true),
+  p('sm.vote.manage','Soul-Meeting — sm.vote.manage',2,true),
+  p('sm.minutes.write','Soul-Meeting — sm.minutes.write',2,true),
+  p('sm.minutes.approve','Soul-Meeting — sm.minutes.approve',2,true),
+  p('sm.minutes.publish','Soul-Meeting — sm.minutes.publish',2,true),
+  p('sm.actionitem.read','Soul-Meeting — sm.actionitem.read',1,false),
+  p('sm.actionitem.write','Soul-Meeting — sm.actionitem.write',2,true),
+  p('sm.recording.manage','Soul-Meeting — sm.recording.manage',2,true),
+  p('sm.report.read','Soul-Meeting — sm.report.read',1,false),
+  p('sm.settings.manage','Soul-Meeting — sm.settings.manage',2,true),
   // ── Soul-Wallet (Ví Cá Nhân) ── write-action lớp 2 khai trong tool def của module (payroll-style)
   p('sw.account.read','Soul-Wallet — Xem danh sách ví/tài khoản, số dư'),
   p('sw.account.write','Soul-Wallet — Tạo/sửa/đóng ví, tài khoản',2,true),
@@ -155,7 +170,7 @@ export const PERMISSION_REGISTRY = [
 export const ROLE_PERMISSIONS: Record<RoleType, readonly Permission[]> = {
   super_admin: ['*'],
   owner: ['*'],
-  manager: ['accounting.*','crm.*','inventory.*','hr.*','om.wallet.read','report.*','core.permissions.read','ke-toan-10a.*','kho.*','soulsale.*','sw.*','trade.*','resto.*'],
+  manager: ['accounting.*','crm.*','inventory.*','hr.*','om.wallet.read','report.*','core.permissions.read','ke-toan-10a.*','kho.*','soulsale.*','sw.*','sm.*','trade.*','resto.*'],
   staff: ['crm.contact.create','crm.contact.read','hr.attendance.checkin','hr.attendance.checkout','om.wallet.read','report.summary.read','core.permissions.read','ke-toan-10a.report.read'],
 };
 

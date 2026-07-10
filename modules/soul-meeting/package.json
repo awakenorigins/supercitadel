@@ -1,0 +1,38 @@
+{
+  "name": "@citadel/module-soul-meeting",
+  "version": "1.0.0",
+  "description": "Soul-Meeting 1A — Cuộc Họp cho SuperCitadel",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./routes.js": "./src/routes.ts",
+    "./tools.js": "./src/tools/index.ts",
+    "./contract.js": "./src/contract.ts",
+    "./schema.js": "./src/db/schema.ts",
+    "./server/host-adapter.js": "./server/host-adapter.ts",
+    "./server/tieu-tam-actions.js": "./server/tieu-tam-actions.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "tsx tests/smoke-core.test.ts && tsx tests/smoke-prep.test.ts && tsx tests/smoke-live.test.ts && tsx tests/smoke-harvest.test.ts && tsx tests/smoke-recording.test.ts && tsx tests/smoke-report.test.ts && tsx tests/smoke-bridge.test.ts",
+    "test:core": "tsx tests/smoke-core.test.ts",
+    "test:prep": "tsx tests/smoke-prep.test.ts",
+    "test:live": "tsx tests/smoke-live.test.ts",
+    "test:harvest": "tsx tests/smoke-harvest.test.ts",
+    "test:recording": "tsx tests/smoke-recording.test.ts",
+    "test:report": "tsx tests/smoke-report.test.ts",
+    "test:bridge": "tsx tests/smoke-bridge.test.ts"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.36.0",
+    "hono": "^4.6.0",
+    "xlsx": "0.18.5",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "@types/node": "^22.0.0",
+    "@electric-sql/pglite": "^0.2.0"
+  }
+}

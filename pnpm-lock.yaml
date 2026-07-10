@@ -345,6 +345,37 @@ importers:
       hono:
         specifier: ^4.6.0
         version: 4.12.23
+      xlsx:
+        specifier: 0.18.5
+        version: 0.18.5
+      zod:
+        specifier: ^3.23.0
+        version: 3.25.76
+    devDependencies:
+      '@electric-sql/pglite':
+        specifier: ^0.2.0
+        version: 0.2.17
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.19.19
+      tsx:
+        specifier: ^4.19.0
+        version: 4.22.4
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
+  modules/soul-meeting:
+    dependencies:
+      drizzle-orm:
+        specifier: ^0.36.0
+        version: 0.36.4(@electric-sql/pglite@0.2.17)(@types/pg@8.20.0)(@types/react@19.2.16)(pg@8.22.0)(postgres@3.4.9)(react@19.2.7)
+      hono:
+        specifier: ^4.6.0
+        version: 4.12.23
+      xlsx:
+        specifier: 0.18.5
+        version: 0.18.5
       zod:
         specifier: ^3.23.0
         version: 3.25.76
@@ -596,6 +627,9 @@ importers:
       '@citadel/module-soul-manager':
         specifier: workspace:*
         version: link:../../modules/soul-manager
+      '@citadel/module-soul-meeting':
+        specifier: workspace:*
+        version: link:../../modules/soul-meeting
       '@citadel/module-soul-restaurant':
         specifier: workspace:*
         version: link:../../modules/soul-restaurant

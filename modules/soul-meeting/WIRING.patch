@@ -1,0 +1,115 @@
+--- a/packages/core/src/permissions.ts
++++ b/packages/core/src/permissions.ts
+@@ -121,6 +121,22 @@
+   p('sw.report.read','Soul-Wallet — Xem báo cáo, dashboard, chart, insights'),
+   p('sw.export.sensitive','Soul-Wallet — Xuất dữ liệu tài chính nhạy cảm',2,true),
+ 
++  // ── Soul-Meeting (Cuộc Họp) ──
++  p('sm.meeting.read','Soul-Meeting — Xem lịch họp, chi tiết họp, digest'),
++  p('sm.meeting.write','Soul-Meeting — Đặt/dời/hủy/bắt đầu/kết thúc họp',2,true),
++  p('sm.agenda.write','Soul-Meeting — Soạn/publish agenda, parking lot'),
++  p('sm.participant.write','Soul-Meeting — Mời người, RSVP, điểm danh, tỷ lệ vốn',2,true),
++  p('sm.decision.write','Soul-Meeting — Ghi quyết định vào biên bản',2,true),
++  p('sm.vote.manage','Soul-Meeting — Mở/bỏ phiếu/đóng biểu quyết (quorum % vốn)',2,true),
++  p('sm.minutes.write','Soul-Meeting — Soạn/sửa/nộp biên bản'),
++  p('sm.minutes.approve','Soul-Meeting — Chủ tọa duyệt/từ chối biên bản',2,true),
++  p('sm.minutes.publish','Soul-Meeting — Phát hành biên bản (bất biến)',2,true),
++  p('sm.actionitem.read','Soul-Meeting — Xem việc cần làm, lịch sử việc'),
++  p('sm.actionitem.write','Soul-Meeting — Tạo/cập nhật/hoàn thành/carry-over việc'),
++  p('sm.recording.manage','Soul-Meeting — Ghi âm, bóc băng ASR, sửa transcript',2,true),
++  p('sm.report.read','Soul-Meeting — KPI họp, chi phí họp, xuất Excel'),
++  p('sm.settings.manage','Soul-Meeting — Cấu hình đơn giá giờ họp, quy tắc, ASR',2,true),
++
+   // ── Soul-Restaurant (Nhà hàng) ──
+   p('resto.table.read','Soul-Restaurant — resto.table.read',1,false),
+   p('resto.table.write','Soul-Restaurant — resto.table.write',2,true),
+@@ -155,7 +171,7 @@
+ export const ROLE_PERMISSIONS: Record<RoleType, readonly Permission[]> = {
+   super_admin: ['*'],
+   owner: ['*'],
+-  manager: ['accounting.*','crm.*','inventory.*','hr.*','om.wallet.read','report.*','core.permissions.read','ke-toan-10a.*','kho.*','soulsale.*','sw.*','trade.*','resto.*'],
++  manager: ['accounting.*','crm.*','inventory.*','hr.*','om.wallet.read','report.*','core.permissions.read','ke-toan-10a.*','kho.*','soulsale.*','sw.*','sm.*','trade.*','resto.*'],
+   staff: ['crm.contact.create','crm.contact.read','hr.attendance.checkin','hr.attendance.checkout','om.wallet.read','report.summary.read','core.permissions.read','ke-toan-10a.report.read'],
+ };
+ 
+--- a/services/api/src/modules/loader.ts
++++ b/services/api/src/modules/loader.ts
+@@ -15,6 +15,7 @@
+ import { buildSoulInventoryRoutes } from '@citadel/module-soul-inventory/server/host-adapter.js';
+ import { buildSoulSaleRoutes } from '@citadel/module-soul-sale/server/host-adapter.js';
+ import { buildSoulWalletRoutes } from '@citadel/module-soul-wallet/server/host-adapter.js';
++import { buildSoulMeetingRoutes } from '@citadel/module-soul-meeting/server/host-adapter.js';
+ import { buildSoulTradeRoutes } from '@citadel/module-soul-trade/server/host-adapter.js';
+ import { buildSoulRestaurantRoutes } from '@citadel/module-soul-restaurant/server/host-adapter.js';
+ import { eventHandlers as notificationEventHandlers } from '@citadel/module-notification/server/events.js';
+@@ -45,6 +46,7 @@
+   // audit: soul-sale tự ghi ss_action_audit (khác shape host audit(c,entry)) → không truyền host audit để tránh lệch chữ ký.
+   'soul-sale': (d) => buildSoulSaleRoutes({ db: d.db, requireAuth: d.requireAuth, gate: (perm: string) => requirePermission(d.db, perm as any), emit: (orgId: string, topic: string, payload: any) => emitToOutbox(d.db, orgId, topic, payload) } as any),
+   'soul-wallet': (d) => buildSoulWalletRoutes({ db: d.db, requireAuth: d.requireAuth, gate: d.requireModule(d.db, 'soul-wallet'), audit: d.audit } as any),
++  'soul-meeting': (d) => buildSoulMeetingRoutes({ db: d.db, requireAuth: d.requireAuth, gate: d.requireModule(d.db, 'soul-meeting'), audit: d.audit } as any),
+   // soul-trade: tự quản pool pg riêng (runtime.ts) + org-scoped tx per request (fail-closed RLS)
+   'soul-trade': (d) => buildSoulTradeRoutes({ requireAuth: d.requireAuth, gate: d.requireModule(d.db, 'soul-trade') }),
+   'soul-restaurant': (d) => buildSoulRestaurantRoutes({ db: d.db, requireAuth: d.requireAuth, gate: d.requireModule(d.db, 'soul-restaurant'), audit: d.audit, emitTx: (tx: any, topic: string, payload: any) => emitToOutbox(tx, payload?.org_id ?? payload?.orgId ?? '', topic, payload) } as any),
+--- a/services/api/src/index.ts
++++ b/services/api/src/index.ts
+@@ -15,6 +15,7 @@
+ import { soulInventoryTools, startSoulInventoryNightlyAutomation } from '@citadel/module-soul-inventory/server/host-adapter.js';
+ import { startSoulSaleNightlyAutomation } from '@citadel/module-soul-sale/server/host-adapter.js';
+ import { soulWalletTools, startSoulWalletNightlyAutomation } from '@citadel/module-soul-wallet/server/host-adapter.js';
++import { soulMeetingTools, startSoulMeetingNightlyAutomation } from '@citadel/module-soul-meeting/server/host-adapter.js';
+ import { startAutomatoWorker } from '@citadel/module-soul-trade/server/host-adapter.js';
+ import { buildModuleRoutes, requireModule } from './modules/routes.js';
+ import { mountLoadedModules } from './modules/loader.js';
+@@ -183,6 +184,7 @@
+ try { soulManagerTools(getDb()).forEach((t) => toolRegistry.register(t as any)); } catch (e) { /* idempotent */ }
+ try { soulInventoryTools(getDb()).forEach((t) => toolRegistry.register(t as any)); } catch (e) { /* idempotent */ }
+ try { soulWalletTools(getDb()).forEach((t) => toolRegistry.register(t as any)); } catch (e) { /* idempotent */ }
++try { soulMeetingTools(getDb()).forEach((t: any) => toolRegistry.register(t as any)); } catch (e) { /* idempotent */ }
+ 
+ // fail-fast env validation at boot
+ const env = loadApiEnv();
+@@ -209,6 +211,7 @@
+ });
+ // Soul-Wallet nightly: ví CÁ NHÂN — module tự quét distinct (org, owner) từ sw_accounts
+ startSoulWalletNightlyAutomation(getDb());
++startSoulMeetingNightlyAutomation(getDb());
+ // Background automato worker: tick mọi bot armed+running mỗi 8s (chạy nền, thoát UI vẫn chạy).
+ startAutomatoWorker({ intervalMs: 8000 });
+ serve({ fetch: app.fetch, port }, () => console.log(`[api] listening on :${port}`));
+--- a/services/api/src/tieu-tam/actions.ts
++++ b/services/api/src/tieu-tam/actions.ts
+@@ -16,6 +16,7 @@
+ import { soulSaleTieuTamActions as ssTieuTamActions } from '@citadel/module-soul-sale/server/tieu-tam-actions.js';
+ import { soulSaleTools as ssTools } from '@citadel/module-soul-sale/server/tools.js';
+ import { soulWalletTieuTamActions } from '@citadel/module-soul-wallet/server/tieu-tam-actions.js';
++import { soulMeetingTieuTamActions } from '@citadel/module-soul-meeting/server/tieu-tam-actions.js';
+ import { soulTradeTieuTamActions, soulTradeReadTools } from '@citadel/module-soul-trade/server/tieu-tam-actions.js';
+ import { withOrgCtx as stWithOrgCtx } from '@citadel/module-soul-trade/server/host-adapter.js';
+ import { soulRestaurantTieuTamActions } from '@citadel/module-soul-restaurant/server/tieu-tam-actions.js';
+@@ -94,6 +95,7 @@
+   });
+ }
+ defs.push(...(soulWalletTieuTamActions() as unknown as TieuTamAction[]));
++defs.push(...(soulMeetingTieuTamActions() as unknown as TieuTamAction[]));
+ // ===== Soul-Trade: 6 write actions (adapter tự mở org-scoped tx) + 8 read tools =====
+ defs.push(...(soulTradeTieuTamActions() as unknown as TieuTamAction[]));
+ for (const t of soulTradeReadTools) {
+--- a/services/api/package.json
++++ b/services/api/package.json
+@@ -31,7 +31,8 @@
+     "@citadel/module-soul-sale": "workspace:*",
+     "@citadel/module-soul-wallet": "workspace:*",
+     "@citadel/module-soul-trade": "workspace:*",
+-    "@citadel/module-soul-restaurant": "workspace:*"
++    "@citadel/module-soul-restaurant": "workspace:*",
++    "@citadel/module-soul-meeting": "workspace:*"
+   },
+   "devDependencies": {
+     "tsx": "^4.19.0",
+@@ -42,4 +43,4 @@
+     "ws": "^8.18.0",
+     "@types/ws": "^8.5.0"
+   }
+-}
++}
+\ No newline at end of file

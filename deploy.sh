@@ -12,7 +12,7 @@ echo "→ Migrate core + tất cả module (DB Lab: citadellab)…"
 docker compose -p $P exec -T postgres psql -U citadellab -d citadellab -f /dev/stdin < packages/db/migrations/0002_org_modules.sql 2>/dev/null || true
 docker compose -p $P exec -T postgres psql -U citadellab -d citadellab -f /dev/stdin < packages/db/migrations/0003_super_admin.sql 2>/dev/null || true
 docker compose -p $P exec -T api sh -c "pnpm --filter @citadel/db exec tsx src/migrate.ts" || true
-for m in chat notification crm om inventory hr accounting ke-toan-10a soul-manager soul-inventory; do
+for m in chat notification crm om inventory hr accounting ke-toan-10a soul-manager soul-meeting soul-inventory; do
   for mig in modules/$m/migrations/*.sql; do
     case "$mig" in *backfill*) echo "  ↳ bỏ qua $mig (backfill thủ công)"; continue;; esac
     docker compose -p $P exec -T postgres psql -U citadellab -d citadellab -f /dev/stdin < "$mig" 2>/dev/null || true

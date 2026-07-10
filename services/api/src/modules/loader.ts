@@ -11,6 +11,7 @@ import { buildInventoryRoutes } from '@citadel/module-inventory/server/routes.js
 import { buildHrRoutes } from '@citadel/module-hr/server/routes.js';
 import { buildAccountingRoutes } from '@citadel/module-accounting/server/routes.js';
 import { buildKeToan10aRoutes } from '@citadel/module-ke-toan-10a/server/routes.js';
+import { buildSoulMeetingRoutes } from '@citadel/module-soul-meeting/server/host-adapter.js';
 import { buildSoulManagerRoutes } from '@citadel/module-soul-manager/server/host-adapter.js';
 import { buildSoulInventoryRoutes } from '@citadel/module-soul-inventory/server/host-adapter.js';
 import { buildSoulSaleRoutes } from '@citadel/module-soul-sale/server/host-adapter.js';
@@ -40,6 +41,7 @@ const builders: Record<string, Builder> = {
   hr: (d) => buildHrRoutes({ db:d.db, requireAuth:d.requireAuth, gate:d.requireModule(d.db,'hr'), audit:d.audit }),
   accounting: (d) => buildAccountingRoutes({ db:d.db, requireAuth:d.requireAuth, gate:d.requireModule(d.db,'accounting'), audit:d.audit, cancelGate:d.cancelGate }),
   'ke-toan-10a': (d) => buildKeToan10aRoutes({ db: d.db, requireAuth: d.requireAuth, gate: d.requireModule(d.db, 'ke-toan-10a'), audit: d.audit, reverseGate: d.cancelGate }),
+  'soul-meeting': (d) => buildSoulMeetingRoutes({ db: d.db, requireAuth: d.requireAuth, gate: d.requireModule(d.db, 'soul-meeting'), audit: d.audit } as any),
   'soul-manager': (d) => buildSoulManagerRoutes({ db: d.db, requireAuth: d.requireAuth, gate: d.requireModule(d.db, 'soul-manager'), audit: d.audit }),
   'soul-inventory': (d) => buildSoulInventoryRoutes({ db: d.db, requireAuth: d.requireAuth, gate: d.requireModule(d.db, 'soul-inventory'), audit: d.audit }),
   // audit: soul-sale tự ghi ss_action_audit (khác shape host audit(c,entry)) → không truyền host audit để tránh lệch chữ ký.

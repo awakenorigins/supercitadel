@@ -12,6 +12,11 @@ async function main() {
   if (!url) throw new Error('DATABASE_URL not set');
   const sql = postgres(url, { max: 1 });
   try {
+    const [existingOrg] = await sql`SELECT id FROM orgs WHERE slug = 'ca-phe-nha-minh' LIMIT 1`;
+    if (existingOrg) {
+      console.log('[seed] demo org ca-phe-nha-minh already exists — skip (idempotent)');
+      return;
+    }
     const [org] = await sql`INSERT INTO orgs (name, slug, logo_emoji) VALUES ('Cà Phê Nhà Mình','ca-phe-nha-minh','coffee') RETURNING id`;
 
     // 3 user · 3 role
