@@ -67,6 +67,8 @@ CREATE TABLE IF NOT EXISTS qldn.policy_params (
   deduction_personal NUMERIC(20,2) NOT NULL DEFAULT 15500000,
   deduction_dependent NUMERIC(20,2) NOT NULL DEFAULT 6200000,
   uniform_cap_year NUMERIC(20,2) NOT NULL DEFAULT 5000000,
+  meal_exempt_cap_monthly NUMERIC(20,2),
+  apply_union_fee BOOLEAN NOT NULL DEFAULT false,
   insurance_min_days NUMERIC(6,2) NOT NULL DEFAULT 14,
   hdtv_factor_bp INTEGER NOT NULL DEFAULT 8500,
   ctv_pit_bp INTEGER NOT NULL DEFAULT 1000,

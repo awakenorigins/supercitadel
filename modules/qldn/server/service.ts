@@ -65,6 +65,8 @@ export async function createPolicyParams(db: any, orgId: string, b: any) {
     deductionPersonal: String(b?.deductionPersonal ?? '15500000'),
     deductionDependent: String(b?.deductionDependent ?? '6200000'),
     uniformCapYear: String(b?.uniformCapYear ?? '5000000'),
+    mealExemptCapMonthly: b?.mealExemptCapMonthly === undefined || b?.mealExemptCapMonthly === null ? null : String(b.mealExemptCapMonthly),
+    applyUnionFee: !!b?.applyUnionFee,
     insuranceMinDays: String(b?.insuranceMinDays ?? '14'),
     hdtvFactorBp: b?.hdtvFactorBp ?? 8500,
     ctvPitBp: b?.ctvPitBp ?? 1000,

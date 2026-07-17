@@ -53,6 +53,9 @@ export const policyParams = qldn.table('policy_params', {
   deductionPersonal: money('deduction_personal').notNull().default('15500000'),
   deductionDependent: money('deduction_dependent').notNull().default('6200000'),
   uniformCapYear: money('uniform_cap_year').notNull().default('5000000'),
+  // Cap miễn thuế tiền ăn/tháng (luật VN 730k). NULL = miễn toàn bộ (kiểu Excel Joli Poli dòng cũ).
+  mealExemptCapMonthly: money('meal_exempt_cap_monthly'),
+  applyUnionFee: boolean('apply_union_fee').notNull().default(false),
   insuranceMinDays: days('insurance_min_days').notNull().default('14'),
   hdtvFactorBp: integer('hdtv_factor_bp').notNull().default(8500), // hệ số HĐTV 0.85
   ctvPitBp: integer('ctv_pit_bp').notNull().default(1000), // CTV khấu trừ 10%

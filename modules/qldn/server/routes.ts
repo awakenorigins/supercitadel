@@ -13,6 +13,7 @@ import {
 } from './service.js';
 import { parseOfficialWorkbook, parseInternalWorkbook, importEmployees } from './import.js';
 import { parseOfficialBcc, parseInternalBcc, importBcc, listTimesheets } from './timesheet.js';
+import { createPayrollRun, calculateRun, listRuns, listRunLines, getRun } from './payroll.js';
 
 declare module 'hono' { interface ContextVariableMap { auth: JwtPayload } }
 const orgOf = (c: any) => (c.get('auth') as JwtPayload).orgId;
@@ -118,6 +119,22 @@ export function buildQldnRoutes(deps: { db: any; requireAuth: MiddlewareHandler;
     if (!period) throw new AppError('VALIDATION' as any, 'Thiếu query ?period=YYYY-MM', 400);
     return c.json(await listTimesheets(deps.db, orgOf(c), period));
   });
+
+  // ── Bảng lương (payroll runs) ──
+  r.get('/payroll/runs', async (c) => c.json({ runs: await listRuns(deps.db, orgOf(c), c.req.query('period')) }));
+  r.post('/payroll/runs', async (c) => {
+    const b = await c.req.json().catch(() => ({}));
+    const run = await createPayrollRun(deps.db, orgOf(c), b);
+    await deps.audit?.(c, { action: 'qldn.payroll.run_create', resource: 'payroll_run', resourceId: run.id, detail: { period: run.periodCode, scheme: run.scheme } });
+    return c.json({ run }, 201);
+  });
+  r.post('/payroll/runs/:id/calculate', async (c) => {
+    const result = await calculateRun(deps.db, orgOf(c), c.req.param('id'));
+    await deps.audit?.(c, { action: 'qldn.payroll.calculate', resource: 'payroll_run', resourceId: c.req.param('id'), detail: { lines: result.lines, netTotal: result.totals.netPay, skipped: result.skipped.length } });
+    return c.json({ result });
+  });
+  r.get('/payroll/runs/:id', async (c) => c.json({ run: await getRun(deps.db, orgOf(c), c.req.param('id')) }));
+  r.get('/payroll/runs/:id/lines', async (c) => c.json({ lines: await listRunLines(deps.db, orgOf(c), c.req.param('id')) }));
 
   return r;
 }
