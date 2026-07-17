@@ -9,6 +9,8 @@ async function approved(ev:any,{db}:{db:DB}){const orgId=ev.orgId; const inst=aw
  case 'qhr_recruitment_plans': await tx.update(s.qhrRecruitmentPlans).set({status:'approved',updatedAt:now()}).where(and(eq(s.qhrRecruitmentPlans.id,inst.entityId),eq(s.qhrRecruitmentPlans.orgId,orgId))); break;
  case 'qhr_transfer_requests': await approveTransfer(tx,orgId,inst.entityId,{signedBy:ev.payload?.actorUserId}); break;
  case 'qhr_business_trip_requests': await tx.update(s.qhrBusinessTripRequests).set({status:'approved',updatedAt:now()}).where(and(eq(s.qhrBusinessTripRequests.id,inst.entityId),eq(s.qhrBusinessTripRequests.orgId,orgId))); break;
+ case 'qhr_training_requests': await tx.update(s.qhrTrainingRequests).set({status:'approved',approvedBy:ev.payload?.actorUserId,updatedAt:now()}).where(and(eq(s.qhrTrainingRequests.id,inst.entityId),eq(s.qhrTrainingRequests.orgId,orgId))); break;
+ case 'qhr_training_plans': await tx.update(s.qhrTrainingPlans).set({status:'approved',updatedAt:now()}).where(and(eq(s.qhrTrainingPlans.id,inst.entityId),eq(s.qhrTrainingPlans.orgId,orgId))); break;
  case 'qhr_probation_extension_requests': { const [ex]=await tx.update(s.qhrProbationExtensionRequests).set({status:'approved',updatedAt:now()}).where(and(eq(s.qhrProbationExtensionRequests.id,inst.entityId),eq(s.qhrProbationExtensionRequests.orgId,orgId))).returning(); if(ex){const [p]=await tx.select().from(s.qhrProbationPeriods).where(and(eq(s.qhrProbationPeriods.id,ex.probationId),eq(s.qhrProbationPeriods.orgId,orgId))); if(p && p.extensionCount<1) await tx.update(s.qhrProbationPeriods).set({status:'extended',extensionCount:1,updatedAt:now()}).where(eq(s.qhrProbationPeriods.id,p.id));} break;}
 }})}
 async function rejected(ev:any,{db}:{db:DB}){const orgId=ev.orgId; const inst=await instance(db,orgId,ev.payload?.instanceId); if(!inst) return; const patch={status:'rejected' as const,updatedAt:now()}; switch(inst.entityType){
@@ -16,6 +18,8 @@ async function rejected(ev:any,{db}:{db:DB}){const orgId=ev.orgId; const inst=aw
  case 'qhr_recruitment_plans': await db.update(s.qhrRecruitmentPlans).set(patch).where(and(eq(s.qhrRecruitmentPlans.id,inst.entityId),eq(s.qhrRecruitmentPlans.orgId,orgId))); break;
  case 'qhr_transfer_requests': await db.update(s.qhrTransferRequests).set(patch).where(and(eq(s.qhrTransferRequests.id,inst.entityId),eq(s.qhrTransferRequests.orgId,orgId))); break;
  case 'qhr_business_trip_requests': await db.update(s.qhrBusinessTripRequests).set(patch).where(and(eq(s.qhrBusinessTripRequests.id,inst.entityId),eq(s.qhrBusinessTripRequests.orgId,orgId))); break;
+ case 'qhr_training_requests': await db.update(s.qhrTrainingRequests).set(patch).where(and(eq(s.qhrTrainingRequests.id,inst.entityId),eq(s.qhrTrainingRequests.orgId,orgId))); break;
+ case 'qhr_training_plans': await db.update(s.qhrTrainingPlans).set(patch).where(and(eq(s.qhrTrainingPlans.id,inst.entityId),eq(s.qhrTrainingPlans.orgId,orgId))); break;
  case 'qhr_probation_extension_requests': await db.update(s.qhrProbationExtensionRequests).set(patch).where(and(eq(s.qhrProbationExtensionRequests.id,inst.entityId),eq(s.qhrProbationExtensionRequests.orgId,orgId))); break;
 }}
 export const eventHandlers={'workflow.instance.approved':approved,'workflow.instance.rejected':rejected};
