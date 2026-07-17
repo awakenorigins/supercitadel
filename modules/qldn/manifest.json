@@ -1,0 +1,35 @@
+{
+  "id": "qldn",
+  "name": "Quản Lý Doanh Nghiệp V1A",
+  "version": "1.0.0",
+  "tier": "paid",
+  "priceOm": 1200,
+  "icon": "i-building",
+  "description": "Lương 2 hệ (chính thức BHXH/thuế + nội bộ doanh số), chấm công 2 chế độ, hoa hồng theo đơn, chi lương ngân hàng, CTV/khoán, dự báo dòng tiền theo ngày. Chuẩn mẫu Joli Poli.",
+  "permissions": [
+    "qldn.employee.read",
+    "qldn.employee.write",
+    "qldn.timesheet.import",
+    "qldn.timesheet.write",
+    "qldn.payroll.run",
+    "qldn.payroll.approve",
+    "qldn.payroll.read",
+    "qldn.commission.write",
+    "qldn.commission.read",
+    "qldn.payout.create",
+    "qldn.payslip.read",
+    "qldn.contractor.write",
+    "qldn.forecast.read",
+    "qldn.forecast.write"
+  ],
+  "routes": "/api/v1/qldn",
+  "docs": "docs/GUIDE.md",
+  "dependsOn": ["ke-toan-10a"],
+  "engine": "^1.0.0",
+  "events": {
+    "emits": ["qldn.payroll.approved", "qldn.payout.created", "qldn.forecast.updated"],
+    "subscribes": ["ke-toan-10a.*"]
+  },
+  "rentPlans": { "30": 180 },
+  "group": "Quản trị"
+}

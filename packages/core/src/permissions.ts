@@ -79,13 +79,27 @@ export const PERMISSION_REGISTRY = [
   p('kho.reservation.write','Soul-Inventory — Tạo/hủy/hoàn tất phiếu giữ hàng'),
   p('kho.stocktake.read','Soul-Inventory — Xem lịch sử kiểm kê'),
   p('kho.stocktake.write','Soul-Inventory — Thực hiện và chốt phiên kiểm kê'),
+  p('qldn.employee.read','QLDN — Xem hồ sơ nhân viên + salary profile'),
+  p('qldn.employee.write','QLDN — Thêm/sửa nhân viên, salary profile',2,true),
+  p('qldn.timesheet.import','QLDN — Import bảng chấm công Excel',2,true),
+  p('qldn.timesheet.write','QLDN — Nhập/sửa chấm công',2,true),
+  p('qldn.payroll.run','QLDN — Chạy bảng lương kỳ',2,true),
+  p('qldn.payroll.approve','QLDN — Duyệt bảng lương',2,true),
+  p('qldn.payroll.read','QLDN — Xem bảng lương, tổng quỹ lương'),
+  p('qldn.commission.write','QLDN — Nhập doanh số/hoa hồng',2,true),
+  p('qldn.commission.read','QLDN — Xem doanh số/hoa hồng'),
+  p('qldn.payout.create','QLDN — Tạo batch chi lương ngân hàng',2,true),
+  p('qldn.payslip.read','QLDN — Xem phiếu lương'),
+  p('qldn.contractor.write','QLDN — Thanh toán CTV/gia công/công tác phí',2,true),
+  p('qldn.forecast.read','QLDN — Xem dự báo dòng tiền'),
+  p('qldn.forecast.write','QLDN — Cập nhật dự báo dòng tiền',2,true),
 ] as const satisfies readonly PermissionMeta[];
 
 export const ROLE_PERMISSIONS: Record<RoleType, readonly Permission[]> = {
   super_admin: ['*'],
   owner: ['*'],
-  manager: ['accounting.*','crm.*','inventory.*','hr.*','om.wallet.read','report.*','core.permissions.read','ke-toan-10a.*','kho.*'],
-  staff: ['crm.contact.create','crm.contact.read','hr.attendance.checkin','hr.attendance.checkout','om.wallet.read','report.summary.read','core.permissions.read','ke-toan-10a.report.read'],
+  manager: ['accounting.*','crm.*','inventory.*','hr.*','om.wallet.read','report.*','core.permissions.read','ke-toan-10a.*','kho.*','qldn.*'],
+  staff: ['crm.contact.create','crm.contact.read','hr.attendance.checkin','hr.attendance.checkout','om.wallet.read','report.summary.read','core.permissions.read','ke-toan-10a.report.read','qldn.payslip.read'],
 };
 
 export function permissionMatches(grant: Permission, perm: Permission): boolean {

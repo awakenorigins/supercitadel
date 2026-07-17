@@ -13,6 +13,7 @@ import { buildAccountingRoutes } from '@citadel/module-accounting/server/routes.
 import { buildKeToan10aRoutes } from '@citadel/module-ke-toan-10a/server/routes.js';
 import { buildSoulManagerRoutes } from '@citadel/module-soul-manager/server/host-adapter.js';
 import { buildSoulInventoryRoutes } from '@citadel/module-soul-inventory/server/host-adapter.js';
+import { buildQldnRoutes } from '@citadel/module-qldn/server/routes.js';
 import { eventHandlers as notificationEventHandlers } from '@citadel/module-notification/server/events.js';
 import { subscribeOutbox, type OutboxHandler } from '../outbox.js';
 
@@ -29,6 +30,7 @@ const builders: Record<string, Builder> = {
   'ke-toan-10a': (d) => buildKeToan10aRoutes({ db: d.db, requireAuth: d.requireAuth, gate: d.requireModule(d.db, 'ke-toan-10a'), audit: d.audit, reverseGate: d.cancelGate }),
   'soul-manager': (d) => buildSoulManagerRoutes({ db: d.db, requireAuth: d.requireAuth, gate: d.requireModule(d.db, 'soul-manager'), audit: d.audit }),
   'soul-inventory': (d) => buildSoulInventoryRoutes({ db: d.db, requireAuth: d.requireAuth, gate: d.requireModule(d.db, 'soul-inventory'), audit: d.audit }),
+  qldn: (d) => buildQldnRoutes({ db: d.db, requireAuth: d.requireAuth, gate: d.requireModule(d.db, 'qldn'), audit: d.audit }),
 };
 const moduleEventHandlers: Record<string, Record<string, OutboxHandler>> = {
   notification: notificationEventHandlers as Record<string, OutboxHandler>,

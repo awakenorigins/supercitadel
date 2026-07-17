@@ -1,0 +1,34 @@
+{
+  "name": "@citadel/module-qldn",
+  "version": "1.0.0",
+  "description": "QLDN V1A — Quản Lý Doanh Nghiệp cho SuperCitadel: lương 2 hệ (chính thức BHXH/thuế + nội bộ doanh số), chấm công 2 chế độ, hoa hồng theo đơn, chi lương ngân hàng, CTV/khoán, dự báo dòng tiền. Chuẩn mẫu Joli Poli, golden test khớp từng đồng.",
+  "type": "module",
+  "exports": {
+    "./server/routes.js": "./server/routes.ts",
+    "./server/schema.js": "./server/schema.ts",
+    "./server/service.js": "./server/service.ts",
+    "./server/engine.js": "./server/engine.ts",
+    "./server/seed.js": "./server/seed.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "tsx server/qldn.pglite.test.ts"
+  },
+  "dependencies": {
+    "@citadel/core": "workspace:*",
+    "drizzle-orm": "^0.36.0",
+    "hono": "^4.6.0",
+    "xlsx": "0.18.5",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.2.17",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "private": true
+}
