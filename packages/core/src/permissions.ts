@@ -37,6 +37,15 @@ export const PERMISSION_REGISTRY = [
   p('notification.notification.read','Xem thông báo'),
   p('notification.notification.create','Tạo thông báo'),
   p('om.wallet.topup','Nạp Om',2,true),
+  // ── Workflow core ──
+  p('workflow.definition.read','Workflow — Xem định nghĩa quy trình'),
+  p('workflow.definition.write','Workflow — Tạo/sửa định nghĩa quy trình',2,true),
+  p('workflow.instance.read','Workflow — Xem instance quy trình'),
+  p('workflow.instance.write','Workflow — Khởi tạo/cập nhật instance quy trình',2,true),
+  p('workflow.step.approve','Workflow — Duyệt bước quy trình',2,true),
+  p('workflow.step.reject','Workflow — Từ chối bước quy trình',2,true),
+  p('workflow.step.delegate','Workflow — Ủy quyền bước quy trình',2,true),
+  p('workflow.admin.manage','Workflow — Quản trị workflow/SLA/compliance',2,true),
   // ── Kế Toán 10A ──
   p('ke-toan-10a.receipt.create','Kế Toán 10A — Tạo phiếu thu',2,true),
   p('ke-toan-10a.payment.create','Kế Toán 10A — Tạo phiếu chi',2,true),
