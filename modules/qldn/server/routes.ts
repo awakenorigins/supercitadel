@@ -14,6 +14,10 @@ import {
 import { parseOfficialWorkbook, parseInternalWorkbook, importEmployees } from './import.js';
 import { parseOfficialBcc, parseInternalBcc, importBcc, listTimesheets } from './timesheet.js';
 import { createPayrollRun, calculateRun, listRuns, listRunLines, getRun } from './payroll.js';
+import {
+  approveRun, createPayoutBatch, listPayoutBatches, markBatchStatus,
+  generatePayslips, getPayslip, createContractorPayment, listContractorPayments,
+} from './payout.js';
 
 declare module 'hono' { interface ContextVariableMap { auth: JwtPayload } }
 const orgOf = (c: any) => (c.get('auth') as JwtPayload).orgId;
@@ -135,6 +139,46 @@ export function buildQldnRoutes(deps: { db: any; requireAuth: MiddlewareHandler;
   });
   r.get('/payroll/runs/:id', async (c) => c.json({ run: await getRun(deps.db, orgOf(c), c.req.param('id')) }));
   r.get('/payroll/runs/:id/lines', async (c) => c.json({ lines: await listRunLines(deps.db, orgOf(c), c.req.param('id')) }));
+  r.post('/payroll/runs/:id/approve', async (c) => {
+    const auth = c.get('auth') as JwtPayload;
+    const run = await approveRun(deps.db, orgOf(c), c.req.param('id'), auth.sub);
+    await deps.audit?.(c, { action: 'qldn.payroll.approve', resource: 'payroll_run', resourceId: run.id });
+    return c.json({ run });
+  });
+
+  // ── Chi lương (payout batch UNC) ──
+  r.get('/payouts', async (c) => c.json({ batches: await listPayoutBatches(deps.db, orgOf(c), c.req.query('runId')) }));
+  r.post('/payouts', async (c) => {
+    const auth = c.get('auth') as JwtPayload;
+    const b = await c.req.json().catch(() => ({}));
+    const { batch, summary } = await createPayoutBatch(deps.db, orgOf(c), b, auth.sub);
+    await deps.audit?.(c, { action: 'qldn.payout.create', resource: 'payout_batch', resourceId: batch.id, detail: summary });
+    return c.json({ batch, summary }, 201);
+  });
+  r.post('/payouts/:id/status', async (c) => {
+    const b = await c.req.json().catch(() => ({}));
+    const batch = await markBatchStatus(deps.db, orgOf(c), c.req.param('id'), String(b?.status ?? ''));
+    await deps.audit?.(c, { action: 'qldn.payout.status', resource: 'payout_batch', resourceId: batch.id, detail: { status: batch.status } });
+    return c.json({ batch });
+  });
+
+  // ── Phiếu lương (payslips — snapshot bất biến) ──
+  r.post('/payroll/runs/:id/payslips', async (c) => {
+    const result = await generatePayslips(deps.db, orgOf(c), c.req.param('id'));
+    await deps.audit?.(c, { action: 'qldn.payslip.generate', resource: 'payroll_run', resourceId: c.req.param('id'), detail: result });
+    return c.json({ result }, 201);
+  });
+  r.get('/payslips/:employeeId/:period', async (c) =>
+    c.json({ payslips: await getPayslip(deps.db, orgOf(c), c.req.param('employeeId'), c.req.param('period')) }));
+
+  // ── CTV / gia công / công tác phí ──
+  r.get('/contractors/payments', async (c) => c.json({ payments: await listContractorPayments(deps.db, orgOf(c), c.req.query('period')) }));
+  r.post('/contractors/payments', async (c) => {
+    const b = await c.req.json().catch(() => ({}));
+    const payment = await createContractorPayment(deps.db, orgOf(c), b);
+    await deps.audit?.(c, { action: 'qldn.contractor.payment', resource: 'contractor_payment', resourceId: payment.id, detail: { kind: payment.kind, net: payment.netAmount } });
+    return c.json({ payment }, 201);
+  });
 
   return r;
 }
