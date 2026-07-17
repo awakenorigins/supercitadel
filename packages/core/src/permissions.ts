@@ -119,6 +119,21 @@ export const PERMISSION_REGISTRY = [
   p('qldn-finance-flow.payroll-flow.write','QLDN Finance Flow — Tạo/sửa run duyệt bảng lương',2,true),
   p('qldn-finance-flow.payroll-flow.approve','QLDN Finance Flow — Duyệt bảng lương generic',2,true),
   p('qldn-finance-flow.payroll-flow.pay','QLDN Finance Flow — Xác nhận lệnh chi lương',2,true),
+  // ── QLDN HR Plus — recruitment/probation workflow layer ──
+  p('qldn-hr-plus.recruitment.read','QLDN HR Plus — Xem yêu cầu/kế hoạch tuyển dụng'),
+  p('qldn-hr-plus.recruitment.write','QLDN HR Plus — Tạo/sửa yêu cầu/kế hoạch tuyển dụng',2,true),
+  p('qldn-hr-plus.recruitment.approve','QLDN HR Plus — Duyệt yêu cầu/kế hoạch tuyển dụng',2,true),
+  p('qldn-hr-plus.candidate.read','QLDN HR Plus — Xem kho ứng viên'),
+  p('qldn-hr-plus.candidate.write','QLDN HR Plus — Tạo/sửa ứng viên',2,true),
+  p('qldn-hr-plus.application.read','QLDN HR Plus — Xem pipeline ứng tuyển'),
+  p('qldn-hr-plus.application.write','QLDN HR Plus — Chuyển stage/loại ứng viên',2,true),
+  p('qldn-hr-plus.offer.write','QLDN HR Plus — Gửi/đàm phán offer',2,true),
+  p('qldn-hr-plus.probation.read','QLDN HR Plus — Xem thử việc'),
+  p('qldn-hr-plus.probation.write','QLDN HR Plus — Tạo/sửa thử việc',2,true),
+  p('qldn-hr-plus.probation.evaluate','QLDN HR Plus — Đánh giá thử việc',2,true),
+  p('qldn-hr-plus.probation.extend','QLDN HR Plus — Đề xuất/duyệt gia hạn thử việc',2,true),
+  p('qldn-hr-plus.onboarding.execute','QLDN HR Plus — Thực hiện onboarding checklist',2,true),
+  p('qldn-hr-plus.employee-document.write','QLDN HR Plus — Thu/cập nhật hồ sơ nhân sự',2,true),
 ] as const satisfies readonly PermissionMeta[];
 
 export const ROLE_PERMISSIONS: Record<RoleType, readonly Permission[]> = {
