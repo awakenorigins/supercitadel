@@ -14,6 +14,7 @@ import { keToan10aTools } from '@citadel/module-ke-toan-10a/server/tools.js';
 import { soulManagerTools } from '@citadel/module-soul-manager/server/host-adapter.js';
 import { soulInventoryTools, startSoulInventoryNightlyAutomation } from '@citadel/module-soul-inventory/server/host-adapter.js';
 import { startQldnMonthlyAutomation } from '@citadel/module-qldn/server/scheduler.js';
+import { qldnTools } from '@citadel/module-qldn/server/tools.js';
 import { buildModuleRoutes, requireModule } from './modules/routes.js';
 import { mountLoadedModules } from './modules/loader.js';
 import { buildCompanyModuleRoutes } from './company-module-routes.js';
@@ -180,6 +181,7 @@ try { crmTools(getDb()).forEach((t) => toolRegistry.register(t)); } catch (e) { 
 try { keToan10aTools(getDb()).forEach((t) => toolRegistry.register(t)); } catch (e) { /* idempotent */ }
 try { soulManagerTools(getDb()).forEach((t) => toolRegistry.register(t as any)); } catch (e) { /* idempotent */ }
 try { soulInventoryTools(getDb()).forEach((t) => toolRegistry.register(t as any)); } catch (e) { /* idempotent */ }
+try { qldnTools(getDb()).forEach((t) => toolRegistry.register(t as any)); } catch (e) { /* idempotent */ }
 
 // fail-fast env validation at boot
 const env = loadApiEnv();

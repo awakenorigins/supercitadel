@@ -13,6 +13,7 @@ import { hrEmployees } from '@citadel/module-hr/server/schema.js';
 import { keToan10aTieuTamActions, detectK10aAction } from '@citadel/module-ke-toan-10a/server/tieu-tam-actions.js';
 import { soulManagerTieuTamActions } from '@citadel/module-soul-manager/server/tieu-tam-actions.js';
 import { soulInventoryTieuTamActions } from '@citadel/module-soul-inventory/server/tieu-tam-actions.js';
+import { qldnTieuTamActions, detectQldnAction } from '@citadel/module-qldn/server/tieu-tam-actions.js';
 
 type DB = any;
 export type TieuTamActionCtx = { db: DB; orgId: string; userId: string; role: Role; securityLevel: number; audit?: (e: { action: string; resource?: string; resourceId?: string; detail?: unknown }) => Promise<void> };
@@ -55,6 +56,7 @@ const defs: TieuTamAction[] = [
 defs.push(...(keToan10aTieuTamActions as unknown as (db: DB) => TieuTamAction[])(undefined as unknown as DB));
 defs.push(...(soulManagerTieuTamActions() as unknown as TieuTamAction[]));
 defs.push(...(soulInventoryTieuTamActions() as unknown as TieuTamAction[]));
+defs.push(...(qldnTieuTamActions() as unknown as TieuTamAction[]));
 export const ACTION_REGISTRY = new Map(defs.map(d=>[d.name,d]));
 export function toolSafeName(name:string){ return name.replace(/[^a-zA-Z0-9_-]/g, '_'); }
 const SAFE_TO_ACTION = new Map(defs.map(d=>[toolSafeName(d.name), d.name]));
@@ -70,6 +72,7 @@ export async function executeAction(ctx:TieuTamActionCtx, name:string, params:an
 }
 export function detectAction(message:string): {name:string; params:any} | null {
   const k10a = detectK10aAction(message); if (k10a) return k10a;
+  const qldn = detectQldnAction(message); if (qldn) return qldn;
   const m=message.trim(); let x;
   if((x=/tạo\s+phiếu\s+thu\s+([\d.,]+)\s+(?:cho|từ)\s+(.+)/i.exec(m))) return {name:'acc.create_receipt',params:{amount:x[1].replace(/\D/g,''),partyName:x[2].trim()}};
   if((x=/tạo\s+phiếu\s+chi\s+([\d.,]+)\s+(?:cho|tới|đến)\s+(.+)/i.exec(m))) return {name:'acc.create_payment',params:{amount:x[1].replace(/\D/g,''),partyName:x[2].trim()}};

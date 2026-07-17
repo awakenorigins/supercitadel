@@ -9,7 +9,9 @@
     "./server/service.js": "./server/service.ts",
     "./server/engine.js": "./server/engine.ts",
     "./server/seed.js": "./server/seed.ts",
-    "./server/scheduler.js": "./server/scheduler.ts"
+    "./server/scheduler.js": "./server/scheduler.ts",
+    "./server/tools.js": "./server/tools.ts",
+    "./server/tieu-tam-actions.js": "./server/tieu-tam-actions.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
