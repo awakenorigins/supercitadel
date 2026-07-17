@@ -94,6 +94,84 @@ export function progressivePit(taxed: number, brackets: PitBracket[]): number {
   return r0(pit);
 }
 
+// ============================================================
+// SCHEME INTERNAL (F5) — dịch từ sheet "TÍNH LƯƠNG" file LUONGNB (127r×59c):
+//  - income   = base + PC(sáng tạo + trách nhiệm + tay nghề + xăng xe)
+//  - workPay  = income × workDays / stdDays   (K*L/26 — KHÔNG round)
+//  - OT theo NGÀY (dư công giờ máy quy ra ngày): pay = base/std × rate × otDays
+//  - gross    = ROUND(workPay + OT + hoa hồng + thưởng vượt DS + phí công tác
+//               + hỗ trợ + gia công + OT đêm + thưởng lễ/SN + T13, -3) ← tròn NGHÌN
+//  - net      = ROUND(gross − trừ đi trễ − tạm ứng − khấu trừ thử việc 15%
+//               − BHXH NLĐ − ĐÃ LĨNH hệ chính thức (VLOOKUP Bảng thể hiện)
+//               − thuế TNCN + (nghỉ P + L), -3)
+//  → đây chính là reconciliation 2 hệ lương: nội bộ trả phần chênh sau khi
+//    hệ chính thức (BHXH/thuế) đã chi.
+// ============================================================
+
+export interface InternalInput {
+  baseSalary: number;          // lương nội bộ (hoặc đơn giá GIỜ nếu hourlyMode)
+  pcCreative: number; pcResponsibility: number; pcSkill: number; pcFuel: number;
+  workDays: number;
+  ot170Days: number; ot150Days: number; ot200Days: number;
+  /** Thợ tính lương theo GIỜ (Excel M = L×F×8): workPay = days × rate/giờ × 8. */
+  hourlyMode?: boolean;
+  /** Mẫu số chia công riêng (ví dụ 22 ngày chuẩn thay 26 — JPTK002). */
+  workPayDivisor?: number;
+  /** Rate OT200 override (Excel có dòng gõ 1.5 thay 2.0 — JPMM001). */
+  ot200RateOverride?: number;
+  /** Điều chỉnh cộng thẳng vào gross sau ROUND (Excel +769230 — JPMM002). */
+  grossAdjust?: number;
+  /** Lương phẳng không chia công (Excel M = F — tạp vụ JPHN001). */
+  flatWorkPay?: boolean;
+  commission: number; bonusOverTarget: number;
+  feeProvince: number; feeCity: number; feeSupport: number;
+  outsourcing: number; otNight: number;
+  bonusHoliday: number; bonus13: number;
+  lateAmount: number; advance: number; probationDeduct: number;
+  insuranceEmployee: number;   // BHXH 10.5% tính trên lương hệ chính thức
+  officialNetPaid: number;     // đã thực lĩnh ở hệ chính thức (khấu trừ)
+  leavePayP: number; leavePayL: number;
+  pit: number;
+}
+
+export interface InternalLine {
+  income: number; workPay: number;
+  ot170Pay: number; ot150Pay: number; ot200Pay: number; otPay: number;
+  gross: number; netPay: number;
+}
+
+const r3 = (x: number) => Math.round(Number((x / 1000).toFixed(6))) * 1000; // ROUND(x,-3) Excel
+
+/** Tính 1 dòng lương INTERNAL — bản dịch 1-1 sheet TÍNH LƯƠNG LUONGNB. */
+export function calcInternalLine(inp: InternalInput, pol: { standardDays: number; otRates: { ot150: number; ot170: number; ot200: number } }): InternalLine {
+  const std = inp.workPayDivisor ?? pol.standardDays;
+  const income = inp.hourlyMode ? 0 : inp.baseSalary + inp.pcCreative + inp.pcResponsibility + inp.pcSkill + inp.pcFuel;
+  // Thợ theo giờ: M = ngày công × đơn giá giờ × 8; lương phẳng: M = F; còn lại: income × công / mẫu số
+  const workPay = inp.hourlyMode
+    ? inp.workDays * inp.baseSalary * 8
+    : inp.flatWorkPay
+      ? inp.baseSalary
+      : (inp.baseSalary + inp.pcCreative + inp.pcResponsibility + inp.pcSkill + inp.pcFuel) * inp.workDays / std;
+  const daily = inp.baseSalary / pol.standardDays; // OT luôn chia 26 (F/26 cố định trong Excel, kể cả dòng chia 22)
+  const ot170Pay = daily * pol.otRates.ot170 * inp.ot170Days;
+  const ot150Pay = daily * pol.otRates.ot150 * inp.ot150Days;
+  const ot200Pay = daily * (inp.ot200RateOverride ?? pol.otRates.ot200) * inp.ot200Days;
+  const otPay = ot170Pay + ot150Pay + ot200Pay;
+  const gross = r3(
+    workPay + ot170Pay + ot150Pay + ot200Pay
+    + inp.commission + inp.bonusOverTarget
+    + inp.feeProvince + inp.feeCity + inp.feeSupport
+    + inp.outsourcing + inp.otNight
+    + inp.bonusHoliday + inp.bonus13,
+  ) + (inp.grossAdjust ?? 0);
+  const netPay = r3(
+    gross - inp.lateAmount - inp.advance - inp.probationDeduct
+    - inp.insuranceEmployee - inp.officialNetPaid - inp.pit
+    + (inp.leavePayP + inp.leavePayL),
+  );
+  return { income, workPay, ot170Pay, ot150Pay, ot200Pay, otPay, gross, netPay };
+}
+
 /** Tính 1 dòng lương OFFICIAL — bản dịch 1-1 của engine Excel Joli Poli. */
 export function calcOfficialLine(inp: OfficialInput, pol: PayrollPolicy): OfficialLine {
   const std = pol.standardDays;
