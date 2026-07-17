@@ -102,6 +102,23 @@ export const PERMISSION_REGISTRY = [
   p('qldn.contractor.write','QLDN — Thanh toán CTV/gia công/công tác phí',2,true),
   p('qldn.forecast.read','QLDN — Xem dự báo dòng tiền'),
   p('qldn.forecast.write','QLDN — Cập nhật dự báo dòng tiền',2,true),
+  // ── QLDN Finance Flow — workflow tài chính mỏng, tái sử dụng Kế Toán 10A ──
+  p('qldn-finance-flow.payment-request.read','QLDN Finance Flow — Xem đề nghị thanh toán/tạm ứng'),
+  p('qldn-finance-flow.payment-request.write','QLDN Finance Flow — Tạo/sửa đề nghị thanh toán/tạm ứng',2,true),
+  p('qldn-finance-flow.payment-request.approve','QLDN Finance Flow — Duyệt đề nghị thanh toán/tạm ứng',2,true),
+  p('qldn-finance-flow.payment-request.pay','QLDN Finance Flow — Xác nhận chi/giải ngân đề nghị',2,true),
+  p('qldn-finance-flow.advance.read','QLDN Finance Flow — Xem tạm ứng/quyết toán'),
+  p('qldn-finance-flow.advance.write','QLDN Finance Flow — Tạo/sửa tạm ứng/quyết toán',2,true),
+  p('qldn-finance-flow.advance.approve','QLDN Finance Flow — Duyệt tạm ứng/quyết toán',2,true),
+  p('qldn-finance-flow.advance.settle','QLDN Finance Flow — Tất toán tạm ứng và chênh lệch',2,true),
+  p('qldn-finance-flow.debt.read','QLDN Finance Flow — Xem công nợ và nhắc nợ'),
+  p('qldn-finance-flow.debt.write','QLDN Finance Flow — Tạo/sửa báo cáo công nợ',2,true),
+  p('qldn-finance-flow.debt.approve','QLDN Finance Flow — Duyệt kế hoạch/xóa nợ',2,true),
+  p('qldn-finance-flow.debt.pay','QLDN Finance Flow — Xác nhận thanh toán công nợ',2,true),
+  p('qldn-finance-flow.payroll-flow.read','QLDN Finance Flow — Xem luồng duyệt bảng lương'),
+  p('qldn-finance-flow.payroll-flow.write','QLDN Finance Flow — Tạo/sửa run duyệt bảng lương',2,true),
+  p('qldn-finance-flow.payroll-flow.approve','QLDN Finance Flow — Duyệt bảng lương generic',2,true),
+  p('qldn-finance-flow.payroll-flow.pay','QLDN Finance Flow — Xác nhận lệnh chi lương',2,true),
 ] as const satisfies readonly PermissionMeta[];
 
 export const ROLE_PERMISSIONS: Record<RoleType, readonly Permission[]> = {
