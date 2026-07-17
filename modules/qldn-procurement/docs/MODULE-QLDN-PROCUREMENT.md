@@ -11,5 +11,11 @@ Beat 12 mở module `qldn-procurement` với supplier master duy nhất toàn h�
 ## HR Plus backfill note
 `qhr_training_vendor_proposals.vendor_ref` có thể nullable soft-ref sang `qpr_suppliers.id` ở Beat sau. Beat 12 chỉ ghi contract liên thông, không sửa `qldn-hr-plus` để tránh phá module đã pass.
 
-## Beat 13 còn lại
-Routes/UI đầy đủ, đấu thầu mua 4-5 cấp, service acceptance sâu, docs route builder.
+## Beat 13 — module complete
+- **Routes** `buildQldnProcurementRoutes` mount tại `/api/v1/qldn-procurement` (loader built-in, gate module active/rent). Permission check theo `PERMISSION_REGISTRY` (staff không có `qldn-procurement.*` → 403).
+- **Supplier lifecycle:** đánh giá định kỳ cập nhật rating trung bình; score <5 hoặc `finalDecision=terminate` → supplier `suspended`/`terminated` + emit `qldn-procurement.supplier.suspended`. NCC không-active bị chặn ở: tạo PO từ PR approved, gửi PO (`/purchase-orders/:id/send`), mời thầu, award thầu (409).
+- **PO lifecycle:** approved → sent (`purchase-order.sent`) → nhận hàng partial (`partially_received`) → nhận đủ → `closed` + `purchase-order.closed`. PO closed/cancelled/rejected chặn nhận thêm hàng (409). Mỗi GR emit `goods-receipt.recorded` kèm `poStatus`.
+- **Đấu thầu mua (QT 4):** bid project → submit workflow `vanhanh.qt-dau-thau` 4 cấp (KTT→GĐKD→P.TGĐ→TGĐ), ngưỡng ≥20tr thêm GĐTC = 5 cấp. Duyệt xong mới được mời thầu; award chọn winner (`won`), loại bidder khác (`rejected`), tự sinh PR/PO nối NCC thắng + emit `bid.awarded`. Reject workflow → bid `rejected`.
+- **QT 12 DV vận hành:** `qpr_procurement_requests` submit workflow `vanhanh.qt-thue-dv-mua-thiet-bi`; nghiệm thu `qpr_service_acceptances` — `result=issue` bắt buộc `issueDesc`, emit `service-acceptance.signed`.
+- **UI** `apps/web/app/qldn-procurement/page.tsx`: 4 tab (NCC & Đánh giá / Mua hàng & PO / Đấu thầu / DV & Nghiệm thu), quick actions, submit/send inline, ModuleLocked gate.
+- **Tests:** `tests/procurement.pglite.test.ts` (service + migration 15 bảng) và `tests/routes.pglite.test.ts` (API 403/3-NCC/threshold/GR partial-full/suspended block/bid award/org isolation).

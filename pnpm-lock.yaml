@@ -413,6 +413,9 @@ importers:
       drizzle-orm:
         specifier: ^0.36.0
         version: 0.36.4(@electric-sql/pglite@0.2.17)(@types/react@19.2.16)(postgres@3.4.9)(react@19.2.7)
+      hono:
+        specifier: ^4.6.0
+        version: 4.12.23
     devDependencies:
       '@electric-sql/pglite':
         specifier: ^0.2.0
@@ -627,6 +630,9 @@ importers:
       '@citadel/module-qldn-hr-plus':
         specifier: workspace:*
         version: link:../../modules/qldn-hr-plus
+      '@citadel/module-qldn-procurement':
+        specifier: workspace:*
+        version: link:../../modules/qldn-procurement
       '@citadel/module-soul-inventory':
         specifier: workspace:*
         version: link:../../modules/soul-inventory

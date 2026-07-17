@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { loadModuleManifests, getLoaderState, buildCatalogFromManifests } from './modules/loader.js';
 
 const state = loadModuleManifests(join(process.cwd(), '..', '..', 'modules'));
-assert.equal(state.loaded.length, 14); // includes workflow, qldn-finance-flow and qldn-hr-plus built-in modules
+assert.equal(state.loaded.length, 15); // includes workflow, qldn-finance-flow, qldn-hr-plus and qldn-procurement built-in modules
 // Pre-existing ngoài scope: 1ms-print manifest id sai format.
 assert.equal(state.rejected.filter(r=>!['1ms-print'].includes(r.id)).length, 0);
 assert.equal(state.loaded.find(m=>m.id==='soul-manager')?.routes, '/api/v1/soul-manager');
