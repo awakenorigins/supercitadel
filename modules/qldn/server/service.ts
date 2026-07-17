@@ -5,7 +5,7 @@
  */
 import { and, desc, eq, lte } from 'drizzle-orm';
 import { AppError } from '@citadel/core';
-import { periods, policyParams, employees } from './schema.js';
+import { periods, policyParams, employees, salaryProfiles } from './schema.js';
 
 const invalid = (msg: string) => new AppError('VALIDATION' as any, msg, 400);
 
@@ -115,6 +115,54 @@ export async function createEmployee(db: any, orgId: string, b: any) {
     note: b?.note ?? null,
   }).returning();
   return row;
+}
+
+// ---------- SALARY PROFILES ----------
+export async function listSalaryProfiles(db: any, orgId: string, employeeId: string) {
+  return db.select().from(salaryProfiles)
+    .where(and(eq(salaryProfiles.orgId, orgId), eq(salaryProfiles.employeeId, employeeId)))
+    .orderBy(desc(salaryProfiles.effectiveFrom));
+}
+
+export async function createSalaryProfile(db: any, orgId: string, b: any) {
+  const employeeId = String(b?.employeeId ?? '').trim();
+  const effectiveFrom = String(b?.effectiveFrom ?? '').trim();
+  if (!employeeId) throw invalid('employeeId bắt buộc');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(effectiveFrom)) throw invalid('effectiveFrom phải dạng YYYY-MM-DD');
+  const emp = await db.select().from(employees)
+    .where(and(eq(employees.orgId, orgId), eq(employees.id, employeeId))).limit(1);
+  if (!emp.length) throw invalid('Không tìm thấy nhân viên');
+  const moneyOf = (k: string) => String(b?.[k] ?? '0');
+  const [row] = await db.insert(salaryProfiles).values({
+    orgId, employeeId, effectiveFrom,
+    bhxhSalary: moneyOf('bhxhSalary'),
+    baseSalary: moneyOf('baseSalary'),
+    baseSalaryInternal: moneyOf('baseSalaryInternal'),
+    allowResponsibility: moneyOf('allowResponsibility'),
+    allowMeal: moneyOf('allowMeal'),
+    allowFuel: moneyOf('allowFuel'),
+    allowPhone: moneyOf('allowPhone'),
+    allowUniform: moneyOf('allowUniform'),
+    allowCreative: moneyOf('allowCreative'),
+    allowSkill: moneyOf('allowSkill'),
+    allowPosition: moneyOf('allowPosition'),
+    allowOther: moneyOf('allowOther'),
+    note: b?.note ?? null,
+  }).returning();
+  return row;
+}
+
+/** Hồ sơ lương hiệu lực cho 1 NV tại 1 ngày (mới nhất có effective_from <= date). */
+export async function effectiveSalaryProfile(db: any, orgId: string, employeeId: string, date: string) {
+  const rows = await db.select().from(salaryProfiles)
+    .where(and(
+      eq(salaryProfiles.orgId, orgId),
+      eq(salaryProfiles.employeeId, employeeId),
+      lte(salaryProfiles.effectiveFrom, date),
+    ))
+    .orderBy(desc(salaryProfiles.effectiveFrom))
+    .limit(1);
+  return rows[0] ?? null;
 }
 
 export async function updateEmployee(db: any, orgId: string, id: string, b: any) {

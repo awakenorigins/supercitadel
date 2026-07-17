@@ -9,7 +9,9 @@ import {
   listPeriods, createPeriod, closePeriod,
   listPolicyParams, createPolicyParams, effectivePolicyParams,
   listEmployees, createEmployee, updateEmployee,
+  listSalaryProfiles, createSalaryProfile, effectiveSalaryProfile,
 } from './service.js';
+import { parseOfficialWorkbook, parseInternalWorkbook, importEmployees } from './import.js';
 
 declare module 'hono' { interface ContextVariableMap { auth: JwtPayload } }
 const orgOf = (c: any) => (c.get('auth') as JwtPayload).orgId;
@@ -65,6 +67,36 @@ export function buildQldnRoutes(deps: { db: any; requireAuth: MiddlewareHandler;
     const employee = await updateEmployee(deps.db, orgOf(c), c.req.param('id'), b);
     await deps.audit?.(c, { action: 'qldn.employee.update', resource: 'employee', resourceId: employee.id });
     return c.json({ employee });
+  });
+
+  // ── Hồ sơ lương (salary profiles — version hóa) ──
+  r.get('/employees/:id/salary-profiles', async (c) =>
+    c.json({ salaryProfiles: await listSalaryProfiles(deps.db, orgOf(c), c.req.param('id')) }));
+  r.get('/employees/:id/salary-profiles/effective', async (c) => {
+    const date = c.req.query('date') ?? new Date().toISOString().slice(0, 10);
+    return c.json({ salaryProfile: await effectiveSalaryProfile(deps.db, orgOf(c), c.req.param('id'), date), date });
+  });
+  r.post('/salary-profiles', async (c) => {
+    const b = await c.req.json().catch(() => ({}));
+    const salaryProfile = await createSalaryProfile(deps.db, orgOf(c), b);
+    await deps.audit?.(c, { action: 'qldn.salary_profile.create', resource: 'salary_profile', resourceId: salaryProfile.id, detail: { employeeId: salaryProfile.employeeId, effectiveFrom: salaryProfile.effectiveFrom } });
+    return c.json({ salaryProfile }, 201);
+  });
+
+  // ── Import Excel nhân sự (multipart: official= file lương chính thức, internal= file LUONGNB) ──
+  r.post('/employees/import', async (c) => {
+    const body = await c.req.parseBody();
+    const effectiveFrom = String(body['effectiveFrom'] ?? '').trim() || new Date().toISOString().slice(0, 10);
+    const officialFile = body['official'];
+    const internalFile = body['internal'];
+    if (!(officialFile instanceof File) && !(internalFile instanceof File)) {
+      throw new AppError('VALIDATION' as any, 'Cần ít nhất 1 file: official (Bảng thông tin) hoặc internal (LUONGNB)', 400);
+    }
+    const official = officialFile instanceof File ? parseOfficialWorkbook(Buffer.from(await officialFile.arrayBuffer())) : [];
+    const internal = internalFile instanceof File ? parseInternalWorkbook(Buffer.from(await internalFile.arrayBuffer())) : [];
+    const result = await importEmployees(deps.db, orgOf(c), { official, internal, effectiveFrom });
+    await deps.audit?.(c, { action: 'qldn.employee.import', resource: 'employee', detail: { created: result.created, updated: result.updated, profiles: result.profilesCreated, unmatched: result.unmatchedInternal.length } });
+    return c.json({ result }, 201);
   });
 
   return r;
