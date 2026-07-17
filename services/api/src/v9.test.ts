@@ -5,9 +5,9 @@ import { join } from 'node:path';
 import { loadModuleManifests, getLoaderState, buildCatalogFromManifests } from './modules/loader.js';
 
 const state = loadModuleManifests(join(process.cwd(), '..', '..', 'modules'));
-assert.equal(state.loaded.length, 11); // + soul-manager (R11.3) + soul-inventory (R11.4) + qldn (R12)
-// Pre-existing ngoài scope R12: 1ms-print (manifest id sai format, dir untracked) + workflow (commit bỏ dở QLDN-B1 cũ, chưa đăng ký route builder)
-assert.equal(state.rejected.filter(r=>!['1ms-print','workflow'].includes(r.id)).length, 0);
+assert.equal(state.loaded.length, 14); // includes workflow, qldn-finance-flow and qldn-hr-plus built-in modules
+// Pre-existing ngoài scope: 1ms-print manifest id sai format.
+assert.equal(state.rejected.filter(r=>!['1ms-print'].includes(r.id)).length, 0);
 assert.equal(state.loaded.find(m=>m.id==='soul-manager')?.routes, '/api/v1/soul-manager');
 assert.equal(state.loaded.find(m=>m.id==='soul-inventory')?.routes, '/api/v1/soul-inventory');
 assert.equal(state.loaded.find(m=>m.id==='qldn')?.routes, '/api/v1/qldn');

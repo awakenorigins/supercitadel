@@ -30,7 +30,8 @@
     "@citadel/module-soul-inventory": "workspace:*",
     "@citadel/module-qldn": "workspace:*",
     "@citadel/module-workflow": "workspace:*",
-    "@citadel/module-qldn-finance-flow": "workspace:*"
+    "@citadel/module-qldn-finance-flow": "workspace:*",
+    "@citadel/module-qldn-hr-plus": "workspace:*"
   },
   "devDependencies": {
     "tsx": "^4.19.0",
