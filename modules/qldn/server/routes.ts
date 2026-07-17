@@ -12,6 +12,7 @@ import {
   listSalaryProfiles, createSalaryProfile, effectiveSalaryProfile,
 } from './service.js';
 import { parseOfficialWorkbook, parseInternalWorkbook, importEmployees } from './import.js';
+import { parseOfficialBcc, parseInternalBcc, importBcc, listTimesheets } from './timesheet.js';
 
 declare module 'hono' { interface ContextVariableMap { auth: JwtPayload } }
 const orgOf = (c: any) => (c.get('auth') as JwtPayload).orgId;
@@ -97,6 +98,25 @@ export function buildQldnRoutes(deps: { db: any; requireAuth: MiddlewareHandler;
     const result = await importEmployees(deps.db, orgOf(c), { official, internal, effectiveFrom });
     await deps.audit?.(c, { action: 'qldn.employee.import', resource: 'employee', detail: { created: result.created, updated: result.updated, profiles: result.profilesCreated, unmatched: result.unmatchedInternal.length } });
     return c.json({ result }, 201);
+  });
+
+  // ── Chấm công: import BCC Excel (multipart: file= BCC, source= official|internal) ──
+  r.post('/timesheets/import', async (c) => {
+    const body = await c.req.parseBody();
+    const file = body['file'];
+    const source = String(body['source'] ?? 'official');
+    if (!(file instanceof File)) throw new AppError('VALIDATION' as any, 'Thiếu file BCC (field "file")', 400);
+    if (!['official', 'internal'].includes(source)) throw new AppError('VALIDATION' as any, 'source phải là official|internal', 400);
+    const buf = Buffer.from(await file.arrayBuffer());
+    const parsed = source === 'official' ? parseOfficialBcc(buf) : parseInternalBcc(buf);
+    const result = await importBcc(deps.db, orgOf(c), parsed);
+    await deps.audit?.(c, { action: 'qldn.timesheet.import', resource: 'timesheet', detail: { period: result.periodCode, source, created: result.created, updated: result.updated, unmatched: result.unmatched.length } });
+    return c.json({ result }, 201);
+  });
+  r.get('/timesheets', async (c) => {
+    const period = c.req.query('period');
+    if (!period) throw new AppError('VALIDATION' as any, 'Thiếu query ?period=YYYY-MM', 400);
+    return c.json(await listTimesheets(deps.db, orgOf(c), period));
   });
 
   return r;
