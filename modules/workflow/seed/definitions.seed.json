@@ -1,0 +1,2529 @@
+[
+  {
+    "code": "hcns.qt-dao-tao",
+    "name": "QT Đào tạo",
+    "domain": "hr",
+    "entityType": "qhr_training_requests",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Xem xét (phong-dt)",
+        "approverRole": "phong-dt",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Xem xét phê duyệt (phong-dt)",
+        "approverRole": "phong-dt",
+        "slaHours": 24
+      },
+      {
+        "order": 3,
+        "name": "Duyệt → P (phong-dt)",
+        "approverRole": "phong-dt",
+        "slaHours": 24
+      },
+      {
+        "order": 4,
+        "name": "Xem xét KH ĐT (phong-dt)",
+        "approverRole": "phong-dt",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [
+      {
+        "minAmount": 500000,
+        "addSteps": [
+          {
+            "order": 90,
+            "name": "Duyệt bổ sung theo ngưỡng 500.000đ",
+            "approverRole": "quan-ly-truc-tiep",
+            "minAmount": 500000
+          }
+        ]
+      },
+      {
+        "minAmount": 5000000,
+        "addSteps": [
+          {
+            "order": 91,
+            "name": "Duyệt bổ sung theo ngưỡng 5.000.000đ",
+            "approverRole": "giam-doc",
+            "minAmount": 5000000
+          }
+        ]
+      }
+    ],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "1. QT Hành chính Nhân sự/1. QT Đào tạo/QT Dao tao.docx",
+      "block": "block-1-hcns.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "hcns.qt-hoan-tat-ho-so-nhan-su",
+    "name": "QT Hoàn tất Hồ sơ nhân sự",
+    "domain": "hr",
+    "entityType": "qhr_audit_plans",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Xác nhận nhận việc nhưng không đi làm → loại (nguoi-de-nghi)",
+        "approverRole": "nguoi-de-nghi",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Kiểm tra + ký nháy → NV mới đọc (nguoi-de-nghi)",
+        "approverRole": "nguoi-de-nghi",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "1. QT Hành chính Nhân sự/2. QT Hoàn tất Hồ sơ nhân sự/QT Hoan tat HSNS.docx",
+      "block": "block-1-hcns.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "hcns.qt-sa-thai-nhan-su",
+    "name": "QT Sa thải nhân sự",
+    "domain": "hr",
+    "entityType": "qhr_violation_cases",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Ký xác nhận (phong-ns)",
+        "approverRole": "phong-ns",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Ký xác nhận sai lỗi (phong-ns)",
+        "approverRole": "phong-ns",
+        "slaHours": 24
+      },
+      {
+        "order": 3,
+        "name": "Xác nhận (phong-ns)",
+        "approverRole": "phong-ns",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "1. QT Hành chính Nhân sự/3. QT Sa thải nhân sự/QT Sa thai NS.docx",
+      "block": "block-1-hcns.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "hcns.qt-thanh-kiem-tra-noi-bo",
+    "name": "QT Thanh, kiểm tra nội bộ",
+    "domain": "hr",
+    "entityType": "qhr_audit_plans",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Xem xét KH (ban-tgd)",
+        "approverRole": "ban-tgd",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Phê duyệt (ban-tgd)",
+        "approverRole": "ban-tgd",
+        "slaHours": 24
+      },
+      {
+        "order": 3,
+        "name": "Duyệt → chuyển P (ban-tgd)",
+        "approverRole": "ban-tgd",
+        "slaHours": 24
+      },
+      {
+        "order": 4,
+        "name": "Xác nhận giấy đi đường từ QL TT/CN nơi kiểm tra (quan-ly-truc-tiep)",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "1. QT Hành chính Nhân sự/4. QT thanh, kiểm tra nội bộ/QT thanh, KT noi bo.docx",
+      "block": "block-1-hcns.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "hcns.qt-theo-doi-hop-dong-chinh-thuc",
+    "name": "QT Theo dõi hợp đồng chính thức",
+    "domain": "hr",
+    "entityType": "qhr_employment_contracts",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Kiểm tra mẫu mới nhất + tính pháp lý (phong-ns)",
+        "approverRole": "phong-ns",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Ký xác nhận (phong-ns)",
+        "approverRole": "phong-ns",
+        "slaHours": 24
+      },
+      {
+        "order": 3,
+        "name": "Ký xác nhận (giam-doc)",
+        "approverRole": "giam-doc",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "1. QT Hành chính Nhân sự/5. QT theo dõi hợp đồng chính thức/QT theo doi HD chinh thuc.docx",
+      "block": "block-1-hcns.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "hcns.qt-thu-viec-hoc-viec",
+    "name": "QT Thử việc, học việc",
+    "domain": "hr",
+    "entityType": "qhr_probation_periods",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Quản lý trực tiếp xác nhận/duyệt quy trình",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "1. QT Hành chính Nhân sự/6. QT Thử việc, học việc/QT Thu viec, hoc viec.docx",
+      "block": "block-1-hcns.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "hcns.qt-thuyen-chuyen-cong-tac",
+    "name": "QT Thuyên chuyển công tác",
+    "domain": "hr",
+    "entityType": "qhr_transfer_requests",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Xem xét + phỏng vấn (trực tiếp/online) hiểu nguyện vọng (quan-ly-truc-tiep)",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Phê duyệt của QL (giam-doc)",
+        "approverRole": "giam-doc",
+        "slaHours": 24
+      },
+      {
+        "order": 3,
+        "name": "Duyệt (phong-ns)",
+        "approverRole": "phong-ns",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "1. QT Hành chính Nhân sự/14. QT công tác/QT Cong tac.docx",
+      "block": "block-1-hcns.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "hcns.qt-trien-khai-dao-tao-noi-bo",
+    "name": "QT Triển khai đào tạo nội bộ",
+    "domain": "hr",
+    "entityType": "qhr_training_requests",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Kiểm tra cuối khóa (quan-ly-truc-tiep)",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "1. QT Hành chính Nhân sự/1. QT Đào tạo/QT Dao tao.docx",
+      "block": "block-1-hcns.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "hcns.qt-trien-khai-dao-tao-thue-ngoai",
+    "name": "QT Triển khai đào tạo thuê ngoài",
+    "domain": "hr",
+    "entityType": "qhr_training_requests",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Xem xét (quan-ly-truc-tiep)",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Duyệt → P (quan-ly-truc-tiep)",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [
+      {
+        "minAmount": 5000000,
+        "addSteps": [
+          {
+            "order": 90,
+            "name": "Duyệt bổ sung theo ngưỡng 5.000.000đ",
+            "approverRole": "giam-doc",
+            "minAmount": 5000000
+          }
+        ]
+      }
+    ],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "1. QT Hành chính Nhân sự/1. QT Đào tạo/QT Dao tao.docx",
+      "block": "block-1-hcns.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "hcns.qt-trien-khai-tuyen-dung",
+    "name": "QT Triển khai tuyển dụng",
+    "domain": "hr",
+    "entityType": "qhr_recruitment_requests",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Quản lý trực tiếp xác nhận/duyệt quy trình",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "1. QT Hành chính Nhân sự/10. QT triển khai tuyển dụng/QT trien khai tuyen dung.docx",
+      "block": "block-1-hcns.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "hcns.qt-tuyen-dung",
+    "name": "QT Tuyển dụng",
+    "domain": "hr",
+    "entityType": "qhr_recruitment_requests",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Xem xét đánh giá đề xuất (quan-ly-truc-tiep)",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Duyệt → phản hồi lý do qua P (quan-ly-truc-tiep)",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      },
+      {
+        "order": 3,
+        "name": "Duyệt → P (quan-ly-truc-tiep)",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      },
+      {
+        "order": 4,
+        "name": "Xem xét KH (quan-ly-truc-tiep)",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "1. QT Hành chính Nhân sự/10. QT triển khai tuyển dụng/QT trien khai tuyen dung.docx",
+      "block": "block-1-hcns.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "hcns.qt-xac-minh-va-xu-ly-hvvp-nqld",
+    "name": "QT Xác minh và xử lý HVVP NQLĐ",
+    "domain": "hr",
+    "entityType": "qhr_violation_cases",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Xác nhận sai phạm (quan-ly-truc-tiep)",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Xác nhận → BP (nguoi-de-nghi)",
+        "approverRole": "nguoi-de-nghi",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "1. QT Hành chính Nhân sự/12. QT Xác minh và xử lý HVVP NQLĐ/QT xac minh và xư lý HVVP NQLD.docx",
+      "block": "block-1-hcns.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "hcns.qt-xu-ly-thoi-viec",
+    "name": "QT Xử lý thôi việc",
+    "domain": "hr",
+    "entityType": "qhr_violation_cases",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Xem xét (quan-ly-truc-tiep)",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Ký duyệt (quan-ly-truc-tiep)",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      },
+      {
+        "order": 3,
+        "name": "Ký xác nhận) (quan-ly-truc-tiep)",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      },
+      {
+        "order": 4,
+        "name": "Xác nhận (quan-ly-truc-tiep)",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "1. QT Hành chính Nhân sự/13. QT Xử lý thôi việc/QT Xu ly xin thoi viec.docx",
+      "block": "block-1-hcns.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "hcns.qt-cong-tac",
+    "name": "QT Công tác",
+    "domain": "hr",
+    "entityType": "qhr_business_trip_requests",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Xem xét (nguoi-de-nghi)",
+        "approverRole": "nguoi-de-nghi",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Xác nhận (phong-ke-toan)",
+        "approverRole": "phong-ke-toan",
+        "slaHours": 24
+      },
+      {
+        "order": 3,
+        "name": "Duyệt → phản hồi CBNV (phong-ke-toan)",
+        "approverRole": "phong-ke-toan",
+        "slaHours": 24
+      },
+      {
+        "order": 4,
+        "name": "Duyệt → phản hồi Kế toán (phong-ke-toan)",
+        "approverRole": "phong-ke-toan",
+        "slaHours": 24
+      },
+      {
+        "order": 5,
+        "name": "Duyệt → Kế toán thanh toán cho CBNV (phong-ke-toan)",
+        "approverRole": "phong-ke-toan",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "1. QT Hành chính Nhân sự/14. QT công tác/QT Cong tac.docx",
+      "block": "block-1-hcns.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "ketoan.qt-chi-tien-mat",
+    "name": "QT chi tiền mặt",
+    "domain": "finance",
+    "entityType": "qfi_payment_requests",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Ký duyệt (ke-toan-truong)",
+        "approverRole": "ke-toan-truong",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Xem xét phiếu chi (giam-doc)",
+        "approverRole": "giam-doc",
+        "slaHours": 24
+      },
+      {
+        "order": 3,
+        "name": "Duyệt từ Giám Đốc và chuyển cho Thủ Quỹ (giam-doc)",
+        "approverRole": "giam-doc",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "2. QT Kế toán/1. QT chi tiền mặt/QT chi tien mat.docx",
+      "block": "block-2-ketoan.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "ketoan.qt-duyet-thanh-toan-vat-tu",
+    "name": "QT duyệt thanh toán vật tư",
+    "domain": "finance",
+    "entityType": "qfi_payment_requests",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Kiểm tra độ chính xác báo cáo (phong-vat-tu)",
+        "approverRole": "phong-vat-tu",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Đối soát hóa đơn/chứng từ (phong-ke-toan)",
+        "approverRole": "phong-ke-toan",
+        "slaHours": 24
+      },
+      {
+        "order": 3,
+        "name": "Xem xét (phong-ke-toan)",
+        "approverRole": "phong-ke-toan",
+        "slaHours": 24
+      },
+      {
+        "order": 4,
+        "name": "Xem xét báo cáo và kế hoạch thanh toán (phong-ke-toan)",
+        "approverRole": "phong-ke-toan",
+        "slaHours": 24
+      },
+      {
+        "order": 5,
+        "name": "Phê duyệt (phong-ke-toan)",
+        "approverRole": "phong-ke-toan",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "2. QT Kế toán/2. QT duyệt thanh toán vật tư/QT duyet thanh toan vat tu.docx",
+      "block": "block-2-ketoan.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "ketoan.qt-thanh-toan-tam-ung",
+    "name": "QT thanh toán, tạm ứng",
+    "domain": "finance",
+    "entityType": "qfi_payment_requests",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Kiểm tra tính hợp lệ của chứng từ kèm theo (phong-ke-toan)",
+        "approverRole": "phong-ke-toan",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Xem xét (giam-doc)",
+        "approverRole": "giam-doc",
+        "slaHours": 24
+      },
+      {
+        "order": 3,
+        "name": "Phê duyệt (giam-doc)",
+        "approverRole": "giam-doc",
+        "slaHours": 24
+      },
+      {
+        "order": 4,
+        "name": "Ký xác nhận theo biểu mẫu (phong-ke-toan)",
+        "approverRole": "phong-ke-toan",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "2. QT Kế toán/3. QT thanh toán, tạm ứng/QT thanh toan, tam ung.docx",
+      "block": "block-2-ketoan.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "ketoan.qt-thanh-toan-tam-ung-cong-tac-phi",
+    "name": "QT thanh toán, tạm ứng công tác phí",
+    "domain": "finance",
+    "entityType": "qfi_payment_requests",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Ký xác nhận của QL trực tiếp và trình Giám đốc (giam-doc)",
+        "approverRole": "giam-doc",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Xem xét đề xuất (giam-doc)",
+        "approverRole": "giam-doc",
+        "slaHours": 24
+      },
+      {
+        "order": 3,
+        "name": "Duyệt (giam-doc)",
+        "approverRole": "giam-doc",
+        "slaHours": 24
+      },
+      {
+        "order": 4,
+        "name": "Xác nhận vào giấy đi đường tại nơi đến và thu thập đầy đủ hóa đơn/chứng từ chi phí đi lại (phong-ke-toan)",
+        "approverRole": "phong-ke-toan",
+        "slaHours": 24
+      },
+      {
+        "order": 5,
+        "name": "Kiểm tra tính hợp lệ của đề xuất và chứng từ (phong-ke-toan)",
+        "approverRole": "phong-ke-toan",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "2. QT Kế toán/3. QT thanh toán, tạm ứng/QT thanh toan, tam ung.docx",
+      "block": "block-2-ketoan.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "ketoan.qt-thu-tien-mat",
+    "name": "QT thu tiền mặt",
+    "domain": "finance",
+    "entityType": "qfi_customer_debt_statements",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Ký duyệt (ke-toan-truong)",
+        "approverRole": "ke-toan-truong",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Xem xét (ke-toan-truong)",
+        "approverRole": "ke-toan-truong",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "2. QT Kế toán/5. QT thu tiền mặt/QT thu tien mat.docx",
+      "block": "block-2-ketoan.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "ketoan.qt-thu-va-xoa-no",
+    "name": "QT thu và xoá nợ",
+    "domain": "finance",
+    "entityType": "qfi_customer_debt_statements",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Xác nhận giao hàng cho khách hàng và lập bảng kê chi tiết công nợ theo phát sinh hàng hóa thực tế trong tháng (quan-ly-truc-tiep)",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Xem xét (quan-ly-truc-tiep)",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      },
+      {
+        "order": 3,
+        "name": "Kiểm tra tính chính xác bảng kê (quan-ly-truc-tiep)",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      },
+      {
+        "order": 4,
+        "name": "Đối soát và xác nhận (quan-ly-truc-tiep)",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      },
+      {
+        "order": 5,
+        "name": "Đối soát bảng kê (quan-ly-truc-tiep)",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      },
+      {
+        "order": 6,
+        "name": "Xác nhận bảng kê chính xác (quan-ly-truc-tiep)",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      },
+      {
+        "order": 7,
+        "name": "Xác nhận khi tiền về (quan-ly-truc-tiep)",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      },
+      {
+        "order": 8,
+        "name": "Xác nhận thanh toán (phong-ke-toan)",
+        "approverRole": "phong-ke-toan",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "2. QT Kế toán/6. QT thu và xoá nợ/QT thu va xoa no.docx",
+      "block": "block-2-ketoan.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "ketoan.qt-tinh-luong",
+    "name": "QT tính lương",
+    "domain": "finance",
+    "entityType": "qfi_payroll_runs",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Kiểm tra dữ liệu commission và công từ các bộ phận (nguoi-de-nghi)",
+        "approverRole": "nguoi-de-nghi",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Kiểm tra (nguoi-de-nghi)",
+        "approverRole": "nguoi-de-nghi",
+        "slaHours": 24
+      },
+      {
+        "order": 3,
+        "name": "Kiểm tra bảng lương (nguoi-de-nghi)",
+        "approverRole": "nguoi-de-nghi",
+        "slaHours": 24
+      },
+      {
+        "order": 4,
+        "name": "Xem xét và ký duyệt bảng lương (nguoi-de-nghi)",
+        "approverRole": "nguoi-de-nghi",
+        "slaHours": 24
+      },
+      {
+        "order": 5,
+        "name": "Duyệt lệnh chi lương (nguoi-de-nghi)",
+        "approverRole": "nguoi-de-nghi",
+        "slaHours": 24
+      },
+      {
+        "order": 6,
+        "name": "Duyệt (nguoi-de-nghi)",
+        "approverRole": "nguoi-de-nghi",
+        "slaHours": 24
+      },
+      {
+        "order": 7,
+        "name": "Đối soát phiếu lương với lương thực nhận (nguoi-de-nghi)",
+        "approverRole": "nguoi-de-nghi",
+        "slaHours": 24
+      },
+      {
+        "order": 8,
+        "name": "Kiểm tra phản hồi sai sót (nguoi-de-nghi)",
+        "approverRole": "nguoi-de-nghi",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "2. QT Kế toán/7. QT tính lương/QT tinh luong.docx",
+      "block": "block-2-ketoan.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "kinhdoanh.qt-cham-soc-khach-hang-dai-ly",
+    "name": "QT chăm sóc khách hàng đại lý",
+    "domain": "sales",
+    "entityType": "qsa_sales_orders",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Duyệt (giam-doc)",
+        "approverRole": "giam-doc",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "3. QT Kinh doanh/QT chăm sóc khách hàng đại lý",
+      "block": "block-3-kinhdoanh.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "kinhdoanh.qt-gap-go-gioi-thieu-san-pham-cho-kh-dai-ly",
+    "name": "QT gặp gỡ, giới thiệu sản phẩm cho KH đại lý",
+    "domain": "sales",
+    "entityType": "qsa_sales_orders",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Quản lý trực tiếp xác nhận/duyệt quy trình",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "3. QT Kinh doanh/QT gặp gỡ, giới thiệu sản phẩm cho KH đại lý",
+      "block": "block-3-kinhdoanh.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "kinhdoanh.qt-xu-ly-thac-mac-khieu-nai-cua-khach-hang",
+    "name": "QT xử lý thắc mắc/khiếu nại của khách hàng",
+    "domain": "sales",
+    "entityType": "qsa_warranty_claims",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Duyệt phương án (giam-doc)",
+        "approverRole": "giam-doc",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Duyệt (quan-ly-truc-tiep)",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "3. QT Kinh doanh/QT xử lý thắc mắc/khiếu nại của khách hàng",
+      "block": "block-3-kinhdoanh.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "kinhdoanh.qt-phan-luong-xu-ly-khach-hang",
+    "name": "QT phân luồng, xử lý khách hàng",
+    "domain": "sales",
+    "entityType": "qsa_sales_orders",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Quản lý trực tiếp xác nhận/duyệt quy trình",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "3. QT Kinh doanh/QT phân luồng, xử lý khách hàng",
+      "block": "block-3-kinhdoanh.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "kinhdoanh.qt-tiep-don-tu-van-khach-hang-tai-vpdd",
+    "name": "QT tiếp đón, tư vấn khách hàng tại VPĐD",
+    "domain": "sales",
+    "entityType": "qsa_sales_orders",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Quản lý trực tiếp xác nhận/duyệt quy trình",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "3. QT Kinh doanh/QT tiếp đón, tư vấn khách hàng tại VPĐD",
+      "block": "block-3-kinhdoanh.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "kinhdoanh.qt-tiep-nhan-va-xu-ly-don-hang",
+    "name": "QT tiếp nhận và xử lý đơn hàng",
+    "domain": "sales",
+    "entityType": "qsa_sales_orders",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Quản lý trực tiếp xác nhận/duyệt quy trình",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "3. QT Kinh doanh/QT tiếp nhận và xử lý đơn hàng",
+      "block": "block-3-kinhdoanh.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "kinhdoanh.qt-tu-van-va-ban-hang-dai-ly",
+    "name": "QT tư vấn và bán hàng đại lý",
+    "domain": "sales",
+    "entityType": "qsa_sales_orders",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Quản lý trực tiếp xác nhận/duyệt quy trình",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "3. QT Kinh doanh/QT tư vấn và bán hàng đại lý",
+      "block": "block-3-kinhdoanh.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "kinhdoanh.qt-goi-dien-thoai-cho-kh-dat-lich-hen",
+    "name": "QT gọi điện thoại cho KH đặt lịch hẹn",
+    "domain": "sales",
+    "entityType": "qsa_sales_orders",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Quản lý trực tiếp xác nhận/duyệt quy trình",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "3. QT Kinh doanh/QT gọi điện thoại cho KH đặt lịch hẹn",
+      "block": "block-3-kinhdoanh.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "kinhdoanh.qt-ban-hang-thu-tien",
+    "name": "QT bán hàng – thu tiền",
+    "domain": "sales",
+    "entityType": "qfi_customer_debt_statements",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Quản lý trực tiếp xác nhận/duyệt quy trình",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "3. QT Kinh doanh/QT bán hàng – thu tiền",
+      "block": "block-3-kinhdoanh.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "kinhdoanh.qt-tiep-nhan-doi-tra-hang-cua-dai-ly",
+    "name": "QT tiếp nhận đổi trả hàng của đại lý",
+    "domain": "sales",
+    "entityType": "qsa_return_requests",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Quản lý trực tiếp xác nhận/duyệt quy trình",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "3. QT Kinh doanh/QT tiếp nhận đổi trả hàng của đại lý",
+      "block": "block-3-kinhdoanh.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "kinhdoanh.qt-xu-ly-don-dat-hang-khach-quen",
+    "name": "QT xử lý đơn đặt hàng (khách quen)",
+    "domain": "sales",
+    "entityType": "qsa_sales_orders",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Quản lý trực tiếp xác nhận/duyệt quy trình",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "3. QT Kinh doanh/QT xử lý đơn đặt hàng (khách quen)",
+      "block": "block-3-kinhdoanh.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "kinhdoanh.qt-di-thi-truong",
+    "name": "QT đi thị trường",
+    "domain": "sales",
+    "entityType": "qsa_sales_orders",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Quản lý trực tiếp xác nhận/duyệt quy trình",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "3. QT Kinh doanh/QT đi thị trường",
+      "block": "block-3-kinhdoanh.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "kinhdoanh.qt-tim-kiem-khach-hang-moi",
+    "name": "QT tìm kiếm khách hàng mới",
+    "domain": "sales",
+    "entityType": "qsa_sales_orders",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Quản lý trực tiếp xác nhận/duyệt quy trình",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "3. QT Kinh doanh/QT tìm kiếm khách hàng mới",
+      "block": "block-3-kinhdoanh.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "kinhdoanh.qt-dau-thau-qua-mang-co-bao-lanh",
+    "name": "QT đấu thầu qua mạng có bảo lãnh",
+    "domain": "sales",
+    "entityType": "qsa_sales_tenders",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Quản lý trực tiếp xác nhận/duyệt quy trình",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "3. QT Kinh doanh/QT đấu thầu qua mạng có bảo lãnh",
+      "block": "block-3-kinhdoanh.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "kinhdoanh.qt-demo-san-pham-gioi-thieu-thuyet-trinh-giai-phap",
+    "name": "QT demo sản phẩm, giới thiệu thuyết trình giải pháp",
+    "domain": "sales",
+    "entityType": "qsa_sales_orders",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Quản lý trực tiếp xác nhận/duyệt quy trình",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "3. QT Kinh doanh/QT demo sản phẩm, giới thiệu thuyết trình giải pháp",
+      "block": "block-3-kinhdoanh.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "kinhdoanh.qt-khuyen-mai-xa-hang",
+    "name": "QT khuyến mãi, xả hàng",
+    "domain": "sales",
+    "entityType": "qsa_promotions",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Quản lý trực tiếp xác nhận/duyệt quy trình",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "3. QT Kinh doanh/QT khuyến mãi, xả hàng",
+      "block": "block-3-kinhdoanh.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "kinhdoanh.qt-nhap-khau-nguyen-vat-lieu-tu-khach-hang",
+    "name": "QT nhập khẩu nguyên vật liệu từ khách hàng",
+    "domain": "sales",
+    "entityType": "qsa_sales_orders",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Quản lý trực tiếp xác nhận/duyệt quy trình",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "3. QT Kinh doanh/QT nhập khẩu nguyên vật liệu từ khách hàng",
+      "block": "block-3-kinhdoanh.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "kinhdoanh.qt-nhuong-quyen-cua-hang",
+    "name": "QT nhượng quyền cửa hàng",
+    "domain": "sales",
+    "entityType": "qsa_franchise_deals",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Quản lý trực tiếp xác nhận/duyệt quy trình",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "3. QT Kinh doanh/QT nhượng quyền cửa hàng",
+      "block": "block-3-kinhdoanh.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "kinhdoanh.qt-phan-phoi-vat-pham-qua-tang-ve-ttkd",
+    "name": "QT phân phối vật phẩm/quà tặng về TTKD",
+    "domain": "sales",
+    "entityType": "qsa_sales_orders",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Quản lý trực tiếp xác nhận/duyệt quy trình",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "3. QT Kinh doanh/QT phân phối vật phẩm/quà tặng về TTKD",
+      "block": "block-3-kinhdoanh.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "kinhdoanh.qt-xuat-khau-hang-hoa",
+    "name": "QT xuất khẩu hàng hoá",
+    "domain": "sales",
+    "entityType": "qsa_export_shipments",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Quản lý trực tiếp xác nhận/duyệt quy trình",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "3. QT Kinh doanh/QT xuất khẩu hàng hoá",
+      "block": "block-3-kinhdoanh.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "marketing.qt-adwords-search-sp-moi",
+    "name": "QT Adwords Search SP mới",
+    "domain": "marketing",
+    "entityType": "qmk_campaigns",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Xem xét và chốt (phong-marketing)",
+        "approverRole": "phong-marketing",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "4. QT Marketing/1. QT Adwords Search SP mới/QT Adwords Search SP moi.docx",
+      "block": "block-4-marketing.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "marketing.qt-chay-facebook-ads",
+    "name": "QT chạy Facebook Ads",
+    "domain": "marketing",
+    "entityType": "qmk_campaigns",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Xem xét và phê duyệt kế hoạch (phong-marketing)",
+        "approverRole": "phong-marketing",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Duyệt (phong-marketing)",
+        "approverRole": "phong-marketing",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "4. QT Marketing/2. QT chạy Facebook Ads/QT chay Facebook Ads.docx",
+      "block": "block-4-marketing.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "marketing.qt-trien-khai-gioi-thieu-sp-moi",
+    "name": "QT triển khai giới thiệu sp mới",
+    "domain": "marketing",
+    "entityType": "wf_procedure_rollouts",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Kiểm tra đặc tính sản phẩm mới (phong-ky-thuat)",
+        "approverRole": "phong-ky-thuat",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "4. QT Marketing/3. QT triển khai giới thiệu sp mới/QT trien khai GT SP moi.docx",
+      "block": "block-4-marketing.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "marketing.qt-viet-bai-landingpage",
+    "name": "QT viết bài Landingpage",
+    "domain": "marketing",
+    "entityType": "qmk_campaigns",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Xem xét và phản hồi nếu chưa phù hợp (phong-marketing)",
+        "approverRole": "phong-marketing",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "4. QT Marketing/4. QT viết bài Landingpage/QT viet bai Landingpage.docx",
+      "block": "block-4-marketing.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "marketing.qt-nghien-cuu-thi-truong",
+    "name": "QT nghiên cứu thị trường",
+    "domain": "marketing",
+    "entityType": "qmk_research_projects",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Xem xét và chốt kế hoạch (phong-marketing)",
+        "approverRole": "phong-marketing",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Xác nhận (phong-marketing)",
+        "approverRole": "phong-marketing",
+        "slaHours": 24
+      },
+      {
+        "order": 3,
+        "name": "Xem xét (ban-tgd)",
+        "approverRole": "ban-tgd",
+        "slaHours": 24
+      },
+      {
+        "order": 4,
+        "name": "Xem xét báo cáo và yêu cầu bổ sung nếu cần (phong-marketing)",
+        "approverRole": "phong-marketing",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "4. QT Marketing/5. QT nghiên cứu thị trường/QT nghien cuu thi truong.docx",
+      "block": "block-4-marketing.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "marketing.qt-booking-kols",
+    "name": "QT Booking KOLs",
+    "domain": "marketing",
+    "entityType": "qmk_campaigns",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Xem xét phương án booking KOL (quan-ly-truc-tiep)",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "4. QT Marketing/6. QT Booking KOLs/QT Booking KOLs.docx",
+      "block": "block-4-marketing.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "marketing.qt-xu-ly-khung-hoang-truyen-thong",
+    "name": "QT xử lý khủng hoảng truyền thông",
+    "domain": "marketing",
+    "entityType": "qmk_reports",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Quản lý trực tiếp xác nhận/duyệt quy trình",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "4. QT Marketing/7. QT xử lý khủng hoảng truyền thông/QT xu ly khung hoang truyen thong.docx",
+      "block": "block-4-marketing.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "marketing.qt-phan-tich-doi-thu-canh-tranh",
+    "name": "QT phân tích đối thủ cạnh tranh",
+    "domain": "marketing",
+    "entityType": "qmk_research_projects",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Quản lý trực tiếp xác nhận/duyệt quy trình",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "4. QT Marketing/8. QT phân tích đối thủ cạnh tranh/QT PT Doi thu canh tranh.docx",
+      "block": "block-4-marketing.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "marketing.qt-to-chuc-su-kien",
+    "name": "QT tổ chức sự kiện",
+    "domain": "marketing",
+    "entityType": "qmk_campaigns",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Xem xét và phê duyệt nội dung (quan-ly-truc-tiep)",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Phê duyệt (quan-ly-truc-tiep)",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "4. QT Marketing/9. QT tổ chức sự kiện/QT tổ chức sự kiện.docx",
+      "block": "block-4-marketing.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "marketing.qt-xd-video-quang-cao",
+    "name": "QT XD video quảng cáo",
+    "domain": "marketing",
+    "entityType": "qmk_campaigns",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Xem xét tính khả thi của ý tưởng và kế hoạch (quan-ly-truc-tiep)",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Duyệt (quan-ly-truc-tiep)",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "4. QT Marketing/10. QT XD video quảng cáo/QT Quay video, phim quang cao.docx",
+      "block": "block-4-marketing.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "marketing.qt-khao-sat-y-kien-khach-hang",
+    "name": "QT khảo sát ý kiến khách hàng",
+    "domain": "marketing",
+    "entityType": "qmk_research_projects",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Duyệt kế hoạch (phong-marketing)",
+        "approverRole": "phong-marketing",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Xem xét lại bản khảo sát và yêu cầu chỉnh sửa nếu cần (quan-ly-truc-tiep)",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "4. QT Marketing/11. QT khảo sát ý kiến khách hàng/QT Khao sat y kien khach hang.docx",
+      "block": "block-4-marketing.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "marketing.qt-gioi-thieu-san-pham-moi",
+    "name": "QT giới thiệu sản phẩm mới",
+    "domain": "marketing",
+    "entityType": "wf_procedure_rollouts",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Kiểm tra sản phẩm theo QT kỹ thuật sản phẩm (phong-ky-thuat)",
+        "approverRole": "phong-ky-thuat",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "4. QT Marketing/12. QT giới thiệu sản phẩm mới/QT Gioi thieu SP moi.docx",
+      "block": "block-4-marketing.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "marketing.qt-nghien-cuu-dinh-gia-sp-dv",
+    "name": "QT nghiên cứu định giá SP-DV",
+    "domain": "marketing",
+    "entityType": "qmk_research_projects",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Xem xét (ban-tgd)",
+        "approverRole": "ban-tgd",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Phê duyệt trước rồi chuyển TGĐ (ban-tgd)",
+        "approverRole": "ban-tgd",
+        "slaHours": 24
+      },
+      {
+        "order": 3,
+        "name": "Duyệt (phong-ns)",
+        "approverRole": "phong-ns",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "4. QT Marketing/13. QT nghiên cứu định giá SP-DV/QT nghien cuu, dinh gia SP-DV.docx",
+      "block": "block-4-marketing.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "marketing.qt-tao-va-kiem-duyet-content-marketing",
+    "name": "QT tạo và kiểm duyệt content Marketing",
+    "domain": "marketing",
+    "entityType": "qmk_campaigns",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Kiểm tra tính chính xác (phong-marketing)",
+        "approverRole": "phong-marketing",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Kiểm tra chính tả (phong-marketing)",
+        "approverRole": "phong-marketing",
+        "slaHours": 24
+      },
+      {
+        "order": 3,
+        "name": "Kiểm tra SEO: từ khóa (phong-marketing)",
+        "approverRole": "phong-marketing",
+        "slaHours": 24
+      },
+      {
+        "order": 4,
+        "name": "Kiểm tra tính hợp pháp của tài liệu/hình ảnh và bản quyền (phong-marketing)",
+        "approverRole": "phong-marketing",
+        "slaHours": 24
+      },
+      {
+        "order": 5,
+        "name": "Xem xét và kiểm duyệt nội dung (quan-ly-truc-tiep)",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      },
+      {
+        "order": 6,
+        "name": "Duyệt (phong-marketing)",
+        "approverRole": "phong-marketing",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "4. QT Marketing/14. QT tạo và kiểm duyệt content Marketing/QT tao va kiem duyet content Marlketing.docx",
+      "block": "block-4-marketing.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "marketing.qt-order-thiet-ke",
+    "name": "QT Order thiết kế",
+    "domain": "marketing",
+    "entityType": "qmk_task_assignments",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Xác nhận (nguoi-de-nghi)",
+        "approverRole": "nguoi-de-nghi",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Xác nhận hoàn thành (quan-ly-truc-tiep)",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "4. QT Marketing/15. QT Order thiết kế/QT Order thiet ke.docx",
+      "block": "block-4-marketing.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "vanhanh.qt-huong-dan-tiep-don-khach-thue",
+    "name": "QT hướng dẫn tiếp đón khách thuê",
+    "domain": "operations",
+    "entityType": "wf_procedure_rollouts",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Ký xác nhận (quan-ly-truc-tiep)",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "5. QT Vận hành/1. QT hướng dẫn tiếp đón khách thuê/HD tiep don khach thue.docx",
+      "block": "block-5-vanhanh.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "vanhanh.qt-ban-hang-thu-tien",
+    "name": "QT bán hàng thu tiền",
+    "domain": "operations",
+    "entityType": "qfi_customer_debt_statements",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Xem xét (giam-doc)",
+        "approverRole": "giam-doc",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Xác nhận khi KH chuyển cọc → chuyển BP VH - Kho (phong-ke-toan)",
+        "approverRole": "phong-ke-toan",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "5. QT Vận hành/2. QT bán hàng thu tiền/QT ban hang thu tien.docx",
+      "block": "block-5-vanhanh.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "vanhanh.qt-bao-hanh",
+    "name": "QT bảo hành",
+    "domain": "operations",
+    "entityType": "qsa_warranty_claims",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Kiểm tra thời hạn BH (phong-ky-thuat)",
+        "approverRole": "phong-ky-thuat",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Kiểm tra sơ bộ lỗi (30 phút): lỗi do KH hoặc ngoài danh mục được BH → chuyển lại CSKH làm việc với KH theo QT sửa chữa hàng không BH (2 (phong-ky-thua",
+        "approverRole": "phong-ky-thuat",
+        "slaHours": 24
+      },
+      {
+        "order": 3,
+        "name": "Kiểm tra kho (1h): còn LK → xuất kho cấp LK cho Kỹ thuật (6 (phong-ky-thuat)",
+        "approverRole": "phong-ky-thuat",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "5. QT Vận hành/3. QT bảo hành/QT bao hanh.vsdx",
+      "block": "block-5-vanhanh.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "vanhanh.qt-dau-thau",
+    "name": "QT đấu thầu",
+    "domain": "operations",
+    "entityType": "qsa_sales_tenders",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Xem xét (ban-tgd)",
+        "approverRole": "ban-tgd",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Duyệt → NV KD liên hệ mua hồ sơ thầu (nguoi-de-nghi)",
+        "approverRole": "nguoi-de-nghi",
+        "slaHours": 24
+      },
+      {
+        "order": 3,
+        "name": "Duyệt (nguoi-de-nghi)",
+        "approverRole": "nguoi-de-nghi",
+        "slaHours": 24
+      },
+      {
+        "order": 4,
+        "name": "Duyệt lần lượt KTT → GĐKD → GĐTC → P (ban-tgd)",
+        "approverRole": "ban-tgd",
+        "slaHours": 24
+      },
+      {
+        "order": 5,
+        "name": "Kiểm tra (ban-tgd)",
+        "approverRole": "ban-tgd",
+        "slaHours": 24
+      },
+      {
+        "order": 6,
+        "name": "Ký xác nhận toàn bộ HS (ban-tgd)",
+        "approverRole": "ban-tgd",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "5. QT Vận hành/4. QT đấu thầu/QT dau thau.docx",
+      "block": "block-5-vanhanh.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "vanhanh.qt-giao-hang",
+    "name": "QT giao hàng",
+    "domain": "operations",
+    "entityType": "wf_procedure_rollouts",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Kiểm tra đủ số lượng (phong-van-hanh)",
+        "approverRole": "phong-van-hanh",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Kiểm tra có sự cố (thiếu (phong-van-hanh)",
+        "approverRole": "phong-van-hanh",
+        "slaHours": 24
+      },
+      {
+        "order": 3,
+        "name": "Ký xác nhận (nguoi-de-nghi)",
+        "approverRole": "nguoi-de-nghi",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "5. QT Vận hành/5. QT giao hàng/QT Giao hang.docx",
+      "block": "block-5-vanhanh.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "vanhanh.qt-kiem-tra-va-ban-giao-xe",
+    "name": "QT kiểm tra và bàn giao xe",
+    "domain": "operations",
+    "entityType": "qas_vehicles",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Kiểm tra tình trạng xe (nguoi-de-nghi)",
+        "approverRole": "nguoi-de-nghi",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Kiểm tra tất cả sổ nhật ký (giam-doc)",
+        "approverRole": "giam-doc",
+        "slaHours": 24
+      },
+      {
+        "order": 3,
+        "name": "Ký xác nhận (giam-doc)",
+        "approverRole": "giam-doc",
+        "slaHours": 24
+      },
+      {
+        "order": 4,
+        "name": "Kiểm tra (phong-ns)",
+        "approverRole": "phong-ns",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "5. QT Vận hành/6. QT kiểm tra và bàn giao xe/QT KT va ban giao xe.docx",
+      "block": "block-5-vanhanh.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "vanhanh.qt-mua-hang-de-ban-moi",
+    "name": "QT mua hàng để bán_mới",
+    "domain": "operations",
+    "entityType": "qpr_purchase_requests",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Xem xét tính hợp lý và phê duyệt yêu cầu (quan-ly-truc-tiep)",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Duyệt theo giá trị: <20 (ban-tgd)",
+        "approverRole": "ban-tgd",
+        "slaHours": 24
+      },
+      {
+        "order": 3,
+        "name": "Duyệt (quan-ly-truc-tiep)",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      },
+      {
+        "order": 4,
+        "name": "Kiểm tra và nhận hàng (chỉ nhận khi đúng (quan-ly-truc-tiep)",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [
+      {
+        "minAmount": 20000000,
+        "addSteps": [
+          {
+            "order": 90,
+            "name": "Duyệt bổ sung theo ngưỡng 20.000.000đ",
+            "approverRole": "ban-tgd",
+            "minAmount": 20000000
+          }
+        ]
+      }
+    ],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "5. QT Vận hành/7. QT mua hàng để bán_mới/QT mua hàng để bán_mới.docx",
+      "block": "block-5-vanhanh.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "vanhanh.qt-nghien-cuu-va-phat-trien-sp-moi",
+    "name": "QT nghiên cứu và phát triển sp mới",
+    "domain": "operations",
+    "entityType": "qmk_research_projects",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Xem xét đề án (quan-ly-truc-tiep)",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Kiểm tra mẫu theo tiêu chuẩn (quan-ly-truc-tiep)",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      },
+      {
+        "order": 3,
+        "name": "Duyệt (phong-van-hanh)",
+        "approverRole": "phong-van-hanh",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "5. QT Vận hành/8. QT nghiên cứu và phát triển sp mới/QT nghien cuu va phat trien SP moi.docx",
+      "block": "block-5-vanhanh.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "vanhanh.qt-so-che",
+    "name": "QT sơ chế",
+    "domain": "operations",
+    "entityType": "wf_procedure_rollouts",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Kiểm tra sơ bộ số lượng/chất lượng (phong-van-hanh)",
+        "approverRole": "phong-van-hanh",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "5. QT Vận hành/9. QT sơ chế/QT so che.docx",
+      "block": "block-5-vanhanh.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "vanhanh.qt-sua-chua-bao-duong-mmtb",
+    "name": "QT sửa chữa bảo dưỡng MMTB",
+    "domain": "operations",
+    "entityType": "qas_maintenance_tickets",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Kiểm tra (phong-ky-thuat)",
+        "approverRole": "phong-ky-thuat",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Xác nhận Khách thuê vào BB sự việc (quan-ly-truc-tiep)",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "5. QT Vận hành/10. QT sửa chữa bảo dưỡng MMTB/QT sua chua_bao duong MMTB.docx",
+      "block": "block-5-vanhanh.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "vanhanh.qt-san-xuat-theo-don-dat-hang",
+    "name": "QT sản xuất theo đơn đặt hàng",
+    "domain": "operations",
+    "entityType": "wf_procedure_rollouts",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Duyệt BG (phong-kinh-doanh)",
+        "approverRole": "phong-kinh-doanh",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Duyệt → gửi KH kèm hàng mẫu (quan-ly-truc-tiep)",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      },
+      {
+        "order": 3,
+        "name": "Xác nhận cọc → chuyển P (phong-ke-toan)",
+        "approverRole": "phong-ke-toan",
+        "slaHours": 24
+      },
+      {
+        "order": 4,
+        "name": "Kiểm tra thành phẩm (quan-ly-truc-tiep)",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "5. QT Vận hành/11. QT sản xuất theo đơn đặt hàng/QT SX theo don dat hang.docx",
+      "block": "block-5-vanhanh.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "vanhanh.qt-thue-dv-mua-thiet-bi",
+    "name": "QT thuê DV - mua thiết bị",
+    "domain": "operations",
+    "entityType": "qpr_purchase_requests",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Duyệt (giam-doc)",
+        "approverRole": "giam-doc",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Duyệt báo giá (giam-doc)",
+        "approverRole": "giam-doc",
+        "slaHours": 24
+      },
+      {
+        "order": 3,
+        "name": "Kiểm tra kỹ hàng (số lượng + chất lượng) rồi ký BB bàn giao (phong-van-hanh)",
+        "approverRole": "phong-van-hanh",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [
+      {
+        "minAmount": 2000000,
+        "addSteps": [
+          {
+            "order": 90,
+            "name": "Duyệt bổ sung theo ngưỡng 2.000.000đ",
+            "approverRole": "quan-ly-truc-tiep",
+            "minAmount": 2000000
+          }
+        ]
+      }
+    ],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "5. QT Vận hành/12. QT thuê DV - mua thiết bị/QT thue DV_mua thiet bi.docx",
+      "block": "block-5-vanhanh.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "vanhanh.qt-thue-sua-thiet-bi",
+    "name": "QT thuê sửa thiết bị",
+    "domain": "operations",
+    "entityType": "wf_procedure_rollouts",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Xem xét phê duyệt (giam-doc)",
+        "approverRole": "giam-doc",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Duyệt đề xuất >5 triệu (giam-doc)",
+        "approverRole": "giam-doc",
+        "slaHours": 24
+      },
+      {
+        "order": 3,
+        "name": "Duyệt đề xuất ≤5 triệu (phong-ky-thuat)",
+        "approverRole": "phong-ky-thuat",
+        "slaHours": 24
+      },
+      {
+        "order": 4,
+        "name": "Duyệt → BP (phong-ky-thuat)",
+        "approverRole": "phong-ky-thuat",
+        "slaHours": 24
+      },
+      {
+        "order": 5,
+        "name": "Nghiệm thu với NCC (phong-ky-thuat)",
+        "approverRole": "phong-ky-thuat",
+        "slaHours": 24
+      },
+      {
+        "order": 6,
+        "name": "Nghiệm thu → BP (phong-ky-thuat)",
+        "approverRole": "phong-ky-thuat",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [
+      {
+        "minAmount": 5000000,
+        "addSteps": [
+          {
+            "order": 90,
+            "name": "Duyệt bổ sung theo ngưỡng 5.000.000đ",
+            "approverRole": "giam-doc",
+            "minAmount": 5000000
+          }
+        ]
+      }
+    ],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "5. QT Vận hành/13. QT thuê sửa thiết bị/QT thue sua thiet bi.docx",
+      "block": "block-5-vanhanh.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "vanhanh.qt-to-chuc-tot-nghiep",
+    "name": "QT tổ chức tốt nghiệp",
+    "domain": "operations",
+    "entityType": "wf_procedure_rollouts",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Quản lý trực tiếp xác nhận/duyệt quy trình",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "5. QT Vận hành/14. QT tổ chức tốt nghiệp/QT to chuc Le trao bang tot nghiep.docx",
+      "block": "block-5-vanhanh.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "vanhanh.qt-to-chuc-su-kien",
+    "name": "QT tổ chức sự kiện",
+    "domain": "operations",
+    "entityType": "qmk_campaigns",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Xem xét phê duyệt nội dung (quan-ly-truc-tiep)",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Duyệt (phong-ns)",
+        "approverRole": "phong-ns",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "5. QT Vận hành/15. QT tổ chức sự kiện/QT tổ chức sự kiện.docx",
+      "block": "block-5-vanhanh.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "vanhanh.qt-trien-khai-ap-dung-kiem-tra-viec-thuc-hien-qt",
+    "name": "QT triển khai áp dụng - kiểm tra việc thực hiện QT",
+    "domain": "operations",
+    "entityType": "wf_procedure_rollouts",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Ký duyệt xuống các phòng/ban/BP liên quan (ban-tgd)",
+        "approverRole": "ban-tgd",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Ký xác nhận sẽ triển khai hướng dẫn + áp dụng cho toàn bộ NV liên quan (nguoi-de-nghi)",
+        "approverRole": "nguoi-de-nghi",
+        "slaHours": 24
+      },
+      {
+        "order": 3,
+        "name": "Kiểm tra (phong-dt)",
+        "approverRole": "phong-dt",
+        "slaHours": 24
+      },
+      {
+        "order": 4,
+        "name": "Kiểm tra (quan-ly-truc-tiep)",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      },
+      {
+        "order": 5,
+        "name": "Xem xét (nguoi-de-nghi)",
+        "approverRole": "nguoi-de-nghi",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "5. QT Vận hành/16. QT triển khai áp dụng - kiểm tra việc thực hiện QT/QT trien khai ap dung _ KT viec thuc hien QT.docx",
+      "block": "block-5-vanhanh.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "vanhanh.qt-tu-sua-chua-thiet-bi",
+    "name": "QT tự sửa chữa thiết bị",
+    "domain": "operations",
+    "entityType": "qas_maintenance_tickets",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Xem xét (phong-ky-thuat)",
+        "approverRole": "phong-ky-thuat",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Xem xét (phong-ns)",
+        "approverRole": "phong-ns",
+        "slaHours": 24
+      },
+      {
+        "order": 3,
+        "name": "Nghiệm thu với ĐV đề xuất (BB 2 bản (phong-ky-thuat)",
+        "approverRole": "phong-ky-thuat",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "5. QT Vận hành/17. QT tự sửa chữa thiết bị/QT tu sua chưa thiet bi.docx",
+      "block": "block-5-vanhanh.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "vanhanh.qt-tu-van-thiet-ke-noi-that",
+    "name": "QT tư vấn thiết kế nội thất",
+    "domain": "operations",
+    "entityType": "qmk_task_assignments",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Xác nhận (phong-ke-toan)",
+        "approverRole": "phong-ke-toan",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Xác nhận xong → NV TV làm HĐ mua bán (phong-ke-toan)",
+        "approverRole": "phong-ke-toan",
+        "slaHours": 24
+      },
+      {
+        "order": 3,
+        "name": "Xác nhận → BP (phong-ke-toan)",
+        "approverRole": "phong-ke-toan",
+        "slaHours": 24
+      },
+      {
+        "order": 4,
+        "name": "Nghiệm thu công trình (quan-ly-truc-tiep)",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "5. QT Vận hành/18. QT tư vấn thiết kế nội thất/QT tư van thiet ke noi that.docx",
+      "block": "block-5-vanhanh.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "vanhanh.qt-xay-dung-qt",
+    "name": "QT xây dựng QT",
+    "domain": "operations",
+    "entityType": "wf_procedure_rollouts",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Xem xét lần cuối (quan-ly-truc-tiep)",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Duyệt → chuyển người viết QT phối hợp P (phong-ns)",
+        "approverRole": "phong-ns",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "5. QT Vận hành/19. QT xây dựng QT/QT Xay dung QT.docx",
+      "block": "block-5-vanhanh.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "vanhanh.qt-xuat-nhap-ton-kho",
+    "name": "QT xuất - nhập tồn kho",
+    "domain": "operations",
+    "entityType": "inventory_items",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Kiểm tra KH xuất/nhập (nguoi-de-nghi)",
+        "approverRole": "nguoi-de-nghi",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Kiểm tra theo HD tiếp nhận & KT hàng hóa (phong-van-hanh)",
+        "approverRole": "phong-van-hanh",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "5. QT Vận hành/20. QT xuất - nhập tồn kho/QT xuat-nhap-ton kho.docx",
+      "block": "block-5-vanhanh.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "vanhanh.qt-bao-duong-o-to",
+    "name": "QT bảo dưỡng ô tô",
+    "domain": "operations",
+    "entityType": "qas_maintenance_tickets",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Quản lý trực tiếp xác nhận/duyệt quy trình",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "5. QT Vận hành/21. QT bảo dưỡng ô tô/QT Bao duong, sua chua may moc, thiet bi, o to.docx",
+      "block": "block-5-vanhanh.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "vanhanh.qt-danh-gia-nha-cung-cap",
+    "name": "QT Đánh giá nhà cung cấp",
+    "domain": "operations",
+    "entityType": "qpr_purchase_requests",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Xác nhận (phong-ke-toan)",
+        "approverRole": "phong-ke-toan",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Xem xét (nguoi-de-nghi)",
+        "approverRole": "nguoi-de-nghi",
+        "slaHours": 24
+      },
+      {
+        "order": 3,
+        "name": "Xem xét (giam-doc)",
+        "approverRole": "giam-doc",
+        "slaHours": 24
+      },
+      {
+        "order": 4,
+        "name": "Phê duyệt (quan-ly-truc-tiep)",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "5. QT Vận hành/22. QT Đánh giá nhà cung cấp/QT Danh gia NCC.docx",
+      "block": "block-5-vanhanh.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "vanhanh.qt-nghien-cuu-ung-dung-cong-nghe-moi",
+    "name": "QT nghiên cứu ứng dụng công nghệ mới",
+    "domain": "operations",
+    "entityType": "qmk_research_projects",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Xem xét phê duyệt chủ trương (giam-doc)",
+        "approverRole": "giam-doc",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Duyệt → TP (phong-ky-thuat)",
+        "approverRole": "phong-ky-thuat",
+        "slaHours": 24
+      },
+      {
+        "order": 3,
+        "name": "Nghiệm thu (phong-dt)",
+        "approverRole": "phong-dt",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "5. QT Vận hành/23. QT nghiên cứu ứng dụng công nghệ mới/QT nghien cuu ung dung cong nghe moi.docx",
+      "block": "block-5-vanhanh.md",
+      "parser": "auto"
+    }
+  },
+  {
+    "code": "vanhanh.qt-phong-chong-benh-dich",
+    "name": "QT phòng chống bệnh dịch",
+    "domain": "operations",
+    "entityType": "wf_procedure_rollouts",
+    "stepsConfig": [
+      {
+        "order": 1,
+        "name": "Kiểm tra (nguoi-de-nghi)",
+        "approverRole": "nguoi-de-nghi",
+        "slaHours": 24
+      },
+      {
+        "order": 2,
+        "name": "Kiểm tra sức khỏe toàn công ty (quan-ly-truc-tiep)",
+        "approverRole": "quan-ly-truc-tiep",
+        "slaHours": 24
+      }
+    ],
+    "thresholdRules": [],
+    "version": 1,
+    "isActive": true,
+    "trace": {
+      "source": "5. QT Vận hành/24. QT phòng chống bệnh dịch/QT Phong chong dich benh.docx",
+      "block": "block-5-vanhanh.md",
+      "parser": "auto"
+    }
+  }
+]

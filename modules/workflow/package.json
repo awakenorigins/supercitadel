@@ -11,7 +11,7 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "tsx tests/workflow.pglite.test.ts && tsx tests/workflow.routes.pglite.test.ts"
+    "test": "tsx tests/workflow.pglite.test.ts && tsx tests/workflow.routes.pglite.test.ts && tsx tests/workflow.seed.pglite.test.ts"
   },
   "dependencies": {
     "@citadel/core": "workspace:*",
