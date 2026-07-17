@@ -4,11 +4,14 @@
   "type": "module",
   "exports": {
     "./server/service.js": "./server/service.ts",
-    "./server/schema.js": "./server/schema.ts"
+    "./server/schema.js": "./server/schema.ts",
+    "./server/routes.js": "./server/routes.ts",
+    "./server/events.js": "./server/events.ts",
+    "./server/sla.js": "./server/sla.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "tsx tests/workflow.pglite.test.ts"
+    "test": "tsx tests/workflow.pglite.test.ts && tsx tests/workflow.routes.pglite.test.ts"
   },
   "dependencies": {
     "@citadel/core": "workspace:*",

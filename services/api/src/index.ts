@@ -14,6 +14,7 @@ import { keToan10aTools } from '@citadel/module-ke-toan-10a/server/tools.js';
 import { soulManagerTools } from '@citadel/module-soul-manager/server/host-adapter.js';
 import { soulInventoryTools, startSoulInventoryNightlyAutomation } from '@citadel/module-soul-inventory/server/host-adapter.js';
 import { startQldnMonthlyAutomation } from '@citadel/module-qldn/server/scheduler.js';
+import { startWorkflowSlaScanner } from '@citadel/module-workflow/server/sla.js';
 import { qldnTools } from '@citadel/module-qldn/server/tools.js';
 import { buildModuleRoutes, requireModule } from './modules/routes.js';
 import { mountLoadedModules } from './modules/loader.js';
@@ -204,6 +205,12 @@ startSoulInventoryNightlyAutomation(getDb(), async () => {
 startQldnMonthlyAutomation(getDb(), async () => {
   const rows = await getDb().select({ orgId: orgModules.orgId }).from(orgModules)
     .where(and(eq(orgModules.moduleId, 'qldn'), eq(orgModules.status, 'active')));
+  return rows.map((r: any) => r.orgId);
+});
+// Workflow SLA scanner: per-org host hook, giữ step active và chỉ emit expired một lần.
+startWorkflowSlaScanner(getDb(), async () => {
+  const rows = await getDb().select({ orgId: orgModules.orgId }).from(orgModules)
+    .where(and(eq(orgModules.moduleId, 'workflow'), eq(orgModules.status, 'active')));
   return rows.map((r: any) => r.orgId);
 });
 serve({ fetch: app.fetch, port }, () => console.log(`[api] listening on :${port}`));

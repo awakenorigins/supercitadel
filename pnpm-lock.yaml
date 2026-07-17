@@ -546,6 +546,9 @@ importers:
       '@citadel/module-soul-manager':
         specifier: workspace:*
         version: link:../../modules/soul-manager
+      '@citadel/module-workflow':
+        specifier: workspace:*
+        version: link:../../modules/workflow
       '@citadel/tieu-tam':
         specifier: workspace:*
         version: link:../../packages/tieu-tam
