@@ -9,7 +9,7 @@
  *  - Sheet "Phiếu lương"/"phieuluong": payslip render từ dòng lương → snapshot bất biến
  */
 import { and, eq } from 'drizzle-orm';
-import { AppError } from '@citadel/core';
+import { AppError, emitEvent } from '@citadel/core';
 import {
   employees, periods, payrollRuns, payrollLines,
   payoutBatches, payslips, contractorPayments,
@@ -118,11 +118,18 @@ export async function createPayoutBatch(db: any, orgId: string, b: any, createdB
     });
     total += net;
   }
-  const [batch] = await db.insert(payoutBatches).values({
-    orgId, runId, lines: payout, totalAmount: String(total),
-    status: 'draft', createdBy: createdBy ?? null,
-    bankFileRef: b?.bankFileRef ?? null,
-  }).returning();
+  const batch = await db.transaction(async (tx: any) => {
+    const [row] = await tx.insert(payoutBatches).values({
+      orgId, runId, lines: payout, totalAmount: String(total),
+      status: 'draft', createdBy: createdBy ?? null,
+      bankFileRef: b?.bankFileRef ?? null,
+    }).returning();
+    await emitEvent(tx, {
+      orgId, topic: 'qldn.payout.created',
+      payload: { batchId: row.id, runId, lines: payout.length, totalAmount: total },
+    });
+    return row;
+  });
   return { batch, summary: { lines: payout.length, totalAmount: total, missingBank } };
 }
 
@@ -194,8 +201,31 @@ export async function getPayslip(db: any, orgId: string, employeeId: string, per
 export async function approveRun(db: any, orgId: string, runId: string, approvedBy: string) {
   const run = await getRun(db, orgId, runId);
   if (run.status !== 'calculated') throw invalid(`Bảng lương đang ${run.status} — chỉ duyệt được khi đã calculated`);
-  const [row] = await db.update(payrollRuns).set({
-    status: 'approved', approvedBy, approvedAt: new Date(),
-  }).where(and(eq(payrollRuns.orgId, orgId), eq(payrollRuns.id, runId))).returning();
-  return row;
+  return db.transaction(async (tx: any) => {
+    const [row] = await tx.update(payrollRuns).set({
+      status: 'approved', approvedBy, approvedAt: new Date(),
+    }).where(and(eq(payrollRuns.orgId, orgId), eq(payrollRuns.id, runId))).returning();
+    // Tổng hợp cho bút toán k10a (334/338/3335): lương gross, BH, thuế, net
+    const lines = await tx.select().from(payrollLines)
+      .where(and(eq(payrollLines.orgId, orgId), eq(payrollLines.runId, runId)));
+    let gross = 0, insCo = 0, insEmp = 0, pit = 0, net = 0;
+    for (const l of lines) {
+      gross += N(l.gross); insCo += N(l.insuranceCompany);
+      insEmp += N(l.insuranceEmployee); pit += N(l.pit); net += N(l.netPay);
+    }
+    await emitEvent(tx, {
+      orgId, topic: 'qldn.payroll.approved',
+      payload: {
+        runId, scheme: row.scheme, periodId: row.periodId, approvedBy,
+        totals: { gross, insuranceCompany: insCo, insuranceEmployee: insEmp, pit, netPay: net, lines: lines.length },
+        // Gợi ý hạch toán k10a: Nợ 642/622 gross+insCo — Có 334 net, 338 BH, 3335 thuế
+        suggestedEntries: [
+          { account: '334', side: 'credit', amount: net, memo: 'Phải trả NLĐ' },
+          { account: '338', side: 'credit', amount: insCo + insEmp, memo: 'BHXH/BHYT/BHTN/KPCĐ' },
+          { account: '3335', side: 'credit', amount: pit, memo: 'Thuế TNCN khấu trừ' },
+        ],
+      },
+    });
+    return row;
+  });
 }

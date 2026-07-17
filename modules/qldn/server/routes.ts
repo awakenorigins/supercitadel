@@ -18,6 +18,7 @@ import {
   approveRun, createPayoutBatch, listPayoutBatches, markBatchStatus,
   generatePayslips, getPayslip, createContractorPayment, listContractorPayments,
 } from './payout.js';
+import { parseForecastWorkbook, importForecast, createForecastLine, forecastView, settleForecastLine } from './forecast.js';
 
 declare module 'hono' { interface ContextVariableMap { auth: JwtPayload } }
 const orgOf = (c: any) => (c.get('auth') as JwtPayload).orgId;
@@ -178,6 +179,30 @@ export function buildQldnRoutes(deps: { db: any; requireAuth: MiddlewareHandler;
     const payment = await createContractorPayment(deps.db, orgOf(c), b);
     await deps.audit?.(c, { action: 'qldn.contractor.payment', resource: 'contractor_payment', resourceId: payment.id, detail: { kind: payment.kind, net: payment.netAmount } });
     return c.json({ payment }, 201);
+  });
+
+  // ── Dự báo dòng tiền (forecast) ──
+  r.get('/forecast', async (c) =>
+    c.json(await forecastView(deps.db, orgOf(c), c.req.query('from'), c.req.query('to'))));
+  r.post('/forecast/lines', async (c) => {
+    const b = await c.req.json().catch(() => ({}));
+    const line = await createForecastLine(deps.db, orgOf(c), b);
+    await deps.audit?.(c, { action: 'qldn.forecast.line_create', resource: 'forecast_line', resourceId: line.id });
+    return c.json({ line }, 201);
+  });
+  r.post('/forecast/lines/:id/settle', async (c) => {
+    const line = await settleForecastLine(deps.db, orgOf(c), c.req.param('id'));
+    await deps.audit?.(c, { action: 'qldn.forecast.settle', resource: 'forecast_line', resourceId: line.id });
+    return c.json({ line });
+  });
+  r.post('/forecast/import', async (c) => {
+    const body = await c.req.parseBody();
+    const file = body['file'];
+    if (!(file instanceof File)) throw new AppError('VALIDATION' as any, 'Thiếu file dự báo (field "file")', 400);
+    const parsed = parseForecastWorkbook(Buffer.from(await file.arrayBuffer()));
+    const result = await importForecast(deps.db, orgOf(c), parsed);
+    await deps.audit?.(c, { action: 'qldn.forecast.import', resource: 'forecast', detail: { created: result.created, opening: result.openingBalance } });
+    return c.json({ result }, 201);
   });
 
   return r;
