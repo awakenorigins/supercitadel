@@ -8,7 +8,8 @@
     "./server/schema.js": "./server/schema.ts",
     "./server/service.js": "./server/service.ts",
     "./server/engine.js": "./server/engine.ts",
-    "./server/seed.js": "./server/seed.ts"
+    "./server/seed.js": "./server/seed.ts",
+    "./server/scheduler.js": "./server/scheduler.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

@@ -13,6 +13,7 @@ import { crmTools } from '@citadel/module-crm/server/tools.js';
 import { keToan10aTools } from '@citadel/module-ke-toan-10a/server/tools.js';
 import { soulManagerTools } from '@citadel/module-soul-manager/server/host-adapter.js';
 import { soulInventoryTools, startSoulInventoryNightlyAutomation } from '@citadel/module-soul-inventory/server/host-adapter.js';
+import { startQldnMonthlyAutomation } from '@citadel/module-qldn/server/scheduler.js';
 import { buildModuleRoutes, requireModule } from './modules/routes.js';
 import { mountLoadedModules } from './modules/loader.js';
 import { buildCompanyModuleRoutes } from './company-module-routes.js';
@@ -195,6 +196,12 @@ startOutboxDispatcher(getDb());
 startSoulInventoryNightlyAutomation(getDb(), async () => {
   const rows = await getDb().select({ orgId: orgModules.orgId }).from(orgModules)
     .where(and(eq(orgModules.moduleId, 'soul-inventory'), eq(orgModules.status, 'active')));
+  return rows.map((r: any) => r.orgId);
+});
+// QLDN monthly automation (F7.5): mùng 1 tự tạo kỳ + calculate lương kỳ trước (KHÔNG auto-approve)
+startQldnMonthlyAutomation(getDb(), async () => {
+  const rows = await getDb().select({ orgId: orgModules.orgId }).from(orgModules)
+    .where(and(eq(orgModules.moduleId, 'qldn'), eq(orgModules.status, 'active')));
   return rows.map((r: any) => r.orgId);
 });
 serve({ fetch: app.fetch, port }, () => console.log(`[api] listening on :${port}`));

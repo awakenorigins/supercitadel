@@ -27,7 +27,7 @@
   "dependsOn": ["ke-toan-10a"],
   "engine": "^1.0.0",
   "events": {
-    "emits": ["qldn.payroll.approved", "qldn.payout.created", "qldn.forecast.updated"],
+    "emits": ["qldn.payroll.approved", "qldn.payroll.autorun_completed", "qldn.payout.created", "qldn.forecast.updated"],
     "subscribes": ["ke-toan-10a.*"]
   },
   "rentPlans": { "30": 180 },
