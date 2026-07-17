@@ -41,7 +41,8 @@
       "qldn-finance-flow.salary-payment.executed"
     ],
     "subscribes": [
-      "workflow.*"
+      "workflow.instance.approved",
+      "workflow.instance.rejected"
     ]
   }
 }

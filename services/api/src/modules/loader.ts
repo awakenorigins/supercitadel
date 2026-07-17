@@ -15,8 +15,10 @@ import { buildSoulManagerRoutes } from '@citadel/module-soul-manager/server/host
 import { buildSoulInventoryRoutes } from '@citadel/module-soul-inventory/server/host-adapter.js';
 import { buildQldnRoutes } from '@citadel/module-qldn/server/routes.js';
 import { buildWorkflowRoutes } from '@citadel/module-workflow/server/routes.js';
+import { buildQldnFinanceFlowRoutes } from '@citadel/module-qldn-finance-flow/server/routes.js';
 import { eventHandlers as notificationEventHandlers } from '@citadel/module-notification/server/events.js';
 import { eventHandlers as workflowEventHandlers } from '@citadel/module-workflow/server/events.js';
+import { eventHandlers as qldnFinanceFlowEventHandlers } from '@citadel/module-qldn-finance-flow/server/events.js';
 import { subscribeOutbox, type OutboxHandler } from '../outbox.js';
 
 type Deps = { db:any; requireAuth:MiddlewareHandler; requireModule:(db:any,id:string)=>MiddlewareHandler; audit?:any; sensitiveGate?:any; cancelGate?:any };
@@ -34,10 +36,12 @@ const builders: Record<string, Builder> = {
   'soul-inventory': (d) => buildSoulInventoryRoutes({ db: d.db, requireAuth: d.requireAuth, gate: d.requireModule(d.db, 'soul-inventory'), audit: d.audit }),
   qldn: (d) => buildQldnRoutes({ db: d.db, requireAuth: d.requireAuth, gate: d.requireModule(d.db, 'qldn'), audit: d.audit }),
   workflow: (d) => buildWorkflowRoutes({ db: d.db, requireAuth: d.requireAuth, gate: d.requireModule(d.db, 'workflow'), audit: d.audit }),
+  'qldn-finance-flow': (d) => buildQldnFinanceFlowRoutes({ db: d.db, requireAuth: d.requireAuth, gate: d.requireModule(d.db, 'qldn-finance-flow'), audit: d.audit }),
 };
 const moduleEventHandlers: Record<string, Record<string, OutboxHandler>> = {
   notification: notificationEventHandlers as Record<string, OutboxHandler>,
   workflow: workflowEventHandlers as Record<string, OutboxHandler>,
+  'qldn-finance-flow': qldnFinanceFlowEventHandlers as Record<string, OutboxHandler>,
 };
 export interface LoadedModule { id:string; version:string; routes:string; manifest:ModuleManifest }
 export interface RejectedModule { id:string; errors:string[] }
