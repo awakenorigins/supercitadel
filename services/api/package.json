@@ -34,7 +34,8 @@
     "@citadel/module-qldn-hr-plus": "workspace:*",
     "@citadel/module-qldn-procurement": "workspace:*",
     "@citadel/module-qldn-asset": "workspace:*",
-    "@citadel/module-qldn-sales-plus": "workspace:*"
+    "@citadel/module-qldn-sales-plus": "workspace:*",
+    "@citadel/module-qldn-marketing": "workspace:*"
   },
   "devDependencies": {
     "tsx": "^4.19.0",
