@@ -686,6 +686,9 @@ importers:
       '@citadel/module-qldn-procurement':
         specifier: workspace:*
         version: link:../../modules/qldn-procurement
+      '@citadel/module-qldn-sales-plus':
+        specifier: workspace:*
+        version: link:../../modules/qldn-sales-plus
       '@citadel/module-soul-inventory':
         specifier: workspace:*
         version: link:../../modules/soul-inventory

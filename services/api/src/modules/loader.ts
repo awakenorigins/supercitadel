@@ -19,6 +19,7 @@ import { buildQldnFinanceFlowRoutes } from '@citadel/module-qldn-finance-flow/se
 import { buildQldnHrPlusRoutes } from '@citadel/module-qldn-hr-plus/server/routes.js';
 import { buildQldnProcurementRoutes } from '@citadel/module-qldn-procurement/server/routes.js';
 import { buildQldnAssetRoutes } from '@citadel/module-qldn-asset/server/routes.js';
+import { buildQldnSalesPlusRoutes } from '@citadel/module-qldn-sales-plus/server/routes.js';
 import { eventHandlers as notificationEventHandlers } from '@citadel/module-notification/server/events.js';
 import { eventHandlers as workflowEventHandlers } from '@citadel/module-workflow/server/events.js';
 import { eventHandlers as qldnFinanceFlowEventHandlers } from '@citadel/module-qldn-finance-flow/server/events.js';
@@ -45,6 +46,7 @@ const builders: Record<string, Builder> = {
   'qldn-finance-flow': (d) => buildQldnFinanceFlowRoutes({ db: d.db, requireAuth: d.requireAuth, gate: d.requireModule(d.db, 'qldn-finance-flow'), audit: d.audit }),
   'qldn-hr-plus': (d) => buildQldnHrPlusRoutes({ db: d.db, requireAuth: d.requireAuth, gate: d.requireModule(d.db, 'qldn-hr-plus'), audit: d.audit }),
   'qldn-procurement': (d) => buildQldnProcurementRoutes({ db: d.db, requireAuth: d.requireAuth, gate: d.requireModule(d.db, 'qldn-procurement'), audit: d.audit }),
+  'qldn-sales-plus': (d) => buildQldnSalesPlusRoutes({ db:d.db, requireAuth:d.requireAuth, gate:d.requireModule(d.db,'qldn-sales-plus'), audit:d.audit }),
   'qldn-asset': (d) => buildQldnAssetRoutes({ db: d.db, requireAuth: d.requireAuth, gate: d.requireModule(d.db, 'qldn-asset'), audit: d.audit }),
 };
 const moduleEventHandlers: Record<string, Record<string, OutboxHandler>> = {
