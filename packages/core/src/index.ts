@@ -110,3 +110,4 @@ export * from './env.js';
 export * from './permissions.js';
 export * from './manifest.js';
 export * from './outbox.js';
+export * from './outbox-dispatcher.js';

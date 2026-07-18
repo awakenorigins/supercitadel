@@ -196,7 +196,10 @@ export const outboxEvents = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     dispatchedAt: timestamp('dispatched_at', { withTimezone: true }),
     attempts: integer('attempts').notNull().default(0),
+    status: text('status').notNull().default('pending'),
     lastError: text('last_error'),
+    nextAttemptAt: timestamp('next_attempt_at', { withTimezone: true }),
+    failedAt: timestamp('failed_at', { withTimezone: true }),
   },
   (t) => ({
     orgIdx: index('outbox_events_org_idx').on(t.orgId),

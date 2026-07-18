@@ -9,7 +9,7 @@ export async function scanWorkflowSla(db: any, orgId: string, now = new Date()):
     for (const s of rows) {
       const meta = (s.metadata ?? {}) as any;
       if (meta.slaExpiredNotified) continue;
-      await tx.update(wfSteps).set({ metadata: { ...meta, slaExpiredNotified: true, slaExpiredAt: now.toISOString() } }).where(eq(wfSteps.id, s.id));
+      await tx.update(wfSteps).set({ metadata: { ...meta, slaExpiredNotified: true, slaExpiredAt: now.toISOString() } }).where(and(eq(wfSteps.id, s.id),eq(wfSteps.orgId,orgId)));
       await emitEvent(tx, { orgId, topic: 'workflow.step.expired', payload: { stepId: s.id, instanceId: s.instanceId, stepOrder: s.stepOrder, slaDeadline: s.slaDeadline } });
       n++;
     }
