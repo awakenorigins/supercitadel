@@ -831,7 +831,7 @@
     "version": 1,
     "isActive": true,
     "trace": {
-      "source": "3. QT Kinh doanh/QT chăm sóc khách hàng đại lý",
+      "source": "designed-not-sourced:3. QT Kinh doanh/QT chăm sóc khách hàng đại lý",
       "block": "block-3-kinhdoanh.md",
       "parser": "auto"
     }
@@ -853,7 +853,7 @@
     "version": 1,
     "isActive": true,
     "trace": {
-      "source": "3. QT Kinh doanh/QT gặp gỡ, giới thiệu sản phẩm cho KH đại lý",
+      "source": "designed-not-sourced:3. QT Kinh doanh/QT gặp gỡ, giới thiệu sản phẩm cho KH đại lý",
       "block": "block-3-kinhdoanh.md",
       "parser": "auto"
     }
@@ -881,7 +881,7 @@
     "version": 1,
     "isActive": true,
     "trace": {
-      "source": "3. QT Kinh doanh/QT xử lý thắc mắc/khiếu nại của khách hàng",
+      "source": "designed-not-sourced:3. QT Kinh doanh/QT xử lý thắc mắc/khiếu nại của khách hàng",
       "block": "block-3-kinhdoanh.md",
       "parser": "auto"
     }
@@ -903,7 +903,7 @@
     "version": 1,
     "isActive": true,
     "trace": {
-      "source": "3. QT Kinh doanh/QT phân luồng, xử lý khách hàng",
+      "source": "designed-not-sourced:3. QT Kinh doanh/QT phân luồng, xử lý khách hàng",
       "block": "block-3-kinhdoanh.md",
       "parser": "auto"
     }
@@ -925,7 +925,7 @@
     "version": 1,
     "isActive": true,
     "trace": {
-      "source": "3. QT Kinh doanh/QT tiếp đón, tư vấn khách hàng tại VPĐD",
+      "source": "designed-not-sourced:3. QT Kinh doanh/QT tiếp đón, tư vấn khách hàng tại VPĐD",
       "block": "block-3-kinhdoanh.md",
       "parser": "auto"
     }
@@ -947,7 +947,7 @@
     "version": 1,
     "isActive": true,
     "trace": {
-      "source": "3. QT Kinh doanh/QT tiếp nhận và xử lý đơn hàng",
+      "source": "designed-not-sourced:3. QT Kinh doanh/QT tiếp nhận và xử lý đơn hàng",
       "block": "block-3-kinhdoanh.md",
       "parser": "auto"
     }
@@ -969,7 +969,7 @@
     "version": 1,
     "isActive": true,
     "trace": {
-      "source": "3. QT Kinh doanh/QT tư vấn và bán hàng đại lý",
+      "source": "designed-not-sourced:3. QT Kinh doanh/QT tư vấn và bán hàng đại lý",
       "block": "block-3-kinhdoanh.md",
       "parser": "auto"
     }
@@ -991,7 +991,7 @@
     "version": 1,
     "isActive": true,
     "trace": {
-      "source": "3. QT Kinh doanh/QT gọi điện thoại cho KH đặt lịch hẹn",
+      "source": "designed-not-sourced:3. QT Kinh doanh/QT gọi điện thoại cho KH đặt lịch hẹn",
       "block": "block-3-kinhdoanh.md",
       "parser": "auto"
     }
@@ -1013,7 +1013,7 @@
     "version": 1,
     "isActive": true,
     "trace": {
-      "source": "3. QT Kinh doanh/QT bán hàng – thu tiền",
+      "source": "designed-not-sourced:3. QT Kinh doanh/QT bán hàng – thu tiền",
       "block": "block-3-kinhdoanh.md",
       "parser": "auto"
     }
@@ -1035,7 +1035,7 @@
     "version": 1,
     "isActive": true,
     "trace": {
-      "source": "3. QT Kinh doanh/QT tiếp nhận đổi trả hàng của đại lý",
+      "source": "designed-not-sourced:3. QT Kinh doanh/QT tiếp nhận đổi trả hàng của đại lý",
       "block": "block-3-kinhdoanh.md",
       "parser": "auto"
     }
@@ -1057,7 +1057,7 @@
     "version": 1,
     "isActive": true,
     "trace": {
-      "source": "3. QT Kinh doanh/QT xử lý đơn đặt hàng (khách quen)",
+      "source": "designed-not-sourced:3. QT Kinh doanh/QT xử lý đơn đặt hàng (khách quen)",
       "block": "block-3-kinhdoanh.md",
       "parser": "auto"
     }
@@ -1079,7 +1079,7 @@
     "version": 1,
     "isActive": true,
     "trace": {
-      "source": "3. QT Kinh doanh/QT đi thị trường",
+      "source": "designed-not-sourced:3. QT Kinh doanh/QT đi thị trường",
       "block": "block-3-kinhdoanh.md",
       "parser": "auto"
     }
@@ -1101,7 +1101,7 @@
     "version": 1,
     "isActive": true,
     "trace": {
-      "source": "3. QT Kinh doanh/QT tìm kiếm khách hàng mới",
+      "source": "designed-not-sourced:3. QT Kinh doanh/QT tìm kiếm khách hàng mới",
       "block": "block-3-kinhdoanh.md",
       "parser": "auto"
     }
@@ -1123,7 +1123,7 @@
     "version": 1,
     "isActive": true,
     "trace": {
-      "source": "3. QT Kinh doanh/QT đấu thầu qua mạng có bảo lãnh",
+      "source": "designed-not-sourced:3. QT Kinh doanh/QT đấu thầu qua mạng có bảo lãnh",
       "block": "block-3-kinhdoanh.md",
       "parser": "auto"
     }
@@ -1145,7 +1145,7 @@
     "version": 1,
     "isActive": true,
     "trace": {
-      "source": "3. QT Kinh doanh/QT demo sản phẩm, giới thiệu thuyết trình giải pháp",
+      "source": "designed-not-sourced:3. QT Kinh doanh/QT demo sản phẩm, giới thiệu thuyết trình giải pháp",
       "block": "block-3-kinhdoanh.md",
       "parser": "auto"
     }
@@ -1167,7 +1167,7 @@
     "version": 1,
     "isActive": true,
     "trace": {
-      "source": "3. QT Kinh doanh/QT khuyến mãi, xả hàng",
+      "source": "designed-not-sourced:3. QT Kinh doanh/QT khuyến mãi, xả hàng",
       "block": "block-3-kinhdoanh.md",
       "parser": "auto"
     }
@@ -1189,7 +1189,7 @@
     "version": 1,
     "isActive": true,
     "trace": {
-      "source": "3. QT Kinh doanh/QT nhập khẩu nguyên vật liệu từ khách hàng",
+      "source": "designed-not-sourced:3. QT Kinh doanh/QT nhập khẩu nguyên vật liệu từ khách hàng",
       "block": "block-3-kinhdoanh.md",
       "parser": "auto"
     }
@@ -1211,7 +1211,7 @@
     "version": 1,
     "isActive": true,
     "trace": {
-      "source": "3. QT Kinh doanh/QT nhượng quyền cửa hàng",
+      "source": "designed-not-sourced:3. QT Kinh doanh/QT nhượng quyền cửa hàng",
       "block": "block-3-kinhdoanh.md",
       "parser": "auto"
     }
@@ -1233,7 +1233,7 @@
     "version": 1,
     "isActive": true,
     "trace": {
-      "source": "3. QT Kinh doanh/QT phân phối vật phẩm/quà tặng về TTKD",
+      "source": "designed-not-sourced:3. QT Kinh doanh/QT phân phối vật phẩm/quà tặng về TTKD",
       "block": "block-3-kinhdoanh.md",
       "parser": "auto"
     }
@@ -1255,7 +1255,7 @@
     "version": 1,
     "isActive": true,
     "trace": {
-      "source": "3. QT Kinh doanh/QT xuất khẩu hàng hoá",
+      "source": "designed-not-sourced:3. QT Kinh doanh/QT xuất khẩu hàng hoá",
       "block": "block-3-kinhdoanh.md",
       "parser": "auto"
     }

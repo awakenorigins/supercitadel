@@ -42,7 +42,7 @@ function parseSteps(body:string):StepConfig[]{ const lines=[...body.matchAll(/^\
  if(!picked.length){ picked.push({order:1,name:'Quản lý trực tiếp xác nhận/duyệt quy trình',approverRole:'quan-ly-truc-tiep',slaHours:24}); }
  return picked.map((s,i)=>({...s,order:i+1})); }
 const inv=JSON.parse(readFileSync(inventoryPath,'utf8'));
-function sourceFor(processName:string, blockTitle:string){ const procs=inv.blocks?.[blockTitle]?.processes||{}; const norm=(x:string)=>slug(x).replace(/^qt-/,''); const target=norm(processName); let best=''; for(const [p,v] of Object.entries<any>(procs)){ if(norm(p)===target || norm(p).includes(target) || target.includes(norm(p))) { best=(v.files||[]).find((f:any)=>f.kind==='process')?.rel || (v.files||[])[0]?.rel; break; } } return best || `${blockTitle}/${processName}`; }
+function sourceFor(processName:string, blockTitle:string){ const procs=inv.blocks?.[blockTitle]?.processes||{}; const norm=(x:string)=>slug(x).replace(/^qt-/,''); const target=norm(processName); let best=''; for(const [p,v] of Object.entries<any>(procs)){ if(norm(p)===target || norm(p).includes(target) || target.includes(norm(p))) { best=(v.files||[]).find((f:any)=>f.kind==='process')?.rel || (v.files||[])[0]?.rel; break; } } return best || `designed-not-sourced:${blockTitle}/${processName}`; }
 const overrides = (()=>{try{return JSON.parse(readFileSync(overridesPath,'utf8'))}catch{return {}}})();
 const defs:Def[]=[]; let auto=0, overridden=0;
 for(const b of blocks){ const md=readFileSync(join(reportsDir,b.file),'utf8'); const blockTitle = b.file.includes('hcns')?'1. QT Hành chính Nhân sự':b.file.includes('ketoan')?'2. QT Kế toán':b.file.includes('kinhdoanh')?'3. QT Kinh doanh':b.file.includes('marketing')?'4. QT Marketing':'5. QT Vận hành';

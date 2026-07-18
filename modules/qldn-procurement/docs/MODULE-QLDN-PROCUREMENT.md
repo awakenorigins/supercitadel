@@ -19,3 +19,23 @@ Beat 12 mở module `qldn-procurement` với supplier master duy nhất toàn h�
 - **QT 12 DV vận hành:** `qpr_procurement_requests` submit workflow `vanhanh.qt-thue-dv-mua-thiet-bi`; nghiệm thu `qpr_service_acceptances` — `result=issue` bắt buộc `issueDesc`, emit `service-acceptance.signed`.
 - **UI** `apps/web/app/qldn-procurement/page.tsx`: 4 tab (NCC & Đánh giá / Mua hàng & PO / Đấu thầu / DV & Nghiệm thu), quick actions, submit/send inline, ModuleLocked gate.
 - **Tests:** `tests/procurement.pglite.test.ts` (service + migration 15 bảng) và `tests/routes.pglite.test.ts` (API 403/3-NCC/threshold/GR partial-full/suspended block/bid award/org isolation).
+
+## Giới thiệu
+Supplier master toàn hệ, báo giá 3-NCC, đề nghị mua hàng, PO, nhận hàng và đấu thầu mua. Mọi dữ liệu được cô lập theo tổ chức và module được nạp qua manifest loader.
+
+## Chức năng
+| Chức năng | Endpoint | Quyền |
+|---|---|---|
+| Kiểm tra module | `GET /api/v1/qldn-procurement/health` | Đăng nhập |
+| Danh sách nghiệp vụ | `GET /api/v1/qldn-procurement/...` | `qldn-procurement.supplier.read` |
+| Thao tác nghiệp vụ | `POST /api/v1/qldn-procurement/...` | `qldn-procurement.supplier.write` |
+
+## Hướng dẫn sử dụng
+Mở module từ catalog, chọn nhóm nghiệp vụ, tạo hoặc cập nhật hồ sơ rồi theo dõi trạng thái. API luôn lấy `org_id` từ JWT; không truyền tổ chức thay người dùng. Các thao tác nhạy cảm yêu cầu permission tương ứng trong manifest.
+
+## Ví dụ
+- **"Cho tôi xem danh sách nghiệp vụ QLDN — Procurement"** → Tiểu Tâm gọi endpoint danh sách với quyền đọc.
+- **"Tạo hồ sơ mới và cho tôi biết trạng thái"** → Tiểu Tâm kiểm quyền, gọi endpoint tạo và trả về mã hồ sơ.
+
+## Changelog
+- 1.0.0 — Hoàn thiện module, manifest, loader, tài liệu và audit Beat 18.

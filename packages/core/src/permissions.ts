@@ -163,6 +163,10 @@ export const PERMISSION_REGISTRY = [
   p('qldn-sales-plus.shipment.write','QLDN Sales Plus — Tạo/sửa shipment XNK',2,true),
   p('qldn-sales-plus.fulfillment.write','QLDN Sales Plus — Ghi fulfillment state overlay',2,true),
   p('qldn-sales-plus.admin.manage','QLDN Sales Plus — Quản trị sales-plus',2,true),
+  // ── QLDN Marketing ──
+  p('qldn-marketing.campaign.read','QLDN Marketing — Xem chiến dịch, nội dung và nghiên cứu'),
+  p('qldn-marketing.campaign.write','QLDN Marketing — Tạo/sửa chiến dịch, nội dung và nghiên cứu',2,true),
+  p('qldn-marketing.budget.approve','QLDN Marketing — Phê duyệt ngân sách',2,true),
   // ── QLDN HR Plus — full HR lifecycle (49 qhr_ tables) ──
   p('qldn-hr-plus.recruitment.read','QLDN HR Plus — Xem yêu cầu/kế hoạch tuyển dụng'),
   p('qldn-hr-plus.recruitment.write','QLDN HR Plus — Tạo/sửa yêu cầu/kế hoạch tuyển dụng',2,true),
@@ -195,7 +199,7 @@ export const PERMISSION_REGISTRY = [
 export const ROLE_PERMISSIONS: Record<RoleType, readonly Permission[]> = {
   super_admin: ['*'],
   owner: ['*'],
-  manager: ['accounting.*','crm.*','inventory.*','hr.*','om.wallet.read','report.*','core.permissions.read','ke-toan-10a.*','kho.*','qldn.*','qldn-finance-flow.*','qldn-procurement.*','qldn-asset.*','qldn-sales-plus.*','qldn-hr-plus.*'],
+  manager: ['accounting.*','crm.*','inventory.*','hr.*','om.wallet.read','report.*','core.permissions.read','ke-toan-10a.*','kho.*','qldn.*','qldn-finance-flow.*','qldn-procurement.*','qldn-asset.*','qldn-sales-plus.*','qldn-marketing.*','qldn-hr-plus.*'],
   staff: ['crm.contact.create','crm.contact.read','hr.attendance.checkin','hr.attendance.checkout','om.wallet.read','report.summary.read','core.permissions.read','ke-toan-10a.report.read','qldn.payslip.read'],
 };
 
