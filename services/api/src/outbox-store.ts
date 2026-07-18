@@ -13,12 +13,13 @@ const map = (r: any): OutboxRecord => ({
 export function createPostgresOutboxStore(db: DB): OutboxStore {
   return {
     async claim(limit, now) {
+      const nowIso = now.toISOString();
       const result = await db.execute(sql`
         WITH candidates AS (
           SELECT id FROM outbox_events
           WHERE dispatched_at IS NULL
             AND status = 'pending'
-            AND (next_attempt_at IS NULL OR next_attempt_at <= ${now})
+            AND (next_attempt_at IS NULL OR next_attempt_at <= ${nowIso}::timestamptz)
           ORDER BY created_at
           FOR UPDATE SKIP LOCKED
           LIMIT ${limit}
@@ -32,13 +33,13 @@ export function createPostgresOutboxStore(db: DB): OutboxStore {
       return rows(result).map(map);
     },
     async dispatched(id, at) {
-      await db.execute(sql`UPDATE outbox_events SET status='dispatched', dispatched_at=${at}, last_error=NULL, next_attempt_at=NULL WHERE id=${id}::uuid AND status='processing'`);
+      await db.execute(sql`UPDATE outbox_events SET status='dispatched', dispatched_at=${at.toISOString()}::timestamptz, last_error=NULL, next_attempt_at=NULL WHERE id=${id}::uuid AND status='processing'`);
     },
     async retry(id, attempts, error, nextAttemptAt) {
-      await db.execute(sql`UPDATE outbox_events SET status='pending', attempts=${attempts}, last_error=${error}, next_attempt_at=${nextAttemptAt} WHERE id=${id}::uuid AND status='processing'`);
+      await db.execute(sql`UPDATE outbox_events SET status='pending', attempts=${attempts}, last_error=${error}, next_attempt_at=${nextAttemptAt.toISOString()}::timestamptz WHERE id=${id}::uuid AND status='processing'`);
     },
     async failed(id, attempts, error, at) {
-      await db.execute(sql`UPDATE outbox_events SET status='failed', attempts=${attempts}, last_error=${error}, failed_at=${at}, next_attempt_at=NULL WHERE id=${id}::uuid AND status='processing'`);
+      await db.execute(sql`UPDATE outbox_events SET status='failed', attempts=${attempts}, last_error=${error}, failed_at=${at.toISOString()}::timestamptz, next_attempt_at=NULL WHERE id=${id}::uuid AND status='processing'`);
     },
   };
 }
