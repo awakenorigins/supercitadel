@@ -1,0 +1,3 @@
+export const SALES_PLUS_TABLES = ["qsa_return_requests", "qsa_return_lines", "qsa_promotions", "qsa_promotion_rules", "qsa_sales_tenders", "qsa_tender_guarantees", "qsa_field_visits", "qsa_field_visit_reports", "qsa_franchise_applications", "qsa_franchise_reviews", "qsa_import_shipments", "qsa_export_shipments", "qsa_shipment_lines", "qsa_fulfillment_states", "qsa_fulfillment_events", "qsa_customer_material_imports"];
+export function assertSameOrg(row:any, orgId:string){ if(!row||row.orgId!==orgId) throw new Error('tenant_scope_violation'); return row; }
+export function isReusedMasterRef(field:string){ return ['sales_order_id','customer_id','deal_id','item_id','supplier_id'].includes(field); }

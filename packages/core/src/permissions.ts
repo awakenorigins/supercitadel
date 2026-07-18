@@ -148,6 +148,21 @@ export const PERMISSION_REGISTRY = [
   p('qldn-asset.inspection.write','QLDN Asset — Ghi kiểm định/kiểm kê',2,true),
   p('qldn-asset.incident.write','QLDN Asset — Báo cáo sự cố tài sản',2,true),
   p('qldn-asset.admin.manage','QLDN Asset — Quản trị tài sản',2,true),
+  // ── QLDN Sales Plus — returns/promotions/tender/visits/franchise/XNK/fulfillment ──
+  p('qldn-sales-plus.return.read','QLDN Sales Plus — Xem hồ sơ đổi trả'),
+  p('qldn-sales-plus.return.write','QLDN Sales Plus — Tạo/sửa hồ sơ đổi trả',2,true),
+  p('qldn-sales-plus.promotion.read','QLDN Sales Plus — Xem khuyến mãi'),
+  p('qldn-sales-plus.promotion.write','QLDN Sales Plus — Tạo/sửa khuyến mãi',2,true),
+  p('qldn-sales-plus.tender.read','QLDN Sales Plus — Xem thầu bán/bảo lãnh'),
+  p('qldn-sales-plus.tender.write','QLDN Sales Plus — Tạo/sửa thầu bán/bảo lãnh',2,true),
+  p('qldn-sales-plus.visit.read','QLDN Sales Plus — Xem field visit'),
+  p('qldn-sales-plus.visit.write','QLDN Sales Plus — Tạo/sửa field visit',2,true),
+  p('qldn-sales-plus.franchise.read','QLDN Sales Plus — Xem hồ sơ nhượng quyền'),
+  p('qldn-sales-plus.franchise.write','QLDN Sales Plus — Tạo/sửa hồ sơ nhượng quyền',2,true),
+  p('qldn-sales-plus.shipment.read','QLDN Sales Plus — Xem shipment XNK'),
+  p('qldn-sales-plus.shipment.write','QLDN Sales Plus — Tạo/sửa shipment XNK',2,true),
+  p('qldn-sales-plus.fulfillment.write','QLDN Sales Plus — Ghi fulfillment state overlay',2,true),
+  p('qldn-sales-plus.admin.manage','QLDN Sales Plus — Quản trị sales-plus',2,true),
   // ── QLDN HR Plus — full HR lifecycle (49 qhr_ tables) ──
   p('qldn-hr-plus.recruitment.read','QLDN HR Plus — Xem yêu cầu/kế hoạch tuyển dụng'),
   p('qldn-hr-plus.recruitment.write','QLDN HR Plus — Tạo/sửa yêu cầu/kế hoạch tuyển dụng',2,true),
@@ -180,7 +195,7 @@ export const PERMISSION_REGISTRY = [
 export const ROLE_PERMISSIONS: Record<RoleType, readonly Permission[]> = {
   super_admin: ['*'],
   owner: ['*'],
-  manager: ['accounting.*','crm.*','inventory.*','hr.*','om.wallet.read','report.*','core.permissions.read','ke-toan-10a.*','kho.*','qldn.*','qldn-finance-flow.*','qldn-procurement.*','qldn-asset.*','qldn-hr-plus.*'],
+  manager: ['accounting.*','crm.*','inventory.*','hr.*','om.wallet.read','report.*','core.permissions.read','ke-toan-10a.*','kho.*','qldn.*','qldn-finance-flow.*','qldn-procurement.*','qldn-asset.*','qldn-sales-plus.*','qldn-hr-plus.*'],
   staff: ['crm.contact.create','crm.contact.read','hr.attendance.checkin','hr.attendance.checkout','om.wallet.read','report.summary.read','core.permissions.read','ke-toan-10a.report.read','qldn.payslip.read'],
 };
 
