@@ -134,6 +134,20 @@ export const PERMISSION_REGISTRY = [
   p('qldn-procurement.bid.write','QLDN Procurement — Tạo/sửa đấu thầu mua',2,true),
   p('qldn-procurement.goods-receipt.write','QLDN Procurement — Ghi nhận nhập/nhận hàng',2,true),
   p('qldn-procurement.admin.manage','QLDN Procurement — Quản trị procurement',2,true),
+  // ── QLDN Asset — tài sản, thiết bị, xe ──
+  p('qldn-asset.asset.read','QLDN Asset — Xem tài sản/thiết bị'),
+  p('qldn-asset.asset.write','QLDN Asset — Tạo/sửa tài sản/thiết bị',2,true),
+  p('qldn-asset.assignment.read','QLDN Asset — Xem cấp phát/thu hồi/điều chuyển'),
+  p('qldn-asset.assignment.write','QLDN Asset — Cấp phát/thu hồi/điều chuyển tài sản',2,true),
+  p('qldn-asset.vehicle.read','QLDN Asset — Xem hồ sơ xe'),
+  p('qldn-asset.vehicle.write','QLDN Asset — Tạo/sửa hồ sơ xe',2,true),
+  p('qldn-asset.usage.write','QLDN Asset — Ghi usage/nhật trình tài sản',2,true),
+  p('qldn-asset.maintenance.read','QLDN Asset — Xem bảo trì/sửa chữa'),
+  p('qldn-asset.maintenance.write','QLDN Asset — Tạo/hoàn tất bảo trì/sửa chữa',2,true),
+  p('qldn-asset.inspection.read','QLDN Asset — Xem kiểm định/kiểm kê'),
+  p('qldn-asset.inspection.write','QLDN Asset — Ghi kiểm định/kiểm kê',2,true),
+  p('qldn-asset.incident.write','QLDN Asset — Báo cáo sự cố tài sản',2,true),
+  p('qldn-asset.admin.manage','QLDN Asset — Quản trị tài sản',2,true),
   // ── QLDN HR Plus — full HR lifecycle (49 qhr_ tables) ──
   p('qldn-hr-plus.recruitment.read','QLDN HR Plus — Xem yêu cầu/kế hoạch tuyển dụng'),
   p('qldn-hr-plus.recruitment.write','QLDN HR Plus — Tạo/sửa yêu cầu/kế hoạch tuyển dụng',2,true),
@@ -166,7 +180,7 @@ export const PERMISSION_REGISTRY = [
 export const ROLE_PERMISSIONS: Record<RoleType, readonly Permission[]> = {
   super_admin: ['*'],
   owner: ['*'],
-  manager: ['accounting.*','crm.*','inventory.*','hr.*','om.wallet.read','report.*','core.permissions.read','ke-toan-10a.*','kho.*','qldn.*'],
+  manager: ['accounting.*','crm.*','inventory.*','hr.*','om.wallet.read','report.*','core.permissions.read','ke-toan-10a.*','kho.*','qldn.*','qldn-finance-flow.*','qldn-procurement.*','qldn-asset.*','qldn-hr-plus.*'],
   staff: ['crm.contact.create','crm.contact.read','hr.attendance.checkin','hr.attendance.checkout','om.wallet.read','report.summary.read','core.permissions.read','ke-toan-10a.report.read','qldn.payslip.read'],
 };
 

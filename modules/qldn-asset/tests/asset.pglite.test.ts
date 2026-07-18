@@ -1,0 +1,24 @@
+import { PGlite } from '@electric-sql/pglite';
+import { drizzle } from 'drizzle-orm/pglite';
+import { readFileSync } from 'node:fs';
+import { and, eq, sql } from 'drizzle-orm';
+import * as qas from '../server/schema.js';
+import * as svc from '../server/service.js';
+const ORG='aaaaaaaa-0000-0000-0000-000000000001', ORGB='bbbbbbbb-0000-0000-0000-000000000002', U='11111111-1111-1111-1111-111111111111', U2='22222222-2222-2222-2222-222222222222';
+function assert(c:any,m:string){if(!c) throw new Error(m); console.log('✓',m)}
+const c=new PGlite(); await c.exec(readFileSync(new URL('../migrations/0001_qldn_asset.sql',import.meta.url),'utf8')); (globalThis as any).__citadelOutboxEnabled=false; const db=drizzle(c,{schema:qas}) as any;
+const tables=await db.execute(sql`select count(*)::int c from information_schema.tables where table_schema='public' and table_name like 'qas_%'`); assert(Number((tables as any).rows?.[0]?.c??0)===8,'migration creates 8 qas_ tables');
+const a=await svc.createAsset(db,ORG,{assetCode:'LAP-001',name:'Laptop Dell',purchaseCost:25000000,inventoryItemRef:'33333333-3333-3333-3333-333333333333'}); await svc.createAsset(db,ORGB,{assetCode:'LAP-B',name:'Org B Laptop'});
+assert((await svc.getAsset(db,ORG,a.id)).assetCode==='LAP-001','asset CRUD in org A'); let iso=false; try{await svc.getAsset(db,ORGB,a.id)}catch(e:any){iso=e.status===404} assert(iso,'org B cannot read org A asset');
+const asg=await svc.assignAsset(db,ORG,a.id,{assignmentNo:'ASG-1',assignedToRef:U,idempotencyKey:'idem-asg'}); const asg2=await svc.assignAsset(db,ORG,a.id,{assignmentNo:'ASG-1-DUP',assignedToRef:U,idempotencyKey:'idem-asg'}); assert(asg.id===asg2.id,'assignment idempotency returns same row');
+let blocked=false; try{await svc.assignAsset(db,ORG,a.id,{assignmentNo:'ASG-2',assignedToRef:U2})}catch(e:any){blocked=e.status===409} assert(blocked,'cannot assign already assigned asset');
+const tr=await svc.transferAsset(db,ORG,a.id,{toHolderRef:U2,reason:'handover',idempotencyKey:'idem-tr'}); assert(tr.toHolderRef===U2,'transfer moves custodian'); const afterTr=await svc.getAsset(db,ORG,a.id); assert(afterTr.custodianRef===U2,'asset custodian updated after transfer');
+let retBlock=false; try{await svc.returnAsset(db,ORG,asg.id)}catch(e:any){retBlock=e.status===409} assert(retBlock,'cannot return transferred assignment');
+await svc.transferAsset(db,ORG,a.id,{toHolderRef:null,reason:'release to pool'});
+const asg3=await svc.assignAsset(db,ORG,a.id,{assignmentNo:'ASG-3',assignedToRef:U2}); await svc.returnAsset(db,ORG,asg3.id,{returnCondition:'fair'}); const afterRet=await svc.getAsset(db,ORG,a.id); assert(afterRet.status==='returned'&&afterRet.custodianRef===null,'return clears custodian and marks returned');
+const v=await svc.createVehicle(db,ORG,{assetCode:'CAR-001',plateNo:'51A-12345',vehicleType:'car',odometer:1000}); const u=await svc.logUsage(db,ORG,{assetId:v.assetId,vehicleId:v.id,odometerStart:1000,odometerEnd:1050,idempotencyKey:'idem-use'}); assert(u.odometerEnd==='1050.00'||Number(u.odometerEnd)===1050,'usage log recorded'); const [v2]=await db.select().from(qas.qasVehicles).where(and(eq(qas.qasVehicles.orgId,ORG),eq(qas.qasVehicles.id,v.id))); assert(Number(v2.odometer)===1050,'vehicle odometer updated');
+let odo=false; try{await svc.logUsage(db,ORG,{assetId:v.assetId,vehicleId:v.id,odometerStart:1100,odometerEnd:1000})}catch(e:any){odo=e.status===400} assert(odo,'invalid odometer transition blocked');
+const mo=await svc.openMaintenance(db,ORG,{assetId:a.id,orderNo:'MO-1',description:'Replace battery'}); assert(mo.status==='open','maintenance opens'); await svc.completeMaintenance(db,ORG,mo.id,{actualCost:500000}); assert((await svc.getAsset(db,ORG,a.id)).status==='available','maintenance completion returns asset available');
+await svc.recordInspection(db,ORG,{assetId:a.id,inspectionNo:'INS-1',result:'fail',findings:{battery:'weak'}}); assert((await svc.getAsset(db,ORG,a.id)).condition==='needs_repair','failed inspection marks needs_repair');
+const inc=await svc.reportIncident(db,ORG,{assetId:a.id,incidentNo:'INC-1',severity:'critical',description:'Dropped laptop',createMaintenanceOrder:true}); assert(inc.maintenanceOrderId,'incident can create linked repair order');
+await c.close();
