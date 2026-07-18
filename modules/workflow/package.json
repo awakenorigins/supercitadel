@@ -7,7 +7,8 @@
     "./server/schema.js": "./server/schema.ts",
     "./server/routes.js": "./server/routes.ts",
     "./server/events.js": "./server/events.ts",
-    "./server/sla.js": "./server/sla.ts"
+    "./server/sla.js": "./server/sla.ts",
+    "./seed/apply-seed.js": "./seed/apply-seed.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

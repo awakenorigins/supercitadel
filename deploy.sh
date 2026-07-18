@@ -12,24 +12,24 @@ docker compose up -d --build
 echo "→ Đợi Postgres…"
 until docker compose exec -T postgres pg_isready -U citadel >/dev/null 2>&1; do sleep 2; done
 echo "→ Migrate core + tất cả module…"
-docker compose exec -T postgres psql -U citadel -d citadel -f /dev/stdin < packages/db/migrations/0002_org_modules.sql 2>/dev/null || true
-docker compose exec -T postgres psql -U citadel -d citadel -f /dev/stdin < packages/db/migrations/0003_super_admin.sql 2>/dev/null || true
-docker compose exec -T api sh -c "pnpm --filter @citadel/db exec tsx src/migrate.ts" || true
+docker compose exec -T api sh -c "pnpm --filter @citadel/db exec tsx src/migrate.ts"
 # module migrations
 # Soul-Manager: chỉ chạy 0000 (bảng sm_*) + 0001 (RLS trên sm_*).
 # BỎ QUA *backfill* (0002): backfill legacy hr chỉ chạy thủ công có chủ đích,
 # không tự chạy khi deploy (an toàn dữ liệu — xem soul-manager-DEEP-AUDIT.md).
-for m in chat notification crm om inventory hr accounting ke-toan-10a soul-manager soul-inventory; do
+for m in chat notification crm om inventory hr accounting ke-toan-10a soul-manager soul-inventory workflow qldn-finance-flow qldn-hr-plus qldn-procurement qldn-asset qldn-sales-plus qldn-marketing; do
   for mig in modules/$m/migrations/*.sql; do
     case "$mig" in
       *backfill*) echo "  ↳ bỏ qua $mig (backfill thủ công)"; continue;;
     esac
-    docker compose exec -T postgres psql -U citadel -d citadel -f /dev/stdin < "$mig" 2>/dev/null || true
+    docker compose exec -T postgres psql -v ON_ERROR_STOP=1 -U citadel -d citadel -f /dev/stdin < "$mig"
   done
   echo "  ✓ migrated $m"
 done
 echo "→ Seed demo…"
-docker compose exec -T api sh -c "pnpm --filter @citadel/db exec tsx src/seed.ts" || true
+docker compose exec -T api sh -c "pnpm --filter @citadel/db exec tsx src/seed.ts"
+echo "→ Seed 80 workflow definitions cho mọi tổ chức (idempotent)…"
+docker compose exec -T api sh -c "pnpm --filter @citadel/api exec tsx src/seed-workflows.ts"
 echo ""
 echo "════ XONG ════"
 echo "Web : http://localhost:3000  (/chat · /crm)"
