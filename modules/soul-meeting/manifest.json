@@ -1,0 +1,48 @@
+{
+  "id": "soul-meeting",
+  "name": "Soul-Meeting 1A — Cuộc Họp",
+  "version": "1.0.0",
+  "tier": "paid",
+  "priceOm": 800,
+  "icon": "clock",
+  "description": "Vòng đời cuộc họp khép kín cho SME VN: loại họp + template, họp định kỳ (series), RSVP + .ics, agenda draft→publish + time-box, tài liệu pre-read có read-receipt, checklist chuẩn bị, điểm danh, ghi chú theo agenda, quyết định + biểu quyết quorum theo % vốn (chuẩn họp HĐTV Luật DN 2020), biên bản draft→duyệt→phát hành bất biến, action items + carry-over kỳ sau, ghi âm + bóc băng (ASR sidecar optional), harvest AI từ text/transcript có dedup, KPI chi phí họp, xuất Excel. Tiểu Tâm điều khiển 100%, dry-run→confirm mọi action nhạy cảm.",
+  "permissions": [
+    "sm.meeting.read",
+    "sm.meeting.write",
+    "sm.agenda.write",
+    "sm.participant.write",
+    "sm.decision.write",
+    "sm.vote.manage",
+    "sm.minutes.write",
+    "sm.minutes.approve",
+    "sm.minutes.publish",
+    "sm.actionitem.read",
+    "sm.actionitem.write",
+    "sm.recording.manage",
+    "sm.report.read",
+    "sm.settings.manage"
+  ],
+  "routes": "/api/v1/soul-meeting",
+  "docs": "docs/GUIDE.md",
+  "engine": "^1.0.0",
+  "group": "Vận hành",
+  "rentPlans": {
+    "30": 120
+  },
+  "events": {
+    "emits": [
+      "sm.meeting.scheduled",
+      "sm.meeting.started",
+      "sm.meeting.completed",
+      "sm.meeting.cancelled",
+      "sm.minutes.published",
+      "sm.decision.recorded",
+      "sm.vote.closed",
+      "sm.actionitem.created",
+      "sm.actionitem.overdue",
+      "sm.recording.queued",
+      "sm.recording.transcribed"
+    ],
+    "subscribes": []
+  }
+}

@@ -1,0 +1,1245 @@
+{
+  "summary": {
+    "total": 42,
+    "read": 17,
+    "action": 25,
+    "groups": [
+      "Bảng điều khiển",
+      "Sàn & Bàn",
+      "Đơn hàng",
+      "Bếp / KDS",
+      "Menu & Định lượng",
+      "Bill & Thanh toán",
+      "Đặt bàn",
+      "Khuyến mãi",
+      "Khách & Điểm",
+      "Báo cáo",
+      "Cấu hình"
+    ]
+  },
+  "capabilities": [
+    {
+      "tool": "resto.console.dashboard",
+      "group": "Bảng điều khiển",
+      "label": "Tổng quan quán",
+      "kind": "read",
+      "method": "GET",
+      "path": "/restaurant/dashboard",
+      "fields": []
+    },
+    {
+      "tool": "resto.table.map",
+      "group": "Sàn & Bàn",
+      "label": "Sơ đồ bàn",
+      "kind": "read",
+      "method": "GET",
+      "path": "/restaurant/tables/map",
+      "fields": [
+        {
+          "name": "area",
+          "label": "Khu vực",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "tool": "resto.table.upsert",
+      "group": "Sàn & Bàn",
+      "label": "Thêm / sửa bàn",
+      "kind": "action",
+      "method": "POST",
+      "path": "/restaurant/tables",
+      "fields": [
+        {
+          "name": "name",
+          "label": "Tên bàn",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "area",
+          "label": "Khu vực",
+          "type": "text"
+        },
+        {
+          "name": "capacity",
+          "label": "Số chỗ",
+          "type": "number"
+        },
+        {
+          "name": "shape",
+          "label": "Hình",
+          "type": "select",
+          "options": [
+            "square",
+            "round",
+            "rect",
+            "bar"
+          ]
+        },
+        {
+          "name": "active",
+          "label": "Đang dùng",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "tool": "resto.table.open",
+      "group": "Đơn hàng",
+      "label": "Mở bàn / đơn",
+      "kind": "action",
+      "method": "POST",
+      "path": "/restaurant/orders/open",
+      "fields": [
+        {
+          "name": "table",
+          "label": "Bàn",
+          "type": "text"
+        },
+        {
+          "name": "type",
+          "label": "Loại",
+          "type": "select",
+          "options": [
+            "dine_in",
+            "takeaway",
+            "delivery"
+          ]
+        },
+        {
+          "name": "guests",
+          "label": "Số khách",
+          "type": "number"
+        },
+        {
+          "name": "customer_name",
+          "label": "Tên khách",
+          "type": "text"
+        },
+        {
+          "name": "customer_phone",
+          "label": "SĐT",
+          "type": "text"
+        },
+        {
+          "name": "note",
+          "label": "Ghi chú",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "tool": "resto.order.add_items",
+      "group": "Đơn hàng",
+      "label": "Gọi món",
+      "kind": "action",
+      "method": "POST",
+      "path": "/restaurant/orders/items",
+      "fields": [
+        {
+          "name": "table",
+          "label": "Bàn",
+          "type": "text"
+        },
+        {
+          "name": "order_code",
+          "label": "Mã đơn",
+          "type": "text"
+        },
+        {
+          "name": "items",
+          "label": "Món (JSON: [{name,qty,options,course}])",
+          "type": "json",
+          "required": true
+        }
+      ]
+    },
+    {
+      "tool": "resto.order.view",
+      "group": "Đơn hàng",
+      "label": "Xem đơn",
+      "kind": "read",
+      "method": "GET",
+      "path": "/restaurant/orders/view",
+      "fields": [
+        {
+          "name": "table",
+          "label": "Bàn",
+          "type": "text"
+        },
+        {
+          "name": "order_code",
+          "label": "Mã đơn",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "tool": "resto.order.open_list",
+      "group": "Đơn hàng",
+      "label": "Đơn đang mở",
+      "kind": "read",
+      "method": "GET",
+      "path": "/restaurant/orders/open-list",
+      "fields": [
+        {
+          "name": "type",
+          "label": "Loại",
+          "type": "select",
+          "options": [
+            "dine_in",
+            "takeaway",
+            "delivery"
+          ]
+        }
+      ]
+    },
+    {
+      "tool": "resto.order.cancel_item",
+      "group": "Đơn hàng",
+      "label": "Hủy món",
+      "kind": "action",
+      "method": "POST",
+      "path": "/restaurant/orders/cancel-item",
+      "sensitive": true,
+      "fields": [
+        {
+          "name": "table",
+          "label": "Bàn",
+          "type": "text"
+        },
+        {
+          "name": "order_code",
+          "label": "Mã đơn",
+          "type": "text"
+        },
+        {
+          "name": "item",
+          "label": "Tên món",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "qty",
+          "label": "SL hủy",
+          "type": "number"
+        },
+        {
+          "name": "reason",
+          "label": "Lý do",
+          "type": "text",
+          "required": true
+        }
+      ]
+    },
+    {
+      "tool": "resto.order.discount",
+      "group": "Đơn hàng",
+      "label": "Giảm giá đơn",
+      "kind": "action",
+      "method": "POST",
+      "path": "/restaurant/orders/discount",
+      "sensitive": true,
+      "fields": [
+        {
+          "name": "table",
+          "label": "Bàn",
+          "type": "text"
+        },
+        {
+          "name": "order_code",
+          "label": "Mã đơn",
+          "type": "text"
+        },
+        {
+          "name": "discount_type",
+          "label": "Kiểu",
+          "type": "select",
+          "required": true,
+          "options": [
+            "percent",
+            "amount"
+          ]
+        },
+        {
+          "name": "value",
+          "label": "Giá trị",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "reason",
+          "label": "Lý do",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "tool": "resto.order.move_table",
+      "group": "Đơn hàng",
+      "label": "Chuyển bàn",
+      "kind": "action",
+      "method": "POST",
+      "path": "/restaurant/orders/move-table",
+      "fields": [
+        {
+          "name": "table",
+          "label": "Bàn hiện tại",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "to_table",
+          "label": "Bàn đích",
+          "type": "text",
+          "required": true
+        }
+      ]
+    },
+    {
+      "tool": "resto.order.merge",
+      "group": "Đơn hàng",
+      "label": "Gộp bàn",
+      "kind": "action",
+      "method": "POST",
+      "path": "/restaurant/orders/merge",
+      "sensitive": true,
+      "fields": [
+        {
+          "name": "from_table",
+          "label": "Bàn nguồn",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "to_table",
+          "label": "Bàn đích",
+          "type": "text",
+          "required": true
+        }
+      ]
+    },
+    {
+      "tool": "resto.order.cancel",
+      "group": "Đơn hàng",
+      "label": "Hủy cả đơn",
+      "kind": "action",
+      "method": "POST",
+      "path": "/restaurant/orders/cancel",
+      "sensitive": true,
+      "fields": [
+        {
+          "name": "table",
+          "label": "Bàn",
+          "type": "text"
+        },
+        {
+          "name": "order_code",
+          "label": "Mã đơn",
+          "type": "text"
+        },
+        {
+          "name": "reason",
+          "label": "Lý do",
+          "type": "text",
+          "required": true
+        }
+      ]
+    },
+    {
+      "tool": "resto.order.set_customer",
+      "group": "Đơn hàng",
+      "label": "Gắn khách vào đơn",
+      "kind": "action",
+      "method": "POST",
+      "path": "/restaurant/orders/set-customer",
+      "fields": [
+        {
+          "name": "table",
+          "label": "Bàn",
+          "type": "text"
+        },
+        {
+          "name": "order_code",
+          "label": "Mã đơn",
+          "type": "text"
+        },
+        {
+          "name": "phone",
+          "label": "SĐT khách",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "name",
+          "label": "Tên khách",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "tool": "resto.order.send_kitchen",
+      "group": "Bếp / KDS",
+      "label": "Gửi bếp",
+      "kind": "action",
+      "method": "POST",
+      "path": "/restaurant/orders/send-kitchen",
+      "fields": [
+        {
+          "name": "table",
+          "label": "Bàn",
+          "type": "text"
+        },
+        {
+          "name": "order_code",
+          "label": "Mã đơn",
+          "type": "text"
+        },
+        {
+          "name": "note",
+          "label": "Ghi chú",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "tool": "resto.order.fire_course",
+      "group": "Bếp / KDS",
+      "label": "Ra món theo lượt (course)",
+      "kind": "action",
+      "method": "POST",
+      "path": "/restaurant/orders/fire-course",
+      "fields": [
+        {
+          "name": "table",
+          "label": "Bàn",
+          "type": "text"
+        },
+        {
+          "name": "order_code",
+          "label": "Mã đơn",
+          "type": "text"
+        },
+        {
+          "name": "course",
+          "label": "Course #",
+          "type": "number",
+          "required": true
+        },
+        {
+          "name": "note",
+          "label": "Ghi chú",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "tool": "resto.order.serve",
+      "group": "Bếp / KDS",
+      "label": "Lên món",
+      "kind": "action",
+      "method": "POST",
+      "path": "/restaurant/orders/serve",
+      "fields": [
+        {
+          "name": "table",
+          "label": "Bàn",
+          "type": "text"
+        },
+        {
+          "name": "order_code",
+          "label": "Mã đơn",
+          "type": "text"
+        },
+        {
+          "name": "items",
+          "label": "Món cụ thể (JSON tên)",
+          "type": "json"
+        }
+      ]
+    },
+    {
+      "tool": "resto.kds.queue",
+      "group": "Bếp / KDS",
+      "label": "Hàng đợi bếp",
+      "kind": "read",
+      "method": "GET",
+      "path": "/restaurant/kds/queue",
+      "fields": [
+        {
+          "name": "station",
+          "label": "Trạm",
+          "type": "text"
+        },
+        {
+          "name": "status",
+          "label": "Trạng thái",
+          "type": "select",
+          "options": [
+            "queued",
+            "preparing",
+            "ready",
+            "completed"
+          ]
+        },
+        {
+          "name": "limit",
+          "label": "Giới hạn",
+          "type": "number"
+        }
+      ]
+    },
+    {
+      "tool": "resto.kds.update",
+      "group": "Bếp / KDS",
+      "label": "Cập nhật phiếu bếp",
+      "kind": "action",
+      "method": "POST",
+      "path": "/restaurant/kds/update",
+      "fields": [
+        {
+          "name": "kot_code",
+          "label": "Mã phiếu (KOT)",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "status",
+          "label": "Trạng thái",
+          "type": "select",
+          "required": true,
+          "options": [
+            "preparing",
+            "ready",
+            "completed"
+          ]
+        }
+      ]
+    },
+    {
+      "tool": "resto.menu.search",
+      "group": "Menu & Định lượng",
+      "label": "Tìm menu",
+      "kind": "read",
+      "method": "GET",
+      "path": "/restaurant/menu",
+      "fields": [
+        {
+          "name": "query",
+          "label": "Từ khóa",
+          "type": "text"
+        },
+        {
+          "name": "category",
+          "label": "Danh mục",
+          "type": "text"
+        },
+        {
+          "name": "include_soldout",
+          "label": "Gồm món hết",
+          "type": "bool"
+        },
+        {
+          "name": "limit",
+          "label": "Giới hạn",
+          "type": "number"
+        }
+      ]
+    },
+    {
+      "tool": "resto.menu.item_info",
+      "group": "Menu & Định lượng",
+      "label": "Chi tiết món",
+      "kind": "read",
+      "method": "GET",
+      "path": "/restaurant/menu/item",
+      "fields": [
+        {
+          "name": "name",
+          "label": "Tên món",
+          "type": "text"
+        },
+        {
+          "name": "sku",
+          "label": "SKU",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "tool": "resto.menu.upsert",
+      "group": "Menu & Định lượng",
+      "label": "Thêm / sửa món",
+      "kind": "action",
+      "method": "POST",
+      "path": "/restaurant/menu",
+      "fields": [
+        {
+          "name": "name",
+          "label": "Tên món",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "sku",
+          "label": "SKU",
+          "type": "text"
+        },
+        {
+          "name": "price",
+          "label": "Giá",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "category",
+          "label": "Danh mục",
+          "type": "text"
+        },
+        {
+          "name": "station",
+          "label": "Trạm bếp",
+          "type": "text"
+        },
+        {
+          "name": "options",
+          "label": "Nhóm tùy chọn (JSON)",
+          "type": "json"
+        },
+        {
+          "name": "combo_items",
+          "label": "Thành phần combo (JSON)",
+          "type": "json"
+        }
+      ]
+    },
+    {
+      "tool": "resto.menu.set_availability",
+      "group": "Menu & Định lượng",
+      "label": "Báo hết / mở bán",
+      "kind": "action",
+      "method": "POST",
+      "path": "/restaurant/menu/availability",
+      "fields": [
+        {
+          "name": "name",
+          "label": "Tên món",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "sold_out",
+          "label": "Hết món",
+          "type": "bool",
+          "required": true
+        }
+      ]
+    },
+    {
+      "tool": "resto.recipe.set",
+      "group": "Menu & Định lượng",
+      "label": "Khai định lượng",
+      "kind": "action",
+      "method": "POST",
+      "path": "/restaurant/recipes",
+      "fields": [
+        {
+          "name": "item",
+          "label": "Tên món",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "lines",
+          "label": "Nguyên liệu (JSON: [{sku,qty,unit}])",
+          "type": "json",
+          "required": true
+        }
+      ]
+    },
+    {
+      "tool": "resto.recipe.coverage",
+      "group": "Menu & Định lượng",
+      "label": "Độ phủ định lượng",
+      "kind": "read",
+      "method": "GET",
+      "path": "/restaurant/recipes/coverage",
+      "fields": []
+    },
+    {
+      "tool": "resto.bill.create",
+      "group": "Bill & Thanh toán",
+      "label": "Tạo / tách bill",
+      "kind": "action",
+      "method": "POST",
+      "path": "/restaurant/bills",
+      "sensitive": true,
+      "fields": [
+        {
+          "name": "table",
+          "label": "Bàn",
+          "type": "text"
+        },
+        {
+          "name": "order_code",
+          "label": "Mã đơn",
+          "type": "text"
+        },
+        {
+          "name": "item_names",
+          "label": "Tách theo món (JSON tên)",
+          "type": "json"
+        }
+      ]
+    },
+    {
+      "tool": "resto.bill.pay",
+      "group": "Bill & Thanh toán",
+      "label": "Thanh toán",
+      "kind": "action",
+      "method": "POST",
+      "path": "/restaurant/bills/pay",
+      "sensitive": true,
+      "fields": [
+        {
+          "name": "table",
+          "label": "Bàn",
+          "type": "text"
+        },
+        {
+          "name": "bill_code",
+          "label": "Mã bill",
+          "type": "text"
+        },
+        {
+          "name": "order_code",
+          "label": "Mã đơn",
+          "type": "text"
+        },
+        {
+          "name": "method",
+          "label": "Phương thức",
+          "type": "select",
+          "required": true,
+          "options": [
+            "cash",
+            "bank",
+            "card",
+            "momo",
+            "zalopay",
+            "vnpay",
+            "points",
+            "other"
+          ]
+        },
+        {
+          "name": "amount",
+          "label": "Số tiền / điểm",
+          "type": "text"
+        },
+        {
+          "name": "customer_phone",
+          "label": "SĐT khách (tích/đổi điểm)",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "tool": "resto.bill.void",
+      "group": "Bill & Thanh toán",
+      "label": "Hủy bill",
+      "kind": "action",
+      "method": "POST",
+      "path": "/restaurant/bills/void",
+      "sensitive": true,
+      "fields": [
+        {
+          "name": "bill_code",
+          "label": "Mã bill",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "reason",
+          "label": "Lý do",
+          "type": "text",
+          "required": true
+        }
+      ]
+    },
+    {
+      "tool": "resto.bill.view",
+      "group": "Bill & Thanh toán",
+      "label": "Xem bill",
+      "kind": "read",
+      "method": "GET",
+      "path": "/restaurant/bills/view",
+      "fields": [
+        {
+          "name": "bill_code",
+          "label": "Mã bill",
+          "type": "text"
+        },
+        {
+          "name": "order_code",
+          "label": "Mã đơn",
+          "type": "text"
+        },
+        {
+          "name": "table",
+          "label": "Bàn",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "tool": "resto.reservation.manage",
+      "group": "Đặt bàn",
+      "label": "Quản lý đặt bàn",
+      "kind": "action",
+      "method": "POST",
+      "path": "/restaurant/reservations/manage",
+      "fields": [
+        {
+          "name": "op",
+          "label": "Thao tác",
+          "type": "select",
+          "required": true,
+          "options": [
+            "create",
+            "confirm",
+            "seat",
+            "cancel",
+            "no_show"
+          ]
+        },
+        {
+          "name": "code",
+          "label": "Mã đặt (RSV)",
+          "type": "text"
+        },
+        {
+          "name": "customer_name",
+          "label": "Tên khách",
+          "type": "text"
+        },
+        {
+          "name": "phone",
+          "label": "SĐT",
+          "type": "text"
+        },
+        {
+          "name": "party_size",
+          "label": "Số khách",
+          "type": "number"
+        },
+        {
+          "name": "table",
+          "label": "Bàn",
+          "type": "text"
+        },
+        {
+          "name": "at",
+          "label": "Thời điểm (ISO +07:00)",
+          "type": "text"
+        },
+        {
+          "name": "duration_min",
+          "label": "Thời lượng (phút)",
+          "type": "number"
+        },
+        {
+          "name": "note",
+          "label": "Ghi chú",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "tool": "resto.reservation.list",
+      "group": "Đặt bàn",
+      "label": "Danh sách đặt bàn",
+      "kind": "read",
+      "method": "GET",
+      "path": "/restaurant/reservations",
+      "fields": [
+        {
+          "name": "date",
+          "label": "Ngày (YYYY-MM-DD)",
+          "type": "text"
+        },
+        {
+          "name": "days",
+          "label": "Số ngày",
+          "type": "number"
+        },
+        {
+          "name": "include_done",
+          "label": "Gồm đã xong",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "tool": "resto.promo.upsert",
+      "group": "Khuyến mãi",
+      "label": "Tạo / sửa khuyến mãi",
+      "kind": "action",
+      "method": "POST",
+      "path": "/restaurant/promotions",
+      "sensitive": true,
+      "fields": [
+        {
+          "name": "code",
+          "label": "Mã (voucher)",
+          "type": "text"
+        },
+        {
+          "name": "name",
+          "label": "Tên",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "kind",
+          "label": "Loại",
+          "type": "select",
+          "options": [
+            "voucher",
+            "happy_hour",
+            "auto"
+          ]
+        },
+        {
+          "name": "discount_type",
+          "label": "Kiểu giảm",
+          "type": "select",
+          "required": true,
+          "options": [
+            "percent",
+            "amount"
+          ]
+        },
+        {
+          "name": "value",
+          "label": "Giá trị",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "min_subtotal",
+          "label": "Đơn tối thiểu",
+          "type": "text"
+        },
+        {
+          "name": "max_discount",
+          "label": "Trần giảm",
+          "type": "text"
+        },
+        {
+          "name": "usage_limit",
+          "label": "Giới hạn lượt",
+          "type": "number"
+        },
+        {
+          "name": "per_customer_limit",
+          "label": "Lượt/khách",
+          "type": "number"
+        },
+        {
+          "name": "hh_start_min",
+          "label": "HH bắt đầu (phút)",
+          "type": "number"
+        },
+        {
+          "name": "hh_end_min",
+          "label": "HH kết thúc (phút)",
+          "type": "number"
+        },
+        {
+          "name": "active",
+          "label": "Bật",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "tool": "resto.promo.apply",
+      "group": "Khuyến mãi",
+      "label": "Áp / gỡ mã cho đơn",
+      "kind": "action",
+      "method": "POST",
+      "path": "/restaurant/promotions/apply",
+      "sensitive": true,
+      "fields": [
+        {
+          "name": "table",
+          "label": "Bàn",
+          "type": "text"
+        },
+        {
+          "name": "order_code",
+          "label": "Mã đơn",
+          "type": "text"
+        },
+        {
+          "name": "code",
+          "label": "Mã KM",
+          "type": "text"
+        },
+        {
+          "name": "remove",
+          "label": "Gỡ mã",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "tool": "resto.promo.list",
+      "group": "Khuyến mãi",
+      "label": "Danh sách khuyến mãi",
+      "kind": "read",
+      "method": "GET",
+      "path": "/restaurant/promotions",
+      "fields": [
+        {
+          "name": "active_only",
+          "label": "Chỉ đang bật",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "tool": "resto.customer.upsert",
+      "group": "Khách & Điểm",
+      "label": "Thêm / sửa khách",
+      "kind": "action",
+      "method": "POST",
+      "path": "/restaurant/customers",
+      "fields": [
+        {
+          "name": "phone",
+          "label": "SĐT",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "name",
+          "label": "Tên",
+          "type": "text"
+        },
+        {
+          "name": "tier",
+          "label": "Hạng",
+          "type": "text"
+        },
+        {
+          "name": "note",
+          "label": "Ghi chú",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "tool": "resto.customer.lookup",
+      "group": "Khách & Điểm",
+      "label": "Tra khách (SĐT)",
+      "kind": "read",
+      "method": "GET",
+      "path": "/restaurant/customers/lookup",
+      "fields": [
+        {
+          "name": "phone",
+          "label": "SĐT",
+          "type": "text",
+          "required": true
+        }
+      ]
+    },
+    {
+      "tool": "resto.customer.list",
+      "group": "Khách & Điểm",
+      "label": "Danh sách khách",
+      "kind": "read",
+      "method": "GET",
+      "path": "/restaurant/customers",
+      "fields": [
+        {
+          "name": "query",
+          "label": "Tìm tên/SĐT",
+          "type": "text"
+        },
+        {
+          "name": "limit",
+          "label": "Giới hạn",
+          "type": "number"
+        }
+      ]
+    },
+    {
+      "tool": "resto.loyalty.adjust",
+      "group": "Khách & Điểm",
+      "label": "Điều chỉnh điểm",
+      "kind": "action",
+      "method": "POST",
+      "path": "/restaurant/loyalty/adjust",
+      "sensitive": true,
+      "fields": [
+        {
+          "name": "phone",
+          "label": "SĐT",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "points",
+          "label": "Điểm (± )",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "reason",
+          "label": "Lý do",
+          "type": "text",
+          "required": true
+        }
+      ]
+    },
+    {
+      "tool": "resto.loyalty.history",
+      "group": "Khách & Điểm",
+      "label": "Sổ điểm khách",
+      "kind": "read",
+      "method": "GET",
+      "path": "/restaurant/loyalty/history",
+      "fields": [
+        {
+          "name": "phone",
+          "label": "SĐT",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "limit",
+          "label": "Giới hạn",
+          "type": "number"
+        }
+      ]
+    },
+    {
+      "tool": "resto.report.sales",
+      "group": "Báo cáo",
+      "label": "Doanh thu",
+      "kind": "read",
+      "method": "GET",
+      "path": "/restaurant/reports/sales",
+      "fields": [
+        {
+          "name": "from",
+          "label": "Từ ngày",
+          "type": "text"
+        },
+        {
+          "name": "to",
+          "label": "Đến ngày",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "tool": "resto.report.top_items",
+      "group": "Báo cáo",
+      "label": "Món bán chạy",
+      "kind": "read",
+      "method": "GET",
+      "path": "/restaurant/reports/top-items",
+      "fields": [
+        {
+          "name": "from",
+          "label": "Từ ngày",
+          "type": "text"
+        },
+        {
+          "name": "to",
+          "label": "Đến ngày",
+          "type": "text"
+        },
+        {
+          "name": "limit",
+          "label": "Top",
+          "type": "number"
+        }
+      ]
+    },
+    {
+      "tool": "resto.settings.view",
+      "group": "Cấu hình",
+      "label": "Xem cấu hình",
+      "kind": "read",
+      "method": "GET",
+      "path": "/restaurant/settings",
+      "fields": []
+    },
+    {
+      "tool": "resto.settings.update",
+      "group": "Cấu hình",
+      "label": "Đổi cấu hình",
+      "kind": "action",
+      "method": "POST",
+      "path": "/restaurant/settings",
+      "sensitive": true,
+      "fields": [
+        {
+          "name": "service_charge_pct",
+          "label": "Phí phục vụ %",
+          "type": "text"
+        },
+        {
+          "name": "tax_pct",
+          "label": "VAT %",
+          "type": "text"
+        },
+        {
+          "name": "price_includes_tax",
+          "label": "VAT gộp trong giá",
+          "type": "bool"
+        },
+        {
+          "name": "deduct_on",
+          "label": "Trừ kho khi",
+          "type": "select",
+          "options": [
+            "paid",
+            "served"
+          ]
+        },
+        {
+          "name": "auto_deduct_stock",
+          "label": "Tự trừ kho",
+          "type": "bool"
+        },
+        {
+          "name": "table_auto_clean",
+          "label": "Tự dọn bàn",
+          "type": "bool"
+        },
+        {
+          "name": "loyalty_enabled",
+          "label": "Bật tích điểm",
+          "type": "bool"
+        },
+        {
+          "name": "loyalty_earn_pct",
+          "label": "Tỷ lệ tích %",
+          "type": "text"
+        },
+        {
+          "name": "loyalty_min_redeem",
+          "label": "Đổi tối thiểu",
+          "type": "text"
+        }
+      ]
+    }
+  ]
+}

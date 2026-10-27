@@ -1,0 +1,36 @@
+{
+  "name": "@citadel/module-soul-restaurant",
+  "version": "1.0.0",
+  "description": "Soul-Restaurant — Module Quản Lý Nhà Hàng (Restaurant Manager) cho SuperCitadel",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./routes.js": "./src/routes.ts",
+    "./tools.js": "./src/tools/index.ts",
+    "./contract.js": "./src/contract.ts",
+    "./schema.js": "./src/db/schema.ts",
+    "./server/host-adapter.js": "./server/host-adapter.ts",
+    "./server/tieu-tam-actions.js": "./server/tieu-tam-actions.ts",
+    "./ui-catalog.js": "./src/ui-catalog.ts",
+    "./web/RestaurantConsole.js": "./web/RestaurantConsole.tsx",
+    "./web/api-client.js": "./web/api-client.ts",
+    "./web/capabilities.json": "./web/capabilities.json"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "tsx tests/smoke.test.ts",
+    "test:smoke": "tsx tests/smoke.test.ts",
+    "audit": "node scripts/audit.mjs"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.36.0",
+    "hono": "^4.6.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "@types/node": "^22.0.0",
+    "@electric-sql/pglite": "^0.2.0"
+  }
+}

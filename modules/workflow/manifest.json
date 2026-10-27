@@ -1,0 +1,34 @@
+{
+  "id": "workflow",
+  "name": "Quy trình & Phê duyệt",
+  "version": "1.0.0",
+  "tier": "core",
+  "priceOm": 0,
+  "icon": "i-flow",
+  "description": "Engine quy trình phê duyệt đa cấp dùng chung: định nghĩa bước, SLA, ngưỡng tiền, audit trail.",
+  "permissions": [
+    "workflow.definition.read",
+    "workflow.definition.write",
+    "workflow.instance.read",
+    "workflow.instance.write",
+    "workflow.step.approve",
+    "workflow.step.reject",
+    "workflow.step.delegate",
+    "workflow.admin.manage"
+  ],
+  "routes": "/api/v1/workflow",
+  "docs": "docs/MODULE-WORKFLOW.md",
+  "dependsOn": [],
+  "engine": "^1.0.0",
+  "events": {
+    "emits": [
+      "workflow.instance.started",
+      "workflow.instance.approved",
+      "workflow.instance.rejected",
+      "workflow.instance.completed",
+      "workflow.step.activated",
+      "workflow.step.expired"
+    ],
+    "subscribes": []
+  }
+}

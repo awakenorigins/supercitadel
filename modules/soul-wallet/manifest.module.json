@@ -1,0 +1,62 @@
+{
+  "id": "soul-wallet",
+  "name": "Soul-Wallet 1A — Ví Cá Nhân",
+  "version": "1.0.0",
+  "description": "Personal Finance Command Center cho SuperCitadel: đa ví (tiền mặt, bank, ví điện tử, thẻ tín dụng chu kỳ sao kê, sổ tiết kiệm kỳ hạn), sổ kép mini — số dư luôn derive từ ledger, không bao giờ lệch; hủy = bút toán đảo, audit log mọi mutation kể cả dry-run. Ngân sách envelope + preset 6 Hũ (JARS), hũ mục tiêu, sổ nợ cá nhân có aging 5 bucket, recurring & subscription (bắt tăng giá), rule engine tự phân loại, import sao kê Excel/CSV (preset VCB/TCB/MB/ACB/BIDV, bắt trùng bằng dup-hash, preview→commit), đối soát rebuild-from-ledger. Tầng Insights: snapshot OHLC ngày cho nến cash-range, donut cơ cấu, waterfall, heatmap đốt tiền, 8 báo cáo quản trị, anomaly z-score, dự báo runway. Tiểu Tâm: 12 tool tra cứu + 13 write-action dry-run→confirm.",
+  "dependencies": [],
+  "conflicts": [],
+  "store": {
+    "listed": true,
+    "category": "module",
+    "pricing": {
+      "currency": "om",
+      "buy": { "price": 700, "label": "Mua vĩnh viễn — 700 Ôm" },
+      "rent": { "price": 100, "period_days": 30, "label": "Thuê 30 ngày — 100 Ôm" }
+    },
+    "trial_days": 7,
+    "tagline": "Két sắt biết nói: ví cá nhân sổ kép, ngân sách 6 Hũ, sổ nợ, import sao kê, nến dòng tiền — Tiểu Tâm quản hết bằng tiếng Việt.",
+    "highlights": [
+      "25 năng lực cho Tiểu Tâm: 12 tra cứu + 13 thao tác tiền có dry-run→confirm",
+      "Sổ kép mini: số dư derive từ ledger, hủy = bút toán đảo — không con số nào chạy rong",
+      "Ngân sách 6 Hũ (JARS) + envelope rollover + cảnh báo nguy cơ vượt 7/30 ngày",
+      "Sổ nợ cá nhân: ai nợ mình / mình nợ ai, aging 5 bucket, nhắc hạn tự động",
+      "Import sao kê Excel/CSV preset bank VN, bắt trùng dup-hash, preview trước commit",
+      "Nến dòng tiền OHLC theo ngày + donut cơ cấu + waterfall + heatmap đốt tiền",
+      "Recurring & subscription: biết khoản sắp trừ tiền, bắt khoản âm thầm tăng giá",
+      "Audit log mọi mutation (kể cả dry-run) — ví không audit là túi quần thủng"
+    ]
+  },
+  "permissions": [
+    { "id": "sw.account.read",    "description": "Xem danh sách ví/tài khoản, số dư",            "actions": ["read"] },
+    { "id": "sw.account.write",   "description": "Tạo/sửa/đóng ví, tài khoản",                    "actions": ["create", "update", "close"] },
+    { "id": "sw.tx.read",         "description": "Tra cứu giao dịch, sổ ledger",                  "actions": ["read"] },
+    { "id": "sw.tx.write",        "description": "Ghi thu/chi/chuyển/hoàn/phí, đảo bút toán",     "actions": ["create", "reverse"] },
+    { "id": "sw.budget.read",     "description": "Xem ngân sách, trạng thái hũ",                  "actions": ["read"] },
+    { "id": "sw.budget.write",    "description": "Tạo/sửa ngân sách, áp preset 6 Hũ",             "actions": ["create", "update"] },
+    { "id": "sw.contact.read",    "description": "Xem danh bạ payee/khách/chủ nợ",                "actions": ["read"] },
+    { "id": "sw.contact.write",   "description": "Tạo/sửa danh bạ đối tác cá nhân",               "actions": ["create", "update"] },
+    { "id": "sw.debt.read",       "description": "Xem sổ nợ, aging, lịch trả",                    "actions": ["read"] },
+    { "id": "sw.debt.write",      "description": "Ghi khoản nợ, ghi trả nợ",                      "actions": ["create", "pay"] },
+    { "id": "sw.goal.read",       "description": "Xem hũ mục tiêu tiết kiệm",                     "actions": ["read"] },
+    { "id": "sw.goal.write",      "description": "Tạo hũ mục tiêu, nạp tiền vào hũ",              "actions": ["create", "contribute"] },
+    { "id": "sw.recurring.read",  "description": "Xem khoản định kỳ, subscription sắp trừ tiền",  "actions": ["read"] },
+    { "id": "sw.recurring.write", "description": "Tạo/sửa khoản định kỳ, chạy kỳ đến hạn",        "actions": ["create", "update", "run"] },
+    { "id": "sw.rule.write",      "description": "Tạo/sửa rule tự phân loại giao dịch",           "actions": ["create", "update"] },
+    { "id": "sw.import.run",      "description": "Import sao kê: upload, preview, commit",        "actions": ["run"] },
+    { "id": "sw.report.read",     "description": "Xem báo cáo, dashboard, chart, insights",       "actions": ["read"] },
+    { "id": "sw.export.sensitive","description": "Xuất dữ liệu tài chính nhạy cảm (ledger/Excel)","actions": ["export"] }
+  ],
+  "routes": "/api/v1/soul-wallet",
+  "docs": "docs/GUIDE.md",
+  "engine": "^1.0.0",
+  "group": "Tài chính",
+  "events": {
+    "emits": [
+      "sw.transaction.created", "sw.transaction.reversed",
+      "sw.budget.exceeded", "sw.debt.due",
+      "sw.goal.reached", "sw.import.completed",
+      "sw.anomaly.detected", "sw.recurring.posted"
+    ],
+    "subscribes": []
+  }
+}

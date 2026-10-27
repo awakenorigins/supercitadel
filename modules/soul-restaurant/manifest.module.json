@@ -1,0 +1,746 @@
+{
+  "id": "soul-restaurant",
+  "name": "Soul-Restaurant — Quản lý Nhà hàng",
+  "version": "1.2.0",
+  "description": "Module quản lý nhà hàng/quán ăn/cafe trọn gói cho SuperCitadel: sơ đồ bàn theo khu vực, mở bàn/mang về/giao đi, gọi món với nhóm tùy chọn (size/topping/phụ thu bắt buộc hoặc tự chọn), combo, gửi bếp tách phiếu KOT theo trạm (bếp nóng/bar/tráng miệng), màn hình bếp KDS FIFO có tuổi phiếu, lên món, hủy món có lý do, chuyển bàn, gộp bàn, giảm giá đơn (tiền/%), tách bill chia tiền, thanh toán đa phương thức (cash/bank/card/momo/zalopay/vnpay) có tiền thối, đặt bàn chống trùng khung giờ + nhận khách mở đơn một chạm, báo cáo doanh thu theo ngày/phương thức/loại đơn + top món bán chạy. Định lượng nguyên liệu (recipe) nối Soul-Inventory qua event resto.stock.deduct_requested — tự trừ kho khi thanh toán hoặc khi lên món (cấu hình được), combo tự bung thành phần. Tính tiền BigInt fixed-point chuẩn VN: phí phục vụ % + VAT gộp trong giá (mặc định 8%) hoặc cộng ngoài; tách bill phân bổ giảm giá theo tỷ lệ, bill cuối nhận phần dư — tổng các bill luôn khớp tổng đơn. RLS fail-closed 18 bảng.",
+  "dependencies": [],
+  "conflicts": [
+    "restaurant"
+  ],
+  "store": {
+    "listed": true,
+    "category": "module",
+    "pricing": {
+      "currency": "om",
+      "buy": {
+        "price": 1000,
+        "label": "Mua vĩnh viễn — 1.000 Ôm"
+      },
+      "rent": {
+        "price": 150,
+        "period_days": 30,
+        "label": "Thuê 30 ngày — 150 Ôm"
+      }
+    },
+    "trial_days": 7,
+    "tagline": "Cả quán trên một bảng điều khiển sống 100% — và một câu tiếng Việt với Tiểu Tâm cũng làm được mọi thứ.",
+    "highlights": [
+      "⭐ v1.2 BẢNG ĐIỀU KHIỂN: 42 năng lực đều thành nút thật, sống 100% (không nút chết) — render động từ catalog, có endpoint /capabilities",
+      "42 năng lực cho Tiểu Tâm: 17 tra cứu + 25 thao tác, dry-run→confirm cho nghiệp vụ nhạy cảm",
+      "⭐ v1.2 RA MÓN THEO LƯỢT (fire-by-course): gửi bếp từng course theo trình tự phục vụ",
+      "Khuyến mãi: voucher, happy-hour theo giờ, đơn tối thiểu, trần giảm, giới hạn lượt/khách",
+      "Khách thân thiết: tích điểm % chi tiêu, đổi điểm trả tiền (1 điểm = 1đ), gắn khách theo SĐT",
+      "Bếp chuyên nghiệp: phiếu KOT tách theo trạm, KDS FIFO kèm tuổi phiếu, luồng trạng thái chỉ tiến",
+      "Tính tiền chuẩn VN: phí phục vụ + VAT gộp/cộng ngoài, KM gộp vào giảm giá, BigInt không sai một đồng",
+      "Tách bill – gộp bàn – chuyển bàn: giảm giá phân bổ tỷ lệ, tổng các bill luôn khớp tổng đơn",
+      "Tự trừ kho khi bán (nối Soul-Inventory qua event) · RLS fail-closed 22 bảng"
+    ]
+  },
+  "permissions": [
+    {
+      "id": "resto.table.read",
+      "description": "Xem sơ đồ bàn, khu vực, trạng thái bàn",
+      "actions": [
+        "read"
+      ]
+    },
+    {
+      "id": "resto.table.write",
+      "description": "Thêm/sửa bàn và khu vực",
+      "actions": [
+        "create",
+        "update"
+      ]
+    },
+    {
+      "id": "resto.menu.read",
+      "description": "Tra menu, chi tiết món, độ phủ định lượng",
+      "actions": [
+        "read"
+      ]
+    },
+    {
+      "id": "resto.menu.write",
+      "description": "Thêm/sửa món, tùy chọn, combo, báo hết món, khai định lượng",
+      "actions": [
+        "create",
+        "update"
+      ]
+    },
+    {
+      "id": "resto.order.read",
+      "description": "Xem đơn, danh sách đơn đang mở",
+      "actions": [
+        "read"
+      ]
+    },
+    {
+      "id": "resto.order.write",
+      "description": "Mở đơn, gọi món, lên món, hủy món/đơn, chuyển/gộp bàn, giảm giá",
+      "actions": [
+        "create",
+        "update"
+      ]
+    },
+    {
+      "id": "resto.kitchen.read",
+      "description": "Xem màn hình bếp (KDS), hàng đợi phiếu",
+      "actions": [
+        "read"
+      ]
+    },
+    {
+      "id": "resto.kitchen.write",
+      "description": "Gửi bếp, cập nhật trạng thái phiếu KOT",
+      "actions": [
+        "create",
+        "update"
+      ]
+    },
+    {
+      "id": "resto.bill.read",
+      "description": "Xem bill và lịch sử thanh toán",
+      "actions": [
+        "read"
+      ]
+    },
+    {
+      "id": "resto.bill.write",
+      "description": "Tạo/tách bill, thanh toán, void bill",
+      "actions": [
+        "create",
+        "update"
+      ]
+    },
+    {
+      "id": "resto.reservation.read",
+      "description": "Xem danh sách đặt bàn",
+      "actions": [
+        "read"
+      ]
+    },
+    {
+      "id": "resto.reservation.write",
+      "description": "Tạo/xác nhận/nhận khách/hủy đặt bàn",
+      "actions": [
+        "create",
+        "update"
+      ]
+    },
+    {
+      "id": "resto.report.read",
+      "description": "Báo cáo doanh thu, món bán chạy",
+      "actions": [
+        "read"
+      ]
+    },
+    {
+      "id": "resto.settings.read",
+      "description": "Xem cấu hình quán",
+      "actions": [
+        "read"
+      ]
+    },
+    {
+      "id": "resto.settings.write",
+      "description": "Đổi phí phục vụ, VAT, chế độ trừ kho, tự dọn bàn",
+      "actions": [
+        "update"
+      ]
+    },
+    {
+      "id": "resto.promo.read",
+      "description": "Xem danh sách khuyến mãi",
+      "actions": [
+        "read"
+      ]
+    },
+    {
+      "id": "resto.promo.write",
+      "description": "Tạo/sửa khuyến mãi, áp/gỡ mã cho đơn",
+      "actions": [
+        "create",
+        "update"
+      ]
+    },
+    {
+      "id": "resto.customer.read",
+      "description": "Tra cứu khách thân thiết, danh sách khách",
+      "actions": [
+        "read"
+      ]
+    },
+    {
+      "id": "resto.customer.write",
+      "description": "Tạo/sửa hồ sơ khách, gắn khách vào đơn",
+      "actions": [
+        "create",
+        "update"
+      ]
+    },
+    {
+      "id": "resto.loyalty.read",
+      "description": "Xem sổ điểm khách",
+      "actions": [
+        "read"
+      ]
+    },
+    {
+      "id": "resto.loyalty.write",
+      "description": "Điều chỉnh điểm tay (comp/sửa)",
+      "actions": [
+        "update"
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "name": "resto.table.map",
+      "kind": "tool",
+      "permission": "resto.table.read",
+      "inputSchema": "src/validation/schemas.ts#tableMapSchema",
+      "docs": "docs/TOOLS.md#restotablemap"
+    },
+    {
+      "name": "resto.menu.search",
+      "kind": "tool",
+      "permission": "resto.menu.read",
+      "inputSchema": "src/validation/schemas.ts#menuSearchSchema",
+      "docs": "docs/TOOLS.md#restomenusearch"
+    },
+    {
+      "name": "resto.menu.item_info",
+      "kind": "tool",
+      "permission": "resto.menu.read",
+      "inputSchema": "src/validation/schemas.ts#itemInfoSchema",
+      "docs": "docs/TOOLS.md#restomenuitem_info"
+    },
+    {
+      "name": "resto.order.view",
+      "kind": "tool",
+      "permission": "resto.order.read",
+      "inputSchema": "src/validation/schemas.ts#orderViewSchema",
+      "docs": "docs/TOOLS.md#restoorderview"
+    },
+    {
+      "name": "resto.order.open_list",
+      "kind": "tool",
+      "permission": "resto.order.read",
+      "inputSchema": "src/validation/schemas.ts#openOrdersSchema",
+      "docs": "docs/TOOLS.md#restoorderopen_list"
+    },
+    {
+      "name": "resto.kds.queue",
+      "kind": "tool",
+      "permission": "resto.kitchen.read",
+      "inputSchema": "src/validation/schemas.ts#kdsQueueSchema",
+      "docs": "docs/TOOLS.md#restokdsqueue"
+    },
+    {
+      "name": "resto.bill.view",
+      "kind": "tool",
+      "permission": "resto.bill.read",
+      "inputSchema": "src/validation/schemas.ts#billViewSchema",
+      "docs": "docs/TOOLS.md#restobillview"
+    },
+    {
+      "name": "resto.reservation.list",
+      "kind": "tool",
+      "permission": "resto.reservation.read",
+      "inputSchema": "src/validation/schemas.ts#reservationListSchema",
+      "docs": "docs/TOOLS.md#restoreservationlist"
+    },
+    {
+      "name": "resto.report.sales",
+      "kind": "tool",
+      "permission": "resto.report.read",
+      "inputSchema": "src/validation/schemas.ts#salesReportSchema",
+      "docs": "docs/TOOLS.md#restoreportsales"
+    },
+    {
+      "name": "resto.report.top_items",
+      "kind": "tool",
+      "permission": "resto.report.read",
+      "inputSchema": "src/validation/schemas.ts#topItemsSchema",
+      "docs": "docs/TOOLS.md#restoreporttop_items"
+    },
+    {
+      "name": "resto.recipe.coverage",
+      "kind": "tool",
+      "permission": "resto.menu.read",
+      "inputSchema": "src/validation/schemas.ts#recipeCoverageSchema",
+      "docs": "docs/TOOLS.md#restorecipecoverage"
+    },
+    {
+      "name": "resto.settings.view",
+      "kind": "tool",
+      "permission": "resto.settings.read",
+      "inputSchema": "src/validation/schemas.ts#settingsViewSchema",
+      "docs": "docs/TOOLS.md#restosettingsview"
+    },
+    {
+      "name": "resto.table.upsert",
+      "kind": "action",
+      "permission": "resto.table.write",
+      "inputSchema": "src/validation/schemas.ts#tableUpsertSchema",
+      "docs": "docs/TOOLS.md#restotableupsert"
+    },
+    {
+      "name": "resto.table.open",
+      "kind": "action",
+      "permission": "resto.order.write",
+      "inputSchema": "src/validation/schemas.ts#tableOpenSchema",
+      "docs": "docs/TOOLS.md#restotableopen"
+    },
+    {
+      "name": "resto.order.add_items",
+      "kind": "action",
+      "permission": "resto.order.write",
+      "inputSchema": "src/validation/schemas.ts#addItemsSchema",
+      "docs": "docs/TOOLS.md#restoorderadd_items"
+    },
+    {
+      "name": "resto.order.send_kitchen",
+      "kind": "action",
+      "permission": "resto.kitchen.write",
+      "inputSchema": "src/validation/schemas.ts#sendKitchenSchema",
+      "docs": "docs/TOOLS.md#restoordersend_kitchen"
+    },
+    {
+      "name": "resto.kds.update",
+      "kind": "action",
+      "permission": "resto.kitchen.write",
+      "inputSchema": "src/validation/schemas.ts#kdsUpdateSchema",
+      "docs": "docs/TOOLS.md#restokdsupdate"
+    },
+    {
+      "name": "resto.order.serve",
+      "kind": "action",
+      "permission": "resto.order.write",
+      "inputSchema": "src/validation/schemas.ts#serveSchema",
+      "docs": "docs/TOOLS.md#restoorderserve"
+    },
+    {
+      "name": "resto.order.cancel_item",
+      "kind": "action",
+      "permission": "resto.order.write",
+      "inputSchema": "src/validation/schemas.ts#cancelItemSchema",
+      "docs": "docs/TOOLS.md#restoordercancel_item"
+    },
+    {
+      "name": "resto.order.move_table",
+      "kind": "action",
+      "permission": "resto.order.write",
+      "inputSchema": "src/validation/schemas.ts#moveTableSchema",
+      "docs": "docs/TOOLS.md#restoordermove_table"
+    },
+    {
+      "name": "resto.order.merge",
+      "kind": "action",
+      "permission": "resto.order.write",
+      "inputSchema": "src/validation/schemas.ts#mergeOrdersSchema",
+      "docs": "docs/TOOLS.md#restoordermerge"
+    },
+    {
+      "name": "resto.order.discount",
+      "kind": "action",
+      "permission": "resto.order.write",
+      "inputSchema": "src/validation/schemas.ts#discountSchema",
+      "docs": "docs/TOOLS.md#restoorderdiscount"
+    },
+    {
+      "name": "resto.bill.create",
+      "kind": "action",
+      "permission": "resto.bill.write",
+      "inputSchema": "src/validation/schemas.ts#billCreateSchema",
+      "docs": "docs/TOOLS.md#restobillcreate"
+    },
+    {
+      "name": "resto.bill.pay",
+      "kind": "action",
+      "permission": "resto.bill.write",
+      "inputSchema": "src/validation/schemas.ts#payBillSchema",
+      "docs": "docs/TOOLS.md#restobillpay"
+    },
+    {
+      "name": "resto.bill.void",
+      "kind": "action",
+      "permission": "resto.bill.write",
+      "inputSchema": "src/validation/schemas.ts#voidBillSchema",
+      "docs": "docs/TOOLS.md#restobillvoid"
+    },
+    {
+      "name": "resto.order.cancel",
+      "kind": "action",
+      "permission": "resto.order.write",
+      "inputSchema": "src/validation/schemas.ts#cancelOrderSchema",
+      "docs": "docs/TOOLS.md#restoordercancel"
+    },
+    {
+      "name": "resto.reservation.manage",
+      "kind": "action",
+      "permission": "resto.reservation.write",
+      "inputSchema": "src/validation/schemas.ts#reservationManageSchema",
+      "docs": "docs/TOOLS.md#restoreservationmanage"
+    },
+    {
+      "name": "resto.menu.upsert",
+      "kind": "action",
+      "permission": "resto.menu.write",
+      "inputSchema": "src/validation/schemas.ts#menuUpsertSchema",
+      "docs": "docs/TOOLS.md#restomenuupsert"
+    },
+    {
+      "name": "resto.menu.set_availability",
+      "kind": "action",
+      "permission": "resto.menu.write",
+      "inputSchema": "src/validation/schemas.ts#setAvailabilitySchema",
+      "docs": "docs/TOOLS.md#restomenuset_availability"
+    },
+    {
+      "name": "resto.recipe.set",
+      "kind": "action",
+      "permission": "resto.menu.write",
+      "inputSchema": "src/validation/schemas.ts#recipeSetSchema",
+      "docs": "docs/TOOLS.md#restorecipeset"
+    },
+    {
+      "name": "resto.settings.update",
+      "kind": "action",
+      "permission": "resto.settings.write",
+      "inputSchema": "src/validation/schemas.ts#settingsUpdateSchema",
+      "docs": "docs/TOOLS.md#restosettingsupdate"
+    },
+    {
+      "name": "resto.promo.list",
+      "kind": "tool",
+      "permission": "resto.promo.read",
+      "inputSchema": "src/validation/schemas.ts#promoListSchema",
+      "docs": "docs/TOOLS.md#restopromolist"
+    },
+    {
+      "name": "resto.customer.lookup",
+      "kind": "tool",
+      "permission": "resto.customer.read",
+      "inputSchema": "src/validation/schemas.ts#customerLookupSchema",
+      "docs": "docs/TOOLS.md#restocustomerlookup"
+    },
+    {
+      "name": "resto.customer.list",
+      "kind": "tool",
+      "permission": "resto.customer.read",
+      "inputSchema": "src/validation/schemas.ts#customerListSchema",
+      "docs": "docs/TOOLS.md#restocustomerlist"
+    },
+    {
+      "name": "resto.loyalty.history",
+      "kind": "tool",
+      "permission": "resto.loyalty.read",
+      "inputSchema": "src/validation/schemas.ts#loyaltyHistorySchema",
+      "docs": "docs/TOOLS.md#restoloyaltyhistory"
+    },
+    {
+      "name": "resto.promo.upsert",
+      "kind": "action",
+      "permission": "resto.promo.write",
+      "inputSchema": "src/validation/schemas.ts#promoUpsertSchema",
+      "docs": "docs/TOOLS.md#restopromoupsert"
+    },
+    {
+      "name": "resto.promo.apply",
+      "kind": "action",
+      "permission": "resto.promo.write",
+      "inputSchema": "src/validation/schemas.ts#promoApplySchema",
+      "docs": "docs/TOOLS.md#restopromoapply"
+    },
+    {
+      "name": "resto.customer.upsert",
+      "kind": "action",
+      "permission": "resto.customer.write",
+      "inputSchema": "src/validation/schemas.ts#customerUpsertSchema",
+      "docs": "docs/TOOLS.md#restocustomerupsert"
+    },
+    {
+      "name": "resto.order.set_customer",
+      "kind": "action",
+      "permission": "resto.customer.write",
+      "inputSchema": "src/validation/schemas.ts#orderSetCustomerSchema",
+      "docs": "docs/TOOLS.md#restoorderset_customer"
+    },
+    {
+      "name": "resto.loyalty.adjust",
+      "kind": "action",
+      "permission": "resto.loyalty.write",
+      "inputSchema": "src/validation/schemas.ts#loyaltyAdjustSchema",
+      "docs": "docs/TOOLS.md#restoloyaltyadjust"
+    },
+    {
+      "name": "resto.console.dashboard",
+      "kind": "tool",
+      "permission": "resto.report.read",
+      "inputSchema": "src/validation/schemas.ts#consoleDashboardSchema",
+      "docs": "docs/TOOLS.md#restoconsoledashboard"
+    },
+    {
+      "name": "resto.order.fire_course",
+      "kind": "action",
+      "permission": "resto.kitchen.write",
+      "inputSchema": "src/validation/schemas.ts#fireCourseSchema",
+      "docs": "docs/TOOLS.md#restoorderfire_course"
+    }
+  ],
+  "intents": "src/intents.ts#restoIntents",
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/restaurant/tables/map",
+      "permission": "resto.table.read"
+    },
+    {
+      "method": "POST",
+      "path": "/restaurant/tables",
+      "permission": "resto.table.write"
+    },
+    {
+      "method": "POST",
+      "path": "/restaurant/orders/open",
+      "permission": "resto.order.write"
+    },
+    {
+      "method": "POST",
+      "path": "/restaurant/orders/items",
+      "permission": "resto.order.write"
+    },
+    {
+      "method": "POST",
+      "path": "/restaurant/orders/send-kitchen",
+      "permission": "resto.kitchen.write"
+    },
+    {
+      "method": "POST",
+      "path": "/restaurant/orders/serve",
+      "permission": "resto.order.write"
+    },
+    {
+      "method": "POST",
+      "path": "/restaurant/orders/cancel-item",
+      "permission": "resto.order.write"
+    },
+    {
+      "method": "POST",
+      "path": "/restaurant/orders/discount",
+      "permission": "resto.order.write"
+    },
+    {
+      "method": "POST",
+      "path": "/restaurant/orders/move-table",
+      "permission": "resto.order.write"
+    },
+    {
+      "method": "POST",
+      "path": "/restaurant/orders/merge",
+      "permission": "resto.order.write"
+    },
+    {
+      "method": "POST",
+      "path": "/restaurant/orders/cancel",
+      "permission": "resto.order.write"
+    },
+    {
+      "method": "GET",
+      "path": "/restaurant/orders/open-list",
+      "permission": "resto.order.read"
+    },
+    {
+      "method": "GET",
+      "path": "/restaurant/orders/view",
+      "permission": "resto.order.read"
+    },
+    {
+      "method": "GET",
+      "path": "/restaurant/kds/queue",
+      "permission": "resto.kitchen.read"
+    },
+    {
+      "method": "POST",
+      "path": "/restaurant/kds/update",
+      "permission": "resto.kitchen.write"
+    },
+    {
+      "method": "GET",
+      "path": "/restaurant/menu",
+      "permission": "resto.menu.read"
+    },
+    {
+      "method": "GET",
+      "path": "/restaurant/menu/item",
+      "permission": "resto.menu.read"
+    },
+    {
+      "method": "POST",
+      "path": "/restaurant/menu",
+      "permission": "resto.menu.write"
+    },
+    {
+      "method": "POST",
+      "path": "/restaurant/menu/availability",
+      "permission": "resto.menu.write"
+    },
+    {
+      "method": "POST",
+      "path": "/restaurant/recipes",
+      "permission": "resto.menu.write"
+    },
+    {
+      "method": "GET",
+      "path": "/restaurant/recipes/coverage",
+      "permission": "resto.menu.read"
+    },
+    {
+      "method": "POST",
+      "path": "/restaurant/bills",
+      "permission": "resto.bill.write"
+    },
+    {
+      "method": "POST",
+      "path": "/restaurant/bills/pay",
+      "permission": "resto.bill.write"
+    },
+    {
+      "method": "POST",
+      "path": "/restaurant/bills/void",
+      "permission": "resto.bill.write"
+    },
+    {
+      "method": "GET",
+      "path": "/restaurant/bills/view",
+      "permission": "resto.bill.read"
+    },
+    {
+      "method": "POST",
+      "path": "/restaurant/reservations/manage",
+      "permission": "resto.reservation.write"
+    },
+    {
+      "method": "GET",
+      "path": "/restaurant/reservations",
+      "permission": "resto.reservation.read"
+    },
+    {
+      "method": "GET",
+      "path": "/restaurant/reports/sales",
+      "permission": "resto.report.read"
+    },
+    {
+      "method": "GET",
+      "path": "/restaurant/reports/top-items",
+      "permission": "resto.report.read"
+    },
+    {
+      "method": "GET",
+      "path": "/restaurant/settings",
+      "permission": "resto.settings.read"
+    },
+    {
+      "method": "POST",
+      "path": "/restaurant/settings",
+      "permission": "resto.settings.write"
+    },
+    {
+      "method": "GET",
+      "path": "/restaurant/promotions",
+      "permission": "resto.promo.read"
+    },
+    {
+      "method": "POST",
+      "path": "/restaurant/promotions",
+      "permission": "resto.promo.write"
+    },
+    {
+      "method": "POST",
+      "path": "/restaurant/promotions/apply",
+      "permission": "resto.promo.write"
+    },
+    {
+      "method": "GET",
+      "path": "/restaurant/customers",
+      "permission": "resto.customer.read"
+    },
+    {
+      "method": "GET",
+      "path": "/restaurant/customers/lookup",
+      "permission": "resto.customer.read"
+    },
+    {
+      "method": "POST",
+      "path": "/restaurant/customers",
+      "permission": "resto.customer.write"
+    },
+    {
+      "method": "POST",
+      "path": "/restaurant/orders/set-customer",
+      "permission": "resto.customer.write"
+    },
+    {
+      "method": "GET",
+      "path": "/restaurant/loyalty/history",
+      "permission": "resto.loyalty.read"
+    },
+    {
+      "method": "POST",
+      "path": "/restaurant/loyalty/adjust",
+      "permission": "resto.loyalty.write"
+    },
+    {
+      "method": "POST",
+      "path": "/restaurant/orders/fire-course",
+      "permission": "resto.kitchen.write"
+    },
+    {
+      "method": "GET",
+      "path": "/restaurant/dashboard",
+      "permission": "resto.report.read"
+    },
+    {
+      "method": "GET",
+      "path": "/restaurant/capabilities",
+      "permission": "resto.order.read"
+    }
+  ],
+  "menu": [
+    {
+      "id": "soul-restaurant.menu.root",
+      "label": "Nhà hàng",
+      "icon": "utensils",
+      "path": "/restaurant",
+      "permission": "resto.order.read"
+    }
+  ],
+  "docs": {
+    "readme": "README.md",
+    "guides": [
+      "docs/GUIDE.md",
+      "docs/TUTORIAL.md",
+      "docs/INSTALL.md",
+      "web/README.md"
+    ],
+    "examples": [
+      "docs/TOOLS.md",
+      "docs/EVENTS.md"
+    ]
+  },
+  "hooks": {
+    "install": "src/index.ts#onInstall",
+    "activate": "src/index.ts#onActivate",
+    "disable": "src/index.ts#onDisable",
+    "remove": "src/index.ts#onRemove"
+  },
+  "ui": {
+    "console": "web/RestaurantConsole.tsx",
+    "catalog": "src/ui-catalog.ts#restoUiCatalog",
+    "capabilities_endpoint": "/api/v1/soul-restaurant/capabilities",
+    "mount": "/restaurant",
+    "demo": "web/soul-restaurant-console.html",
+    "note": "Bảng điều khiển render động từ catalog — mọi năng lực (42) là một nút thật, sống 100%."
+  }
+}

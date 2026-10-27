@@ -1,0 +1,292 @@
+{
+  "id": "soul-trade",
+  "name": "Soul-Trade — AI Trading",
+  "version": "1.0.0",
+  "description": "Module giao dịch crypto AI cho SuperCitadel: nhiều bot cô lập, 3 chiến lược cắm được (rsi_ema, donchian_breakout, bollinger_meanrev), backtest chống nhìn-trước, nguồn dữ liệu thật qua ccxt (Bybit/Binance/BingX/OKX…), LLM RIÊNG cho từng bot + TỰ CHIA AGENT (signal/risk/sentiment), cắm được LOCAL MODEL (Ollama/LM Studio qua base URL), lưu TRÍ NHỚ từng lượt + phân tích qua các lượt & tổng lượt trade. RLS fail-closed cô lập theo org. Tiểu Tâm điều khiển bằng tiếng Việt.",
+  "dependencies": [],
+  "conflicts": [],
+  "store": {
+    "listed": true,
+    "category": "module",
+    "pricing": {
+      "currency": "om",
+      "buy": {
+        "price": 2200,
+        "label": "Mua vĩnh viễn — 2.200 Ôm"
+      },
+      "rent": {
+        "price": 300,
+        "period_days": 30,
+        "label": "Thuê 30 ngày — 300 Ôm"
+      }
+    },
+    "trial_days": 7,
+    "tagline": "Phòng giao dịch có hồn: bot AI tự chia agent, cắm model riêng (kể cả local), nhớ từng lượt và tự phân tích thắng thua — Tiểu Tâm điều khiển bằng tiếng Việt.",
+    "highlights": [
+      "Nhiều bot cô lập theo org (RLS fail-closed), mỗi bot một chiến lược + cấu hình rủi ro riêng",
+      "Nguồn dữ liệu coin THẬT qua ccxt: Bybit, Binance, BingX, OKX… chỉ đổi tên sàn",
+      "LLM riêng cho từng bot + TỰ CHIA AGENT (signal/risk/sentiment) — mỗi agent một model",
+      "Cắm LOCAL MODEL (Ollama/LM Studio/llama.cpp) qua base URL — chạy offline, không rò dữ liệu",
+      "TRÍ NHỚ bền: ghi từng lượt quyết định (chiến lược + AI + phiếu bầu agent), sẵn pgvector để hồi tưởng ngữ nghĩa",
+      "Phân tích qua các lượt & TỔNG lượt trade: win rate, profit factor, PnL, avg R, đóng góp từng agent, theo chiến lược",
+      "Backtest chống nhìn-trước (vào lệnh nến kế tiếp, SL/TP trong nến), 7 read tools + 6 write actions cho Tiểu Tâm"
+    ]
+  },
+  "permissions": [
+    {
+      "id": "trade.bot.read",
+      "description": "Xem danh sách & trạng thái bot",
+      "actions": [
+        "read"
+      ]
+    },
+    {
+      "id": "trade.bot.write",
+      "description": "Tạo/xóa bot",
+      "actions": [
+        "create",
+        "update"
+      ]
+    },
+    {
+      "id": "trade.bot.control",
+      "description": "Chạy/dừng bot, chạy một lượt đánh giá",
+      "actions": [
+        "update"
+      ]
+    },
+    {
+      "id": "trade.history.read",
+      "description": "Xem lịch sử lệnh",
+      "actions": [
+        "read"
+      ]
+    },
+    {
+      "id": "trade.analytics.read",
+      "description": "Xem phân tích, trí nhớ, đóng góp agent",
+      "actions": [
+        "read"
+      ]
+    },
+    {
+      "id": "trade.backtest.run",
+      "description": "Chạy backtest trên dữ liệu sàn",
+      "actions": [
+        "create"
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "name": "soul-trade.bot.list",
+      "kind": "tool",
+      "permission": "trade.bot.read",
+      "inputSchema": "src/validation/schemas.ts#botListSchema",
+      "docs": "docs/TOOLS.md#botlist"
+    },
+    {
+      "name": "soul-trade.bot.status",
+      "kind": "tool",
+      "permission": "trade.bot.read",
+      "inputSchema": "src/validation/schemas.ts#botRefSchema",
+      "docs": "docs/TOOLS.md#botstatus"
+    },
+    {
+      "name": "soul-trade.trades.recent",
+      "kind": "tool",
+      "permission": "trade.history.read",
+      "inputSchema": "src/validation/schemas.ts#tradesRecentSchema",
+      "docs": "docs/TOOLS.md#tradesrecent"
+    },
+    {
+      "name": "soul-trade.analytics.summary",
+      "kind": "tool",
+      "permission": "trade.analytics.read",
+      "inputSchema": "src/validation/schemas.ts#analyticsSchema",
+      "docs": "docs/TOOLS.md#analyticssummary"
+    },
+    {
+      "name": "soul-trade.analytics.org",
+      "kind": "tool",
+      "permission": "trade.analytics.read",
+      "inputSchema": "src/validation/schemas.ts#orgAnalyticsSchema",
+      "docs": "docs/TOOLS.md#analyticsorg"
+    },
+    {
+      "name": "soul-trade.memory.recent",
+      "kind": "tool",
+      "permission": "trade.analytics.read",
+      "inputSchema": "src/validation/schemas.ts#memoryRecentSchema",
+      "docs": "docs/TOOLS.md#memoryrecent"
+    },
+    {
+      "name": "soul-trade.agents.contribution",
+      "kind": "tool",
+      "permission": "trade.analytics.read",
+      "inputSchema": "src/validation/schemas.ts#analyticsSchema",
+      "docs": "docs/TOOLS.md#agentscontribution"
+    },
+    {
+      "name": "soul-trade.bot.create",
+      "kind": "action",
+      "permission": "trade.bot.write",
+      "inputSchema": "src/validation/schemas.ts#botCreateSchema",
+      "docs": "docs/TOOLS.md#botcreate"
+    },
+    {
+      "name": "soul-trade.bot.start",
+      "kind": "action",
+      "permission": "trade.bot.control",
+      "inputSchema": "src/validation/schemas.ts#botRefSchema",
+      "docs": "docs/TOOLS.md#botstart"
+    },
+    {
+      "name": "soul-trade.bot.stop",
+      "kind": "action",
+      "permission": "trade.bot.control",
+      "inputSchema": "src/validation/schemas.ts#botRefSchema",
+      "docs": "docs/TOOLS.md#botstop"
+    },
+    {
+      "name": "soul-trade.bot.delete",
+      "kind": "action",
+      "permission": "trade.bot.write",
+      "inputSchema": "src/validation/schemas.ts#botRefSchema",
+      "docs": "docs/TOOLS.md#botdelete"
+    },
+    {
+      "name": "soul-trade.backtest.run",
+      "kind": "action",
+      "permission": "trade.backtest.run",
+      "inputSchema": "src/validation/schemas.ts#backtestRunSchema",
+      "docs": "docs/TOOLS.md#backtestrun"
+    },
+    {
+      "name": "soul-trade.turn.evaluate",
+      "kind": "action",
+      "permission": "trade.bot.control",
+      "inputSchema": "src/validation/schemas.ts#turnEvaluateSchema",
+      "docs": "docs/TOOLS.md#turnevaluate"
+    },
+    {
+      "name": "soul-trade.memory.recall",
+      "kind": "tool",
+      "permission": "trade.analytics.read",
+      "inputSchema": "src/validation/schemas.ts#memoryRecallSchema",
+      "docs": "docs/TOOLS.md#memoryrecall"
+    },
+    {
+      "name": "soul-trade.walkforward.run",
+      "kind": "action",
+      "permission": "trade.backtest.run",
+      "inputSchema": "src/validation/schemas.ts#walkforwardRunSchema",
+      "docs": "docs/TOOLS.md#walkforwardrun"
+    }
+  ],
+  "intents": "src/intents.ts#tradeIntents",
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/trade/bots",
+      "permission": "trade.bot.read"
+    },
+    {
+      "method": "POST",
+      "path": "/trade/bots",
+      "permission": "trade.bot.write"
+    },
+    {
+      "method": "GET",
+      "path": "/trade/bots/:name",
+      "permission": "trade.bot.read"
+    },
+    {
+      "method": "DELETE",
+      "path": "/trade/bots/:name",
+      "permission": "trade.bot.write"
+    },
+    {
+      "method": "POST",
+      "path": "/trade/bots/:name/start",
+      "permission": "trade.bot.control"
+    },
+    {
+      "method": "POST",
+      "path": "/trade/bots/:name/stop",
+      "permission": "trade.bot.control"
+    },
+    {
+      "method": "POST",
+      "path": "/trade/bots/:name/evaluate",
+      "permission": "trade.bot.control"
+    },
+    {
+      "method": "GET",
+      "path": "/trade/bots/:name/trades",
+      "permission": "trade.history.read"
+    },
+    {
+      "method": "GET",
+      "path": "/trade/bots/:name/analytics",
+      "permission": "trade.analytics.read"
+    },
+    {
+      "method": "GET",
+      "path": "/trade/bots/:name/memory",
+      "permission": "trade.analytics.read"
+    },
+    {
+      "method": "GET",
+      "path": "/trade/bots/:name/agents",
+      "permission": "trade.analytics.read"
+    },
+    {
+      "method": "GET",
+      "path": "/trade/analytics",
+      "permission": "trade.analytics.read"
+    },
+    {
+      "method": "POST",
+      "path": "/trade/backtest",
+      "permission": "trade.backtest.run"
+    },
+    {
+      "method": "POST",
+      "path": "/trade/walkforward",
+      "permission": "trade.backtest.run"
+    },
+    {
+      "method": "GET",
+      "path": "/trade/bots/:name/recall",
+      "permission": "trade.analytics.read"
+    }
+  ],
+  "menu": [
+    {
+      "id": "soul-trade.menu.root",
+      "label": "Giao dịch",
+      "icon": "trending-up",
+      "path": "/soul-trade",
+      "permission": "trade.bot.read"
+    }
+  ],
+  "docs": {
+    "readme": "README.md",
+    "guides": [
+      "docs/GUIDE.md",
+      "docs/TUTORIAL.md",
+      "docs/ARCHITECTURE.md"
+    ],
+    "examples": [
+      "docs/TOOLS.md",
+      "docs/EVENTS.md"
+    ]
+  },
+  "hooks": {
+    "install": "src/index.ts#onInstall",
+    "activate": "src/index.ts#onActivate",
+    "disable": "src/index.ts#onDisable",
+    "remove": "src/index.ts#onRemove"
+  }
+}
