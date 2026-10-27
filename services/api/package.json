@@ -1,0 +1,49 @@
+{
+  "name": "@citadel/api",
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx src/rl.test.ts && tsx src/v7a-p1.test.ts && tsx src/v7a-p2.test.ts && tsx src/v7a-p3.test.ts && tsx src/v7a-p4.test.ts && tsx src/v7a-p5.test.ts && tsx src/v7a-p6.test.ts && tsx src/v8-rent.test.ts && tsx src/v8_5.test.ts && tsx src/v9.test.ts && tsx src/v10.test.ts && tsx src/r111.test.ts"
+  },
+  "dependencies": {
+    "@citadel/core": "workspace:*",
+    "@citadel/db": "workspace:*",
+    "hono": "^4.6.0",
+    "@hono/node-server": "^1.13.0",
+    "@node-rs/argon2": "^2.0.0",
+    "jose": "^5.9.0",
+    "drizzle-orm": "^0.36.0",
+    "@citadel/tieu-tam": "workspace:*",
+    "@citadel/module-chat": "workspace:*",
+    "@citadel/module-notification": "workspace:*",
+    "@citadel/module-crm": "workspace:*",
+    "@citadel/module-om": "workspace:*",
+    "@citadel/module-inventory": "workspace:*",
+    "@citadel/module-hr": "workspace:*",
+    "@citadel/module-accounting": "workspace:*",
+    "@citadel/module-ke-toan-10a": "workspace:*",
+    "@citadel/module-soul-manager": "workspace:*",
+    "@citadel/module-soul-inventory": "workspace:*",
+    "@citadel/module-qldn": "workspace:*",
+    "@citadel/module-workflow": "workspace:*",
+    "@citadel/module-qldn-finance-flow": "workspace:*",
+    "@citadel/module-qldn-hr-plus": "workspace:*",
+    "@citadel/module-qldn-procurement": "workspace:*",
+    "@citadel/module-qldn-asset": "workspace:*",
+    "@citadel/module-qldn-sales-plus": "workspace:*",
+    "@citadel/module-qldn-marketing": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "@types/node": "^22.0.0",
+    "@electric-sql/pglite": "^0.2.0",
+    "xlsx": "0.18.5",
+    "ws": "^8.18.0",
+    "@types/ws": "^8.5.0"
+  }
+}
