@@ -1,0 +1,27 @@
+{
+  "name": "@citadel/module-hr",
+  "version": "1.0.0",
+  "type": "module",
+  "exports": {
+    "./server/routes.js": "./server/routes.ts",
+    "./server/service.js": "./server/service.ts",
+    "./server/service-v2.js": "./server/service-v2.ts",
+    "./server/schema.js": "./server/schema.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "tsx server/hr.test.ts && tsx server/hr-v2.test.ts"
+  },
+  "dependencies": {
+    "@citadel/core": "workspace:*",
+    "@citadel/db": "workspace:*",
+    "drizzle-orm": "^0.36.0",
+    "hono": "^4.6.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "@types/node": "^22.0.0",
+    "@electric-sql/pglite": "^0.2.0"
+  }
+}

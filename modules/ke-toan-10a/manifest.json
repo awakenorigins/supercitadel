@@ -1,0 +1,34 @@
+{
+  "id": "ke-toan-10a",
+  "name": "Kế Toán 10A",
+  "version": "1.0.0",
+  "tier": "paid",
+  "priceOm": 1000,
+  "icon": "i-coin",
+  "description": "Kế toán kép hoàn chỉnh cho SME→DN lớn: chart TT133/TT200 tùy biến, sổ cái BigInt bất biến, hóa đơn & công nợ knock-off, tạm ứng, giao dịch định kỳ, hạn mức tín dụng, đối chiếu ngân hàng tự khớp, bộ phận/dự án, TSCĐ + khấu hao, đánh giá lại tỷ giá, dự toán ngân sách, kết chuyển & khóa kỳ, Excel, 12 báo cáo VN. Tiểu Tâm điều khiển 100%: 15 tool đọc + 17 action ghi chuẩn dry-run.",
+  "permissions": [
+    "ke-toan-10a.receipt.create",
+    "ke-toan-10a.payment.create",
+    "ke-toan-10a.invoice.create",
+    "ke-toan-10a.invoice.collect",
+    "ke-toan-10a.advance.create",
+    "ke-toan-10a.recurring.create",
+    "ke-toan-10a.recurring.run",
+    "ke-toan-10a.credit.limit-set",
+    "ke-toan-10a.bank.reconcile",
+    "ke-toan-10a.asset.create",
+    "ke-toan-10a.asset.depreciate",
+    "ke-toan-10a.fx.revalue",
+    "ke-toan-10a.period.close",
+    "ke-toan-10a.budget.set",
+    "ke-toan-10a.budget.read",
+    "ke-toan-10a.report.read"
+  ],
+  "routes": "/api/v1/ke-toan-10a",
+  "docs": "docs/GUIDE.md",
+  "group": "Tài chính",
+  "engine": "^1.0.0",
+  "rentPlans": {
+    "30": 150
+  }
+}

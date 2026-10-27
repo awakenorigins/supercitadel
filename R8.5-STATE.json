@@ -1,0 +1,31 @@
+{
+  "round": "R8.5",
+  "status": "done",
+  "startedAt": "2026-07-05T05:10:00+02:00",
+  "sessionKey": "agent:main:telegram:group:-1003720502853:topic:9871",
+  "brief": "R8.5-TASK.md",
+  "directives": {
+    "audit": "Anh Nấng lệnh audit kỹ — mỗi phase tự thẩm định bằng test/curl thật, không đoán.",
+    "inventory": "KHÔNG ĐỤNG logic inventory — chỉ được thêm permission declaration. Phase B only metadata/checks around inv action, no inventory service/data logic changed."
+  },
+  "phases": {
+    "pA_permission_registry": "implemented; evidence: pnpm --filter @citadel/core test PASS; pnpm --filter @citadel/api typecheck PASS; commit c41c1a8",
+    "pB_tieutam_dryrun": "implemented; evidence: pnpm --filter @citadel/api test PASS including v8_5: staff denied VN/no audit, dry-run no acc_payments row, sensitive preview→confirm exactly one row, no confirm no row, cross-org scoped; commit 65a2d72",
+    "pC_fe": "implemented; evidence: pnpm --filter @citadel/web typecheck PASS; pnpm --filter @citadel/web build PASS; node_modules/.pnpm/node_modules/.bin/tsx scripts/audit-buttons.mts PASS (0 dead buttons). Chat sheet uses amber confirmation card + confirm/cancel via /tieu-tam/chat; Settings loads GET /permissions and groups my permissions by module.",
+    "pD_verify_deploy_release": "done; deploy docker compose -p supercitadel up -d --build api web completed; scripts/verify-r85.py PASS 7/7 after services healthy; docs committed c6a9600; pushed main; release v8.5.0 https://github.com/NachaFromMars/supercitadel/releases/tag/v8.5.0; GitHub Actions CI run 28728741518 completed success."
+  },
+  "commits": [
+    "c41c1a8",
+    "65a2d72",
+    "8d09304",
+    "c6a9600"
+  ],
+  "next": "R9 Module Loader FULL strict; R10 outbox",
+  "releaseUrl": "https://github.com/NachaFromMars/supercitadel/releases/tag/v8.5.0",
+  "ci": {
+    "headSha": "c6a9600f2829f87b6c50065de7c248addce50c38",
+    "runId": 28728741518,
+    "url": "https://github.com/NachaFromMars/supercitadel/actions/runs/28728741518",
+    "conclusion": "success"
+  }
+}

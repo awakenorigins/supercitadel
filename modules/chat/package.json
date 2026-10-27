@@ -1,0 +1,32 @@
+{
+  "name": "@citadel/module-chat",
+  "version": "2.1.0",
+  "type": "module",
+  "main": "./server/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "tsx server/integration.test.ts && tsx server/v2.test.ts"
+  },
+  "dependencies": {
+    "@citadel/core": "workspace:*",
+    "@citadel/db": "workspace:*",
+    "@citadel/tieu-tam": "workspace:*",
+    "drizzle-orm": "^0.36.0",
+    "hono": "^4.6.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "@types/node": "^22.0.0",
+    "@electric-sql/pglite": "^0.2.0",
+    "ws": "^8.18.0",
+    "@types/ws": "^8.5.0",
+    "jose": "^5.9.0"
+  },
+  "exports": {
+    "./server/routes.js": "./server/routes.ts",
+    "./server/emit.js": "./server/emit.ts",
+    "./server/service.js": "./server/service.ts",
+    "./server/schema.js": "./server/schema.ts"
+  }
+}

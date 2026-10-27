@@ -1,0 +1,17 @@
+{
+  "round": "R7.6",
+  "status": "done",
+  "updatedAt": "2026-07-04T00:45:00+02:00",
+  "sessionKey": "agent:main:telegram:group:-1003720502853:topic:9871",
+  "phases": {
+    "p1_sse_markdown_render": "done — 9d70ec5: SSE token JSON-encoded + FE gộp multi-line data + renderAiText bold/newline. Playwright mobile: leak 'data:' CLEAN",
+    "p2_send_button_mobile": "done — 46x46px ≥44 verified playwright",
+    "p3_action_add_employee": "done — hr.add_employee org-scoped+audit. Live: 'add nhân viên Bặc Ca Ăn Socola vào vị trí Phòng Không' → DB hr_employees ✓. Guard chống lặp action f468f26",
+    "p4_chat_persistence_context": "done — migration 0010 tt_chat_messages applied live, GET/DELETE /chat/history, FE load 40 msg khi mở sheet, 20 lượt context. Live verify: recall 'Nấng Tối Thượng' ✓, history 13 bubbles ✓",
+    "p5_tutorial_mobile_recall": "done — fix .tut-card.center (inline transform bị animation ghi đè) + TutorialFab '?' nổi mobile. Playwright: card centered YES, FAB recall YES"
+  },
+  "bonus_docs": "done — 1dca31f docs/MODULE-FORGE-GUIDE.md (AI/dev ngoài: stack, contract 6 bước, từ khóa fork OSS, English summary) + README r7.2.0",
+  "commits": ["9d70ec5", "f468f26", "1dca31f"],
+  "release": "https://github.com/NachaFromMars/supercitadel/releases/tag/r7.2.0",
+  "notes": "R7.6 hoàn tất 2026-07-04 00:45. Đã push main + release r7.2.0. Watcher tự gỡ."
+}

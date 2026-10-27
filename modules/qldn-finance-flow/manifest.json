@@ -1,0 +1,48 @@
+{
+  "id": "qldn-finance-flow",
+  "name": "QLDN — Luồng Tài chính",
+  "version": "1.0.0",
+  "tier": "paid",
+  "priceOm": 500,
+  "icon": "i-wallet-flow",
+  "description": "Lớp workflow chi, tạm ứng, công nợ và duyệt bảng lương; tái sử dụng sổ kế toán Kế Toán 10A qua soft ref và event.",
+  "permissions": [
+    "qldn-finance-flow.payment-request.read",
+    "qldn-finance-flow.payment-request.write",
+    "qldn-finance-flow.payment-request.approve",
+    "qldn-finance-flow.payment-request.pay",
+    "qldn-finance-flow.advance.read",
+    "qldn-finance-flow.advance.write",
+    "qldn-finance-flow.advance.approve",
+    "qldn-finance-flow.advance.settle",
+    "qldn-finance-flow.debt.read",
+    "qldn-finance-flow.debt.write",
+    "qldn-finance-flow.debt.approve",
+    "qldn-finance-flow.debt.pay",
+    "qldn-finance-flow.payroll-flow.read",
+    "qldn-finance-flow.payroll-flow.write",
+    "qldn-finance-flow.payroll-flow.approve",
+    "qldn-finance-flow.payroll-flow.pay"
+  ],
+  "routes": "/api/v1/qldn-finance-flow",
+  "docs": "docs/MODULE-QLDN-FINANCE-FLOW.md",
+  "dependsOn": [
+    "workflow",
+    "ke-toan-10a"
+  ],
+  "engine": "^1.0.0",
+  "events": {
+    "emits": [
+      "qldn-finance-flow.payment-request.approved",
+      "qldn-finance-flow.disbursement.executed",
+      "qldn-finance-flow.advance.settled",
+      "qldn-finance-flow.debt-reminder.due",
+      "qldn-finance-flow.payroll-run.approved",
+      "qldn-finance-flow.salary-payment.executed"
+    ],
+    "subscribes": [
+      "workflow.instance.approved",
+      "workflow.instance.rejected"
+    ]
+  }
+}

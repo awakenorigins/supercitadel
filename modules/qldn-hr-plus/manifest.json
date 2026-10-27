@@ -1,0 +1,63 @@
+{
+  "id": "qldn-hr-plus",
+  "name": "QLDN — HR Plus",
+  "version": "1.0.0",
+  "tier": "paid",
+  "priceOm": 600,
+  "icon": "i-users-plus",
+  "description": "HR Plus full lifecycle: recruitment, probation, contract/transfer/trip, training, discipline, offboarding and audit.",
+  "permissions": [
+    "qldn-hr-plus.recruitment.read",
+    "qldn-hr-plus.recruitment.write",
+    "qldn-hr-plus.candidate.read",
+    "qldn-hr-plus.candidate.write",
+    "qldn-hr-plus.probation.read",
+    "qldn-hr-plus.probation.write",
+    "qldn-hr-plus.probation.evaluate",
+    "qldn-hr-plus.onboarding.execute",
+    "qldn-hr-plus.contract.read",
+    "qldn-hr-plus.contract.write",
+    "qldn-hr-plus.contract.sign",
+    "qldn-hr-plus.transfer.read",
+    "qldn-hr-plus.transfer.write",
+    "qldn-hr-plus.trip.read",
+    "qldn-hr-plus.trip.write",
+    "qldn-hr-plus.training.read",
+    "qldn-hr-plus.training.write",
+    "qldn-hr-plus.training.evaluate",
+    "qldn-hr-plus.discipline.read",
+    "qldn-hr-plus.discipline.write",
+    "qldn-hr-plus.offboarding.read",
+    "qldn-hr-plus.offboarding.write",
+    "qldn-hr-plus.exitinterview.read",
+    "qldn-hr-plus.audit.read",
+    "qldn-hr-plus.audit.write",
+    "qldn-hr-plus.admin.manage"
+  ],
+  "routes": "/api/v1/qldn-hr-plus",
+  "docs": "docs/MODULE-QLDN-HR-PLUS.md",
+  "dependsOn": [
+    "hr",
+    "workflow"
+  ],
+  "engine": "^1.0.0",
+  "events": {
+    "emits": [
+      "qldn-hr-plus.candidate.hired",
+      "qldn-hr-plus.contract.expiring",
+      "qldn-hr-plus.employee.terminated",
+      "qldn-hr-plus.employee.resigned",
+      "qldn-hr-plus.violation.decided",
+      "qldn-hr-plus.trip.advance_requested",
+      "qldn-hr-plus.trip.completed",
+      "qldn-hr-plus.probation.passed",
+      "qldn-hr-plus.probation.failed",
+      "qldn-hr-plus.training-request.auto-approved",
+      "qldn-hr-plus.corrective-action.overdue"
+    ],
+    "subscribes": [
+      "workflow.instance.approved",
+      "workflow.instance.rejected"
+    ]
+  }
+}

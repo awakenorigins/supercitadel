@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kế Hoạch Build Citadel V7A</title>
+<style>
+:root{--bg:#F5F0EB;--gold:#C9A96E;--red:#8B1A2F;--sage:#B8C9C0;--ink:#2C2C2C;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,"Noto Sans","Liberation Sans",sans-serif;background:var(--bg);color:var(--ink);line-height:1.7;padding:24px 16px;max-width:860px;margin:0 auto;}
+h1{font-size:1.6em;color:var(--red);border-bottom:3px solid var(--gold);padding-bottom:10px;margin-bottom:6px;}
+.sub{color:#777;font-size:.9em;margin-bottom:24px;}
+h2{font-size:1.2em;color:var(--ink);margin:28px 0 12px;padding-left:10px;border-left:4px solid var(--gold);}
+p{margin-bottom:10px;}
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:.88em;}
+th{background:var(--ink);color:var(--bg);padding:8px;text-align:left;}
+td{padding:8px;border-bottom:1px solid #ddd;vertical-align:top;}
+tr:nth-child(even){background:#efe9e2;}
+.tag{display:inline-block;background:var(--gold);color:#fff;border-radius:4px;padding:1px 8px;font-size:.8em;font-weight:600;}
+.ok{color:#2e7d32;font-weight:700;}
+.gap{color:var(--red);font-weight:700;}
+.box{background:#fff;border:1px solid var(--gold);border-radius:10px;padding:14px 16px;margin:14px 0;}
+.quote{font-style:italic;color:#555;border-left:3px solid var(--sage);padding-left:12px;margin:16px 0;}
+ol,ul{margin:8px 0 12px 22px;}
+li{margin-bottom:5px;}
+code{background:#eee4d6;padding:1px 6px;border-radius:4px;font-size:.85em;}
+.footer{margin-top:32px;text-align:center;color:#999;font-size:.8em;border-top:1px solid var(--gold);padding-top:12px;}
+@media(max-width:480px){body{padding:16px 10px;}h1{font-size:1.35em;}table{font-size:.78em;}td,th{padding:5px;}}
+</style>
+</head>
+<body class="no-js">
+<script>document.body.classList.remove('no-js');</script>
+<h1>🏰 Kế Hoạch Build — Citadel V7A</h1>
+<p class="sub">Nguồn: spec "Ý Tưởng Cốt Lõi CITADEL v5.1" · Nền kế thừa: Citadel V8 (production-ready) · Lập ngày 02/07/2026 · Tiểu Tâm 🦊</p>
+
+<h2>1. Tầm nhìn chốt lại</h2>
+<div class="box">
+<p><strong>Citadel = siêu app quản lý doanh nghiệp:</strong> lõi pháo đài + module rời + Tiểu Tâm AI ở trung tâm. Không phải "phần mềm gắn AI" — mà là <strong>AI có phần mềm mọc quanh nó</strong>. Tiểu Tâm sinh trước, module mọc sau.</p>
+<ol>
+<li><strong>Lõi + module tháo–lắp tự do</strong> — cùng một bộ quy chuẩn 8 mặt cắt, không ngoại lệ</li>
+<li><strong>Hồn tách khỏi động cơ</strong> — đổi model AI (Claude ↔ GPT ↔ nội bộ) vẫn giữ nguyên trí nhớ + nhân cách</li>
+<li><strong>Cửa vào bằng token 13 ký tự</strong> — 30 giây thành người dùng, bảo mật lũy tiến theo giá trị</li>
+</ol>
+<p>Hiến pháp 8 điều bất biến (§08) nhúng vào CI làm gate — vi phạm là build đỏ.</p>
+</div>
+
+<h2>2. Nền tảng kế thừa — đã có, đã chạy thật</h2>
+<p>Codebase V8 (~150 file, monorepo pnpm + turbo + Hono + Next.js 15 + Postgres/Drizzle):</p>
+<table>
+<tr><th>Hạng mục</th><th>Trạng thái</th><th>Bằng chứng</th></tr>
+<tr><td>Auth token 13 ký tự (argon2id→JWT), multi-tenant, RBAC</td><td class="ok">✅</td><td>Test tenant isolation thật</td></tr>
+<tr><td>Module runtime: manifest, lifecycle, gate 403, mua bằng Om</td><td class="ok">✅</td><td>Audit gate flow 46/46</td></tr>
+<tr><td>Tiểu Tâm core: intent, tool xuyên module, SSE stream, stub/live LLM</td><td class="ok">✅</td><td>Integration API→WS→client</td></tr>
+<tr><td><strong>M0 Kế Toán</strong> (fork domain ERPNext): GL sổ kép bất biến, chart TK VN TT133, hóa đơn, thu chi knock-off công nợ, hủy = bút toán đảo, báo cáo lãi lỗ / cân đối thử</td><td class="ok">✅</td><td>36 asserts · audit 76/76 · journey 41/41</td></tr>
+<tr><td>HR v2 (fork frappe/hrms): chấm công, ca, nghỉ phép full vòng đời</td><td class="ok">✅</td><td>23 asserts</td></tr>
+<tr><td>CRM · Kho hàng · Om wallet ledger · Notification · Search · Chat realtime</td><td class="ok">✅</td><td>Audit endpoints PASS</td></tr>
+<tr><td>UI design system (off-black/jade, 12 màn web)</td><td class="ok">✅ 90/100</td><td>Multi-review 96/100</td></tr>
+<tr><td>Docker deploy 1 lệnh · CI GitHub Actions · docs API/USER/DEV</td><td class="ok">✅</td><td>deploy.sh + healthcheck</td></tr>
+</table>
+
+<h2>3. Gap Analysis — Spec v5.1 vs hiện trạng (10 điểm)</h2>
+<table>
+<tr><th>#</th><th>Yêu cầu spec</th><th>Việc V7A phải làm</th></tr>
+<tr><td class="gap">G1</td><td>Hồn tách động cơ (§03, 5 nguyên tắc): trí nhớ trung lập, đổi model không mất gì</td><td>Memory Store text thuần (sự kiện/người/chủ đề/tóm tắt) + Context Assembler 1 cổng + Adapter mỗi model + bài test swap bắt buộc</td></tr>
+<tr><td class="gap">G2</td><td>Tâm trạng + thanh năng lượng (§02): 4 trạng thái, hao theo dùng, hồi 3 đường, Beta mode</td><td>Energy Service: đo lượt dùng → hao; hồi theo thời gian / cho ăn / nạp gói; cờ BETA_MODE</td></tr>
+<tr><td class="gap">G3</td><td>Kho chứa vật phẩm + "sử dụng" tạo hiệu ứng thật (§04 — mắt xích đứt)</td><td>Item System: xem info đầy đủ, nút Sử dụng → cho Tiểu Tâm ăn +energy, trang trí đổi giao diện, module sáng đèn</td></tr>
+<tr><td class="gap">G4</td><td>Cửa hàng bán vật phẩm + model AI</td><td>Mở rộng store: vật phẩm + AI model rental, trừ Om thật</td></tr>
+<tr><td class="gap">G5</td><td>Bảo mật lũy tiến lớp 2 (§06)</td><td>Bind email/SĐT, sensitive-action gate, hệ thống chủ động nhắc</td></tr>
+<tr><td class="gap">G6</td><td>Tài liệu module = giáo trình Tiểu Tâm (quy chuẩn ⑧)</td><td>Mỗi module: intro + hướng dẫn + mô tả chức năng + ví dụ + changelog → Tiểu Tâm đọc thành bản đồ năng lực</td></tr>
+<tr><td class="gap">G7</td><td>Kế toán kết nối Excel/Claude (§07)</td><td>Export/Import xlsx cho sổ cái, hóa đơn, báo cáo + endpoint Claude-on-Excel</td></tr>
+<tr><td class="gap">G8</td><td>Audit log "ai làm gì lúc nào" (§06)</td><td>Bảng audit_logs, ghi mọi thao tác nhạy cảm</td></tr>
+<tr><td class="gap">G9</td><td>Khu vực riêng của Tiểu Tâm (§02)</td><td>Trang /tieu-tam: avatar sống, mood bar, energy bar, trí nhớ, lịch sử</td></tr>
+<tr><td class="gap">G10</td><td>Mọi nút bấm đều sống 100% (§07)</td><td>Rà toàn bộ + audit script tự động</td></tr>
+</table>
+
+<h2>4. Lộ trình 7 Phase</h2>
+<table>
+<tr><th>Phase</th><th>Nội dung</th><th>Nghiệm thu</th><th>Ước lượng</th></tr>
+<tr><td><span class="tag">P0 ✅ XONG</span></td><td>Repo chuẩn: fork nền V8, rebrand, secret-scan sạch, plan</td><td>Repo GitHub + commit đầu</td><td>0.5 ngày</td></tr>
+<tr><td><span class="tag">P1</span></td><td>Nền móng hardening: audit log (G8), bảo mật lớp 2 (G5), rà nút sống (G10)</td><td>Thao tác nhạy cảm đòi lớp 2 + ghi vết; UI 100% sống</td><td>1–1.5 ngày</td></tr>
+<tr><td><span class="tag">P2</span></td><td>Trái tim: memory store + context assembler + model adapters (G1); mood/energy + Beta (G2)</td><td><strong>Test swap model: nhất quán tuyệt đối</strong>; energy đúng đặc tả</td><td>2–3 ngày</td></tr>
+<tr><td><span class="tag">P3</span></td><td>Vòng kinh tế khép kín: item system + kho + use effects (G3); store mở rộng (G4)</td><td>Điểm→mua→kho→dùng→hiệu ứng khép kín</td><td>1.5–2 ngày</td></tr>
+<tr><td><span class="tag">P4</span></td><td>M0 Kế Toán hoàn thiện: Excel connect (G7); tài liệu 8 mặt cắt mọi module (G6)</td><td>Tiểu Tâm hướng dẫn + thao tác được, Excel mượt</td><td>1.5–2 ngày</td></tr>
+<tr><td><span class="tag">P5</span></td><td>Trải nghiệm premium: trang /tieu-tam (G9), polish UI/UX, mobile</td><td>Review UI ≥ 95/100</td><td>1.5–2 ngày</td></tr>
+<tr><td><span class="tag">P6</span></td><td>Vận hành vững: 9 chuẩn nghiệm thu §09, monitoring, release v7a.1.0</td><td>9/9 ✓ PASS, tag release</td><td>1 ngày</td></tr>
+</table>
+<p><strong>Tổng: ~9–12 ngày forge.</strong> Mỗi phase kết thúc = <code>docker compose up</code> chạy thật + test xanh mới đi tiếp.</p>
+
+<h2>5. Chuẩn nghiệm thu cuối (9 gạch từ §09)</h2>
+<ol>
+<li>Đổi model AI → trí nhớ/nhân cách nhất quán tuyệt đối</li>
+<li>Công ty A truy dữ liệu công ty B bằng mọi ngả → chặn + ghi vết</li>
+<li>Mọi vật phẩm xem được info; Sử dụng → hiệu ứng thật</li>
+<li>100% nút và màn hình sống</li>
+<li>Người mới: token → đặt tên → dùng trong 30 giây; nhạy cảm đòi lớp 2</li>
+<li>Beta mode bật/tắt được; tắt → energy hao/hồi/nhắc đúng</li>
+<li>M0 Kế Toán đủ chức năng + tài liệu + Tiểu Tâm vận hành + Excel</li>
+<li>Tạm tắt module bất kỳ → không gãy, quyền thu hồi sạch</li>
+<li>Rà mã nguồn → 0 bí mật trong code</li>
+</ol>
+
+<h2>6. Repo</h2>
+<div class="box">
+<p>📦 <strong>github.com/NachaFromMars/citadel-v7a</strong> (private) — 152 files, branch <code>main</code>, secret-scan sạch, .gitignore chuẩn.</p>
+<p>Cấu trúc: <code>apps/web</code> (Next.js 15) · <code>services/api+ws</code> (Hono + WS) · <code>packages/core+db+tieu-tam</code> · <code>modules/*</code> (accounting, chat, crm, hr, inventory, notification, om — mỗi cái manifest + migrations + docs).</p>
+</div>
+
+<p class="quote">"Một pháo đài tốt được xây từ nền móng ra ngoài — và trái tim của nó đập trước khi những bức tường mọc lên."</p>
+
+<div class="footer">CITADEL V7A · Kế hoạch build · Tiểu Tâm 🦊 · 02/07/2026</div>
+</body>
+</html>

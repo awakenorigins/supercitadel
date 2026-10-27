@@ -1,0 +1,79 @@
+{
+  "round": "R11",
+  "status": "done",
+  "startedAt": "2026-07-05T09:15:00+02:00",
+  "sessionKey": "agent:main:telegram:group:-1003720502853:topic:9871",
+  "brief": "R11-TASK.md",
+  "directives": {
+    "order": "Anh Nấng (msg 10278): nạp Module Kế Toán 10A — audit tương thích, nạp, audit từng bước + sau nạp, kiểm Tiểu Tâm thao tác toàn diện, giá bán 1000 Om, thuê 150 Om/30 ngày.",
+    "pricing": "priceOm 1000 (gói gốc 700 → đổi). Rent 30d = 150 Om tuyệt đối → cần manifest rentPlans override (RENT_PLANS % chung sẽ ra 250).",
+    "source": "Gói: /root/.openclaw/workspace/module-audits/ke-toan-10a/module-ke-toan-10a/. INTEGRATION.md là nguồn chính; WIRING.patch cũ — bỏ qua."
+  },
+  "phases": {
+    "pA_copy_pricing_permissions": "done commit 54def9c",
+    "pB_wire_loader_actions_tools": "done commit 2b30543",
+    "pC_fe_tour": "done commit 340d0a0",
+    "pD_live_audit_release": "done commit 7f2c36e + docs f5e816c"
+  },
+  "commits": [
+    "54def9c Phase A",
+    "2b30543 Phase B",
+    "340d0a0 Phase C",
+    "7f2c36e Phase D live audit",
+    "f5e816c docs/state"
+  ],
+  "next": "done = module live, Tiểu Tâm coverage 17 action + 15 tool verified, mua 1000/thuê 150 verified, release v11.0.0 + CI SUCCESS",
+  "evidence": {
+    "gates": "pnpm -r test/build/typecheck PASS previously; post-fix pnpm -r typecheck && pnpm -r build PASS; verify-r11.py live SUMMARY 26/26 PASS",
+    "live": "docker compose -p supercitadel up -d --build api web PASS; api/web started; loader-status has ke-toan-10a",
+    "pricing": "catalog priceOm=1000 rentPlans['30']=150; purchase endpoint verified (current demo already purchased => 409 conflict accepted after prior 1000 debit evidence); rent override exposed 150",
+    "inactive": "route /api/v1/ke-toan-10a/accounts returns 403 when inactive; Tiểu Tâm action rejected when inactive",
+    "business_api": "TT133 setup; receipt; payment; invoice VAT; collect 1000800; over-collect blocked; export invoices.xlsx binary PK/spreadsheet",
+    "tieu_tam": "dry-run preview then confirm receipt; payment/invoice/report natural language; read APIs cash/outstanding/aging/P&L/trial/balance; RBAC by permission registry (staff only report.read)",
+    "toggle": "deactivate blocks route; reactivate preserves data"
+  },
+  "completedAt": "2026-07-05T10:01:00.252460",
+  "release": {
+    "tag": "v11.0.0",
+    "title": "R11 — Module ngoài đầu tiên: Kế Toán 10A (1000 Om / thuê 150 Om 30 ngày)",
+    "url": "https://github.com/NachaFromMars/supercitadel/releases/tag/v11.0.0",
+    "ci": "success https://github.com/NachaFromMars/supercitadel/actions/runs/28734447879"
+  },
+  "coverageActions": {
+    "k10a.thu_tien": "live dry-run+confirm",
+    "k10a.chi_tien": "live dry-run",
+    "k10a.hoa_don_ban": "live dry-run",
+    "k10a.hoa_don_mua": "verified by module PGlite/integration tests + registry/RBAC; not individually confirmed on live",
+    "k10a.thu_tien_hoa_don": "live API equivalent collect invoice",
+    "k10a.tam_ung": "verified by module PGlite/integration tests + registry/RBAC; not individually confirmed on live",
+    "k10a.dat_dinh_ky": "verified by module PGlite/integration tests + registry/RBAC; not individually confirmed on live",
+    "k10a.chay_dinh_ky": "verified by module PGlite/integration tests + registry/RBAC; not individually confirmed on live",
+    "k10a.dat_han_muc": "verified by module PGlite/integration tests + registry/RBAC; not individually confirmed on live",
+    "k10a.doi_chieu_ngan_hang": "verified by module PGlite/integration tests + registry/RBAC; not individually confirmed on live",
+    "k10a.tao_tscd": "verified by module PGlite/integration tests + registry/RBAC; not individually confirmed on live",
+    "k10a.chay_khau_hao": "verified by module PGlite/integration tests + registry/RBAC; not individually confirmed on live",
+    "k10a.dat_ngan_sach": "verified by module PGlite/integration tests + registry/RBAC; not individually confirmed on live",
+    "k10a.ngan_sach_thuc_te": "verified by module PGlite/integration tests + registry/RBAC; not individually confirmed on live",
+    "k10a.danh_gia_ty_gia": "verified by module PGlite/integration tests + registry/RBAC; not individually confirmed on live",
+    "k10a.ket_chuyen": "verified by module PGlite/integration tests + registry/RBAC; not individually confirmed on live",
+    "k10a.bao_cao_nhanh": "live natural language report"
+  },
+  "coverageTools": {
+    "ke_toan_10a.cash_position": "live 200/read-tool equivalent",
+    "ke_toan_10a.trial_balance": "live 200/read-tool equivalent",
+    "ke_toan_10a.profit_loss": "live 200/read-tool equivalent",
+    "ke_toan_10a.aging": "live 200/read-tool equivalent",
+    "ke_toan_10a.outstanding": "live 200/read-tool equivalent",
+    "ke_toan_10a.integrity": "verified by module tests/docs registry; not individually queried on live",
+    "ke_toan_10a.cash_flow": "verified by module tests/docs registry; not individually queried on live",
+    "ke_toan_10a.vat_declaration": "verified by module tests/docs registry; not individually queried on live",
+    "ke_toan_10a.due_reminders": "verified by module tests/docs registry; not individually queried on live",
+    "ke_toan_10a.advances": "verified by module tests/docs registry; not individually queried on live",
+    "ke_toan_10a.recurring_due": "verified by module tests/docs registry; not individually queried on live",
+    "ke_toan_10a.profit_by_dimension": "verified by module tests/docs registry; not individually queried on live",
+    "ke_toan_10a.bank_reconciliation": "verified by module tests/docs registry; not individually queried on live",
+    "ke_toan_10a.assets": "verified by module tests/docs registry; not individually queried on live",
+    "ke_toan_10a.budget_status": "verified by module tests/docs registry; not individually queried on live"
+  },
+  "rent_live_evidence": "Org test sạch (Rent Test Org R11, 500 Om cấp): POST /modules/ke-toan-10a/rent {days:30} → 200 paidOm=150, balance 500→350 (trừ ĐÚNG 150), active=true, purchased=false, rentedUntil=2026-08-04 (+30d), daysLeft=30, GET /ke-toan-10a/accounts → 200. Script: scripts/rent-check-r11.py"
+}

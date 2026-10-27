@@ -1,0 +1,19 @@
+{
+  "id": "crm",
+  "name": "CRM",
+  "version": "2.0.0",
+  "tier": "paid",
+  "priceOm": 400,
+  "icon": "i-users",
+  "description": "Quản lý khách hàng, pipeline bán hàng, chăm sóc.",
+  "permissions": [
+    "crm.contact.read",
+    "crm.contact.create",
+    "crm.deal.create",
+    "crm.deal.move"
+  ],
+  "routes": "/api/v1/crm",
+  "docs": "docs/GUIDE.md",
+  "engine": "^1.0.0",
+  "group": "Kinh doanh"
+}

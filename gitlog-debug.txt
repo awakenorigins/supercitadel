@@ -1,0 +1,4 @@
+3fab90f SUPERCITADEL-R11.2: Phase B tieu-tam settings + org + members endpoints
+5926c71 SUPERCITADEL-R11.2: Phase A audit map
+60cf9e1 SUPERCITADEL: ops — fix deploy-time white-screen (HTML no-cache + static immutable at Caddy) + runbook
+06d6b83 SUPERCITADEL-R11.1: mark release done

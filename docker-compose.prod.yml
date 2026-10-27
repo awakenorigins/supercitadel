@@ -1,0 +1,21 @@
+# SUPERCITADEL — PRODUCTION overlay (R8)
+# Dùng: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+#
+# Nguyên tắc:
+#   • KHÔNG expose Postgres/Redis ra ngoài (chỉ network nội bộ compose)
+#   • API/WS/Web chỉ bind 127.0.0.1 — public qua reverse proxy (Caddy/Nginx) mở 80/443
+#   • NODE_ENV=production → API fail-fast nếu JWT_SECRET/DB_PASSWORD còn default
+#   • CORS_ORIGIN bắt buộc set = domain chính thức (phẩy nếu nhiều)
+services:
+  postgres:
+    ports: !override []
+  redis:
+    ports: !override []
+  api:
+    environment:
+      NODE_ENV: production
+    ports: !override ["127.0.0.1:3001:3001"]
+  ws:
+    ports: !override ["127.0.0.1:3002:3002"]
+  web:
+    ports: !override ["127.0.0.1:3000:3000"]

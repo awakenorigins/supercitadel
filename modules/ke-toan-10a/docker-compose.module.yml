@@ -1,0 +1,44 @@
+# ============================================================
+# Kế Toán 10A — Docker Compose (chế độ sidecar độc lập)
+# Chạy: docker compose -f docker-compose.module.yml up -d
+# Migrate: docker compose -f docker-compose.module.yml run --rm ke-toan-10a npm run db:migrate
+# ============================================================
+services:
+  ke-toan-10a-db:
+    image: postgres:16-alpine
+    container_name: ke-toan-10a-db
+    environment:
+      POSTGRES_USER: ke-toan-10a
+      POSTGRES_PASSWORD: ke-toan-10a
+      POSTGRES_DB: ke-toan-10a
+    volumes:
+      - ke-toan-10a-pgdata:/var/lib/postgresql/data
+    ports:
+      - "5442:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ke-toan-10a"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ke-toan-10a:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ke-toan-10a
+    depends_on:
+      ke-toan-10a-db:
+        condition: service_healthy
+    environment:
+      KETOAN10A_DB_URL: postgres://ke-toan-10a:ke-toan-10a@ke-toan-10a-db:5432/ke-toan-10a
+      CITADEL_JWT_SECRET: ${CITADEL_JWT_SECRET:-doi-thanh-secret-that}
+      KETOAN10A_PORT: "3010"
+      KETOAN10A_STRICT_TENANT: "true"
+      KETOAN10A_ACCOUNTING_STANDARD: "TT133"
+      KETOAN10A_DEFAULT_CURRENCY: "VND"
+    ports:
+      - "3010:3010"
+    restart: unless-stopped
+
+volumes:
+  ke-toan-10a-pgdata:

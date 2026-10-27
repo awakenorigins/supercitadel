@@ -1,0 +1,29 @@
+name: CI
+on:
+  push: { branches: [main] }
+  pull_request: { branches: [main] }
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # R8: không khai version ở đây — pnpm/action-setup tự đọc packageManager trong package.json (tránh xung đột ERR_PNPM_BAD_PM_VERSION)
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - name: Typecheck (all packages)
+        run: pnpm -r typecheck
+      - name: Test (all packages)
+        run: pnpm -r test
+      - name: Gate — manifest module strict (R9)
+        run: pnpm --filter @citadel/api exec tsx ../../scripts/audit-manifests.mts
+      - name: Gate — giáo trình module (quy chuẩn ⑧)
+        run: pnpm --filter @citadel/api exec tsx ../../scripts/audit-module-docs.mts
+      - name: Gate — 100% nút sống (G10)
+        run: pnpm --filter @citadel/api exec tsx ../../scripts/audit-buttons.mts
+      - name: Gate — secret scan (chuẩn #9)
+        run: pnpm --filter @citadel/api exec tsx ../../scripts/acceptance-v7a.mts --secret-only
+      - name: Web build
+        run: pnpm --filter @citadel/web build

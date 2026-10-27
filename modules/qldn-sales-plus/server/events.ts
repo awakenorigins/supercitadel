@@ -1,0 +1,1 @@
+export const qldnSalesPlusEvents={emits:['qldn-sales-plus.return.requested','qldn-sales-plus.promotion.activated','qldn-sales-plus.tender.submitted','qldn-sales-plus.field-visit.completed','qldn-sales-plus.franchise.reviewed','qldn-sales-plus.shipment.updated','qldn-sales-plus.fulfillment.changed'],subscribes:[]};
